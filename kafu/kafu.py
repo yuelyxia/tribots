@@ -54,8 +54,6 @@ async def quota_check():
         # do something
         pass
 
-
-
 # text commands
 
 @bot.command(name="adm", help="Pings ADM+.")
@@ -64,11 +62,39 @@ async def adm(ctx):
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one(server_query)
     if not server_info:
-        await ctx.send(f"This server is not whitelisted.")
         return
     adm_role = server_info.get("adm_role")
-    await ctx.reply(f"{adm_role}")
+    if adm_role:
+        await ctx.reply(f"{adm_role}")
 
+@bot.command(name='lb', help="Sends the current month's leaderboard.")
+async def lb(ctx):
+    guild_id = ctx.guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if not server_info:
+        return
+    staff = server_info.get("staff")
+    if not staff:
+        ctx.reply("Staff not found.")
+        return
+    sorted_staff = sorted(
+        staff.items(),
+        key=lambda item: item[1].get("monthly",0),
+        reverse=True
+    )
+    embed = discord.Embed(colour=0xffffff)
+    lines = []
+    for user_id, data in sorted_staff:
+        user = await bot.fetch_user(int(user_id))
+        line = (
+            f"-# <:greyreply:1448474301673115748>　"
+            f"{user.mention}　–　"
+            f"**{data.get("monthly", 0)}** month ﹒ **{data.get("alltime", 0)}** all"
+        )
+        lines.append(line)
+    embed.description = "\n".join(lines)
+    await ctx.send("## _ _　　　staff leaderboard", embed=embed)
 
 @bot.command(name='rn')
 @commands.cooldown(2, 600, commands.BucketType.channel)
@@ -102,7 +128,6 @@ async def help(ctx):
         embed.description = """wip
         """
         await ctx.send(embed=embed)
-
 
 # slash commands
 
