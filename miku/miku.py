@@ -529,14 +529,17 @@ async def lb(ctx):
                 rep.append([staff_id, reports, weekly_reports])
             elif get(ctx.guild.roles, id=tr_role) in staff.roles:
                 tr.append([staff_id, reports, weekly_reports])
-        else: await ctx.reply(f"`{staff_id}` is no longer in this server.")
+        else:
+            await ctx.reply(f"`{staff_id}` is no longer in this server.")
+            continue
     o5_lb = discord.Embed(colour=0xffffff)
     o5_lb.description = "✦　　┈　　overseers"
     for staff_info in o5:
         staff_id = staff_info[0]
         reports = staff_info[1]
         weekly_reports = staff_info[2]
-        staff = await bot.fetch_user(int(staff_id))
+        staff = ctx.guild.get_member(int(staff_id))
+        if not staff: continue
         o5_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
     adm_lb = discord.Embed(colour=0xffffff)
     adm_lb.description = "✦　　┈　　admins"
@@ -544,7 +547,8 @@ async def lb(ctx):
         staff_id = staff_info[0]
         reports = staff_info[1]
         weekly_reports = staff_info[2]
-        staff = await bot.fetch_user(int(staff_id))
+        staff = ctx.guild.get_member(int(staff_id))
+        if not staff: continue
         adm_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
     sr_lb = discord.Embed(colour=0xffffff)
     sr_lb.description = "✦　　┈　　senior reporters"
@@ -552,7 +556,8 @@ async def lb(ctx):
         staff_id = staff_info[0]
         reports = staff_info[1]
         weekly_reports = staff_info[2]
-        staff = await bot.fetch_user(int(staff_id))
+        staff = ctx.guild.get_member(int(staff_id))
+        if not staff: continue
         sr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
     rep_lb = discord.Embed(colour=0xffffff)
     rep_lb.description = "✦　　┈　　reporters"
@@ -560,7 +565,8 @@ async def lb(ctx):
         staff_id = staff_info[0]
         reports = staff_info[1]
         weekly_reports = staff_info[2]
-        staff = await bot.fetch_user(int(staff_id))
+        staff = ctx.guild.get_member(int(staff_id))
+        if not staff: continue
         rep_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
     tr_lb = discord.Embed(colour=0xffffff)
     tr_lb.description = "✦　　┈　　trial reporters"
@@ -568,7 +574,8 @@ async def lb(ctx):
         staff_id = staff_info[0]
         reports = staff_info[1]
         weekly_reports = staff_info[2]
-        staff = await bot.fetch_user(int(staff_id))
+        staff = ctx.guild.get_member(int(staff_id))
+        if not staff: continue
         tr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
     embeds=[o5_lb, adm_lb, sr_lb, rep_lb, tr_lb]
     await ctx.reply("## _ _　　　reports leaderboard", embeds=embeds)
@@ -596,13 +603,15 @@ async def lbr(ctx):
                 sr.append([staff_id, reviews, weekly_reviews])
         else:
             await ctx.reply(f"`{staff_id}` is no longer in this server.")
+            continue
     o5_lb = discord.Embed(colour=0xffffff)
     o5_lb.description = "✦　　┈　　overseers"
     for staff_info in o5:
         staff_id = staff_info[0]
         reviews = staff_info[1]
         weekly_reviews = staff_info[2]
-        staff = await bot.fetch_user(int(staff_id))
+        staff = ctx.guild.get_member(int(staff_id))
+        if not staff: continue
         o5_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ **{weekly_reviews}** week"
     adm_lb = discord.Embed(colour=0xffffff)
     adm_lb.description = "✦　　┈　　admins"
@@ -610,7 +619,8 @@ async def lbr(ctx):
         staff_id = staff_info[0]
         reviews = staff_info[1]
         weekly_reviews = staff_info[2]
-        staff = await bot.fetch_user(int(staff_id))
+        staff = ctx.guild.get_member(int(staff_id))
+        if not staff: continue
         adm_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ **{weekly_reviews}** week"
     sr_lb = discord.Embed(colour=0xffffff)
     sr_lb.description = "✦　　┈　　senior reporters"
@@ -618,7 +628,8 @@ async def lbr(ctx):
         staff_id = staff_info[0]
         reviews = staff_info[1]
         weekly_reviews = staff_info[2]
-        staff = await bot.fetch_user(int(staff_id))
+        staff = ctx.guild.get_member(int(staff_id))
+        if not staff: continue
         sr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ **{weekly_reviews}** week"
     embeds=[o5_lb, adm_lb, sr_lb]
     await ctx.reply("## _ _　　　reviews leaderboard", embeds=embeds)
