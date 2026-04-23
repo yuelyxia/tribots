@@ -42,6 +42,8 @@ bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
 async def on_ready():
     bot.add_view(TRITicketView())
     bot.add_view(BanReqView())
+    bot.add_view(PilotView())
+    bot.add_view(PilotFormsView())
     bot.add_view(MMView())
     bot.add_view(MMFormsView())
     bot.add_view(MMRisksView())
@@ -54,7 +56,7 @@ QUOTA_CHECK_DAY = 1
 @tasks.loop(time=datetime.time(hour=0, minute=0))
 async def quota_check():
     now = datetime.datetime.now(datetime.timezone.utc)
-    if now.day() == QUOTA_CHECK_DAY:
+    if now.day == QUOTA_CHECK_DAY:
         guilds = servers.find({})  # all whitelisted servers
         for server_info in guilds:
             guild_id = int(server_info["_id"])
@@ -64,8 +66,86 @@ async def quota_check():
                 continue  # bot is not in this guild anymore
             except discord.Forbidden:
                 continue  # no access
-
-        pass
+            else:
+                staff_lb_channel = server_info.get("staff_lb_channel")
+                if staff_lb_channel:
+                    try:
+                        channel = await guild.fetch_channel(int(staff_lb_channel.strip("<#>")))
+                        total_credits = 0
+                        staff = server_info.get("staff", {})
+                        sorted_staff = sorted(
+                            staff.items(),
+                            key=lambda x: x[1].get("monthly", 0),
+                            reverse=True
+                        )
+                        desc = ""
+                        for rank, (user_id, data) in enumerate(sorted_staff, start=1):
+                            monthly = data.get("monthly", 0)
+                            alltime = data.get("alltime", 0)
+                            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
+                            total_credits += monthly
+                        embed = discord.Embed(
+                            description=desc if desc else "No staff found.",
+                        )
+                        summary = discord.Embed(colour=0xffffff)
+                        summary.description = (
+                            f"✦　　┈　　total credits　　┈　　**{total_credits}**")
+                        await channel.send("## _ _　　　staff leaderboard", embed=embed)
+                        await channel.send("## _ _　　　monthly summary", embed=summary)
+                    except discord.NotFound: pass
+                    except discord.Forbidden: pass
+                services_lb_channel = server_info.get("services_lb_channel")
+                if services_lb_channel:
+                    try:
+                        channel = await guild.fetch_channel(int(services_lb_channel.strip("<#>")))
+                        total_services = 0
+                        total_mm_services = 0
+                        total_pilot_services = 0
+                        mms = server_info.get("mms", {})
+                        sorted_mms = sorted(
+                            mms.items(),
+                            key=lambda x: x[1].get("monthly", 0),
+                            reverse=True
+                        )
+                        desc = ""
+                        for rank, (user_id, data) in enumerate(sorted_mms, start=1):
+                            monthly = data.get("monthly", 0)
+                            alltime = data.get("alltime", 0)
+                            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
+                            total_services += monthly
+                            total_mm_services += monthly
+                        mms_embed = discord.Embed(
+                            description=desc if desc else "No mms found.",
+                        )
+                        pilots = server_info.get("pilots", {})
+                        sorted_pilots = sorted(
+                            pilots.items(),
+                            key=lambda x: x[1].get("monthly", 0),
+                            reverse=True
+                        )
+                        desc = ""
+                        for rank, (user_id, data) in enumerate(sorted_pilots, start=1):
+                            monthly = data.get("monthly", 0)
+                            alltime = data.get("alltime", 0)
+                            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
+                            total_services += monthly
+                            total_pilot_services += monthly
+                        pilots_embed = discord.Embed(
+                            description=desc if desc else "No pilots found.",
+                        )
+                        embeds = [mms_embed, pilots_embed]
+                        summary = discord.Embed(colour=0xffffff)
+                        summary.description = (
+                            f"✦　　┈　　total services　　┈　　**{total_services}**\n✦　　┈　　total mm services　　┈　　**{total_mm_services}**\n✦　　┈　　total pilot services　　┈　　**{total_pilot_services}**")
+                        await channel.send("## _ _　　　services leaderboard", embeds=embeds)
+                        await channel.send("## _ _　　　monthly summary", embed=summary)
+                    except discord.NotFound: pass
+                    except discord.Forbidden: pass
+                for category in ["staff", "mms", "pilots"]:
+                    if category in server_info:
+                        for user_id in server_info[category]:
+                            server_info[category][user_id]["monthly"] = 0
+                servers.replace_one({"_id": server_info["_id"]}, server_info)
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -108,6 +188,78 @@ async def on_message(message: discord.Message):
 
 # text commands
 
+@bot.command(name="pilot")
+async def pilot(ctx, *, desc:str=None):
+    if not desc:
+        await ctx.send(view=PilotView())
+    if desc == "forms":
+        await ctx.send("> By filling any of the forms below, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.", view=PilotFormsView())
+
+class PilotView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label="forms", style=discord.ButtonStyle.grey, custom_id="pilot:forms")
+    async def forms_button(self, interaction, button):
+        await interaction.response.send_message(view=PilotFormsView())
+
+class PilotFormsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label="genshin", style=discord.ButtonStyle.grey, custom_id="pilot_forms:genshin")
+    async def genshin_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Genshin Impact Pilot Form
+Account Size: 
+Server: 
+Task: 
+Time Limit:
+Fee:
+Do’s & Don’ts: 
+Account Issues: 
+> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
+""")
+
+    @discord.ui.button(label="hsr", style=discord.ButtonStyle.grey, custom_id="pilot_forms:hsr")
+    async def hsr_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Honkai: Star Rail Pilot Form
+Account Size: 
+Server: 
+Task: 
+Time Limit:
+Fee:
+Do’s & Don’ts: 
+Account Issues: 
+> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
+""")
+
+    @discord.ui.button(label="wuwa", style=discord.ButtonStyle.grey, custom_id="pilot_forms:wuwa")
+    async def wuwa_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Wuthering Waves Pilot Form
+Account Size: 
+Server: 
+Task: 
+Time Limit:
+Fee:
+Do’s & Don’ts: 
+Account Issues: 
+> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
+""")
+
+    @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="pilot_forms:roblox")
+    async def roblox_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Roblox Pilot Form
+Roblox Game: 
+Task: 
+Time Limit:
+Fee:
+Do’s & Don’ts: 
+> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
+""")
+
+
 @bot.command(name="mm")
 async def mm(ctx, *, desc: str=None):
     if not desc:
@@ -118,11 +270,9 @@ async def mm(ctx, *, desc: str=None):
 class MMView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-
     @discord.ui.button(label="forms", style=discord.ButtonStyle.grey, custom_id="mm:forms")
     async def forms_button(self, interaction, button):
         await interaction.response.send_message(view=MMFormsView())
-
     @discord.ui.button(label="risks", style=discord.ButtonStyle.grey, custom_id="mm:risks")
     async def risks_button(self, interaction, button):
         await interaction.response.send_message(view=MMRisksView())
@@ -144,8 +294,9 @@ Lost Receipts?
 Are you the original owner? 
 Can the email be surrendered? 
 Other Issues: 
-Fee + who's providing: 
-                    """)
+Fee + who’s providing: 
+> By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
+""")
 
     @discord.ui.button(label="hsr", style=discord.ButtonStyle.grey, custom_id="mm_forms:hsr")
     async def hsr_button(self, interaction, button):
@@ -160,8 +311,9 @@ Lost Receipts?
 Are you the original owner? 
 Can the email be surrendered? 
 Other Issues: 
-Fee + who's providing: 
-                    """)
+Fee + who’s providing: 
+> By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
+""")
 
     @discord.ui.button(label="wuwa", style=discord.ButtonStyle.grey, custom_id="mm_forms:wuwa")
     async def wuwa_button(self, interaction, button):
@@ -177,8 +329,35 @@ Lost Receipts?
 Are you the original owner? 
 **Please note that email __must__ be surrendered for wuwa accounts.**
 Other Issues: 
-Fee + who's providing: 
-                    """)
+Fee + who’s providing: 
+> By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
+""")
+
+    @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="mm_forms:roblox")
+    async def roblox_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Roblox MM form
+Username: 
+Do you have the original email? 
+Can the email be surrendered? 
+PIN Set or Unset? 
+Lost Receipts? 
+Are you the original owner? 
+Other Issues: 
+Fee + who’s providing: 
+> By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
+""")
+
+    @discord.ui.button(label="roblox items", style=discord.ButtonStyle.grey, custom_id="mm_forms:roblox_items")
+    async def roblox_items_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Roblox Items MM form
+Username: 
+Roblox Game:
+Roblox Game Items:
+Fee + who’s providing: 
+> By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
+""")
 
 class MMRisksView(discord.ui.View):
     def __init__(self):
@@ -190,9 +369,10 @@ class MMRisksView(discord.ui.View):
 ## Deadlinks <a:whitealert:1496542298908000257>
 > 3rd party links are links binded to the hoyoverse account which serves as an alternative way to login - Facebook, Game Center, Google, PSN, Apple, Twitter. A deadlink is a 3rd party link where the owner no longer has access to the 3rd party account and is unable to unlink it, but also unable to login via the link, e.g. Twitter account was deleted.
 **__Risks__**
-- Facebook, Twitter, Google, Apple and Game Center links are __safe__ and can be secured easily by removing all trusted devices via the [Hoyoverse website](https://account.hoyoverse.com). Attempts to login via these links will require a verification code sent to the linked email.
+- **Hoyoverse:** Facebook, Twitter, Google, Apple and Game Center links are __safe__ and can be secured easily by removing all trusted devices via the [Hoyoverse website](https://account.hoyoverse.com). Attempts to login via these links will require a verification code sent to the linked email.
+- **Wuthering Waves:** Note that in Wuwa, ANY 3rd party links attached can be used to log into the account __without a verification code__, even after the password has been changed.
 - A deadlink may not be truly dead; scammers may lie about deadlinks and use them to attempt to retrieve the account later on.
-- **PSN links are especially __dangerous__** as they do not require a new device verification and require Hoyoverse CS to unlink. a PSN link may be considered dead if the most recent trophy was gained >6 months ago.
+- **PSN and Xbox links are especially __dangerous__** as they do not require new device verification and require Hoyoverse CS to unlink. a PSN link may be considered dead if the most recent trophy was gained >6 months ago.
 > **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
                     """)
 
@@ -202,7 +382,7 @@ class MMRisksView(discord.ui.View):
 ## Hαcked Abyss <a:whitealert:1496542298908000257>
 > A h.abyss account is where a bot was used to complete spiral abyss to gain primogems. A h.abyss account can be identified when a high number of stars has been obtained with missing stats (e.g. most damage taken) or an unusually low "strongest single strike" in the abyss challenge summary. They typically apply to reroll accounts using starter characters. However, other characters can also be used.
 **__Risks__**
-- As it is against Hoyoverse's ToS, your account and/or IP address may get banned.
+- As it is against Hoyoverse’s ToS, your account and/or IP address may get banned.
 - Asia accounts seem to be riskier than EU or NA accounts.
 - The risk may not be high, but it is always there and should always be mentioned when trading.
 > **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
@@ -236,8 +416,6 @@ class MMRisksView(discord.ui.View):
 > **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
                             """)
 
-
-
 @bot.command(name="adm", help="Pings ADM+.")
 async def adm(ctx):
     guild_id = ctx.guild.id
@@ -249,7 +427,7 @@ async def adm(ctx):
     if adm_role:
         await ctx.reply(f"{adm_role}")
 
-@bot.command(name='lb', help="Sends the current month's leaderboard.")
+@bot.command(name="lb", help="Sends the current month’s leaderboard.")
 async def lb(ctx, *, category: str=None):
     guild_id = ctx.guild.id
     server_query = {"_id": str(guild_id)}
@@ -267,7 +445,7 @@ async def lb(ctx, *, category: str=None):
         for rank, (user_id, data) in enumerate(sorted_staff, start=1):
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
-            desc += f"-# {rank}﹒　<@{user_id}>　–　**{monthly}** month ﹒ **{alltime}** all\n"
+            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
         embed = discord.Embed(
             description=desc if desc else "No staff found.",
         )
@@ -283,7 +461,7 @@ async def lb(ctx, *, category: str=None):
         for rank, (user_id, data) in enumerate(sorted_mms, start=1):
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
-            desc += f"-# {rank}﹒　<@{user_id}>　–　**{monthly}** month ﹒ **{alltime}** all\n"
+            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
         embed = discord.Embed(
             description=desc if desc else "No mms found.",
         )
@@ -299,14 +477,14 @@ async def lb(ctx, *, category: str=None):
         for rank, (user_id, data) in enumerate(sorted_pilots, start=1):
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
-            desc += f"-# {rank}﹒　<@{user_id}>　–　**{monthly}** month ﹒ **{alltime}** all\n"
+            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
         embed = discord.Embed(
             description=desc if desc else "No pilots found.",
         )
         await ctx.send("## _ _　　　pilot leaderboard", embed=embed)
 
 
-@bot.command(name='rn')
+@bot.command(name="rn")
 @commands.cooldown(2, 600, commands.BucketType.channel)
 async def rn(ctx, *, new_name: str):
     """Renames the current thread to the new name provided."""
@@ -339,27 +517,27 @@ def user_info(user, staff_data, mm_data, pilot_data):
     if staff_data is not None:
         profile.add_field(
             name="staff",
-            value=f"**{staff_data.get('monthly', 0)}** month ﹒ **{staff_data.get('alltime', 0)}** all",
+            value=f"**{staff_data.get('alltime', 0)}** all ﹒ **{staff_data.get('monthly', 0)}** month",
             inline=False
         )
     if mm_data is not None:
         profile.add_field(
             name="mm",
-            value=f"**{mm_data.get('monthly', 0)}** month ﹒ **{mm_data.get('alltime', 0)}** all",
+            value=f"**{mm_data.get('alltime', 0)}** all ﹒ **{mm_data.get('monthly', 0)}** month",
             inline=False
         )
     if pilot_data is not None:
         profile.add_field(
             name="pilot",
-            value=f"**{pilot_data.get('monthly', 0)}** month ﹒ **{pilot_data.get('alltime', 0)}** all",
+            value=f"**{pilot_data.get('alltime', 0)}** all ﹒ **{pilot_data.get('monthly', 0)}** month",
             inline=False
         )
     profile.set_footer(text="✦　Use ,c to check if user is reported, unreported or trusted.")
     return profile
 
 @bot.command(name="p")
-async def profile(ctx, user: discord.Member = None):
-    if user == None:
+async def profile(ctx, user:str = None):
+    if user is None:
         user = ctx.author
     else:
         try:
@@ -935,6 +1113,10 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
             server_info["staff"].setdefault(str(user_id), {})
             servers.replace_one(server_query, server_info)
             await interaction.followup.send(f"`{user_id}` has been added to staff.")
+            staff_role = server_info.get("staff_role")
+            if staff_role: await member.add_roles(interaction.guild.get_role(int(staff_role.strip("<@&>"))))
+            staff_ping = server_info.get("staff_ping")
+            if staff_ping: await member.add_roles(interaction.guild.get_role(int(staff_ping.strip("<@&>"))))
             if desc is not None and server_info.get("staff_roles"):
                 staff_roles = server_info["staff_roles"].split()
                 if desc in staff_roles:
@@ -985,7 +1167,7 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
 async def appoint_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     original = getattr(error, "original", error)
     if isinstance(original, discord.Forbidden):
-        await interaction.followup.send("Missing permissions. Check if KAFU's highest role is above the role you are trying to assign.", ephemeral=True)
+        await interaction.followup.send("Missing permissions. Check if KAFU’s highest role is above the role you are trying to assign.", ephemeral=True)
     else:
         await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
@@ -1109,7 +1291,7 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
 async def dismiss_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     original = getattr(error, "original", error)
     if isinstance(original, discord.Forbidden):
-        await interaction.followup.send("Missing permissions. Check if KAFU's highest role is above the role you are trying to assign.", ephemeral=True)
+        await interaction.followup.send("Missing permissions. Check if KAFU’s highest role is above the role you are trying to assign.", ephemeral=True)
     else:
         await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
