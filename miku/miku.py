@@ -128,6 +128,11 @@ async def weekly_quota():
         rep_reports = []
         tr_reports = []
         cursor = staffweeklycol.find({})
+        o5_r = get(guild.roles, id=o5_role)
+        adm_r = get(guild.roles, id=adm_role)
+        sr_r = get(guild.roles, id=sr_role)
+        rep_r = get(guild.roles, id=rep_role)
+        tr_r = get(guild.roles, id=tr_role)
         for doc in cursor:
             staff_weekly_profile = doc
             staff_id = staff_weekly_profile["_id"]
@@ -138,18 +143,18 @@ async def weekly_quota():
             weekly_reports = staff_weekly_profile["weekly_reports"]
             staff = guild.get_member(int(staff_id))
             if staff:
-                if get(guild.roles, id=o5_role) in staff.roles:
+                if o5_r in staff.roles:
                     o5_reviews.append([staff_id, reviews, weekly_reviews])
                     o5_reports.append([staff_id, reports, weekly_reports])
-                elif get(guild.roles, id=adm_role) in staff.roles:
+                elif adm_r in staff.roles:
                     adm_reviews.append([staff_id, reviews, weekly_reviews])
                     adm_reports.append([staff_id, reports, weekly_reports])
-                elif get(guild.roles, id=sr_role) in staff.roles:
+                elif sr_r in staff.roles:
                     sr_reviews.append([staff_id, reviews, weekly_reviews])
                     sr_reports.append([staff_id, reports, weekly_reports])
-                elif get(guild.roles, id=rep_role) in staff.roles:
+                elif rep_r in staff.roles:
                     rep_reports.append([staff_id, reports, weekly_reports])
-                elif get(guild.roles, id=tr_role) in staff.roles:
+                elif tr_r in staff.roles:
                     tr_reports.append([staff_id, reports, weekly_reports])
             staff_query = {"_id": staff_id}
             staff_weekly_profile["weekly_reports"] = "0"
@@ -162,7 +167,8 @@ async def weekly_quota():
             reviews = staff_info[1]
             weekly_reviews = staff_info[2]
             total_reviews += int(weekly_reviews)
-            staff = await bot.fetch_user(int(staff_id))
+            staff = guild.get_member(int(staff_id))
+            if not staff: continue
             o5_lbr.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ {weekly_reviews} week"
         adm_lbr = discord.Embed(colour=0xffffff)
         adm_lbr.description = "✦　　┈　　admins"
@@ -171,7 +177,8 @@ async def weekly_quota():
             reviews = staff_info[1]
             weekly_reviews = staff_info[2]
             total_reviews += int(weekly_reviews)
-            staff = await bot.fetch_user(int(staff_id))
+            staff = guild.get_member(int(staff_id))
+            if not staff: continue
             adm_lbr.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ {weekly_reviews} week"
         sr_lbr = discord.Embed(colour=0xffffff)
         sr_lbr.description = "✦　　┈　　senior reporters"
@@ -180,7 +187,8 @@ async def weekly_quota():
             reviews = staff_info[1]
             weekly_reviews = staff_info[2]
             total_reviews += int(weekly_reviews)
-            staff = await bot.fetch_user(int(staff_id))
+            staff = guild.get_member(int(staff_id))
+            if not staff: continue
             sr_lbr.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ {weekly_reviews} week"
         embeds=[o5_lbr, adm_lbr, sr_lbr]
         await quota_channel.send(f"## _ _　　　weekly leaderboards .ᐟ\n_ _　　　　　　||<@&{staff_role}>||")
@@ -193,7 +201,8 @@ async def weekly_quota():
             reports = staff_info[1]
             weekly_reports = staff_info[2]
             total_reports += int(weekly_reports)
-            staff = await bot.fetch_user(int(staff_id))
+            staff = guild.get_member(int(staff_id))
+            if not staff: continue
             o5_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
         adm_lb = discord.Embed(colour=0xffffff)
         adm_lb.description = "✦　　┈　　admins"
@@ -202,7 +211,8 @@ async def weekly_quota():
             reports = staff_info[1]
             weekly_reports = staff_info[2]
             total_reports += int(weekly_reports)
-            staff = await bot.fetch_user(int(staff_id))
+            staff = guild.get_member(int(staff_id))
+            if not staff: continue
             adm_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
         sr_lb = discord.Embed(colour=0xffffff)
         sr_lb.description = "✦　　┈　　senior reporters"
@@ -211,7 +221,8 @@ async def weekly_quota():
             reports = staff_info[1]
             weekly_reports = staff_info[2]
             total_reports += int(weekly_reports)
-            staff = await bot.fetch_user(int(staff_id))
+            staff = guild.get_member(int(staff_id))
+            if not staff: continue
             sr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
         rep_lb = discord.Embed(colour=0xffffff)
         rep_lb.description = "✦　　┈　　reporters"
@@ -220,7 +231,8 @@ async def weekly_quota():
             reports = staff_info[1]
             weekly_reports = staff_info[2]
             total_reports += int(weekly_reports)
-            staff = await bot.fetch_user(int(staff_id))
+            staff = guild.get_member(int(staff_id))
+            if not staff: continue
             rep_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
         tr_lb = discord.Embed(colour=0xffffff)
         tr_lb.description = "✦　　┈　　trial reporters"
@@ -229,7 +241,8 @@ async def weekly_quota():
             reports = staff_info[1]
             weekly_reports = staff_info[2]
             total_reports += int(weekly_reports)
-            staff = await bot.fetch_user(int(staff_id))
+            staff = guild.get_member(int(staff_id))
+            if not staff: continue
             tr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
         embeds = [o5_lb, adm_lb, sr_lb, rep_lb, tr_lb]
         await quota_channel.send("## _ _　　　reports leaderboard", embeds=embeds)
@@ -511,6 +524,11 @@ async def lb(ctx):
     rep = []
     tr = []
     cursor = staffweeklycol.find({})
+    o5_r = get(ctx.guild.roles, id=o5_role)
+    adm_r = get(ctx.guild.roles, id=adm_role)
+    sr_r = get(ctx.guild.roles, id=sr_role)
+    rep_r = get(ctx.guild.roles, id=rep_role)
+    tr_r = get(ctx.guild.roles, id=tr_role)
     for doc in cursor:
         staff_weekly_profile = doc
         staff_id = staff_weekly_profile["_id"]
@@ -519,15 +537,15 @@ async def lb(ctx):
         weekly_reports = staff_weekly_profile["weekly_reports"]
         staff = ctx.guild.get_member(int(staff_id))
         if staff:
-            if get(ctx.guild.roles, id=o5_role) in staff.roles:
+            if o5_r in staff.roles:
                 o5.append([staff_id, reports, weekly_reports])
-            elif get(ctx.guild.roles, id=adm_role) in staff.roles:
+            elif adm_r in staff.roles:
                 adm.append([staff_id, reports, weekly_reports])
-            elif get(ctx.guild.roles, id=sr_role) in staff.roles:
+            elif sr_r in staff.roles:
                 sr.append([staff_id, reports, weekly_reports])
-            elif get(ctx.guild.roles, id=rep_role) in staff.roles:
+            elif rep_r in staff.roles:
                 rep.append([staff_id, reports, weekly_reports])
-            elif get(ctx.guild.roles, id=tr_role) in staff.roles:
+            elif tr_r in staff.roles:
                 tr.append([staff_id, reports, weekly_reports])
         else:
             await ctx.reply(f"`{staff_id}` is no longer in this server.")
