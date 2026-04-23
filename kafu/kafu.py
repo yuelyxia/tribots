@@ -19,7 +19,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from discord.utils import get
 
-from typing import Optional
+from typing import Optional, Literal
 
 TOKEN = os.getenv("TOKEN")
 CLIENT = os.getenv("CLIENT")
@@ -31,6 +31,7 @@ tickets = kafu["tickets"]
 servers = kafu["servers"]
 
 TRI_Archive = 1371673839695826974
+ticket_ping = 1449382692671193294
 
 yuelyxia = 1303291812282372137
 
@@ -41,6 +42,9 @@ bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
 async def on_ready():
     bot.add_view(TRITicketView())
     bot.add_view(BanReqView())
+    bot.add_view(MMView())
+    bot.add_view(MMFormsView())
+    bot.add_view(MMRisksView())
     quota_check.start()
 
 # loop tasks
@@ -55,6 +59,136 @@ async def quota_check():
         pass
 
 # text commands
+
+@bot.command(name="mm")
+async def mm(ctx, *, desc: str=None):
+    if not desc:
+        await ctx.send(view=MMView())
+    if desc == "forms":
+        await ctx.send("> By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.", view=MMFormsView())
+
+class MMView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="forms", style=discord.ButtonStyle.grey, custom_id="mm:forms")
+    async def forms_button(self, interaction, button):
+        await interaction.response.send_message(view=MMFormsView())
+
+    @discord.ui.button(label="risks", style=discord.ButtonStyle.grey, custom_id="mm:risks")
+    async def risks_button(self, interaction, button):
+        await interaction.response.send_message(view=MMRisksView())
+
+class MMFormsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label="genshin", style=discord.ButtonStyle.grey, custom_id="mm_forms:genshin")
+    async def genshin_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Genshin Impact MM Form
+Account Size: 
+Adventure Rank: 
+Server: 
+5 star characters, constellations & weapons: 
+Deadlinks: 
+H.abyss? 
+Lost Receipts? 
+Are you the original owner? 
+Can the email be surrendered? 
+Other Issues: 
+Fee + who's providing: 
+                    """)
+
+    @discord.ui.button(label="hsr", style=discord.ButtonStyle.grey, custom_id="mm_forms:hsr")
+    async def hsr_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Honkai: Star Rail MM form
+Account Size: 
+Trailblaze Level: 
+Server: 
+5 star characters, eidolons & lightcones: 
+Deadlinks: 
+Lost Receipts? 
+Are you the original owner? 
+Can the email be surrendered? 
+Other Issues: 
+Fee + who's providing: 
+                    """)
+
+    @discord.ui.button(label="wuwa", style=discord.ButtonStyle.grey, custom_id="mm_forms:wuwa")
+    async def wuwa_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Wuthering Waves MM form
+Account Size: 
+Union Level: 
+Server: 
+5 star characters, sequences & weapons: 
+Deadlinks: 
+H.tower? 
+Lost Receipts? 
+Are you the original owner? 
+**Please note that email __must__ be surrendered for wuwa accounts.**
+Other Issues: 
+Fee + who's providing: 
+                    """)
+
+class MMRisksView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="deadlinks", style=discord.ButtonStyle.grey, custom_id="mm_risks:deadlinks")
+    async def deadlinks_button(self, interaction, button):
+        await interaction.response.send_message("""
+## Deadlinks <a:whitealert:1496542298908000257>
+> 3rd party links are links binded to the hoyoverse account which serves as an alternative way to login - Facebook, Game Center, Google, PSN, Apple, Twitter. A deadlink is a 3rd party link where the owner no longer has access to the 3rd party account and is unable to unlink it, but also unable to login via the link, e.g. Twitter account was deleted.
+**__Risks__**
+- Facebook, Twitter, Google, Apple and Game Center links are __safe__ and can be secured easily by removing all trusted devices via the [Hoyoverse website](https://account.hoyoverse.com). Attempts to login via these links will require a verification code sent to the linked email.
+- A deadlink may not be truly dead; scammers may lie about deadlinks and use them to attempt to retrieve the account later on.
+- **PSN links are especially __dangerous__** as they do not require a new device verification and require Hoyoverse CS to unlink. a PSN link may be considered dead if the most recent trophy was gained >6 months ago.
+> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
+                    """)
+
+    @discord.ui.button(label="hacked abyss", style=discord.ButtonStyle.grey, custom_id="mm_risks:hacked_abyss")
+    async def hacked_abyss_button(self, interaction, button):
+        await interaction.response.send_message("""
+## Hαcked Abyss <a:whitealert:1496542298908000257>
+> A h.abyss account is where a bot was used to complete spiral abyss to gain primogems. A h.abyss account can be identified when a high number of stars has been obtained with missing stats (e.g. most damage taken) or an unusually low "strongest single strike" in the abyss challenge summary. They typically apply to reroll accounts using starter characters. However, other characters can also be used.
+**__Risks__**
+- As it is against Hoyoverse's ToS, your account and/or IP address may get banned.
+- Asia accounts seem to be riskier than EU or NA accounts.
+- The risk may not be high, but it is always there and should always be mentioned when trading.
+> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
+                    """)
+
+    @discord.ui.button(label="lost receipts", style=discord.ButtonStyle.grey, custom_id="mm_risks:lost_receipts")
+    async def lost_receipts_button(self, interaction, button):
+        await interaction.response.send_message("""
+## Lost Receipts <a:whitealert:1496542298908000257>
+> These risks apply to **ALL __P2W__ accounts**, even if you have receipts. P2W is when there has been **any** purchase on the account, regardless of amount, when the purchase was made and from where (in-game top-up, codashop, giveaway win etc.)
+> Receipts must have the __amount spent, transaction ID and what was purchased__ in a **__full__ screenshot** (preferably uncropped) to be a valid receipt.
+**__Risks__**
+- Increased chances of retrieval from the owner who purchased something. the older the receipt, the easier the retrieval.
+- Scammers may lie about having lost the receipts when they still have possession of them but are unwilling to provide them so that they can retrieve the account from Hoyoverse CS later on.
+- Purchase records are only kept for 6 months in currency records.
+- Purchases made within 2 weeks can be __refunded.__ It will result in **negative premium currency (e.g. primogems) which needs to be brought back to 0 or more within __1 week__ or the account will be banned.
+> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
+                        """)
+
+    @discord.ui.button(label="email surrender", style=discord.ButtonStyle.grey, custom_id="mm_risks:email_surrender")
+    async def email_surrender_button(self, interaction, button):
+        await interaction.response.send_message("""
+## Email Surrender <a:whitealert:1496542298908000257>
+> Email surrender requires giving up the entire email, fully losing access of it, so ensure you will never need it in the future.
+**__Risks__**
+- Higher chance of retrieval.
+- Email can be disabled/frozen, meaning you cannot receive any new verification codes.
+- Previously surrendered emails are more risky.
+- Gmail holds recovery info for up to 2 weeks.
+**__FOR GMAILS: Do not change password within the first 72h__ and avoid changing recovery info frequently to prevent locking.** __Outlook__ emails are __safe__ to change password immediately.
+> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
+                            """)
+
+
 
 @bot.command(name="adm", help="Pings ADM+.")
 async def adm(ctx):
@@ -88,8 +222,7 @@ async def lb(ctx):
     for user_id, data in sorted_staff:
         user = await bot.fetch_user(int(user_id))
         line = (
-            f"-# <:greyreply:1448474301673115748>　"
-            f"{user.mention}　–　"
+            f"-# <:blank:1383116055550890095> {user.mention}　–　"
             f"**{data.get("monthly", 0)}** month ﹒ **{data.get("alltime", 0)}** all"
         )
         lines.append(line)
@@ -137,7 +270,6 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
     await interaction.response.defer(ephemeral=True)
     try:
         user = await bot.fetch_user(int(user.strip("<@>")))
-        member = await interaction.guild.fetch_member(user.id)
     except ValueError:
         await interaction.followup.send("Please provide a valid user or user ID.", ephemeral=True)
         return
@@ -150,10 +282,13 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
     if user == interaction.user:
         await interaction.followup.send("You cannot ban yourself!", ephemeral=True)
         return
-    if interaction.user.top_role <= member.top_role:
-        await interaction.followup.send("You cannot ban a user with an equal or higher role than yourself.",
+    try: member = await interaction.guild.fetch_member(user.id)
+    except discord.NotFound: pass
+    else:
+        if member and interaction.user.top_role <= member.top_role:
+            await interaction.followup.send("You cannot ban a user with an equal or higher role than yourself.",
                                                 ephemeral=True)
-        return
+            return
     if reason is None:
         reason = "No reason specified."
     #
@@ -164,7 +299,7 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
             await user.send(f"You have been banned from {interaction.guild.name} for the following reason: {reason}")
         except discord.Forbidden:
             pass
-        await member.ban(reason=reason)
+        await interaction.guild.ban(user, reason=reason)
         guild_id = interaction.guild.id
         server_query = {"_id": str(guild_id)}
         server_info = servers.find_one(server_query)
@@ -173,7 +308,7 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                 await interaction.followup.send("**bans warns channel** has not been set up for this server.")
                 return
             bans_warns_channel = server_info.get("bans_warns_channel")
-            bans_warns_channel = bot.get_channel(bans_warns_channel.strip("<#>"))
+            bans_warns_channel = bot.get_channel(int(bans_warns_channel.strip("<#>")))
             try:
                 images = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if
                           img is not None]
@@ -187,15 +322,14 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                                     files_to_send.append(discord.File(data, filename=img.filename))
                 if files_to_send:
                     await bans_warns_channel.send(
-                        content=f"**Ban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Banned by:{interaction.user.id}\n﹒　Proof:",
+                        content=f"**Ban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Banned by: {interaction.user.id}\n﹒　Proof:",
                         files=files_to_send)
                 else:
                     await bans_warns_channel.send(
-                        content=f"**Ban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Banned by:{interaction.user.id}")
-                    await interaction.followup.send(f"Unable to send ban log images.")
+                        content=f"**Ban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Banned by: {interaction.user.id}")
             except Exception:
                 await bans_warns_channel.send(
-                    content=f"**Ban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Banned by:{interaction.user.id}")
+                    content=f"**Ban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Banned by: {interaction.user.id}")
                 await interaction.followup.send(f"Unable to send ban log images.", ephemeral=True)
             try:
                 server_info.get("staff").get(str(interaction.user.id))["monthly"] = server_info.get("staff").get(
@@ -273,7 +407,7 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
             await interaction.followup.send(f"This server is not whitelisted.", ephemeral=True)
 @ban.error
 async def ban_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    await interaction.response.send_message(f"An error occurred: {error}", ephemeral=True)
+    await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
 class BanReqView(discord.ui.View):
     def __init__(self):
@@ -289,13 +423,12 @@ class BanReqView(discord.ui.View):
                 reason = server_info["bans_warns_req"][user_id][0]
                 requested_by = server_info["bans_warns_req"][user_id][1]
                 user = await bot.fetch_user(int(user_id.strip("<@>")))
-                member = await interaction.guild.fetch_member(int(user_id.strip("<@>")))
                 try:
                     await user.send(
                         f"You have been banned from {interaction.guild.name} for the following reason: {reason}")
                 except discord.Forbidden:
                     pass
-                await member.ban(reason=reason)
+                await interaction.guild.ban(user, reason=reason)
                 await interaction.response.edit_message(
                     content=f"**Ban Accepted**\n﹒　User ID: {user_id}\n﹒　Reason: {reason}\n﹒　Requested by: <@{requested_by}>\n﹒　Accepted by: {interaction.user.mention}\n﹒　Proof:",
                     view=None)
@@ -356,7 +489,9 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
         return
     if reason is None:
         reason = "No reason specified"
-    banned_users = [ban_entry.user for ban_entry in await interaction.guild.bans()]
+    banned_users = []
+    async for ban_entry in interaction.guild.bans():
+        banned_users.append(ban_entry.user)
     if user not in banned_users:
         await interaction.response.send_message(f"{user.mention} is not currently banned.", ephemeral=True)
         return
@@ -376,7 +511,7 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
                 await interaction.followup.send("**bans warns channel** has not been set up for this server.")
                 return
             bans_warns_channel = server_info.get("bans_warns_channel")
-            bans_warns_channel = bot.get_channel(bans_warns_channel.strip("<#>"))
+            bans_warns_channel = bot.get_channel(int(bans_warns_channel.strip("<#>")))
             try:
                 images = [img for img in
                           [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if
@@ -391,15 +526,14 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
                                     files_to_send.append(discord.File(data, filename=img.filename))
                 if files_to_send:
                     await bans_warns_channel.send(
-                        content=f"**Unban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Unbanned by:{interaction.user.id}\n﹒　Proof:",
+                        content=f"**Unban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Unbanned by: {interaction.user.id}\n﹒　Proof:",
                         files=files_to_send)
                 else:
                     await bans_warns_channel.send(
-                        content=f"**Unban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Unbanned by:{interaction.user.id}")
-                    await interaction.followup.send(f"Unable to send ban log images.")
+                        content=f"**Unban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Unbanned by: {interaction.user.id}")
             except Exception:
                 await bans_warns_channel.send(
-                    content=f"**Unban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Unbanned by:{interaction.user.id}")
+                    content=f"**Unban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Unbanned by: {interaction.user.id}")
                 await interaction.followup.send(f"Unable to send ban log images.", ephemeral=True)
             try:
                 server_info.get("staff").get(str(interaction.user.id))["monthly"] = server_info.get("staff").get(
@@ -481,7 +615,7 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
             await interaction.followup.send(f"This server is not whitelisted.", ephemeral=True)
 @unban.error
 async def unban_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    await interaction.response.send_message(f"An error occurred: {error}", ephemeral=True)
+    await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
 class UnbanReqView(discord.ui.View):
     def __init__(self):
@@ -544,35 +678,31 @@ class UnbanReqView(discord.ui.View):
                 servers.replace_one(server_query, server_info)
                 await interaction.followup.send(f"Unban request rejected.", ephemeral=True)
 
-
-
-
-
-
-
-
-
-
-
-
 #
-
-
-
 
 @bot.tree.command(name="panel", description="Sends a ticket panel.")
 @app_commands.checks.has_permissions(administrator=True)
-async def panel(interaction: discord.Interaction):
-    if interaction.guild.id == TRI_Archive:
+async def panel(interaction: discord.Interaction, type: Optional[str]):
+    guild_id = interaction.guild.id
+    if guild_id == TRI_Archive:
         await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
-## 　　<:2paperclip:1449650494044639335>　　┈　　open ticket　　୭
-　<:00_reply:1448474301673115748>　provide __uncropped__ & **unedited** proofs
-　<:00_reply:1448474301673115748>　fake proofs / disrespect = **ban**
-　<:00_reply:1448474301673115748>　**do not open** for appeals on bans
--# _ _　✦ 　not following rules / ghosting = close
-            """), view=TRITicketView())
+    ## 　　<:2paperclip:1449650494044639335>　　┈　　open ticket　　୭
+    　<:00_reply:1448474301673115748>　provide __uncropped__ & **unedited** proofs
+    　<:00_reply:1448474301673115748>　fake proofs / disrespect = **ban**
+    　<:00_reply:1448474301673115748>　**do not open** for appeals on bans
+    -# _ _　✦ 　not following rules / ghosting = close
+                """), view=TRITicketView())
         await interaction.response.send_message("Panel has been sent.", ephemeral=True)
-
+    else:
+        server_query = {"_id": str(guild_id)}
+        server_info = servers.find_one(server_query)
+        if not server_info:
+            await interaction.response.send_message(f"This server is not whitelisted.")
+            return
+        if type == "support":
+            pass
+        elif type == "services":
+            pass
 
 class TranscriptView(discord.ui.View):
     def __init__(self):
@@ -606,67 +736,109 @@ async def whitelist(interaction: discord.Interaction, server: str):
                 await interaction.response.send_message(f"`{guild_id}` has been whitelisted.")
 
 @bot.tree.command(name="appoint", description="Appoint a staff/mm/pilot.")
-@app_commands.describe(user="User to appoint", role="staff/mm/pilot")
-@app_commands.checks.has_permissions(manage_roles=True)
-async def appoint(interaction: discord.Interaction, user: str, role: str, desc: Optional[str]=None):
+@app_commands.describe(user="User/role to appoint")
+async def appoint(interaction: discord.Interaction, user: str, category: Literal["staff", "mm", "pilot"], desc: Optional[str]=None):
+    await interaction.response.defer(ephemeral=True)
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one(server_query)
     if not server_info:
-        await interaction.response.send_message(f"This server is not whitelisted.")
+        await interaction.followup.send(f"This server is not whitelisted.", ephemeral=False)
+        return
+    staff_role = server_info.get("staff_role")
+    if not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+        await interaction.followup.send(f"Unauthorised.", ephemeral=True)
         return
     try:
         user = await bot.fetch_user(int(user.strip("<@>")))
     except Exception:
-        await interaction.response.send_message(f"Please enter a valid user ID.", ephemeral=True)
+        try: user_role = interaction.guild.get_role(int(user.strip("<@&>")))
+        except Exception:
+            await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
+        else:
+            if not interaction.user.guild_permissions.manage_roles:
+                await interaction.followup.send(f"Unauthorised.", ephemeral=True)
+                return
+            if category in ["staff", "mm", "pilot"]:
+                role_members = user_role.members
+                await interaction.followup.send(f"Adding {len(role_members)} users to {category}.", ephemeral=True)
+                for m in role_members:
+                    user_id = m.id
+                    if category == "staff":
+                        server_info.setdefault("staff", {})
+                        server_info["staff"].setdefault(str(user_id), {})
+                        servers.replace_one(server_query, server_info)
+                        await interaction.followup.send(f"`{user_id}` has been added to staff.")
+                    if category == "mm":
+                        server_info.setdefault("mms", {})
+                        server_info["mms"].setdefault(str(user_id), {})
+                        servers.replace_one(server_query, server_info)
+                        await interaction.followup.send(f"`{user_id}` has been added to mms.")
+                    if category == "pilot":
+                        server_info.setdefault("pilots", {})
+                        server_info["pilots"].setdefault(str(user_id), {})
+                        servers.replace_one(server_query, server_info)
+                        await interaction.followup.send(f"`{user_id}` has been added to pilots.")
     else:
         user_id = user.id
+        if user_id == interaction.user.id and not interaction.user.guild_permissions.administrator:
+            await interaction.followup.send(f"You cannot appoint yourself.", ephemeral=True)
+            return
         member = interaction.guild.get_member(int(user_id))
         if not member: return
-        if role.lower() == "staff":
+        if category == "staff":
+            if not interaction.user.guild_permissions.manage_roles:
+                await interaction.followup.send(f"Unauthorised.", ephemeral=True)
+                return
             server_info.setdefault("staff", {})
             server_info["staff"].setdefault(str(user_id), {})
             servers.replace_one(server_query, server_info)
-            await interaction.response.send_message(f"`{user_id}` has been added to staff.")
+            await interaction.followup.send(f"`{user_id}` has been added to staff.")
             if desc is not None and server_info.get("staff_roles"):
                 staff_roles = server_info["staff_roles"].split()
                 if desc in staff_roles:
                     for role in staff_roles:
-                        await member.remove_roles(role)
-                    await member.add_roles(desc)
+                        await member.remove_roles(interaction.guild.get_role(int(role.strip("<@&>"))))
+                    await member.add_roles(interaction.guild.get_role(int(desc.strip("<@&>"))))
                     await interaction.followup.send(f"`{user_id}` has been assigned the {desc} role.", ephemeral=True)
             elif desc is not None:
                 await interaction.followup.send("**staff roles** have not been set up.", ephemeral=True)
-        if role.lower() == "mm":
+        if category == "mm":
             server_info.setdefault("mms", {})
             server_info["mms"].setdefault(str(user_id), {})
             servers.replace_one(server_query, server_info)
-            await interaction.response.send_message(f"`{user_id}` has been added to mms.")
+            await interaction.followup.send(f"`{user_id}` has been added to mms.")
             if desc is not None and server_info.get("mm_roles"):
                 mm_roles = server_info["mm_roles"].split()
                 if desc in mm_roles:
                     for role in mm_roles:
-                        await member.remove_roles(role)
-                    await member.add_roles(desc)
+                        await member.remove_roles(interaction.guild.get_role(int(role.strip("<@&>"))))
+                    await member.add_roles(interaction.guild.get_role(int(desc.strip("<@&>"))))
                     await interaction.followup.send(f"`{user_id}` has been assigned the {desc} role.", ephemeral=True)
             elif desc is not None:
                 await interaction.followup.send("**mm roles** have not been set up.", ephemeral=True)
-        if role.lower() == "pilot":
+        if category == "pilot":
             server_info.setdefault("pilots", {})
             server_info["pilots"].setdefault(str(user_id), {})
             servers.replace_one(server_query, server_info)
-            await interaction.response.send_message(f"`{user_id}` has been added to pilots.")
-            if desc is not None and server_info.get("pilots_roles"):
-                pilots_roles = server_info["pilots_roles"].split()
-                if desc in pilots_roles:
-                    for role in pilots_roles:
-                        await member.remove_roles(role)
-                    await member.add_roles(desc)
+            await interaction.followup.send(f"`{user_id}` has been added to pilots.")
+            if desc is not None and server_info.get("pilot_roles"):
+                pilot_roles = server_info["pilot_roles"].split()
+                if desc in pilot_roles:
+                    for role in pilot_roles:
+                        await member.remove_roles(interaction.guild.get_role(int(role.strip("<@&>"))))
+                    await member.add_roles(interaction.guild.get_role(int(desc.strip("<@&>"))))
                     await interaction.followup.send(f"`{user_id}` has been assigned the {desc} role.", ephemeral=True)
             elif desc is not None:
                 await interaction.followup.send("**pilot roles** have not been set up.", ephemeral=True)
 
-
+@appoint.error
+async def appoint_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    original = getattr(error, "original", error)
+    if isinstance(original, discord.Forbidden):
+        await interaction.followup.send("Missing permissions. Check if KAFU's highest role is above the role you are trying to assign.", ephemeral=True)
+    else:
+        await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
 
 @bot.tree.command(name="setup")
@@ -681,17 +853,23 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
     if topic is None:
         general_embed = discord.Embed(colour=0xffffff)
         general_embed.add_field(name="bans warns channel", value=server_info.get("bans_warns_channel", "unset"), inline=False) #
+        general_embed.add_field(name="transcripts channel", value=server_info.get("transcripts_channel", "unset"), inline=False) #
         general_embed.add_field(name="staff roles", value=server_info.get("staff_roles", "unset"), inline=False) #
         general_embed.add_field(name="staff role", value=server_info.get("staff_role", "unset"), inline=False) #
+        general_embed.add_field(name="staff ping", value=server_info.get("staff_ping", "unset"), inline=False) #
         general_embed.add_field(name="adm role", value=server_info.get("adm_role", "unset"), inline=False) #
         service_embed = discord.Embed(colour=0xffffff)
         service_embed.add_field(name="mm roles", value=server_info.get("mm_roles", "unset"), inline=False) #
-        service_embed.add_field(name="mm role", value=server_info.get("mm_role", "unset"), inline=False)
+        service_embed.add_field(name="mm role", value=server_info.get("mm_role", "unset"), inline=False) #
         service_embed.add_field(name="mm ping", value=server_info.get("mm_ping", "unset"), inline=False)
+        service_embed.add_field(name="mm supervisor", value=server_info.get("mm_supervisor", "unset"), inline=False)
+        service_embed.add_field(name="mm trainer", value=server_info.get("mm_trainer", "unset"), inline=False)
         service_embed.add_field(name="mm vouch channel", value=server_info.get("mm_vouch_channel", "unset"), inline=False)
         service_embed.add_field(name="pilot roles", value=server_info.get("pilot_roles", "unset"), inline=False) #
-        service_embed.add_field(name="pilot role", value=server_info.get("pilot_role", "unset"), inline=False)
-        service_embed.add_field(name="pilot ping", value=server_info.get("pilot_ping", "unset"), inline=False)
+        service_embed.add_field(name="pilot role", value=server_info.get("pilot_role", "unset"), inline=False) #
+        service_embed.add_field(name="pilot ping", value=server_info.get("pilot_ping", "unset"), inline=False) #
+        service_embed.add_field(name="pilot supervisor", value=server_info.get("pilot_supervisor", "unset"), inline=False)
+        service_embed.add_field(name="pilot trainer", value=server_info.get("pilot_trainer", "unset"), inline=False)
         service_embed.add_field(name="pilot vouch channel", value=server_info.get("pilot_vouch_channel", "unset"), inline=False)
         embeds = [general_embed, service_embed]
         await interaction.response.send_message(embeds=embeds, ephemeral=True)
@@ -703,14 +881,22 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
             server_info["bans_warns_channel"] = bans_warns_channel
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **bans warns channel** has been set to {bans_warns_channel}.")
+    if topic == "transcripts channel" and desc is not None:
+        try: transcripts_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+        except discord.NotFound: await interaction.response.send_message("Invalid channel.")
+        else:
+            transcripts_channel = f"<#{transcripts_channel.id}>"
+            server_info["transcripts_channel"] = transcripts_channel
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"The **transcripts channel** has been set to {transcripts_channel}.")
     if topic == "staff roles" and desc is not None:
-        staff_roles = desc.strip("<@&>").split()
+        staff_roles = desc.replace("<@&", "").replace(">", "").split()
         valid_roles = []
         for staff_role in staff_roles:
             role = interaction.guild.get_role(int(staff_role))
             if role:
                 valid_roles.append(staff_role)
-        staff_roles = " ".join(f"<@&{role.id}>" for role in valid_roles)
+        staff_roles = " ".join(f"<@&{role}>" for role in valid_roles)
         if staff_roles:
             server_info["staff_roles"] = staff_roles
             servers.replace_one(server_query, server_info)
@@ -727,6 +913,16 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
             await interaction.response.send_message(f"**staff role** has been set to {staff_role}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
+    if topic == "staff ping" and desc is not None:
+        staff_ping = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(staff_ping))
+        if role:
+            staff_ping = f"<@&{role.id}>"
+            server_info["staff_ping"] = staff_ping
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**staff ping** has been set to {staff_ping}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
     if topic == "adm role" and desc is not None:
         adm_role = desc.strip("<@&>")
         role = interaction.guild.get_role(int(adm_role))
@@ -738,37 +934,76 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm roles" and desc is not None:
-        mm_roles = desc.strip("<@&>").split()
+        mm_roles = desc.replace("<@&", "").replace(">", "").split()
         valid_roles = []
         for mm_role in mm_roles:
             role = interaction.guild.get_role(int(mm_role))
             if role:
                 valid_roles.append(mm_role)
-        mm_roles = " ".join(f"<@&{role.id}>" for role in valid_roles)
+        mm_roles = " ".join(f"<@&{role}>" for role in valid_roles)
         if mm_roles:
             server_info["mm_roles"] = mm_roles
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"**mm roles** have been set to {mm_roles}.")
         else:
             await interaction.response.send_message(f"Invalid roles.")
+    if topic == "mm role" and desc is not None:
+        mm_role = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(mm_role))
+        if role:
+            mm_role = f"<@&{role.id}>"
+            server_info["mm_role"] = mm_role
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**mm role** has been set to {mm_role}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
+    if topic == "mm ping" and desc is not None:
+        mm_ping = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(mm_ping))
+        if role:
+            mm_ping = f"<@&{role.id}>"
+            server_info["mm_ping"] = mm_ping
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**mm ping** has been set to {mm_ping}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot roles" and desc is not None:
-        pilot_roles = desc.strip("<@&>").split()
+        pilot_roles = desc.replace("<@&", "").replace(">", "").split()
         valid_roles = []
         for pilot_role in pilot_roles:
             role = interaction.guild.get_role(int(pilot_role))
             if role:
                 valid_roles.append(pilot_role)
-        pilot_roles = " ".join(f"<@&{role.id}>" for role in valid_roles)
+        pilot_roles = " ".join(f"<@&{role}>" for role in valid_roles)
         if pilot_roles:
             server_info["pilot_roles"] = pilot_roles
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"**pilot roles** have been set to {pilot_roles}.")
         else:
             await interaction.response.send_message(f"Invalid roles.")
+    if topic == "pilot role" and desc is not None:
+        pilot_role = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(pilot_role))
+        if role:
+            pilot_role = f"<@&{role.id}>"
+            server_info["pilot_role"] = pilot_role
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**pilot role** has been set to {pilot_role}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
+    if topic == "pilot ping" and desc is not None:
+        pilot_ping = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(pilot_ping))
+        if role:
+            pilot_ping = f"<@&{role.id}>"
+            server_info["pilot_ping"] = pilot_ping
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**pilot ping** has been set to {pilot_ping}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
 
 
 # TRI
-
 
 tri_ticket_options = [
     discord.SelectOption(emoji="<:whitebutterfly:1459750881611354237>", label="﹒﹒Report", value="report"),
