@@ -1054,6 +1054,74 @@ async def whitelist(interaction: discord.Interaction, server: str):
                 servers.insert_one(server_info)
                 await interaction.response.send_message(f"`{guild_id}` has been whitelisted.")
 
+@bot.tree.command(name="break", description="Toggle staff/mm/pilot break.")
+async def break_command(interaction: discord.Interaction, category: Literal["staff", "mm", "pilot"]):
+    await interaction.response.defer()
+    guild_id = interaction.guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if not server_info:
+        await interaction.followup.send(f"This server is not whitelisted.")
+        return
+    staff_break = server_info.get("staff_break")
+    mm_break = server_info.get("mm_break")
+    pilot_break = server_info.get("pilot_break")
+    staff_ping = server_info.get("staff_ping")
+    mm_ping = server_info.get("mm_ping")
+    pilot_ping = server_info.get("pilot_ping")
+    uid = str(interaction.user.id)
+    if category == "staff":
+        if staff_break:
+            if uid in server_info.get("staff", {}):
+                if get(interaction.user.guild.roles, id=int(staff_break.strip("<@&>"))) in interaction.user.roles:
+                    await interaction.user.remove_roles(interaction.guild.get_role(int(staff_break.strip("<@&>"))))
+                    if staff_ping: await interaction.user.add_roles(interaction.guild.get_role(int(staff_ping.strip("<@&>"))))
+                    await interaction.followup.send(f"You have been unroled **staff break**.")
+                else:
+                    await interaction.user.add_roles(interaction.guild.get_role(int(staff_break.strip("<@&>"))))
+                    if staff_ping: await interaction.user.remove_roles(interaction.guild.get_role(int(staff_ping.strip("<@&>"))))
+                    await interaction.followup.send(f"You have been roled **staff break**.")
+            else:
+                await interaction.followup.send(f"Unauthorised.")
+                return
+        else:
+            await interaction.followup.send("**staff break** has not been set up for this server.")
+    if category == "mm":
+        if mm_break:
+            if uid in server_info.get("mms", {}):
+                if get(interaction.user.guild.roles, id=int(mm_break.strip("<@&>"))) in interaction.user.roles:
+                    await interaction.user.remove_roles(interaction.guild.get_role(int(mm_break.strip("<@&>"))))
+                    if mm_ping: await interaction.user.add_roles(interaction.guild.get_role(int(mm_ping.strip("<@&>"))))
+                    await interaction.followup.send(f"You have been unroled **mm break**.")
+                else:
+                    await interaction.user.add_roles(interaction.guild.get_role(int(mm_break.strip("<@&>"))))
+                    if mm_ping: await interaction.user.remove_roles(interaction.guild.get_role(int(mm_ping.strip("<@&>"))))
+                    await interaction.followup.send(f"You have been roled **mm break**.")
+            else:
+                await interaction.followup.send(f"Unauthorised.")
+                return
+        else:
+            await interaction.followup.send("**mm break** has not been set up for this server.")
+    if category == "pilot":
+        if pilot_break:
+            if uid in server_info.get("pilots", {}):
+                if get(interaction.user.guild.roles, id=int(pilot_break.strip("<@&>"))) in interaction.user.roles:
+                    await interaction.user.remove_roles(interaction.guild.get_role(int(pilot_break.strip("<@&>"))))
+                    if pilot_ping: await interaction.user.add_roles(interaction.guild.get_role(int(pilot_ping.strip("<@&>"))))
+                    await interaction.followup.send(f"You have been unroled **pilot break**.")
+                else:
+                    await interaction.user.add_roles(interaction.guild.get_role(int(pilot_break.strip("<@&>"))))
+                    if pilot_ping: await interaction.user.remove_roles(interaction.guild.get_role(int(pilot_ping.strip("<@&>"))))
+                    await interaction.followup.send(f"You have been roled **pilot break**.")
+            else:
+                await interaction.followup.send(f"Unauthorised.")
+                return
+        else:
+            await interaction.followup.send("**staff break** has not been set up for this server.")
+
+
+
+
 @bot.tree.command(name="appoint", description="Appoint a staff/mm/pilot.")
 @app_commands.describe(user="User/role to appoint")
 async def appoint(interaction: discord.Interaction, user: str, category: Literal["staff", "mm", "pilot"], desc: Optional[str]=None):
@@ -1204,20 +1272,25 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
                         return []
                     return raw.replace("<@&", "").replace(">", "").split()
                 staff_roles = parse_roles(server_info.get("staff_roles"))
-                staff_roles+=parse_roles(server_info.get("staff_role"))
-                staff_roles+=parse_roles(server_info.get("adm_role"))
+                staff_roles += parse_roles(server_info.get("staff_role"))
+                staff_roles += parse_roles(server_info.get("staff_ping"))
+                staff_roles += parse_roles(server_info.get("staff_break"))
+                staff_roles += parse_roles(server_info.get("adm_role"))
+                staff_roles += parse_roles(server_info.get("ban_perms"))
                 mm_roles = parse_roles(server_info.get("mm_roles"))
-                mm_roles+=parse_roles(server_info.get("mm_role"))
-                mm_roles+=parse_roles(server_info.get("mm_ping"))
-                mm_roles+=parse_roles(server_info.get("mm_break"))
+                mm_roles += parse_roles(server_info.get("mm_role"))
+                mm_roles += parse_roles(server_info.get("mm_ping"))
+                mm_roles += parse_roles(server_info.get("mm_break"))
                 mm_roles += parse_roles(server_info.get("mm_supervisor"))
                 mm_roles += parse_roles(server_info.get("mm_trainer"))
+                mm_roles += parse_roles(server_info.get("mm_break"))
                 pilot_roles = parse_roles(server_info.get("pilot_roles"))
                 pilot_roles += parse_roles(server_info.get("pilot_role"))
                 pilot_roles += parse_roles(server_info.get("pilot_ping"))
                 pilot_roles += parse_roles(server_info.get("pilot_break"))
                 pilot_roles += parse_roles(server_info.get("pilot_supervisor"))
                 pilot_roles += parse_roles(server_info.get("pilot_trainer"))
+                pilot_roles += parse_roles(server_info.get("pilot_break"))
                 for m in role_members:
                     uid = str(m.id)
                     if category == "staff":
@@ -1252,19 +1325,24 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
                 return raw.replace("<@&", "").replace(">", "").split()
             staff_roles = parse_roles(server_info.get("staff_roles"))
             staff_roles += parse_roles(server_info.get("staff_role"))
+            staff_roles += parse_roles(server_info.get("staff_ping"))
+            staff_roles += parse_roles(server_info.get("staff_break"))
             staff_roles += parse_roles(server_info.get("adm_role"))
+            staff_roles += parse_roles(server_info.get("ban_perms"))
             mm_roles = parse_roles(server_info.get("mm_roles"))
             mm_roles += parse_roles(server_info.get("mm_role"))
             mm_roles += parse_roles(server_info.get("mm_ping"))
             mm_roles += parse_roles(server_info.get("mm_break"))
             mm_roles += parse_roles(server_info.get("mm_supervisor"))
             mm_roles += parse_roles(server_info.get("mm_trainer"))
+            mm_roles += parse_roles(server_info.get("mm_break"))
             pilot_roles = parse_roles(server_info.get("pilot_roles"))
             pilot_roles += parse_roles(server_info.get("pilot_role"))
             pilot_roles += parse_roles(server_info.get("pilot_ping"))
             pilot_roles += parse_roles(server_info.get("pilot_break"))
             pilot_roles += parse_roles(server_info.get("pilot_supervisor"))
             pilot_roles += parse_roles(server_info.get("pilot_trainer"))
+            pilot_roles += parse_roles(server_info.get("pilot_break"))
             if category == "staff":
                 server_info.setdefault("staff", {}).pop(str(user_id), None)
                 roles = staff_roles
@@ -1284,9 +1362,6 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
                     await member.remove_roles(role)
         servers.replace_one(server_query, server_info)
 
-
-
-
 @dismiss.error
 async def dismiss_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     original = getattr(error, "original", error)
@@ -1297,7 +1372,12 @@ async def dismiss_error(interaction: discord.Interaction, error: app_commands.Ap
 
 @bot.tree.command(name="setup")
 @app_commands.checks.has_permissions(administrator=True)
-async def setup(interaction: discord.Interaction, topic: Optional[str]=None, desc: Optional[str]=None):
+async def setup(interaction: discord.Interaction, topic: Optional[Literal[
+    "bans warns channel", "transcripts channel", "staff lb channel", "services lb channel",
+    "staff roles", "staff role", "staff ping", "staff break", "adm role", "ban perms",
+    "mm roles", "mm role", "mm ping", "mm supervisor", "mm trainer", "mm break", "mm vouch channel",
+    "pilot roles", "pilot role", "pilot ping", "pilot supervisor", "pilot trainer", "pilot break", "pilot vouch channel"
+]]=None, desc: Optional[str]=None):
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one(server_query)
@@ -1314,6 +1394,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
         staff_embed.add_field(name="staff roles", value=server_info.get("staff_roles", "unset"), inline=False) #
         staff_embed.add_field(name="staff role", value=server_info.get("staff_role", "unset"), inline=False) #
         staff_embed.add_field(name="staff ping", value=server_info.get("staff_ping", "unset"), inline=False) #
+        staff_embed.add_field(name="staff break", value=server_info.get("staff_break", "unset"), inline=False)  #
         staff_embed.add_field(name="adm role", value=server_info.get("adm_role", "unset"), inline=False) #
         staff_embed.add_field(name="ban perms", value=server_info.get("ban_perms", "unset"), inline=False)  #
         service_embed = discord.Embed(colour=0xffffff)
@@ -1322,12 +1403,14 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
         service_embed.add_field(name="mm ping", value=server_info.get("mm_ping", "unset"), inline=False) #
         service_embed.add_field(name="mm supervisor", value=server_info.get("mm_supervisor", "unset"), inline=False) #
         service_embed.add_field(name="mm trainer", value=server_info.get("mm_trainer", "unset"), inline=False) #
+        service_embed.add_field(name="mm break", value=server_info.get("mm_break", "unset"), inline=False) #
         service_embed.add_field(name="mm vouch channel", value=server_info.get("mm_vouch_channel", "unset"), inline=False)
         service_embed.add_field(name="pilot roles", value=server_info.get("pilot_roles", "unset"), inline=False) #
         service_embed.add_field(name="pilot role", value=server_info.get("pilot_role", "unset"), inline=False) #
         service_embed.add_field(name="pilot ping", value=server_info.get("pilot_ping", "unset"), inline=False) #
         service_embed.add_field(name="pilot supervisor", value=server_info.get("pilot_supervisor", "unset"), inline=False) #
         service_embed.add_field(name="pilot trainer", value=server_info.get("pilot_trainer", "unset"), inline=False) #
+        service_embed.add_field(name="pilot break", value=server_info.get("pilot_break", "unset"), inline=False) #
         service_embed.add_field(name="pilot vouch channel", value=server_info.get("pilot_vouch_channel", "unset"), inline=False)
         embeds = [general_embed, staff_embed, service_embed]
         await interaction.response.send_message(embeds=embeds, ephemeral=True)
@@ -1398,6 +1481,16 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
             server_info["staff_ping"] = staff_ping
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"**staff ping** has been set to {staff_ping}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
+    if topic == "staff break" and desc is not None:
+        staff_break = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(staff_break))
+        if role:
+            staff_break = f"<@&{role.id}>"
+            server_info["staff_break"] = staff_break
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**staff break** has been set to {staff_break}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "adm role" and desc is not None:
@@ -1474,6 +1567,16 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
             await interaction.response.send_message(f"**mm trainer** has been set to {mm_trainer}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
+    if topic == "mm break" and desc is not None:
+        mm_break = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(mm_break))
+        if role:
+            mm_break = f"<@&{role.id}>"
+            server_info["mm_break"] = mm_break
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**mm break** has been set to {mm_break}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
     if topic == "mm vouch channel" and desc is not None:
         try:
             mm_vouch_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
@@ -1536,6 +1639,16 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
             server_info["pilot_trainer"] = pilot_trainer
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"**pilot trainer** has been set to {pilot_trainer}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
+    if topic == "pilot break" and desc is not None:
+        pilot_break = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(pilot_break))
+        if role:
+            pilot_break = f"<@&{role.id}>"
+            server_info["pilot_break"] = pilot_break
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**pilot break** has been set to {pilot_break}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot vouch channel" and desc is not None:
