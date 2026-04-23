@@ -31,6 +31,7 @@ tickets = kafu["tickets"]
 servers = kafu["servers"]
 
 TRI_Archive = 1371673839695826974
+Tethys = 1434471275723493388
 ticket_ping = 1449382692671193294
 
 yuelyxia = 1303291812282372137
@@ -487,21 +488,27 @@ async def lb(ctx, *, category: str=None):
 @bot.command(name="rn")
 @commands.cooldown(2, 600, commands.BucketType.channel)
 async def rn(ctx, *, new_name: str):
-    """Renames the current thread to the new name provided."""
-    if isinstance(ctx.channel, discord.Thread):
-        try:
-            await ctx.channel.edit(name=new_name)
-            await ctx.send(f"Thread renamed to **{new_name}**.")
-        except Exception as e:
-            await ctx.send(f"Renaming failed due to an error: {e}", ephemeral=True)
-    elif isinstance(ctx.channel, discord.TextChannel):
-        try:
-            await ctx.channel.edit(name=new_name)
-            await ctx.send(f"Channel renamed to **{new_name}**.")
-        except Exception as e:
-            await ctx.send(f"Renaming failed due to an error: {e}", ephemeral=True)
-    else:
-        await ctx.send("This command can only be used in a channel or thread.", ephemeral=True)
+    if ctx.guild.id == TRI_Archive or ctx.guild.id == Tethys:
+        return
+    guild_id = str(ctx.guild.id)
+    server_info = servers.find_one({"_id": guild_id})
+    if server_info:
+        staff_role = server_info.get("staff_role")
+    if (staff_role and get(ctx.guild.roles, id=int(staff_role.strip("<@&>")))) in ctx.author.roles or ctx.author.guild_permissions.manage_channels:
+        if isinstance(ctx.channel, discord.Thread):
+            try:
+                await ctx.channel.edit(name=new_name)
+                await ctx.send(f"Thread renamed to **{new_name}**.")
+            except Exception as e:
+                await ctx.send(f"Renaming failed due to an error: {e}", ephemeral=True)
+        elif isinstance(ctx.channel, discord.TextChannel):
+            try:
+                await ctx.channel.edit(name=new_name)
+                await ctx.send(f"Channel renamed to **{new_name}**.")
+            except Exception as e:
+                await ctx.send(f"Renaming failed due to an error: {e}", ephemeral=True)
+        else:
+            await ctx.send("This command can only be used in a channel or thread.", ephemeral=True)
 @rn.error
 async def rn_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
