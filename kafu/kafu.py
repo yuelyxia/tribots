@@ -55,8 +55,56 @@ QUOTA_CHECK_DAY = 1
 async def quota_check():
     now = datetime.datetime.now(datetime.timezone.utc)
     if now.day() == QUOTA_CHECK_DAY:
-        # do something
+        guilds = servers.find({})  # all whitelisted servers
+        for server_info in guilds:
+            guild_id = int(server_info["_id"])
+            try:
+                guild = await bot.fetch_guild(guild_id)
+            except discord.NotFound:
+                continue  # bot is not in this guild anymore
+            except discord.Forbidden:
+                continue  # no access
+
         pass
+
+@bot.event
+async def on_message(message: discord.Message):
+    if message.author.bot:
+        return
+    guild_id = message.guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if server_info:
+        mm_vouch_channel = server_info.get("mm_vouch_channel")
+        if mm_vouch_channel:
+            if message.channel.id == int(mm_vouch_channel.strip("<#>")):
+                if message.mentions:
+                    first_user = message.mentions[0]
+                    user_id = str(first_user.id)
+                    if user_id in server_info.get("mms", {}):
+                        server_info["mms"][user_id]["monthly"] = (server_info["mms"][user_id].get("monthly", 0) + 1)
+                        server_info["mms"][user_id]["alltime"] = (server_info["mms"][user_id].get("alltime", 0) + 1)
+                        servers.replace_one(server_query, server_info)
+                        await message.add_reaction("<:whitetick:1462774288020013161>")
+                    else:
+                        await message.add_reaction("<:whitecross:1462774085737119828>")
+        pilot_vouch_channel = server_info.get("pilot_vouch_channel")
+        if pilot_vouch_channel:
+            if message.channel.id == int(pilot_vouch_channel.strip("<#>")):
+                if message.mentions:
+                    first_user = message.mentions[0]
+                    user_id = str(first_user.id)
+                    if user_id in server_info.get("pilots", {}):
+                        server_info["pilots"][user_id]["monthly"] = (
+                                    server_info["pilots"][user_id].get("monthly", 0) + 1)
+                        server_info["pilots"][user_id]["alltime"] = (
+                                    server_info["pilots"][user_id].get("alltime", 0) + 1)
+                        servers.replace_one(server_query, server_info)
+                        await message.add_reaction("<:whitetick:1462774288020013161>")
+                    else:
+                        await message.add_reaction("<:whitecross:1462774085737119828>")
+
+    await bot.process_commands(message)
 
 # text commands
 
@@ -202,32 +250,61 @@ async def adm(ctx):
         await ctx.reply(f"{adm_role}")
 
 @bot.command(name='lb', help="Sends the current month's leaderboard.")
-async def lb(ctx):
+async def lb(ctx, *, category: str=None):
     guild_id = ctx.guild.id
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one(server_query)
     if not server_info:
         return
-    staff = server_info.get("staff")
-    if not staff:
-        ctx.reply("Staff not found.")
-        return
-    sorted_staff = sorted(
-        staff.items(),
-        key=lambda item: item[1].get("monthly",0),
-        reverse=True
-    )
-    embed = discord.Embed(colour=0xffffff)
-    lines = []
-    for user_id, data in sorted_staff:
-        user = await bot.fetch_user(int(user_id))
-        line = (
-            f"-# <:blank:1383116055550890095> {user.mention}　–　"
-            f"**{data.get("monthly", 0)}** month ﹒ **{data.get("alltime", 0)}** all"
+    if category == "s":
+        staff = server_info.get("staff", {})
+        sorted_staff = sorted(
+            staff.items(),
+            key=lambda x: x[1].get("monthly", 0),
+            reverse=True
         )
-        lines.append(line)
-    embed.description = "\n".join(lines)
-    await ctx.send("## _ _　　　staff leaderboard", embed=embed)
+        desc = ""
+        for rank, (user_id, data) in enumerate(sorted_staff, start=1):
+            monthly = data.get("monthly", 0)
+            alltime = data.get("alltime", 0)
+            desc += f"-# {rank}﹒　<@{user_id}>　–　**{monthly}** month ﹒ **{alltime}** all\n"
+        embed = discord.Embed(
+            description=desc if desc else "No staff found.",
+        )
+        await ctx.send("## _ _　　　staff leaderboard", embed=embed)
+    if category == "m":
+        mms = server_info.get("mms", {})
+        sorted_mms = sorted(
+            mms.items(),
+            key=lambda x: x[1].get("monthly", 0),
+            reverse=True
+        )
+        desc = ""
+        for rank, (user_id, data) in enumerate(sorted_mms, start=1):
+            monthly = data.get("monthly", 0)
+            alltime = data.get("alltime", 0)
+            desc += f"-# {rank}﹒　<@{user_id}>　–　**{monthly}** month ﹒ **{alltime}** all\n"
+        embed = discord.Embed(
+            description=desc if desc else "No mms found.",
+        )
+        await ctx.send("## _ _　　　mm leaderboard", embed=embed)
+    if category == "p":
+        pilots = server_info.get("pilots", {})
+        sorted_pilots = sorted(
+            pilots.items(),
+            key=lambda x: x[1].get("monthly", 0),
+            reverse=True
+        )
+        desc = ""
+        for rank, (user_id, data) in enumerate(sorted_pilots, start=1):
+            monthly = data.get("monthly", 0)
+            alltime = data.get("alltime", 0)
+            desc += f"-# {rank}﹒　<@{user_id}>　–　**{monthly}** month ﹒ **{alltime}** all\n"
+        embed = discord.Embed(
+            description=desc if desc else "No pilots found.",
+        )
+        await ctx.send("## _ _　　　pilot leaderboard", embed=embed)
+
 
 @bot.command(name='rn')
 @commands.cooldown(2, 600, commands.BucketType.channel)
@@ -253,6 +330,70 @@ async def rn_error(ctx, error):
         remaining = error.retry_after  # cooldown time in seconds
         return await ctx.send(f"This command is on cooldown. Retry in {round(remaining)} seconds.", ephemeral=True)
     raise error
+
+def user_info(user, staff_data, mm_data, pilot_data):
+    profile = discord.Embed()
+    profile.set_thumbnail(url=f"{user.display_avatar}")
+    profile.description = f"{user.name}\n`{user.id}`\n{user.mention}"
+    profile.description += f"\n**Account Created:** <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
+    if staff_data is not None:
+        profile.add_field(
+            name="staff",
+            value=f"**{staff_data.get('monthly', 0)}** month ﹒ **{staff_data.get('alltime', 0)}** all",
+            inline=False
+        )
+    if mm_data is not None:
+        profile.add_field(
+            name="mm",
+            value=f"**{mm_data.get('monthly', 0)}** month ﹒ **{mm_data.get('alltime', 0)}** all",
+            inline=False
+        )
+    if pilot_data is not None:
+        profile.add_field(
+            name="pilot",
+            value=f"**{pilot_data.get('monthly', 0)}** month ﹒ **{pilot_data.get('alltime', 0)}** all",
+            inline=False
+        )
+    profile.set_footer(text="✦　Use ,c to check if user is reported, unreported or trusted.")
+    return profile
+
+@bot.command(name="p")
+async def profile(ctx, user: discord.Member = None):
+    if user == None:
+        user = ctx.author
+    else:
+        try:
+            user = await bot.fetch_user(int(user.strip('<@>')))
+        except Exception:
+            await ctx.reply("Please provide a valid user ID.")
+            return
+    guild_id = str(ctx.guild.id)
+    server_info = servers.find_one({"_id": guild_id})
+    if not server_info:
+        await ctx.send("Server not whitelisted.")
+        return
+    uid = str(user.id)
+    staff = server_info.get("staff", {})
+    mms = server_info.get("mms", {})
+    pilots = server_info.get("pilots", {})
+    roles = []
+    if uid in staff:
+        roles.append("staff")
+        staff_data = staff.get(uid, {})
+    else:
+        staff_data = None
+    if uid in mms:
+        roles.append("mm")
+        mm_data = mms.get(uid, {})
+    else:
+        mm_data = None
+    if uid in pilots:
+        roles.append("pilot")
+        pilot_data = pilots.get(uid, {})
+    else:
+        pilot_data = None
+    await ctx.reply(embed=user_info(user, staff_data, mm_data, pilot_data))
+
 
 @bot.command()
 async def help(ctx):
@@ -351,7 +492,7 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                 await interaction.followup.send("**bans warns channel** has not been set up for this server.", ephemeral=True)
                 return
             staff_role = server_info.get("staff_role")
-            adm_role = server_info.get("adm_role")
+            ban_perms = server_info.get("ban_perms")
             bans_warns_channel = server_info.get("bans_warns_channel")
             server_info.setdefault("bans_warns_req", {})
             if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
@@ -371,27 +512,27 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                                             data = io.BytesIO(await resp.read())
                                             files_to_send.append(discord.File(data, filename=img.filename))
                         if files_to_send:
-                            if adm_role:
+                            if ban_perms:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{adm_role}\n**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"{ban_perms}\n**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                     files=files_to_send, view=BanReqView())
                             else:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
                                     content=f"**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                     files=files_to_send, view=BanReqView())
                         else:
-                            if adm_role:
+                            if ban_perms:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{adm_role}\n**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"{ban_perms}\n**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                     view=BanReqView())
                             else:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
                                     content=f"**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                     view=BanReqView())
                     except Exception:
-                        if adm_role:
+                        if ban_perms:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                content=f"{adm_role}\n**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                content=f"{ban_perms}\n**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                 view=BanReqView())
                         else:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
@@ -557,7 +698,7 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
                                                 ephemeral=True)
                 return
             staff_role = server_info.get("staff_role")
-            adm_role = server_info.get("adm_role")
+            ban_perms = server_info.get("ban_perms")
             bans_warns_channel = server_info.get("bans_warns_channel")
             server_info.setdefault("bans_warns_req", {})
             if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
@@ -578,27 +719,27 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
                                             data = io.BytesIO(await resp.read())
                                             files_to_send.append(discord.File(data, filename=img.filename))
                         if files_to_send:
-                            if adm_role:
+                            if ban_perms:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{adm_role}\n**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"{ban_perms}\n**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                     files=files_to_send, view=UnbanReqView())
                             else:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
                                     content=f"**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                     files=files_to_send, view=UnbanReqView())
                         else:
-                            if adm_role:
+                            if ban_perms:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{adm_role}\n**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"{ban_perms}\n**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                     view=UnbanReqView())
                             else:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
                                     content=f"**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                     view=UnbanReqView())
                     except Exception:
-                        if adm_role:
+                        if ban_perms:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                content=f"{adm_role}\n**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                content=f"{ban_perms}\n**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
                                 view=BanReqView())
                         else:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
@@ -808,6 +949,10 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
             server_info["mms"].setdefault(str(user_id), {})
             servers.replace_one(server_query, server_info)
             await interaction.followup.send(f"`{user_id}` has been added to mms.")
+            mm_role = server_info.get("mm_role")
+            if mm_role: await member.add_roles(interaction.guild.get_role(int(mm_role.strip("<@&>"))))
+            mm_ping = server_info.get("mm_ping")
+            if mm_ping: await member.add_roles(interaction.guild.get_role(int(mm_ping.strip("<@&>"))))
             if desc is not None and server_info.get("mm_roles"):
                 mm_roles = server_info["mm_roles"].split()
                 if desc in mm_roles:
@@ -822,6 +967,10 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
             server_info["pilots"].setdefault(str(user_id), {})
             servers.replace_one(server_query, server_info)
             await interaction.followup.send(f"`{user_id}` has been added to pilots.")
+            pilot_role = server_info.get("pilot_role")
+            if pilot_role: await member.add_roles(interaction.guild.get_role(int(pilot_role.strip("<@&>"))))
+            pilot_ping = server_info.get("pilot_ping")
+            if pilot_ping: await member.add_roles(interaction.guild.get_role(int(pilot_ping.strip("<@&>"))))
             if desc is not None and server_info.get("pilot_roles"):
                 pilot_roles = server_info["pilot_roles"].split()
                 if desc in pilot_roles:
@@ -840,6 +989,129 @@ async def appoint_error(interaction: discord.Interaction, error: app_commands.Ap
     else:
         await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
+@bot.tree.command(name="dismiss", description="Dismiss staff/mm/pilot.")
+@app_commands.describe(user="User to dismiss")
+async def dismiss(interaction: discord.Interaction, user: str, category: Literal["staff", "mm", "pilot"]):
+    await interaction.response.defer(ephemeral=True)
+    guild_id = interaction.guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if not server_info:
+        await interaction.followup.send(f"This server is not whitelisted.", ephemeral=False)
+        return
+    staff_role = server_info.get("staff_role")
+    if not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+        await interaction.followup.send(f"Unauthorised.", ephemeral=True)
+        return
+    try:
+        user = await bot.fetch_user(int(user.strip("<@>")))
+    except Exception:
+        try: user_role = interaction.guild.get_role(int(user.strip("<@&>")))
+        except Exception:
+            await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
+        else:
+            if not interaction.user.guild_permissions.manage_roles:
+                await interaction.followup.send(f"Unauthorised.", ephemeral=True)
+                return
+            if category in ["staff", "mm", "pilot"]:
+                role_members = user_role.members
+                await interaction.followup.send(f"Dismissing {len(role_members)} users from {category}.", ephemeral=True)
+                #
+                def parse_roles(raw):
+                    if not raw:
+                        return []
+                    return raw.replace("<@&", "").replace(">", "").split()
+                staff_roles = parse_roles(server_info.get("staff_roles"))
+                staff_roles+=parse_roles(server_info.get("staff_role"))
+                staff_roles+=parse_roles(server_info.get("adm_role"))
+                mm_roles = parse_roles(server_info.get("mm_roles"))
+                mm_roles+=parse_roles(server_info.get("mm_role"))
+                mm_roles+=parse_roles(server_info.get("mm_ping"))
+                mm_roles+=parse_roles(server_info.get("mm_break"))
+                mm_roles += parse_roles(server_info.get("mm_supervisor"))
+                mm_roles += parse_roles(server_info.get("mm_trainer"))
+                pilot_roles = parse_roles(server_info.get("pilot_roles"))
+                pilot_roles += parse_roles(server_info.get("pilot_role"))
+                pilot_roles += parse_roles(server_info.get("pilot_ping"))
+                pilot_roles += parse_roles(server_info.get("pilot_break"))
+                pilot_roles += parse_roles(server_info.get("pilot_supervisor"))
+                pilot_roles += parse_roles(server_info.get("pilot_trainer"))
+                for m in role_members:
+                    uid = str(m.id)
+                    if category == "staff":
+                        server_info.setdefault("staff", {}).pop(uid, None)
+                        roles = staff_roles
+                        await interaction.followup.send(f"`{uid}` has been dismissed from staff.")
+                    elif category == "mm":
+                        server_info.setdefault("mms", {}).pop(uid, None)
+                        roles = mm_roles
+                        await interaction.followup.send(f"`{uid}` has been dismissed from mms.")
+                    elif category == "pilot":
+                        server_info.setdefault("pilots", {}).pop(uid, None)
+                        roles = pilot_roles
+                        await interaction.followup.send(f"`{uid}` has been dismissed from pilots.")
+                    # remove roles
+                    for role_id in roles:
+                        role = interaction.guild.get_role(int(role_id))
+                        if role:
+                            await m.remove_roles(role)
+                servers.replace_one(server_query, server_info)
+    else:
+        user_id = user.id
+        if user_id == interaction.user.id and not interaction.user.guild_permissions.administrator:
+            await interaction.followup.send(f"You cannot dismiss yourself.", ephemeral=True)
+            return
+        member = interaction.guild.get_member(int(user_id))
+        if not member: return
+        if category in ["staff", "mm", "pilot"]:
+            def parse_roles(raw):
+                if not raw:
+                    return []
+                return raw.replace("<@&", "").replace(">", "").split()
+            staff_roles = parse_roles(server_info.get("staff_roles"))
+            staff_roles += parse_roles(server_info.get("staff_role"))
+            staff_roles += parse_roles(server_info.get("adm_role"))
+            mm_roles = parse_roles(server_info.get("mm_roles"))
+            mm_roles += parse_roles(server_info.get("mm_role"))
+            mm_roles += parse_roles(server_info.get("mm_ping"))
+            mm_roles += parse_roles(server_info.get("mm_break"))
+            mm_roles += parse_roles(server_info.get("mm_supervisor"))
+            mm_roles += parse_roles(server_info.get("mm_trainer"))
+            pilot_roles = parse_roles(server_info.get("pilot_roles"))
+            pilot_roles += parse_roles(server_info.get("pilot_role"))
+            pilot_roles += parse_roles(server_info.get("pilot_ping"))
+            pilot_roles += parse_roles(server_info.get("pilot_break"))
+            pilot_roles += parse_roles(server_info.get("pilot_supervisor"))
+            pilot_roles += parse_roles(server_info.get("pilot_trainer"))
+            if category == "staff":
+                server_info.setdefault("staff", {}).pop(str(user_id), None)
+                roles = staff_roles
+                await interaction.followup.send(f"`{str(user_id)}` has been dismissed from staff.")
+            elif category == "mm":
+                server_info.setdefault("mms", {}).pop(str(user_id), None)
+                roles = mm_roles
+                await interaction.followup.send(f"`{str(user_id)}` has been dismissed from mms.")
+            elif category == "pilot":
+                server_info.setdefault("pilots", {}).pop(str(user_id), None)
+                roles = pilot_roles
+                await interaction.followup.send(f"`{str(user_id)}` has been dismissed from pilots.")
+            # remove roles
+            for role_id in roles:
+                role = interaction.guild.get_role(int(role_id))
+                if role:
+                    await member.remove_roles(role)
+        servers.replace_one(server_query, server_info)
+
+
+
+
+@dismiss.error
+async def dismiss_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    original = getattr(error, "original", error)
+    if isinstance(original, discord.Forbidden):
+        await interaction.followup.send("Missing permissions. Check if KAFU's highest role is above the role you are trying to assign.", ephemeral=True)
+    else:
+        await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
 @bot.tree.command(name="setup")
 @app_commands.checks.has_permissions(administrator=True)
@@ -854,24 +1126,28 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
         general_embed = discord.Embed(colour=0xffffff)
         general_embed.add_field(name="bans warns channel", value=server_info.get("bans_warns_channel", "unset"), inline=False) #
         general_embed.add_field(name="transcripts channel", value=server_info.get("transcripts_channel", "unset"), inline=False) #
-        general_embed.add_field(name="staff roles", value=server_info.get("staff_roles", "unset"), inline=False) #
-        general_embed.add_field(name="staff role", value=server_info.get("staff_role", "unset"), inline=False) #
-        general_embed.add_field(name="staff ping", value=server_info.get("staff_ping", "unset"), inline=False) #
-        general_embed.add_field(name="adm role", value=server_info.get("adm_role", "unset"), inline=False) #
+        general_embed.add_field(name="staff lb channel", value=server_info.get("staff_lb_channel", "unset"), inline=False) #
+        general_embed.add_field(name="services lb channel", value=server_info.get("services_lb_channel", "unset"), inline=False) #
+        staff_embed = discord.Embed(colour=0xffffff)
+        staff_embed.add_field(name="staff roles", value=server_info.get("staff_roles", "unset"), inline=False) #
+        staff_embed.add_field(name="staff role", value=server_info.get("staff_role", "unset"), inline=False) #
+        staff_embed.add_field(name="staff ping", value=server_info.get("staff_ping", "unset"), inline=False) #
+        staff_embed.add_field(name="adm role", value=server_info.get("adm_role", "unset"), inline=False) #
+        staff_embed.add_field(name="ban perms", value=server_info.get("ban_perms", "unset"), inline=False)  #
         service_embed = discord.Embed(colour=0xffffff)
         service_embed.add_field(name="mm roles", value=server_info.get("mm_roles", "unset"), inline=False) #
         service_embed.add_field(name="mm role", value=server_info.get("mm_role", "unset"), inline=False) #
-        service_embed.add_field(name="mm ping", value=server_info.get("mm_ping", "unset"), inline=False)
-        service_embed.add_field(name="mm supervisor", value=server_info.get("mm_supervisor", "unset"), inline=False)
-        service_embed.add_field(name="mm trainer", value=server_info.get("mm_trainer", "unset"), inline=False)
+        service_embed.add_field(name="mm ping", value=server_info.get("mm_ping", "unset"), inline=False) #
+        service_embed.add_field(name="mm supervisor", value=server_info.get("mm_supervisor", "unset"), inline=False) #
+        service_embed.add_field(name="mm trainer", value=server_info.get("mm_trainer", "unset"), inline=False) #
         service_embed.add_field(name="mm vouch channel", value=server_info.get("mm_vouch_channel", "unset"), inline=False)
         service_embed.add_field(name="pilot roles", value=server_info.get("pilot_roles", "unset"), inline=False) #
         service_embed.add_field(name="pilot role", value=server_info.get("pilot_role", "unset"), inline=False) #
         service_embed.add_field(name="pilot ping", value=server_info.get("pilot_ping", "unset"), inline=False) #
-        service_embed.add_field(name="pilot supervisor", value=server_info.get("pilot_supervisor", "unset"), inline=False)
-        service_embed.add_field(name="pilot trainer", value=server_info.get("pilot_trainer", "unset"), inline=False)
+        service_embed.add_field(name="pilot supervisor", value=server_info.get("pilot_supervisor", "unset"), inline=False) #
+        service_embed.add_field(name="pilot trainer", value=server_info.get("pilot_trainer", "unset"), inline=False) #
         service_embed.add_field(name="pilot vouch channel", value=server_info.get("pilot_vouch_channel", "unset"), inline=False)
-        embeds = [general_embed, service_embed]
+        embeds = [general_embed, staff_embed, service_embed]
         await interaction.response.send_message(embeds=embeds, ephemeral=True)
     if topic == "bans warns channel" and desc is not None:
         try: bans_warns_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
@@ -889,6 +1165,25 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
             server_info["transcripts_channel"] = transcripts_channel
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **transcripts channel** has been set to {transcripts_channel}.")
+    if topic == "staff lb channel" and desc is not None:
+        try: staff_lb_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+        except discord.NotFound: await interaction.response.send_message("Invalid channel.")
+        else:
+            staff_lb_channel = f"<#{staff_lb_channel.id}>"
+            server_info["staff_lb_channel"] = staff_lb_channel
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"The **staff lb channel** has been set to {staff_lb_channel}.")
+    if topic == "services lb channel" and desc is not None:
+        try:
+            services_lb_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+        except discord.NotFound:
+            await interaction.response.send_message("Invalid channel.")
+        else:
+            services_lb_channel = f"<#{services_lb_channel.id}>"
+            server_info["services_lb_channel"] = services_lb_channel
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(
+                f"The **services lb channel** has been set to {services_lb_channel}.")
     if topic == "staff roles" and desc is not None:
         staff_roles = desc.replace("<@&", "").replace(">", "").split()
         valid_roles = []
@@ -933,6 +1228,16 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
             await interaction.response.send_message(f"**adm role** has been set to {adm_role}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
+    if topic == "ban perms" and desc is not None:
+        ban_perms = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(ban_perms))
+        if role:
+            ban_perms = f"<@&{role.id}>"
+            server_info["ban_perms"] = ban_perms
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**ban perms** has been set to {ban_perms}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
     if topic == "mm roles" and desc is not None:
         mm_roles = desc.replace("<@&", "").replace(">", "").split()
         valid_roles = []
@@ -967,6 +1272,36 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
             await interaction.response.send_message(f"**mm ping** has been set to {mm_ping}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
+    if topic == "mm supervisor" and desc is not None:
+        mm_supervisor = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(mm_supervisor))
+        if role:
+            mm_supervisor = f"<@&{role.id}>"
+            server_info["mm_supervisor"] = mm_supervisor
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**mm supervisor** has been set to {mm_supervisor}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
+    if topic == "mm trainer" and desc is not None:
+        mm_trainer = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(mm_trainer))
+        if role:
+            mm_trainer = f"<@&{role.id}>"
+            server_info["mm_trainer"] = mm_trainer
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**mm trainer** has been set to {mm_trainer}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
+    if topic == "mm vouch channel" and desc is not None:
+        try:
+            mm_vouch_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+        except discord.NotFound:
+            await interaction.response.send_message("Invalid channel.")
+        else:
+            mm_vouch_channel = f"<#{mm_vouch_channel.id}>"
+            server_info["mm_vouch_channel"] = mm_vouch_channel
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"The **mm vouch channel** has been set to {mm_vouch_channel}.")
     if topic == "pilot roles" and desc is not None:
         pilot_roles = desc.replace("<@&", "").replace(">", "").split()
         valid_roles = []
@@ -1001,6 +1336,37 @@ async def setup(interaction: discord.Interaction, topic: Optional[str]=None, des
             await interaction.response.send_message(f"**pilot ping** has been set to {pilot_ping}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
+    if topic == "pilot supervisor" and desc is not None:
+        pilot_supervisor = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(pilot_supervisor))
+        if role:
+            pilot_supervisor = f"<@&{role.id}>"
+            server_info["pilot_supervisor"] = pilot_supervisor
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**pilot supervisor** has been set to {pilot_supervisor}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
+    if topic == "pilot trainer" and desc is not None:
+        pilot_trainer = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(pilot_trainer))
+        if role:
+            pilot_trainer = f"<@&{role.id}>"
+            server_info["pilot_trainer"] = pilot_trainer
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**pilot trainer** has been set to {pilot_trainer}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
+    if topic == "pilot vouch channel" and desc is not None:
+        try:
+            pilot_vouch_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+        except discord.NotFound:
+            await interaction.response.send_message("Invalid channel.")
+        else:
+            pilot_vouch_channel = f"<#{pilot_vouch_channel.id}>"
+            server_info["pilot_vouch_channel"] = pilot_vouch_channel
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(
+                f"The **pilot vouch channel** has been set to {pilot_vouch_channel}.")
 
 
 # TRI
