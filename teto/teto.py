@@ -1450,15 +1450,6 @@ class UserReasonView(discord.ui.View):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
             requested_by = session["requested_by"]
-            channel_id = session["channel_id"]
-            message_id = interaction.message.id
-            r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
-            title = session["title"]
-            case_title = session["case_title"]
-            user_id = session["user_id"]
-            user = await bot.fetch_user(user_id)
-            #
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(UserReasonModal())
 class UserReasonModal(discord.ui.Modal, title="Reason"):
@@ -1571,7 +1562,6 @@ class UserContributorModal(discord.ui.Modal, title="Contributor"):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
-            requested_by = session["requested_by"]
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
@@ -1672,7 +1662,7 @@ class UserProofsView(discord.ui.View):
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
                                             add_case_list[7].append(new_image_url)
-                            except Exception as e:
+                            except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 #
                 inprogresscol.update_one(
@@ -1707,12 +1697,7 @@ class UserProofsView(discord.ui.View):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
             requested_by = session["requested_by"]
-            channel_id = session["channel_id"]
-            message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
-            title = session["title"]
-            case_title = session["case_title"]
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
@@ -2224,8 +2209,6 @@ class EditAltsOnlyView(discord.ui.View):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
             requested_by = session["requested_by"]
-            channel_id = session["channel_id"]
-            message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
             if requested_by == interaction.user.id:
                 image_links = []
@@ -2258,7 +2241,7 @@ class EditAltsOnlyView(discord.ui.View):
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
                                             r_profile_list[2].append(new_image_url)
-                            except Exception as e:
+                            except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 if len(r_profile_list[2]) > 10:
                     await interaction.followup.send(
@@ -2279,11 +2262,8 @@ class EditAltsOnlyView(discord.ui.View):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
             requested_by = session["requested_by"]
-            channel_id = session["channel_id"]
-            message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
             if requested_by == interaction.user.id:
-                image_links = []
                 await interaction.response.send_message(
                     f"Please list image(s) you would like to remove, from 1 to {len(r_profile_list[2])}, with a space between each number.",
                     ephemeral=True)
@@ -2585,7 +2565,7 @@ class UserAppealView(discord.ui.View):
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
                                             r_profile_list[2].append(new_image_url)
-                            except Exception as e:
+                            except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 if len(r_profile_list[2]) > 10:
                     await interaction.followup.send(
@@ -2967,7 +2947,7 @@ class AddReportAltsView(discord.ui.View):
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
                                             r_profile_list[2].append(new_image_url)
-                            except Exception as e:
+                            except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 if len(r_profile_list[2]) > 10:
                     await interaction.followup.send(
@@ -2993,7 +2973,6 @@ class AddReportAltsView(discord.ui.View):
             r_profile_list = session["r_profile_list"]
             #
             if requested_by == interaction.user.id:
-                image_links = []
                 await interaction.response.send_message(
                     f"Please list image(s) you would like to remove, from 1 to {len(r_profile_list[2])}, with a space between each number.",
                     ephemeral=True)
@@ -3040,12 +3019,7 @@ class AddReportAltsView(discord.ui.View):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
             requested_by = session["requested_by"]
-            channel_id = session["channel_id"]
-            message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
-            title = session["title"]
-            case_title = session["case_title"]
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
@@ -3065,7 +3039,6 @@ class AddAltsModal(discord.ui.Modal, title="Add Alts"):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
-            requested_by = session["requested_by"]
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
@@ -3112,7 +3085,6 @@ class RemoveAltsModal(discord.ui.Modal, title="Remove Alts"):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
-            requested_by = session["requested_by"]
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
@@ -3215,7 +3187,6 @@ class AddReportUserTagsView(discord.ui.View):
             r_profile_list = session["r_profile_list"]
             add_case_list = session["add_case_list"]
             title = session["title"]
-            case_title = session["case_title"]
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
@@ -3510,7 +3481,6 @@ class AddReportUserContributorModal(discord.ui.Modal, title="Contributor"):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
-            requested_by = session["requested_by"]
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
@@ -3610,7 +3580,7 @@ class AddReportUserProofsView(discord.ui.View):
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
                                             add_case_list[7].append(new_image_url)
-                            except Exception as e:
+                            except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 #
                 inprogresscol.update_one(
@@ -4072,7 +4042,6 @@ class UserVoteView(discord.ui.View):
                         add_case_list = add_case_list[0]
                         r_profile = format_user_r_profile(user, r_profile_list, title)
                         add_case = format_user_add_case(add_case_list, case_title)
-                        reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
                         embeds = [r_profile, add_case]
                         #
                         await interaction.edit_original_response(
@@ -4144,9 +4113,7 @@ class UserVoteView(discord.ui.View):
         await interaction.response.defer()
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
-            requested_by = session["requested_by"]
             channel_id = session["channel_id"]
-            message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
             add_case_list = session["add_case_list"]
             title = session["title"]
@@ -4994,7 +4961,7 @@ class ServerProofsView(discord.ui.View):
                                         new_image_url = sent_message.attachments[0].url
                                         image_links.append(new_image_url)
                                         add_case_list[6].append(new_image_url)
-                        except Exception as e:
+                        except Exception:
                             await msg.channel.send(f"An error occurred with file {attachment.filename}")
             #
             self.add_case_list = add_case_list
@@ -7208,7 +7175,7 @@ async def merge_reports(interaction: discord.Interaction, user1: str, user2: str
 @app_commands.checks.has_role(adm_role)
 async def disable_vote(interaction: discord.Interaction, message_id: str):
     try:
-        message = await interaction.channel.fetch_message(message_id)
+        message = await interaction.channel.fetch_message(int(message_id))
     except discord.NotFound:
         await interaction.response.send_message("Message not found in this channel.", ephemeral=True)
     else:
@@ -7229,7 +7196,7 @@ async def disable_vote(interaction: discord.Interaction, message_id: str):
 @app_commands.checks.has_role(sr_role)
 async def disable(interaction: discord.Interaction, message_id: str):
     try:
-        message = await interaction.channel.fetch_message(message_id)
+        message = await interaction.channel.fetch_message(int(message_id))
     except discord.NotFound:
         await interaction.response.send_message("Message not found in this channel.", ephemeral=True)
     else:
