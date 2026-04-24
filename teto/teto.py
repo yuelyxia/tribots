@@ -731,7 +731,7 @@ class ReportedUserView(discord.ui.View):
         self.requested_by = requested_by
         self.current_case = current_case
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="prev")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="reporteduser:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -775,7 +775,7 @@ class ReportedUserView(discord.ui.View):
                                                          view=ReportedUserView(user, user_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="next")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="reporteduser:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -818,7 +818,7 @@ class ReportedUserView(discord.ui.View):
                                                          view=ReportedUserView(user, user_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="see_proofs")
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="reporteduser:proofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -834,7 +834,7 @@ class ReportedUserView(discord.ui.View):
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Alts Proofs", style=discord.ButtonStyle.grey, custom_id="see_alts_proofs")
+    @discord.ui.button(label="Alts Proofs", style=discord.ButtonStyle.grey, custom_id="reporteduser:altsproofs")
     async def alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -855,7 +855,7 @@ class ReportedServerView(discord.ui.View):
         self.requested_by = requested_by
         self.current_case = current_case
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="prev")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="reportedserver:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -899,7 +899,7 @@ class ReportedServerView(discord.ui.View):
                                                          view=ReportedServerView(guild, server_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="next")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="reportedserver:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -942,7 +942,7 @@ class ReportedServerView(discord.ui.View):
                                                          view=ReportedServerView(guild, server_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="see_proofs")
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="reportedserver:proofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -972,7 +972,7 @@ class NewUserReportView(discord.ui.View):
         self.user = user
         self.requested_by = requested_by
 
-    @discord.ui.button(label="Report", style=discord.ButtonStyle.red, custom_id="report")
+    @discord.ui.button(label="Report", style=discord.ButtonStyle.red, custom_id="newuserreport:report")
     async def report_button(self, interaction, button):
         #
         user = self.user
@@ -1070,7 +1070,7 @@ class AltsView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="alts>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="alts:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1093,7 +1093,7 @@ class AltsView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=UserTagsView())
 
-    @discord.ui.button(label="Alts", style=discord.ButtonStyle.green, custom_id="alts")
+    @discord.ui.button(label="Alts", style=discord.ButtonStyle.green, custom_id="alts:input")
     async def alts_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
@@ -1102,7 +1102,7 @@ class AltsView(discord.ui.View):
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(AltsModal())
 
-    @discord.ui.button(label="Add Alts Proofs", style=discord.ButtonStyle.green, custom_id="alts_proofs")
+    @discord.ui.button(label="Add Alts Proofs", style=discord.ButtonStyle.green, custom_id="alts:altsproofs")
     async def alts_proofs_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -1156,7 +1156,7 @@ class AltsView(discord.ui.View):
                 await interaction.followup.send(f"Images received from {interaction.user.mention}.",
                                                 embeds=image_embeds)
 
-    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="show_alts_proofs")
+    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="alts:showaltsproofs")
     async def show_alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1312,7 +1312,7 @@ class GamesView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<games")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="games:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1336,7 +1336,7 @@ class GamesView(discord.ui.View):
                 await message.edit(embeds=embeds,
                                    view=UserTagsView())
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="games>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="games:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1359,7 +1359,7 @@ class GamesView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=UserReasonView())
 
-    @discord.ui.select(options=games_options, placeholder="Select Game(s)...", custom_id="games",
+    @discord.ui.select(options=games_options, placeholder="Select Game(s)...", custom_id="games:select",
                        max_values=len(games_options))
     async def select_callback(self, interaction, select):
         await interaction.response.defer()
@@ -1399,7 +1399,7 @@ class UserReasonView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<reason")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="userreason:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1422,7 +1422,7 @@ class UserReasonView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=GamesView())
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="reason>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="userreason:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1445,7 +1445,7 @@ class UserReasonView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=UserContributorView())
 
-    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="reason")
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="userreason:input")
     async def reason_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -1494,7 +1494,7 @@ class UserContributorView(discord.ui.View):
         super().__init__(timeout=None)
 
     @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey,
-                       custom_id="<contributor")
+                       custom_id="usercontributor:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1518,7 +1518,7 @@ class UserContributorView(discord.ui.View):
                 await message.edit(embeds=embeds, view=UserReasonView())
 
     @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey,
-                       custom_id="contributor>")
+                       custom_id="usercontributor:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1541,7 +1541,7 @@ class UserContributorView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=UserProofsView())
 
-    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="contributor")
+    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="usercontributor:input")
     async def contributor_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -1552,7 +1552,7 @@ class UserContributorView(discord.ui.View):
                 await interaction.response.send_modal(UserContributorModal())
 class UserContributorModal(discord.ui.Modal, title="Contributor"):
     contributor = discord.ui.TextInput(label="Contributor",
-                                       placeholder="Input contributor's User ID. If Anonymous, input n.", required=True,
+                                       placeholder="User ID / n if Anonymous.", required=True,
                                        style=discord.TextStyle.short)
 
     def __init__(self):
@@ -1598,7 +1598,7 @@ class UserProofsView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<proofs")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="userproofs:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1621,7 +1621,7 @@ class UserProofsView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=UserContributorView())
 
-    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="proofs")
+    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="userproofs:input")
     async def proofs_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -1675,7 +1675,7 @@ class UserProofsView(discord.ui.View):
                 await interaction.followup.send(f"Images received from {interaction.user.mention}.",
                                                 embeds=image_embeds)
 
-    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="show_proofs")
+    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="userproofs:showproofs")
     async def show_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1691,7 +1691,7 @@ class UserProofsView(discord.ui.View):
                 await interaction.followup.send(f"Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="show_alts_proofs")
+    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="userproofs:showaltsproofs")
     async def show_alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1707,7 +1707,7 @@ class UserProofsView(discord.ui.View):
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="cancel")
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="userproofs:cancel")
     async def cancel_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1796,7 +1796,7 @@ class EditUserReportView(discord.ui.View):
         self.requested_by = requested_by
         self.current_case = current_case
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="prev",
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="edituserreport:prev",
                        row=0)
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
@@ -1842,7 +1842,7 @@ class EditUserReportView(discord.ui.View):
                                                          view=EditUserReportView(user, user_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="next",
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="edituserreport:next",
                        row=0)
     async def next_button(self, interaction, button):
         await interaction.response.defer()
@@ -1887,7 +1887,7 @@ class EditUserReportView(discord.ui.View):
                                                          view=EditUserReportView(user, user_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="see_proofs", row=0)
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="edituserreport:proofs", row=0)
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1903,7 +1903,7 @@ class EditUserReportView(discord.ui.View):
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Alts Proofs", style=discord.ButtonStyle.grey, custom_id="see_alts_proofs", row=0)
+    @discord.ui.button(label="Alts Proofs", style=discord.ButtonStyle.grey, custom_id="edituserreport:altsproofs", row=0)
     async def alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1915,7 +1915,7 @@ class EditUserReportView(discord.ui.View):
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Alts Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Edit Alts", style=discord.ButtonStyle.primary, custom_id="edit_alts", row=1)
+    @discord.ui.button(label="Edit Alts", style=discord.ButtonStyle.primary, custom_id="edituserreport:editalts", row=1)
     async def edit_alts_button(self, interaction, button):
         #
         user = self.user
@@ -1994,7 +1994,7 @@ class EditUserReportView(discord.ui.View):
         else:
             await interaction.followup.send("You do not have permission to use this button.", ephemeral=True)
 
-    @discord.ui.button(label="Add Report", style=discord.ButtonStyle.red, custom_id="add_report", row=1)
+    @discord.ui.button(label="Add Report", style=discord.ButtonStyle.red, custom_id="edituserreport:addreport", row=1)
     async def add_report_button(self, interaction, button):
         #
         user = self.user
@@ -2097,7 +2097,7 @@ class EditUserReportView(discord.ui.View):
         else:
             await interaction.followup.send("You do not have permission to use this button.", ephemeral=True)
 
-    @discord.ui.button(label="Appeal", style=discord.ButtonStyle.green, custom_id="appeal", row=1)
+    @discord.ui.button(label="Appeal", style=discord.ButtonStyle.green, custom_id="edituserreport:appeal", row=1)
     async def appeal_button(self, interaction, button):
         #
         user = self.user
@@ -2189,7 +2189,7 @@ class EditUserReportView(discord.ui.View):
 class EditAltsOnlyView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-    @discord.ui.button(label="Add Alts", style=discord.ButtonStyle.green, custom_id="add_alts")
+    @discord.ui.button(label="Add Alts", style=discord.ButtonStyle.green, custom_id="editaltsonly:addalts")
     async def add_alts_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
@@ -2197,7 +2197,7 @@ class EditAltsOnlyView(discord.ui.View):
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(AddAltsOnlyModal())
 
-    @discord.ui.button(label="Remove Alts", style=discord.ButtonStyle.red, custom_id="remove_alts")
+    @discord.ui.button(label="Remove Alts", style=discord.ButtonStyle.red, custom_id="editaltsonly:removealts")
     async def remove_alts_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
@@ -2205,7 +2205,7 @@ class EditAltsOnlyView(discord.ui.View):
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(RemoveAltsOnlyModal())
 
-    @discord.ui.button(label="Add Alts Proofs", style=discord.ButtonStyle.green, custom_id="add_alts_proofs")
+    @discord.ui.button(label="Add Alts Proofs", style=discord.ButtonStyle.green, custom_id="editaltsonly:addaltsproofs")
     async def add_alts_proofs_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
@@ -2258,7 +2258,7 @@ class EditAltsOnlyView(discord.ui.View):
                     await interaction.followup.send(f"Images received from {interaction.user.mention}.",
                                                     embeds=image_embeds)
 
-    @discord.ui.button(label="Remove Alts Proofs", style=discord.ButtonStyle.red, custom_id="remove_alts_proofs")
+    @discord.ui.button(label="Remove Alts Proofs", style=discord.ButtonStyle.red, custom_id="editaltsonly:removealtsproofs")
     async def remove_alts_proofs_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
@@ -2300,7 +2300,7 @@ class EditAltsOnlyView(discord.ui.View):
                     await interaction.followup.send(f"Images removed by {interaction.user.mention}.",
                                                     embeds=image_embeds)
 
-    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="show_alts_proofs")
+    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="editaltsonly:showaltsproofs")
     async def show_alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -2314,7 +2314,7 @@ class EditAltsOnlyView(discord.ui.View):
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="reason")
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="editaltsonly:reason")
     async def reason_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -2323,7 +2323,7 @@ class EditAltsOnlyView(discord.ui.View):
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(AltsReasonModal())
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="cancel")
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="editaltsonly:cancel")
     async def cancel_button(self, interaction, button):
         await interaction.response.defer()
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -2515,7 +2515,7 @@ class UserAppealView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Add Alts", style=discord.ButtonStyle.green, custom_id="add_alts")
+    @discord.ui.button(label="Add Alts", style=discord.ButtonStyle.green, custom_id="userappeal:addalts")
     async def add_alts_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
@@ -2523,7 +2523,7 @@ class UserAppealView(discord.ui.View):
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(AddAltsAppealModal())
 
-    @discord.ui.button(label="Remove Alts", style=discord.ButtonStyle.red, custom_id="remove_alts")
+    @discord.ui.button(label="Remove Alts", style=discord.ButtonStyle.red, custom_id="userappeal:removealts")
     async def remove_alts_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
@@ -2531,7 +2531,7 @@ class UserAppealView(discord.ui.View):
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(RemoveAltsAppealModal())
 
-    @discord.ui.button(label="Add Alts Proofs", style=discord.ButtonStyle.green, custom_id="add_alts_proofs")
+    @discord.ui.button(label="Add Alts Proofs", style=discord.ButtonStyle.green, custom_id="userappeal:addaltsproofs")
     async def add_alts_proofs_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
@@ -2582,7 +2582,7 @@ class UserAppealView(discord.ui.View):
                     await interaction.followup.send(f"Images received from {interaction.user.mention}.",
                                                     embeds=image_embeds)
 
-    @discord.ui.button(label="Remove Alts Proofs", style=discord.ButtonStyle.red, custom_id="remove_alts_proofs")
+    @discord.ui.button(label="Remove Alts Proofs", style=discord.ButtonStyle.red, custom_id="userappeal:removealtsproofs")
     async def remove_alts_proofs_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
@@ -2624,7 +2624,7 @@ class UserAppealView(discord.ui.View):
                     await interaction.followup.send(f"Images removed by {interaction.user.mention}.",
                                                     embeds=image_embeds)
 
-    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="show_alts_proofs")
+    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="userappeal:showaltsproofs")
     async def show_alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -2640,7 +2640,7 @@ class UserAppealView(discord.ui.View):
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="reason")
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="userappeal:reason")
     async def reason_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -2650,7 +2650,7 @@ class UserAppealView(discord.ui.View):
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(UserAppealReasonModal())
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="cancel")
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="userappeal:cancel")
     async def cancel_button(self, interaction, button):
         await interaction.response.defer()
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -2865,7 +2865,7 @@ class AddReportAltsView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="alts>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportalts:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -2888,7 +2888,7 @@ class AddReportAltsView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=AddReportUserTagsView())
 
-    @discord.ui.button(label="Add Alts", style=discord.ButtonStyle.green, custom_id="add_alts")
+    @discord.ui.button(label="Add Alts", style=discord.ButtonStyle.green, custom_id="addreportalts:addalts")
     async def add_alts_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -2898,7 +2898,7 @@ class AddReportAltsView(discord.ui.View):
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(AddAltsModal())
 
-    @discord.ui.button(label="Remove Alts", style=discord.ButtonStyle.red, custom_id="remove_alts")
+    @discord.ui.button(label="Remove Alts", style=discord.ButtonStyle.red, custom_id="addreportalts:removealts")
     async def remove_alts_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -2908,7 +2908,7 @@ class AddReportAltsView(discord.ui.View):
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(RemoveAltsModal())
 
-    @discord.ui.button(label="Add Alts Proofs", style=discord.ButtonStyle.green, custom_id="add_alts_proofs")
+    @discord.ui.button(label="Add Alts Proofs", style=discord.ButtonStyle.green, custom_id="addreportalts:addaltsproofs")
     async def add_alts_proofs_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -2967,7 +2967,7 @@ class AddReportAltsView(discord.ui.View):
                     await interaction.followup.send(f"Images received from {interaction.user.mention}.",
                                                     embeds=image_embeds)
 
-    @discord.ui.button(label="Remove Alts Proofs", style=discord.ButtonStyle.red, custom_id="remove_alts_proofs")
+    @discord.ui.button(label="Remove Alts Proofs", style=discord.ButtonStyle.red, custom_id="addreportalts:removealtsproofs")
     async def remove_alts_proofs_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -3015,7 +3015,7 @@ class AddReportAltsView(discord.ui.View):
                     await interaction.followup.send(f"Images removed by {interaction.user.mention}.",
                                                     embeds=image_embeds)
 
-    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="show_alts_proofs")
+    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="addreportalts:showaltsproofs")
     async def show_alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3131,7 +3131,7 @@ class AddReportUserTagsView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<tags")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportusertags:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3154,7 +3154,7 @@ class AddReportUserTagsView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=AddReportAltsView())
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="tags>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportusertags:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3177,7 +3177,7 @@ class AddReportUserTagsView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=AddReportGamesView())
 
-    @discord.ui.select(options=user_tags_options, placeholder="Select Tag(s)...", custom_id="tags",
+    @discord.ui.select(options=user_tags_options, placeholder="Select Tag(s)...", custom_id="addreportusertags:select",
                        max_values=len(user_tags_options))
     async def select_callback(self, interaction, select):
         await interaction.response.defer()
@@ -3234,7 +3234,7 @@ class AddReportGamesView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<games")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportgames:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3257,7 +3257,7 @@ class AddReportGamesView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=AddReportUserTagsView())
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="games>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportgames:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3280,7 +3280,7 @@ class AddReportGamesView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=AddReportUserReasonView())
 
-    @discord.ui.select(options=games_options, placeholder="Select Game(s)...", custom_id="games",
+    @discord.ui.select(options=games_options, placeholder="Select Game(s)...", custom_id="addreportgames:select",
                        max_values=len(games_options))
     async def select_callback(self, interaction, select):
         await interaction.response.defer()
@@ -3320,7 +3320,7 @@ class AddReportUserReasonView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<reason")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportuserreason:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3343,7 +3343,7 @@ class AddReportUserReasonView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=AddReportGamesView())
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="reason>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportuserreason:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3366,7 +3366,7 @@ class AddReportUserReasonView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=AddReportUserContributorView())
 
-    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="reason")
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="addreportuserreason:input")
     async def reason_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -3415,7 +3415,7 @@ class AddReportUserContributorView(discord.ui.View):
         super().__init__(timeout=None)
 
     @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey,
-                       custom_id="<contributor")
+                       custom_id="addreportusercontributor:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3439,7 +3439,7 @@ class AddReportUserContributorView(discord.ui.View):
                 await message.edit(embeds=embeds, view=AddReportUserReasonView())
 
     @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey,
-                       custom_id="contributor>")
+                       custom_id="addreportusercontributor:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3462,7 +3462,7 @@ class AddReportUserContributorView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=AddReportUserProofsView())
 
-    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="contributor")
+    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="addreportusercontributor:input")
     async def contributor_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -3473,7 +3473,7 @@ class AddReportUserContributorView(discord.ui.View):
                 await interaction.response.send_modal(AddReportUserContributorModal())
 class AddReportUserContributorModal(discord.ui.Modal, title="Contributor"):
     contributor = discord.ui.TextInput(label="Contributor",
-                                       placeholder="Input contributor's User ID. If Anonymous, input n.", required=True,
+                                       placeholder="User ID / n if Anonymous.", required=True,
                                        style=discord.TextStyle.short)
 
     def __init__(self):
@@ -3520,7 +3520,7 @@ class AddReportUserProofsView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<proofs")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportuserproofs:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3543,7 +3543,7 @@ class AddReportUserProofsView(discord.ui.View):
                 embeds = [r_profile, add_case]
                 await message.edit(embeds=embeds, view=AddReportUserContributorView())
 
-    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="proofs")
+    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="addreportuserproofs:input")
     async def proofs_button(self, interaction, button):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -3595,7 +3595,7 @@ class AddReportUserProofsView(discord.ui.View):
                 await interaction.followup.send(f"Images received from {interaction.user.mention}.",
                                                 embeds=image_embeds)
 
-    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="show_proofs")
+    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="addreportuserproofs:showproofs")
     async def show_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3611,7 +3611,7 @@ class AddReportUserProofsView(discord.ui.View):
                 await interaction.followup.send(f"Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="show_alts_proofs")
+    @discord.ui.button(label="Show Alts Proofs", style=discord.ButtonStyle.grey, custom_id="addreportuserproofs:showaltsproofs")
     async def show_alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3627,7 +3627,7 @@ class AddReportUserProofsView(discord.ui.View):
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="cancel")
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="addreportuserproofs:cancel")
     async def cancel_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3751,7 +3751,7 @@ class UserVoteView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Agree", style=discord.ButtonStyle.green, custom_id="agree")
+    @discord.ui.button(label="Agree", style=discord.ButtonStyle.green, custom_id="uservote:agree")
     async def agree_button(self, interaction, button):
         await interaction.response.defer()
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -3992,7 +3992,7 @@ class UserVoteView(discord.ui.View):
                     embeds=embeds,
                     view=UserVoteView())
 
-    @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="disagree")
+    @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="uservote:disagree")
     async def disagree_button(self, interaction, button):
         await interaction.response.defer()
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -4118,7 +4118,7 @@ class UserVoteView(discord.ui.View):
                     content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                     embeds=embeds, view=UserVoteView())
 
-    @discord.ui.button(label="Remove Vote", style=discord.ButtonStyle.primary, custom_id="remove_vote")
+    @discord.ui.button(label="Remove Vote", style=discord.ButtonStyle.primary, custom_id="uservote:removevote")
     async def remove_vote_button(self, interaction, button):
         await interaction.response.defer()
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -4156,7 +4156,7 @@ class UserVoteView(discord.ui.View):
                     content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                     embeds=embeds, view=UserVoteView())
 
-    @discord.ui.button(label="Publish", style=discord.ButtonStyle.grey, custom_id="publish")
+    @discord.ui.button(label="Publish", style=discord.ButtonStyle.grey, custom_id="uservote:publish")
     async def publish_button(self, interaction, button):
         await interaction.response.defer()
         session = inprogresscol.find_one({"_id": interaction.message.id})
@@ -4826,7 +4826,7 @@ class ServerContributorView(discord.ui.View):
                                                add_case_list,
                                                title, case_title))
 
-    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="contributor")
+    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="servercontributor:input")
     async def contributor_button(self, interaction, button):
         #
         guild = self.guild
@@ -4844,7 +4844,7 @@ class ServerContributorView(discord.ui.View):
                                  case_title))
 class ServerContributorModal(discord.ui.Modal, title="Contributor"):
     contributor = discord.ui.TextInput(label="Contributor",
-                                       placeholder="Input contributor's User ID. If Anonymous, input n.", required=True,
+                                       placeholder="User ID / n if Anonymous.", required=True,
                                        style=discord.TextStyle.short)
 
     def __init__(self, guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title, case_title):
@@ -6138,7 +6138,7 @@ class AddReportServerContributorView(discord.ui.View):
                                                add_case_list,
                                                title, case_title))
 
-    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="contributor")
+    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="addreportservercontributor:input")
     async def contributor_button(self, interaction, button):
         #
         guild = self.guild
@@ -6156,7 +6156,7 @@ class AddReportServerContributorView(discord.ui.View):
                                  case_title))
 class AddReportServerContributorModal(discord.ui.Modal, title="Contributor"):
     contributor = discord.ui.TextInput(label="Contributor",
-                                       placeholder="Input contributor's User ID. If Anonymous, input n.", required=True,
+                                       placeholder="User ID / n if Anonymous.", required=True,
                                        style=discord.TextStyle.short)
 
     def __init__(self, guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title, case_title):
