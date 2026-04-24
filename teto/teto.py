@@ -401,6 +401,7 @@ async def on_ready():
     bot.add_view(AddReportUserReasonView())
     bot.add_view(AddReportUserContributorView())
     bot.add_view(AddReportUserProofsView())
+    bot.add_view(UserVoteView())
 
 
 @bot.event
@@ -1721,7 +1722,7 @@ class UserProofsView(discord.ui.View):
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accept")
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="userproofs:accept")
     async def accept_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1742,8 +1743,7 @@ class UserProofsView(discord.ui.View):
                 accepted_by = interaction.user
                 add_case_list[6] = f"<@{interaction.user.id}>"
                 #
-                inprogresscol.delete_one({"_id": interaction.message.id})
-                #
+
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1757,15 +1757,16 @@ class UserProofsView(discord.ui.View):
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
-                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
-                    embeds=embeds,
-                    view=UserVoteView())
+                    content=f"Report accepted by <@{accepted_by.id}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    embeds=embeds, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
+                inprogresscol.delete_one({"_id": interaction.message.id})
+                #
                 try:
                     inprogresscol.insert_one({"_id": vote_message_id,
                                               "user_id": user.id,
-                                              "requested_by": requested_by.id,
+                                              "requested_by": requested_by,
                                               "channel_id": channel_id,
                                               "message_id": interaction.message.id,
                                               "r_profile_list": r_profile_list,
@@ -2334,7 +2335,7 @@ class EditAltsOnlyView(discord.ui.View):
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accept")
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="editaltsonly:accept")
     async def accept_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -2351,7 +2352,6 @@ class EditAltsOnlyView(discord.ui.View):
             message = await bot.get_channel(channel_id).fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
-                inprogresscol.delete_one({"_id": interaction.message.id})
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 #
                 vote_channel = bot.get_channel(VOTE_CHANNEL)
@@ -2365,14 +2365,16 @@ class EditAltsOnlyView(discord.ui.View):
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
-                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    content=f"Report accepted by <@{accepted_by.id}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
                     embed=r_profile, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
+                inprogresscol.delete_one({"_id": interaction.message.id})
+                #
                 try:
                     inprogresscol.insert_one({"_id": vote_message_id,
                                               "user_id": user.id,
-                                              "requested_by": requested_by.id,
+                                              "requested_by": requested_by,
                                               "channel_id": channel_id,
                                               "message_id": interaction.message.id,
                                               "r_profile_list": r_profile_list,
@@ -2660,7 +2662,7 @@ class UserAppealView(discord.ui.View):
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accept")
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="userappeal:accept")
     async def accept_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -2679,7 +2681,6 @@ class UserAppealView(discord.ui.View):
             message = await bot.get_channel(channel_id).fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
-                inprogresscol.delete_one({"_id": interaction.message.id})
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
@@ -2695,14 +2696,16 @@ class UserAppealView(discord.ui.View):
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
-                    content=f"Appeal accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    content=f"Appeal accepted by <@{accepted_by.id}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
                     embeds=embeds, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
+                inprogresscol.delete_one({"_id": interaction.message.id})
+                #
                 try:
                     inprogresscol.insert_one({"_id": vote_message_id,
                                               "user_id": user.id,
-                                              "requested_by": requested_by.id,
+                                              "requested_by": requested_by,
                                               "channel_id": channel_id,
                                               "message_id": interaction.message.id,
                                               "r_profile_list": r_profile_list,
@@ -3639,7 +3642,7 @@ class AddReportUserProofsView(discord.ui.View):
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accept")
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="addreportuserproofs:accept")
     async def accept_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -3659,7 +3662,6 @@ class AddReportUserProofsView(discord.ui.View):
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 add_case_list[6] = f"<@{interaction.user.id}>"
-                inprogresscol.delete_one({"_id": interaction.message.id})
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3673,14 +3675,16 @@ class AddReportUserProofsView(discord.ui.View):
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
-                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    content=f"Report accepted by <@{accepted_by.id}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
                     embeds=embeds, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
+                inprogresscol.delete_one({"_id": interaction.message.id})
+                #
                 try:
                     inprogresscol.insert_one({"_id": vote_message_id,
                                               "user_id": user.id,
-                                              "requested_by": requested_by.id,
+                                              "requested_by": requested_by,
                                               "channel_id": channel_id,
                                               "message_id": interaction.message.id,
                                               "r_profile_list": r_profile_list,
@@ -3760,7 +3764,7 @@ class UserVoteView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             accepted_by = session["accepted_by"]
-            reason = session["reason"]
+            reason = session.get("reason")
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             agree_users, disagree_users = await handle_vote(interaction, session, "agree")
@@ -3771,7 +3775,6 @@ class UserVoteView(discord.ui.View):
                 user_id = user.id
                 user_query = {"_id": str(user_id)}
                 user_profile = userscol.find_one(user_query)
-                inprogresscol.delete_one({"_id": interaction.message.id})
                 if user_profile:  # if editing existing reported user
                     old_r_profile_list = user_profile["r_profile_list"]
                     cases = []
@@ -3818,6 +3821,7 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
 
                     elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                         add_case_list = add_case_list[0]
@@ -3877,6 +3881,7 @@ class UserVoteView(discord.ui.View):
                             content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.")
                         await bot.get_channel(channel_id).send(
                             f"Appeal on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
 
                     else:  # new case exists
                         #
@@ -3901,6 +3906,7 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
 
                 else:  # if new reported user
                     r_profile = format_user_r_profile(user, r_profile_list, title)
@@ -3927,6 +3933,7 @@ class UserVoteView(discord.ui.View):
                         content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
                     await bot.get_channel(channel_id).send(
                         f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
+                    inprogresscol.delete_one({"_id": interaction.message.id})
 
                 voters = agree_users + disagree_users
                 for voter in voters:
@@ -3936,7 +3943,7 @@ class UserVoteView(discord.ui.View):
                         voter_profile["votes"] = str(int(voter_profile["votes"]) + 1)
                         trusteduserscol.replace_one(voter_query, voter_profile)
 
-                staff_query = {"_id": str(requested_by.id)}
+                staff_query = {"_id": str(requested_by)}
                 staff_profile = trusteduserscol.find_one(staff_query)
                 staff_weekly_profile = staffweeklycol.find_one(staff_query)
                 if staff_profile:
@@ -3998,7 +4005,7 @@ class UserVoteView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             accepted_by = session["accepted_by"]
-            reason = session["reason"]
+            reason = session.get("reason")
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             agree_users, disagree_users = await handle_vote(interaction, session, "disagree")
@@ -4009,7 +4016,6 @@ class UserVoteView(discord.ui.View):
                 user_id = user.id
                 user_query = {"_id": str(user_id)}
                 user_profile = userscol.find_one(user_query)
-                inprogresscol.delete_one({"_id": interaction.message.id})
                 if user_profile:  # if editing existing reported user
                     if not add_case_list:  # only alts edited
                         no_of_cases = len(user_profile) - 2
@@ -4037,6 +4043,7 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.")
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
 
                     elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                         add_case_list = add_case_list[0]
@@ -4052,6 +4059,7 @@ class UserVoteView(discord.ui.View):
                             content=f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.")
                         await bot.get_channel(channel_id).send(
                             f"Appeal on `{user.id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
 
                     else:  # new case exists
                         r_profile = format_user_r_profile(user, r_profile_list, title)
@@ -4065,6 +4073,7 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.")
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
                 else:  # if new reported user
                     r_profile = format_user_r_profile(user, r_profile_list, title)
                     add_case = format_user_add_case(add_case_list, case_title)
@@ -4077,6 +4086,7 @@ class UserVoteView(discord.ui.View):
                         content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.")
                     await bot.get_channel(channel_id).send(
                         f"Report on `{user.id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
+                    inprogresscol.delete_one({"_id": interaction.message.id})
                 voters = agree_users + disagree_users
                 for voter in voters:
                     voter_query = {"_id": str(voter)}
@@ -4119,7 +4129,7 @@ class UserVoteView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             accepted_by = session["accepted_by"]
-            reason = session["reason"]
+            reason = session.get("reason")
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             agree_users, disagree_users = await handle_vote(interaction, session, "remove")
@@ -4160,7 +4170,7 @@ class UserVoteView(discord.ui.View):
             case_title = session["case_title"]
             agree_users = session["agree_users"]
             disagree_users = session["disagree_users"]
-            reason = session["reason"]
+            reason = session.get("reason")
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles
@@ -4171,7 +4181,6 @@ class UserVoteView(discord.ui.View):
                 user_id = user.id
                 user_query = {"_id": str(user_id)}
                 user_profile = userscol.find_one(user_query)
-                inprogresscol.delete_one({"_id": interaction.message.id})
                 if user_profile:  # if editing existing reported user
                     old_r_profile_list = user_profile["r_profile_list"]
                     cases = []
@@ -4210,14 +4219,14 @@ class UserVoteView(discord.ui.View):
                         await user_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
                         embeds = [r_profile, reason_embed]
                         await interaction.edit_original_response(
-                            content=f"**Report has been published.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
                         await message.edit(
-                            content=f"**Report has been published.** Report accepted by {accepted_by.mention}.")
+                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
                         await bot.get_channel(channel_id).send(
-                            f"Report on `{user.id}` has been published. {requested_by.mention} {accepted_by.mention}")
-
+                            f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
                     elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                         add_case_list = add_case_list[0]
                         appeal_case_number = next((k for k, v in user_profile.items() if v == add_case_list), None)
@@ -4275,7 +4284,7 @@ class UserVoteView(discord.ui.View):
                             content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.")
                         await bot.get_channel(channel_id).send(
                             f"Appeal on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
-
+                        inprogresscol.delete_one({"_id": interaction.message.id})
                     else:  # new case exists
                         add_case_list[6] = f"{interaction.user.mention}"
                         inprogresscol.update_one(
@@ -4304,7 +4313,7 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
-
+                        inprogresscol.delete_one({"_id": interaction.message.id})
                 else:  # if new reported user
                     add_case_list[6] = f"{interaction.user.mention}"
                     inprogresscol.update_one(
@@ -4329,14 +4338,14 @@ class UserVoteView(discord.ui.View):
                     await user_reports_channel.send(content=f"<@&{new_user_report_ping}>\nNew report on `{user.id}`",
                                                     embeds=embeds)
                     await interaction.edit_original_response(
-                        content=f"**Report has been published.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                        content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
                     await message.edit(
-                        content=f"**Report has been published.** Report accepted by {accepted_by.mention}.")
+                        content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
                     await bot.get_channel(channel_id).send(
-                        f"Report on `{user.id}` has been published. {requested_by.mention} {accepted_by.mention}")
-
+                        f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
+                    inprogresscol.delete_one({"_id": interaction.message.id})
                 voters = agree_users + disagree_users
                 for voter in voters:
                     voter_query = {"_id": str(voter)}
@@ -4345,7 +4354,7 @@ class UserVoteView(discord.ui.View):
                         voter_profile["votes"] = str(int(voter_profile["votes"]) + 1)
                         trusteduserscol.replace_one(voter_query, voter_profile)
 
-                staff_query = {"_id": str(requested_by.id)}
+                staff_query = {"_id": str(requested_by)}
                 staff_profile = trusteduserscol.find_one(staff_query)
                 staff_weekly_profile = staffweeklycol.find_one(staff_query)
                 if staff_profile:
@@ -4355,7 +4364,7 @@ class UserVoteView(discord.ui.View):
                     staff_weekly_profile["weekly_reports"] = str(int(staff_weekly_profile["weekly_reports"]) + 1)
                     staffweeklycol.replace_one(staff_query, staff_weekly_profile)
 
-                sr_query = {"_id": str(accepted_by.id)}
+                sr_query = {"_id": str(accepted_by)}
                 sr_profile = trusteduserscol.find_one(sr_query)
                 sr_weekly_profile = staffweeklycol.find_one(sr_query)
                 if sr_profile:
@@ -5001,7 +5010,7 @@ class ServerProofsView(discord.ui.View):
         if requested_by == interaction.user or any(role.id == sr_role for role in interaction.user.roles):
             await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accept")
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="serverproofs:accept")
     async def accept_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5450,7 +5459,7 @@ class EditOwnerOnlyView(discord.ui.View):
         if requested_by == interaction.user or any(role.id == sr_role for role in interaction.user.roles):
             await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accept")
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="editowneronly:accept")
     async def accept_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5629,7 +5638,7 @@ class ServerAppealView(discord.ui.View):
         if requested_by == interaction.user or any(role.id == sr_role for role in interaction.user.roles):
             await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accept")
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="serverappeal:accept")
     async def accept_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6313,7 +6322,7 @@ class AddReportServerProofsView(discord.ui.View):
         if requested_by == interaction.user or any(role.id == sr_role for role in interaction.user.roles):
             await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
-    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accept")
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="addreportserverproofs:accept")
     async def accept_button(self, interaction, button):
         await interaction.response.defer()
         #
