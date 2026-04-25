@@ -8,7 +8,6 @@ import pymongo
 
 import io
 import aiohttp
-import asyncio
 import re
 
 import datetime
@@ -101,16 +100,8 @@ async def on_member_update(before, after):
                 try:
                     await target_member.add_roles(target_role, reason="tri supporter role synced from TRI Archive.")
                 except Exception: pass
-    if len(before.roles) < len(after.roles):
-        # Find the role that was added
-        added_roles = set(after.roles) - set(before.roles)
-        if tri_supporter in added_roles:
-            # You can add specific logic here based on the role name or ID
-            print(f"{after.name} has been assigned the role: {role.name}")
-
 
 # loop tasks
-
 
 @tasks.loop(time=datetime.time(hour=0, minute=0))
 async def weekly_quota():
@@ -251,7 +242,6 @@ async def weekly_quota():
         await quota_channel.send("## _ _　　　weekly summary", embed=summary)
 
 
-
 @bot.event
 async def on_ready():
     bot.add_view(StaffGuideView())
@@ -262,7 +252,6 @@ async def on_ready():
 
 
 # text commands
-
 
 @bot.command()
 async def help(ctx):
@@ -293,28 +282,6 @@ async def help(ctx):
 `lbr`　┈　Sends the current week's reviews leaderboard.
         """
         await ctx.send(embed=embed)
-
-
-def user_info(user):
-    profile = discord.Embed()
-    profile.set_thumbnail(url=f"{user.display_avatar}")
-    profile.description = f"{user.name}\n`{user.id}`\n{user.mention}"
-    profile.description += f"\n**Account Created:** <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
-    profile.set_footer(text="✦　Use ,c to check if user is reported, unreported or trusted.")
-    return profile
-
-@bot.command()
-async def ui(ctx, *, to_check: str = None):
-    if to_check == None:
-        user = ctx.author
-        await ctx.reply(embed=user_info(user))
-    else:
-        try:
-            user = await bot.fetch_user(int(to_check.strip('<@>')))
-        except Exception:
-            await ctx.reply("Please provide a valid user ID.")
-        else:
-            await ctx.reply(embed=user_info(user))
 
 tags_options = [
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="scammer", value="scammer"),
@@ -380,8 +347,6 @@ class TagsView(discord.ui.View):
             """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
-
-
 closing_options = [
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Report", value="report"),
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Appeal", value="appeal"),
@@ -389,7 +354,6 @@ closing_options = [
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Others", value="others"),
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒SR+", value="sr+"),
 ]
-
 
 @bot.command(name='cl', help="Sends closing guide.")
 async def cl(ctx, *, string: str = None):
@@ -401,8 +365,6 @@ async def cl(ctx, *, string: str = None):
 ﹒please merge identical reasons.
 ﹒for mass reports, you may wish to use `,pr` after reports are published to retrieve IDs easily.
         """), view=ClosingView())
-
-
 
 class ClosingView(discord.ui.View):
     def __init__(self):
@@ -451,7 +413,6 @@ class ClosingView(discord.ui.View):
 ﹒ask reporter for closing and close the ticket.
 """), ephemeral=True)
 
-
 @bot.command(name='getids', help="Extracts valid user IDs from the string provided.")
 async def getids(ctx, *, string: str = None):
     if string:
@@ -468,7 +429,6 @@ async def getids(ctx, *, string: str = None):
         else:
             await ctx.reply(f"No valid user IDs found.")
 
-
 @bot.command(name="ban", help="Pings ban perms.")
 @commands.has_any_role(staff_role, tethys_staff_role, professional_mm_role, professional_pilot_role)
 async def ban(ctx):
@@ -476,8 +436,6 @@ async def ban(ctx):
         await ctx.reply(f"<@&{ban_perms}>")
     elif ctx.guild.id == tethys:
         await ctx.reply(f"<@&{tethys_ban_perms}>")
-
-
 
 @bot.command(name='rn')
 @commands.cooldown(2, 600, commands.BucketType.channel)
@@ -499,7 +457,6 @@ async def rn_error(ctx, error):
         return await ctx.send(f"This command is on cooldown. Retry in {round(remaining)} seconds.", ephemeral=True)
     raise error
 
-
 @bot.command(name='fm', help="Sends a jump url to the first message in the thread.")
 @commands.has_any_role(staff_role, tethys_staff_role)
 async def fm(ctx):
@@ -511,9 +468,6 @@ async def fm(ctx):
             await ctx.reply(f"First message: [Jump]({msg.jump_url})")
     else:
         await ctx.reply("This command can only be used in a thread.")
-
-
-
 
 @bot.command(name='lb', help="Sends the current week's reports leaderboard.")
 @commands.has_any_role(staff_role)
@@ -652,14 +606,11 @@ async def lbr(ctx):
     embeds=[o5_lb, adm_lb, sr_lb]
     await ctx.reply("## _ _　　　reviews leaderboard", embeds=embeds)
 
-
-
 class StaffRulesView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(discord.ui.Button(label="Staff Legal Codex", style=discord.ButtonStyle.grey,
                                         url="https://docs.google.com/document/d/18GPfRrvzJ4b1d6cJ_yLyd1HELJbE4y9PqBH5-FVQktc/"))
-
 
 staff_guide_options = [
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Trial", value="trial"),
@@ -763,7 +714,6 @@ class StaffGuideView(discord.ui.View):
                 """), ephemeral=True)
 
 
-
 # slash commands
 
 @bot.tree.command(name="staff_rules", description="Sends staff rules.")
@@ -802,7 +752,6 @@ async def staff_rules(interaction: discord.Interaction):
     await interaction.response.send_message("Staff Rules have been sent.", ephemeral=True)
 
 
-
 @bot.tree.command(name="staff_guide", description="Sends staff guide.")
 @app_commands.checks.has_role(adm_role)
 async def staff_guide(interaction: discord.Interaction):
@@ -811,7 +760,6 @@ async def staff_guide(interaction: discord.Interaction):
 　　`,help` for list of TRI bots commands.
 """), view=StaffGuideView())
     await interaction.response.send_message("Staff Guide has been sent.", ephemeral=True)
-
 
 
 @bot.tree.command(name='anon_say', description='Miku will speak on your behalf.')
@@ -846,31 +794,6 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
     except Exception:
         await interaction.followup.send(f"Unable to send message.", ephemeral=True)
 
-@bot.tree.command(name='ban_log', description='Post a ban log.')
-@app_commands.describe(user_id="User ID of banned user(s).", reason="Reason.", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
-@app_commands.checks.has_role(ban_perms)
-async def ban_log(interaction: discord.Interaction, user_id: str, reason: str, image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
-    await interaction.response.defer(ephemeral=True)
-    try:
-        images = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if img is not None]
-        files_to_send = []
-        async with aiohttp.ClientSession() as session:
-            for img in images:
-                if img.content_type and img.content_type.startswith('image/'):
-                    async with session.get(img.url) as resp:
-                        if resp.status == 200:
-                            data = io.BytesIO(await resp.read())
-                            files_to_send.append(discord.File(data, filename=img.filename))
-        if files_to_send:
-            await interaction.channel.send(content=f"﹒　User ID: {user_id}\n﹒　Reason: {reason}\n﹒　Proof:",
-                                           files=files_to_send)
-            await interaction.followup.send("Your message has been sent.", ephemeral=True)
-        else:
-            await interaction.followup.send(f"Please attach proof(s).", ephemeral=True)
-    except Exception:
-        await interaction.followup.send(f"Unable to send message.", ephemeral=True)
-
-
 @bot.tree.command(name='create_training', description='Creates training thread.')
 @app_commands.describe(name="Name of trainee", user_id="User ID of trainee")
 @app_commands.checks.has_role(adm_role)
@@ -889,10 +812,7 @@ async def create_training(interaction: discord.Interaction, name: str, user_id: 
             await interaction.response.send_message(f"Created a new private thread: {new_thread.jump_url}", ephemeral=True)
             await new_thread.send(f"{user.mention} <@&{staff_trainer}>")
 
-
 #
-
-
 
 @bot.command()
 async def sync(ctx: commands.Context):
