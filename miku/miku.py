@@ -471,7 +471,9 @@ async def fm(ctx):
 
 @bot.command(name='lb', help="Sends the current week's reports leaderboard.")
 @commands.has_any_role(staff_role)
-async def lb(ctx):
+async def lb(ctx, *args):
+    if args:
+        return
     o5 = []
     adm = []
     sr = []
