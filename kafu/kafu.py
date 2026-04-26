@@ -428,6 +428,17 @@ async def adm(ctx):
     if adm_role:
         await ctx.reply(f"{adm_role}")
 
+@bot.command(name="revive", help="Pings revive.")
+async def revive(ctx):
+    guild_id = ctx.guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if not server_info:
+        return
+    revive_ping = server_info.get("revive_ping")
+    if revive_ping:
+        await ctx.reply(f"{revive_ping}")
+
 @bot.command(name="lb", help="Sends the current month’s leaderboard.")
 async def lb(ctx, *, category: str=None):
     guild_id = ctx.guild.id
@@ -444,6 +455,8 @@ async def lb(ctx, *, category: str=None):
         )
         desc = ""
         for rank, (user_id, data) in enumerate(sorted_staff, start=1):
+            if rank > 50:
+                break
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
             desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
@@ -460,6 +473,8 @@ async def lb(ctx, *, category: str=None):
         )
         desc = ""
         for rank, (user_id, data) in enumerate(sorted_mms, start=1):
+            if rank > 50:
+                break
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
             desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
@@ -476,6 +491,8 @@ async def lb(ctx, *, category: str=None):
         )
         desc = ""
         for rank, (user_id, data) in enumerate(sorted_pilots, start=1):
+            if rank > 50:
+                break
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
             desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
@@ -1380,7 +1397,7 @@ async def dismiss_error(interaction: discord.Interaction, error: app_commands.Ap
 @bot.tree.command(name="setup")
 @app_commands.checks.has_permissions(administrator=True)
 async def setup(interaction: discord.Interaction, topic: Optional[Literal[
-    "bans warns channel", "transcripts channel", "staff lb channel", "services lb channel",
+    "bans warns channel", "transcripts channel", "staff lb channel", "services lb channel", "revive ping",
     "staff roles", "staff role", "staff ping", "staff break", "adm role", "ban perms",
     "mm roles", "mm role", "mm ping", "mm supervisor", "mm trainer", "mm break", "mm vouch channel",
     "pilot roles", "pilot role", "pilot ping", "pilot supervisor", "pilot trainer", "pilot break", "pilot vouch channel"
@@ -1397,6 +1414,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         general_embed.add_field(name="transcripts channel", value=server_info.get("transcripts_channel", "unset"), inline=False) #
         general_embed.add_field(name="staff lb channel", value=server_info.get("staff_lb_channel", "unset"), inline=False) #
         general_embed.add_field(name="services lb channel", value=server_info.get("services_lb_channel", "unset"), inline=False) #
+        general_embed.add_field(name="revive ping", value=server_info.get("services_lb_channel", "unset"), inline=False)  #
         staff_embed = discord.Embed(colour=0xffffff)
         staff_embed.add_field(name="staff roles", value=server_info.get("staff_roles", "unset"), inline=False) #
         staff_embed.add_field(name="staff role", value=server_info.get("staff_role", "unset"), inline=False) #
@@ -1456,6 +1474,16 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(
                 f"The **services lb channel** has been set to {services_lb_channel}.")
+    if topic == "revive ping" and desc is not None:
+        revive_ping = desc.strip("<@&>")
+        role = interaction.guild.get_role(int(revive_ping))
+        if role:
+            revive_ping = f"<@&{role.id}>"
+            server_info["revive_ping"] = revive_ping
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**revive ping** has been set to {revive_ping}.")
+        else:
+            await interaction.response.send_message(f"Invalid role.")
     if topic == "staff roles" and desc is not None:
         staff_roles = desc.replace("<@&", "").replace(">", "").split()
         valid_roles = []
