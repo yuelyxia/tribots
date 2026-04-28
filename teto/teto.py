@@ -7421,7 +7421,6 @@ async def remove_trusted(interaction: discord.Interaction, server: str):
             else:
                 await interaction.response.send_message(f"`{guild_id}` is not in Trusted Servers.")
 
-
 # sync
 @bot.command()
 async def sync(ctx: commands.Context):
@@ -7433,6 +7432,5 @@ async def sync(ctx: commands.Context):
                                   name=f"{reports_count} reports."
                               )
                               )
-
 
 bot.run(TOKEN)
