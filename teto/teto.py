@@ -4387,7 +4387,7 @@ class NewServerReportView(discord.ui.View):
         super().__init__(timeout=None)
         self.guild = guild
         self.requested_by = requested_by
-    @discord.ui.button(label="Report", style=discord.ButtonStyle.red, custom_id="report")
+    @discord.ui.button(label="Report", style=discord.ButtonStyle.red, custom_id="newserverreport:report")
     async def report_button(self, interaction, button):
         #
         guild = self.guild
@@ -4480,7 +4480,7 @@ class ServerOwnerView(discord.ui.View):
         self.title = title
         self.case_title = case_title
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="owner>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="serverowner:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4503,7 +4503,7 @@ class ServerOwnerView(discord.ui.View):
                                                     add_case_list,
                                                     title, case_title))
 
-    @discord.ui.button(label="Owner", style=discord.ButtonStyle.green, custom_id="owner")
+    @discord.ui.button(label="Owner", style=discord.ButtonStyle.green, custom_id="serverowner:input")
     async def reason_button(self, interaction, button):
         #
         guild = self.guild
@@ -4576,7 +4576,7 @@ class ServerTagsView(discord.ui.View):
         self.title = title
         self.case_title = case_title
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<tags")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="servertags:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4598,7 +4598,7 @@ class ServerTagsView(discord.ui.View):
                                view=ServerOwnerView(guild, requested_by, channel_id, message_id, r_profile_list,
                                                    add_case_list, title, case_title))
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="tags>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="servertags:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4620,7 +4620,7 @@ class ServerTagsView(discord.ui.View):
                                view=ServerReasonView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list,
                                               title, case_title))
 
-    @discord.ui.select(options=server_tags_options, placeholder="Select Tag(s)...", custom_id="tags",
+    @discord.ui.select(options=server_tags_options, placeholder="Select Tag(s)...", custom_id="servertags:select",
                        max_values=len(server_tags_options))
     async def select_callback(self, interaction, select):
         await interaction.response.defer()
@@ -4666,7 +4666,7 @@ class ServerReasonView(discord.ui.View):
         self.title = title
         self.case_title = case_title
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<reason")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="serverreason:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4688,7 +4688,7 @@ class ServerReasonView(discord.ui.View):
                                view=ServerTagsView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list,
                                               title, case_title))
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="reason>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="serverreason:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4711,7 +4711,7 @@ class ServerReasonView(discord.ui.View):
                                                     add_case_list,
                                                     title, case_title))
 
-    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="reason")
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="serverreason:input")
     async def reason_button(self, interaction, button):
         #
         guild = self.guild
@@ -4779,7 +4779,7 @@ class ServerContributorView(discord.ui.View):
         self.case_title = case_title
 
     @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey,
-                       custom_id="<contributor")
+                       custom_id="servercontributor:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4803,7 +4803,7 @@ class ServerContributorView(discord.ui.View):
                                                title, case_title))
 
     @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey,
-                       custom_id="contributor>")
+                       custom_id="servercontributor:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4903,7 +4903,7 @@ class ServerProofsView(discord.ui.View):
         self.title = title
         self.case_title = case_title
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<proofs")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="serverproofs:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4925,7 +4925,7 @@ class ServerProofsView(discord.ui.View):
                                view=ServerContributorView(guild, requested_by, channel_id, message_id, r_profile_list,
                                                     add_case_list, title, case_title))
 
-    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="proofs")
+    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="serverproofs:input")
     async def proofs_button(self, interaction, button):
         #
         guild = self.guild
@@ -4979,7 +4979,7 @@ class ServerProofsView(discord.ui.View):
             await interaction.followup.send(f"Images received from {interaction.user.mention}.",
                                             embeds=image_embeds)
 
-    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="show_proofs")
+    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="serverproofs:showproofs")
     async def show_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4997,7 +4997,7 @@ class ServerProofsView(discord.ui.View):
             await interaction.followup.send(f"Proofs for `{guild.id}`",
                                             embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="cancel")
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="serverproofs:cancel")
     async def cancel_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5063,7 +5063,7 @@ class EditServerReportView(discord.ui.View):
         self.requested_by = requested_by
         self.current_case = current_case
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="prev")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="editserverreport:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5107,7 +5107,7 @@ class EditServerReportView(discord.ui.View):
                                                          view=EditServerReportView(guild, server_profile, requested_by,
                                                                                  current_case))
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="next")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="editserverreport:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5150,7 +5150,7 @@ class EditServerReportView(discord.ui.View):
                                                          view=EditServerReportView(guild, server_profile, requested_by,
                                                                                  current_case))
 
-    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="see_proofs")
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="editserverreport:seeproofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5168,7 +5168,7 @@ class EditServerReportView(discord.ui.View):
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{guild.id}`", embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Edit Owner", style=discord.ButtonStyle.primary, custom_id="edit_owner", row=1)
+    @discord.ui.button(label="Edit Owner", style=discord.ButtonStyle.primary, custom_id="editserverreport:editowner", row=1)
     async def edit_owner_button(self, interaction, button):
         #
         guild = self.guild
@@ -5238,7 +5238,7 @@ class EditServerReportView(discord.ui.View):
         else:
             await interaction.followup.send("You do not have permission to use this button.", ephemeral=True)
 
-    @discord.ui.button(label="Add Report", style=discord.ButtonStyle.red, custom_id="add_report", row=1)
+    @discord.ui.button(label="Add Report", style=discord.ButtonStyle.red, custom_id="editserverreport:addreport", row=1)
     async def add_report_button(self, interaction, button):
         #
         guild = self.guild
@@ -5328,7 +5328,7 @@ class EditServerReportView(discord.ui.View):
         else:
             await interaction.followup.send("You do not have permission to use this button.", ephemeral=True)
 
-    @discord.ui.button(label="Appeal", style=discord.ButtonStyle.green, custom_id="appeal", row=1)
+    @discord.ui.button(label="Appeal", style=discord.ButtonStyle.green, custom_id="editserverreport:appeal", row=1)
     async def appeal_button(self, interaction, button):
         #
         guild = self.guild
@@ -5416,7 +5416,7 @@ class EditOwnerOnlyView(discord.ui.View):
         self.title = title
         self.reason = reason
 
-    @discord.ui.button(label="Edit Owner", style=discord.ButtonStyle.green, custom_id="edit_owner")
+    @discord.ui.button(label="Edit Owner", style=discord.ButtonStyle.green, custom_id="editowneronly:editowner")
     async def edit_owner_button(self, interaction, button):
         #
         guild = self.guild
@@ -5431,7 +5431,7 @@ class EditOwnerOnlyView(discord.ui.View):
             await interaction.response.send_modal(
                 EditOwnerOnlyModal(guild, requested_by, channel_id, message_id, r_profile_list, title, reason))
 
-    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="reason")
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="editowneronly:reason")
     async def reason_button(self, interaction, button):
         #
         guild = self.guild
@@ -5446,7 +5446,7 @@ class EditOwnerOnlyView(discord.ui.View):
             await interaction.response.send_modal(
                 OwnerReasonModal(guild, requested_by, channel_id, message_id, r_profile_list, title, reason))
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="cancel")
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="editowneronly:cancel")
     async def cancel_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5588,7 +5588,7 @@ class ServerAppealView(discord.ui.View):
         self.case_title = case_title
         self.reason = reason
 
-    @discord.ui.button(label="Edit Owner", style=discord.ButtonStyle.green, custom_id="edit_owner")
+    @discord.ui.button(label="Edit Owner", style=discord.ButtonStyle.green, custom_id="serverappeal:editowner")
     async def edit_owner_button(self, interaction, button):
         #
         guild = self.guild
@@ -5607,7 +5607,7 @@ class ServerAppealView(discord.ui.View):
                                    case_title, reason))
 
 
-    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="reason")
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="serverappeal:reason")
     async def reason_button(self, interaction, button):
         #
         guild = self.guild
@@ -5625,7 +5625,7 @@ class ServerAppealView(discord.ui.View):
                 ServerAppealReasonModal(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
                                   case_title, reason))
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="cancel")
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="serverappeal:cancel")
     async def cancel_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5780,7 +5780,7 @@ class AddReportOwnerView(discord.ui.View):
         self.title = title
         self.case_title = case_title
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="owner>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportowner:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5802,8 +5802,8 @@ class AddReportOwnerView(discord.ui.View):
                                view=AddReportServerTagsView(guild, requested_by, channel_id, message_id, r_profile_list,
                                                             add_case_list, title, case_title))
 
-    @discord.ui.button(label="Edit Owner", style=discord.ButtonStyle.green, custom_id="edit_owner")
-    async def add_alts_button(self, interaction, button):
+    @discord.ui.button(label="Edit Owner", style=discord.ButtonStyle.green, custom_id="addreportowner:editowner")
+    async def edit_owner_button(self, interaction, button):
         #
         guild = self.guild
         requested_by = self.requested_by
@@ -5876,7 +5876,7 @@ class AddReportServerTagsView(discord.ui.View):
         self.title = title
         self.case_title = case_title
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<tags")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportservertags:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5898,7 +5898,7 @@ class AddReportServerTagsView(discord.ui.View):
                                view=AddReportOwnerView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list,
                                              title, case_title))
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="tags>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportservertags:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5920,7 +5920,7 @@ class AddReportServerTagsView(discord.ui.View):
                                view=AddReportServerReasonView(guild, requested_by, channel_id, message_id,
                                                               r_profile_list, add_case_list, title, case_title))
 
-    @discord.ui.select(options=server_tags_options, placeholder="Select Tag(s)...", custom_id="tags",
+    @discord.ui.select(options=server_tags_options, placeholder="Select Tag(s)...", custom_id="addreportservertags:select",
                        max_values=len(server_tags_options))
     async def select_callback(self, interaction, select):
         await interaction.response.defer()
@@ -5978,7 +5978,7 @@ class AddReportServerReasonView(discord.ui.View):
         self.title = title
         self.case_title = case_title
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<reason")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportserverreason:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6000,7 +6000,7 @@ class AddReportServerReasonView(discord.ui.View):
                                view=AddReportServerTagsView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list,
                                               title, case_title))
 
-    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="reason>")
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportserverreason:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6023,7 +6023,7 @@ class AddReportServerReasonView(discord.ui.View):
                                                     add_case_list,
                                                     title, case_title))
 
-    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="reason")
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="addreportserverreason:reason")
     async def reason_button(self, interaction, button):
         #
         guild = self.guild
@@ -6091,7 +6091,7 @@ class AddReportServerContributorView(discord.ui.View):
         self.case_title = case_title
 
     @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey,
-                       custom_id="<contributor")
+                       custom_id="addreportservercontributor:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6115,7 +6115,7 @@ class AddReportServerContributorView(discord.ui.View):
                                                title, case_title))
 
     @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey,
-                       custom_id="contributor>")
+                       custom_id="addreportservercontributor:next")
     async def next_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6215,7 +6215,7 @@ class AddReportServerProofsView(discord.ui.View):
         self.title = title
         self.case_title = case_title
 
-    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="<proofs")
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportserverproofs:prev")
     async def prev_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6237,7 +6237,7 @@ class AddReportServerProofsView(discord.ui.View):
                                view=ServerContributorView(guild, requested_by, channel_id, message_id, r_profile_list,
                                                     add_case_list, title, case_title))
 
-    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="proofs")
+    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="addreportserverproofs:input")
     async def proofs_button(self, interaction, button):
         #
         guild = self.guild
@@ -6291,7 +6291,7 @@ class AddReportServerProofsView(discord.ui.View):
             await interaction.followup.send(f"Images received from {interaction.user.mention}.",
                                             embeds=image_embeds)
 
-    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="show_proofs")
+    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="addreportserverproofs:showproofs")
     async def show_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6309,7 +6309,7 @@ class AddReportServerProofsView(discord.ui.View):
             await interaction.followup.send(f"Proofs for `{guild.id}`",
                                             embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="cancel")
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="addreportserverproofs:cancel")
     async def cancel_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6384,7 +6384,7 @@ class ServerVoteView(discord.ui.View):
         self.disagree_users = disagree_users
         self.reason = reason
 
-    @discord.ui.button(label="Agree", style=discord.ButtonStyle.green, custom_id="agree")
+    @discord.ui.button(label="Agree", style=discord.ButtonStyle.green, custom_id="servervote:agree")
     async def agree_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6614,7 +6614,7 @@ class ServerVoteView(discord.ui.View):
                 view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
                                   case_title, accepted_by, agree_users, disagree_users))
 
-    @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="disagree")
+    @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="servervote:disagree")
     async def disagree_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6761,7 +6761,7 @@ class ServerVoteView(discord.ui.View):
                 view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
                                     case_title, accepted_by, agree_users, disagree_users))
 
-    @discord.ui.button(label="Remove Vote", style=discord.ButtonStyle.primary, custom_id="remove_vote")
+    @discord.ui.button(label="Remove Vote", style=discord.ButtonStyle.primary, custom_id="servervote:removevote")
     async def remove_vote_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -6822,7 +6822,7 @@ class ServerVoteView(discord.ui.View):
                 view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
                                     case_title, accepted_by, agree_users, disagree_users))
 
-    @discord.ui.button(label="Publish", style=discord.ButtonStyle.grey, custom_id="publish")
+    @discord.ui.button(label="Publish", style=discord.ButtonStyle.grey, custom_id="servervote:publish")
     async def publish_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -7231,12 +7231,12 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
         pass
     else:
         user_id = user.id
-        member = interaction.guild.get_member(int(user_id))
-        if not member: return
         user_query = {"_id": str(user_id)}
         trusteduser_profile = trusteduserscol.find_one(user_query)
         if trusteduser_profile:
             if category == "staff":
+                member = interaction.guild.get_member(int(user_id))
+                if not member: return
                 trusteduser_profile["current_staff"] = "1"
                 trusteduser_profile["staff"] = "1"
                 trusteduserscol.replace_one(user_query, trusteduser_profile)
@@ -7264,6 +7264,8 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
                 await interaction.response.send_message(f"Please enter a valid role.", ephemeral=True)
         else:
             if category == "staff":
+                member = interaction.guild.get_member(int(user_id))
+                if not member: return
                 new_user = {
                     "_id": str(user.id),
                     "current_staff": "1",
