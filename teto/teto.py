@@ -3812,10 +3812,9 @@ class UserVoteView(discord.ui.View):
                                                         embed=r_profile)
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await user_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
-                        embeds = [r_profile, reason_embed]
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                            embeds=r_profile, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
                         await message.edit(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
@@ -3968,11 +3967,9 @@ class UserVoteView(discord.ui.View):
 
             #
             if not add_case_list:  # only alts edited
-                reason_embed = discord.Embed(title="Reason", description=reason)
-                embeds = [r_profile, reason_embed]
                 await interaction.edit_original_response(
                     content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=UserVoteView())
+                    embed=r_profile, view=UserVoteView())
 
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
@@ -4033,11 +4030,9 @@ class UserVoteView(discord.ui.View):
                         all_tags_list = sort_user_tags(all_tags_list)
                         title = all_tags_list[0]
                         r_profile = format_user_r_profile(user, r_profile_list, title)
-                        reason_embed = discord.Embed(title="Reason", description=reason)
-                        embeds = [r_profile, reason_embed]
                         await interaction.edit_original_response(
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                            embed=r_profile, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
                         await message.edit(
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.")
@@ -4098,11 +4093,9 @@ class UserVoteView(discord.ui.View):
                 await interaction.channel.edit(name=new_name, archived=True)
                 return
             if not add_case_list:  # only alts edited
-                reason_embed = discord.Embed(title="Reason", description=reason)
-                embeds = [r_profile, reason_embed]
                 await interaction.edit_original_response(
                     content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=UserVoteView())
+                    embed=r_profile, view=UserVoteView())
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -4217,10 +4210,9 @@ class UserVoteView(discord.ui.View):
                                                         embed=r_profile)
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await user_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
-                        embeds = [r_profile, reason_embed]
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                            embed=r_profile, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
                         await message.edit(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
@@ -6585,12 +6577,9 @@ class ServerVoteView(discord.ui.View):
 
         #
         if add_case_list == []:  # only alts edited
-            reason_embed = discord.Embed(title="Reason", description=reason)
-            embeds = [r_profile, reason_embed]
             await interaction.edit_original_response(
                 content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                embeds=embeds,
-                view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
+                embed=r_profile, view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
                                     case_title, accepted_by, agree_users, disagree_users, reason))
 
         elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
@@ -6731,12 +6720,9 @@ class ServerVoteView(discord.ui.View):
             return
         #
         if not add_case_list:  # only alts edited
-            reason_embed = discord.Embed(title="Reason", description=reason)
-            embeds = [r_profile, reason_embed]
             await interaction.edit_original_response(
                 content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                embeds=embeds,
-                view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
+                embed=r_profile, view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
                               case_title,
                               accepted_by, agree_users, disagree_users, reason))
 
