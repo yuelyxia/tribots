@@ -2381,6 +2381,7 @@ class EditAltsOnlyView(discord.ui.View):
                                               "add_case_list": add_case_list,
                                               "title": title,
                                               "case_title": case_title,
+                                              "reason": reason,
                                               "vote_channel_id": vote_channel_id,
                                               "accepted_by": accepted_by.id,
                                               "agree_users": agree_users,
