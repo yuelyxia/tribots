@@ -656,6 +656,9 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
         await interaction.response.send_message("Invalid timezone.", ephemeral=True)
         return
     guild_id = interaction.guild.id
+    if interaction.guild is None:
+        await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
+        return
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one(server_query)
     if not server_info:
