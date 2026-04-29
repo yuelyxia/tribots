@@ -7215,7 +7215,10 @@ def is_int(value):
     except (ValueError, TypeError):
         return False
 
-@bot.tree.command(name="set_points")
+settings = app_commands.Group(name="set", description="Set.")
+bot.tree.add_command(settings)
+
+@settings.command(name="points")
 @app_commands.checks.has_role(adm_role)
 async def set_points(interaction: discord.Interaction, user: str, category: Literal["reports", "reviews", "votes"], timeframe: Literal["weekly", "alltime"], value: str):
     if not is_int(value):
@@ -7407,10 +7410,13 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
                 "trader"] == "0":
                 trusteduserscol.delete_one(user_query)
 
-@bot.tree.command(name="add_trusted", description="Add a server as trusted.")
+trusted = app_commands.Group(name="trusted", description="Manage trusted servers.")
+bot.tree.add_command(trusted)
+
+@trusted.command(name="add", description="Add a server as trusted.")
 @app_commands.describe(server="Server invite")
 @app_commands.checks.has_role(o5_role)
-async def add_trusted(interaction: discord.Interaction, server: str):
+async def trusted_add(interaction: discord.Interaction, server: str):
     try:
         invite = await bot.fetch_invite(server)
     except discord.NotFound:
@@ -7430,10 +7436,10 @@ async def add_trusted(interaction: discord.Interaction, server: str):
             trustedserverscol.insert_one(server_query)
             await interaction.response.send_message(f"`{guild_id}` has been added to Trusted Servers.")
 
-@bot.tree.command(name="remove_trusted", description="Remove a server from Trusted Servers.")
+@trusted.command(name="remove", description="Remove a server from Trusted Servers.")
 @app_commands.describe(server="Server invite or ID")
 @app_commands.checks.has_role(o5_role)
-async def remove_trusted(interaction: discord.Interaction, server: str):
+async def trusted_remove(interaction: discord.Interaction, server: str):
     server_query = {"_id": server}
     trustedserver_profile = trustedserverscol.find_one(server_query)
     if trustedserver_profile:

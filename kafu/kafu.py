@@ -674,7 +674,7 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
             uid = str(interaction.user.id)
             staff = server_info.get("staff", {})
             if uid in staff:
-                staff["uid"]["timezone"] = timezone
+                staff[uid]["timezone"] = timezone
             servers.replace_one({"_id": str(interaction.guild.id)}, server_info)
             now = datetime.datetime.now(ZoneInfo(timezone))
             offset = now.utcoffset()
