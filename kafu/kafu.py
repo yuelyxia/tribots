@@ -11,6 +11,8 @@ import aiohttp
 import asyncio
 import re
 
+from zoneinfo import available_timezones, ZoneInfo
+
 import datetime
 import time
 
@@ -49,6 +51,8 @@ async def on_ready():
     bot.add_view(MMFormsView())
     bot.add_view(MMRisksView())
     quota_check.start()
+
+TIMEZONES = sorted(available_timezones())
 
 # loop tasks
 
@@ -267,6 +271,8 @@ async def mm(ctx, *, desc: str=None):
         await ctx.send(view=MMView())
     if desc == "forms":
         await ctx.send("> By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.", view=MMFormsView())
+    if desc == "risks":
+        await ctx.send(view=MMRisksView())
 
 class MMView(discord.ui.View):
     def __init__(self):
@@ -533,7 +539,7 @@ async def rn_error(ctx, error):
         return await ctx.send(f"This command is on cooldown. Retry in {round(remaining)} seconds.", ephemeral=True)
     raise error
 
-def user_info(user, staff_data, mm_data, pilot_data):
+def user_info(user, staff_data=None, mm_data=None, pilot_data=None):
     profile = discord.Embed()
     profile.set_thumbnail(url=f"{user.display_avatar}")
     profile.description = f"{user.name}\n`{user.id}`\n{user.mention}"
@@ -572,7 +578,7 @@ async def profile(ctx, user:str = None):
     guild_id = str(ctx.guild.id)
     server_info = servers.find_one({"_id": guild_id})
     if not server_info:
-        await ctx.send("Server not whitelisted.")
+        await ctx.reply(embed=user_info(user))
         return
     uid = str(user.id)
     staff = server_info.get("staff", {})
@@ -596,6 +602,85 @@ async def profile(ctx, user:str = None):
         pilot_data = None
     await ctx.reply(embed=user_info(user, staff_data, mm_data, pilot_data))
 
+def format_time_utc(tz_str: str):
+    now = datetime.datetime.now(ZoneInfo(tz_str))
+    offset = now.utcoffset()
+    total_minutes = int(offset.total_seconds() // 60)
+    hours = total_minutes // 60
+    minutes = abs(total_minutes % 60)
+    if minutes == 0:
+        utc_str = f"UTC{hours:+}"
+    else:
+        utc_str = f"UTC{hours:+}:{minutes:02d}"
+    time_str = now.strftime("%I:%M %p")
+    return f"{time_str} ({utc_str})"
+
+async def tz(ctx, user:str = None):
+    if user is None:
+        user = ctx.author
+    else:
+        try:
+            user = await bot.fetch_user(int(user.strip('<@>')))
+        except Exception:
+            await ctx.reply("Please provide a valid user ID.")
+            return
+    guild_id = str(ctx.guild.id)
+    server_info = servers.find_one({"_id": guild_id})
+    if not server_info:
+        await ctx.send("Server not whitelisted.")
+        return
+    uid = str(user.id)
+    staff = server_info.get("staff", {})
+    if uid in staff:
+        staff_data = staff.get(uid, {})
+        user_tz = staff_data.get("timezone", "unset")
+        if user_tz != "unset":
+            formatted = format_time_utc(user_tz)
+            await ctx.reply(f"It is now **{formatted}** for **{user.name}**")
+        else:
+            await ctx.reply(f"`{user.id}` has not set their timezone.")
+    else:
+        await ctx.reply(f"`{user.id}` is not appointed as staff.")
+
+async def timezone_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    matches = [tz for tz in TIMEZONES if current.lower() in tz.lower()][:25]
+    return [app_commands.Choice(name=tz.replace("_", " "), value=tz) for tz in matches]
+
+@bot.tree.command(name="set_timezone", description="Set your timezone")
+@app_commands.autocomplete(timezone=timezone_autocomplete)
+async def set_timezone(interaction: discord.Interaction, timezone: str):
+    if timezone not in TIMEZONES:
+        await interaction.response.send_message("Invalid timezone.", ephemeral=True)
+        return
+    guild_id = interaction.guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if not server_info:
+        await interaction.response.send_message("Server not whitelisted.", ephemeral=True)
+        return
+    if server_info:
+        if not server_info.get("staff_role"):
+            await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
+            return
+        staff_role = server_info.get("staff_role")
+        server_info.setdefault("bans_warns_req", {})
+        if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+            server_info.setdefault("staff", {})
+            uid = str(interaction.user.id)
+            staff = server_info.get("staff", {})
+            if uid in staff:
+                staff["uid"]["timezone"] = timezone
+            servers.replace_one({"_id": str(interaction.guild.id)}, server_info)
+            now = datetime.datetime.now(ZoneInfo(timezone))
+            offset = now.utcoffset()
+            total_minutes = int(offset.total_seconds() // 60)
+            hours = total_minutes // 60
+            minutes = abs(total_minutes % 60)
+            if minutes == 0:
+                utc = f"UTC{hours:+}"
+            else:
+                utc = f"UTC{hours:+}:{minutes:02d}"
+            await interaction.response.send_message(f"Your timezone has been set to **{timezone} ({utc})**.")
 
 @bot.command()
 async def help(ctx):
