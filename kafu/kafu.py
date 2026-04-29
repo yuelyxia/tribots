@@ -647,7 +647,7 @@ async def timezone_autocomplete(interaction: discord.Interaction, current: str) 
     matches = [tz for tz in TIMEZONES if current.lower() in tz.lower()][:25]
     return [app_commands.Choice(name=tz.replace("_", " "), value=tz) for tz in matches]
 
-settings = app_commands.Group(name="set")
+settings = app_commands.Group(name="set", description="Set.")
 bot.tree.add_command(settings)
 
 
