@@ -647,7 +647,11 @@ async def timezone_autocomplete(interaction: discord.Interaction, current: str) 
     matches = [tz for tz in TIMEZONES if current.lower() in tz.lower()][:25]
     return [app_commands.Choice(name=tz.replace("_", " "), value=tz) for tz in matches]
 
-@bot.tree.command(name="set_timezone", description="Set your timezone")
+settings = app_commands.Group(name="set")
+bot.tree.add_command(settings)
+
+
+@settings.command(name="timezone", description="Set your timezone")
 @app_commands.autocomplete(timezone=timezone_autocomplete)
 async def set_timezone(interaction: discord.Interaction, timezone: str):
     if timezone not in TIMEZONES:
@@ -1236,7 +1240,7 @@ def is_int(value):
     except (ValueError, TypeError):
         return False
 
-@bot.tree.command(name="set_points")
+@settings.command(name="points")
 async def set_points(interaction: discord.Interaction, user: str, category: Literal["staff", "mm", "pilot"], timeframe: Literal["monthly", "alltime"], value: str):
     await interaction.response.defer(ephemeral=True)
     if not is_int(value):
