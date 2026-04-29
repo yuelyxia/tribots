@@ -615,6 +615,7 @@ def format_time_utc(tz_str: str):
     time_str = now.strftime("%I:%M %p")
     return f"{time_str} ({utc_str})"
 
+@bot.command(name="tz")
 async def tz(ctx, user:str = None):
     if user is None:
         user = ctx.author
