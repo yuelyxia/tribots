@@ -1477,6 +1477,11 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
                         server_info.setdefault("staff", {}).pop(uid, None)
                         roles = staff_roles
                         await interaction.followup.send(f"`{uid}` has been dismissed from staff.")
+                        still_staff = servers.find_one({
+                            f"staff.{uid}": {"$exists": True}
+                        })
+                        if not still_staff:
+                            timezones.delete_one({"_id": uid})
                     elif category == "mm":
                         server_info.setdefault("mms", {}).pop(uid, None)
                         roles = mm_roles
@@ -1527,6 +1532,11 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
                 server_info.setdefault("staff", {}).pop(str(user_id), None)
                 roles = staff_roles
                 await interaction.followup.send(f"`{str(user_id)}` has been dismissed from staff.")
+                still_staff = servers.find_one({
+                    f"staff.{str(user_id)}": {"$exists": True}
+                })
+                if not still_staff:
+                    timezones.delete_one({"_id": str(user_id)})
             elif category == "mm":
                 server_info.setdefault("mms", {}).pop(str(user_id), None)
                 roles = mm_roles
