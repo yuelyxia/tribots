@@ -7208,6 +7208,56 @@ async def disable(interaction: discord.Interaction, message_id: str):
         else:
             await interaction.response.send_message("That is not a valid report/appeal. Please try again.", ephemeral=True)
 
+def is_int(value):
+    try:
+        int(value)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+@bot.tree.command(name="set_points")
+@app_commands.checks.has_role(adm_role)
+async def set_points(interaction: discord.Interaction, user: str, category: Literal["reports", "reviews", "votes"], timeframe: Literal["weekly", "alltime"], value: str):
+    if not is_int(value):
+        await interaction.response.send_message("Please input a valid integer value.", ephemeral=True)
+        return
+    try:
+        user = await bot.fetch_user(int(user.strip("<@>")))
+    except Exception:
+        pass
+    else:
+        user_id = user.id
+        user_query = {"_id": str(user_id)}
+        trusteduser_profile = trusteduserscol.find_one(user_query)
+        if trusteduser_profile:
+            member = interaction.guild.get_member(int(user_id))
+            if not member:
+                await interaction.response.send_message("User not in server.", ephemeral=True)
+                return
+            staff_weekly = staffweeklycol.find_one(user_query)
+            if not staff_weekly:
+                await interaction.response.send_message("User not appointed as current TRI Staff.", ephemeral=True)
+                return
+            if category == "reports":
+                if timeframe == "weekly":
+                    staff_weekly["weekly_reports"] = value
+                    staffweeklycol.replace_one(user_query, staff_weekly)
+                if timeframe == "alltime":
+                    trusteduser_profile["reports"] = value
+                    trusteduserscol.replace_one(user_query, trusteduser_profile)
+            if category == "reviews":
+                if timeframe == "weekly":
+                    staff_weekly["weekly_reviews"] = value
+                    staffweeklycol.replace_one(user_query, staff_weekly)
+                if timeframe == "alltime":
+                    trusteduser_profile["reviews"] = value
+                    trusteduserscol.replace_one(user_query, trusteduser_profile)
+            if category == "votes":
+                if timeframe == "alltime":
+                    trusteduser_profile["votes"] = value
+                    trusteduserscol.replace_one(user_query, trusteduser_profile)
+            await interaction.response.send_message(f"`{user_id}`’s **{timeframe} {category}** has been set to **{value}**.", ephemeral=True)
+
 @bot.tree.command(name="appoint", description="Appoint a staff/trusted user.")
 @app_commands.describe(user="User to appoint", category="staff/mm/pilot/trader")
 @app_commands.checks.has_role(adm_role)
