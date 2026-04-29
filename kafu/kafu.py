@@ -690,7 +690,7 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
                 utc = f"UTC{hours:+}"
             else:
                 utc = f"UTC{hours:+}:{minutes:02d}"
-            await interaction.response.send_message(f"Your timezone has been set to **{timezone} ({utc})**.")
+            await interaction.response.send_message(f"Your timezone has been set to **{timezone.replace("_", " ")} ({utc})**.")
 
 @bot.command()
 async def help(ctx):
