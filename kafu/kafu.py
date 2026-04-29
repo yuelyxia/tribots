@@ -31,6 +31,7 @@ client = pymongo.MongoClient(CLIENT)
 kafu = client["kafu"]
 tickets = kafu["tickets"]
 servers = kafu["servers"]
+timezones = kafu["timezones"]
 
 TRI_Archive = 1371673839695826974
 Tethys = 1434471275723493388
@@ -627,21 +628,18 @@ async def tz(ctx, user:str = None):
             return
     guild_id = str(ctx.guild.id)
     server_info = servers.find_one({"_id": guild_id})
-    if not server_info:
-        await ctx.send("Server not whitelisted.")
-        return
     uid = str(user.id)
-    staff = server_info.get("staff", {})
-    if uid in staff:
-        staff_data = staff.get(uid, {})
-        user_tz = staff_data.get("timezone", "unset")
-        if user_tz != "unset":
-            formatted = format_time_utc(user_tz)
-            await ctx.reply(f"It is now **{formatted}** for **{user.name}**")
+    if server_info:
+        staff = server_info.get("staff", {})
+        if uid in staff:
+            user_tz = timezones[uid]
+            if user_tz != "unset":
+                formatted = format_time_utc(user_tz)
+                await ctx.reply(f"It is now **{formatted}** for **{user.name}**")
+            else:
+                await ctx.reply(f"`{user.id}` has not set their timezone.")
         else:
-            await ctx.reply(f"`{user.id}` has not set their timezone.")
-    else:
-        await ctx.reply(f"`{user.id}` is not appointed as staff.")
+            await ctx.reply(f"`{user.id}` is not appointed as staff.")
 
 async def timezone_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
     matches = [tz for tz in TIMEZONES if current.lower() in tz.lower()][:25]
@@ -674,7 +672,7 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
             uid = str(interaction.user.id)
             staff = server_info.get("staff", {})
             if uid in staff:
-                staff[uid]["timezone"] = timezone
+                timezones[uid] = timezone
             servers.replace_one({"_id": str(interaction.guild.id)}, server_info)
             now = datetime.datetime.now(ZoneInfo(timezone))
             offset = now.utcoffset()
