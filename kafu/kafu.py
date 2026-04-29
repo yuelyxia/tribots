@@ -632,8 +632,9 @@ async def tz(ctx, user:str = None):
     if server_info:
         staff = server_info.get("staff", {})
         if uid in staff:
-            user_tz = timezones[uid]
-            if user_tz != "unset":
+            profile = timezones.find_one({"_id": uid})
+            user_tz = profile.get("timezone") if profile else None
+            if user_tz is not None:
                 formatted = format_time_utc(user_tz)
                 await ctx.reply(f"It is now **{formatted}** for **{user.name}**")
             else:
@@ -675,8 +676,11 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
             uid = str(interaction.user.id)
             staff = server_info.get("staff", {})
             if uid in staff:
-                timezones[uid] = timezone
-            servers.replace_one({"_id": str(interaction.guild.id)}, server_info)
+                timezones.update_one(
+                    {"_id": uid},
+                    {"$set": {"timezone": timezone}},
+                    upsert=True
+                )
             now = datetime.datetime.now(ZoneInfo(timezone))
             offset = now.utcoffset()
             total_minutes = int(offset.total_seconds() // 60)
