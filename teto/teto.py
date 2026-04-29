@@ -1046,8 +1046,7 @@ class NewUserReportView(discord.ui.View):
             r_profile = format_user_r_profile(user, r_profile_list, title)
             add_case = format_user_add_case(add_case_list, case_title)
             embeds = [r_profile, add_case]
-            session = inprogresscol.find_one({"_id": message_id})
-            if not session:
+            try:
                 inprogresscol.insert_one({"_id": message_id,
                                           "user_id": user.id,
                                           "requested_by": requested_by.id,
@@ -1057,8 +1056,8 @@ class NewUserReportView(discord.ui.View):
                                           "title": title,
                                           "case_title": case_title
                                           })
-            await msg.edit(embeds=embeds,
-                           view=AltsView())
+            except DuplicateKeyError: pass
+            await msg.edit(embeds=embeds, view=AltsView())
         elif any(role.id == ticket_ping for role in interaction.user.roles):
             await interaction.followup.send(
                 "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
