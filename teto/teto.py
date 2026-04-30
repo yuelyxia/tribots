@@ -413,7 +413,7 @@ async def on_message(message):
 
 # check
 
-@bot.command(name='mc', help='Checks a list of users (max 200), leave a space between users.')
+@bot.command(name="mc", help="Checks a list of users (max 200), leave a space between users.")
 async def mc(ctx, *, to_check: str = None):
     if to_check != None:
         users = to_check.split()
@@ -507,7 +507,7 @@ async def mc(ctx, *, to_check: str = None):
             else: await ctx.reply("No valid users provided.")
 
 
-@bot.command(name='c', help='Checks a user or server.')
+@bot.command(name="c", help="Checks a user or server.")
 async def c(ctx, *, to_check: str = None):
     requested_by = ctx.author
     if to_check == None:
@@ -7002,7 +7002,7 @@ class ServerVoteView(discord.ui.View):
 
 # staff utils
 
-@bot.command(name='ar', help="Sends jump urls to all active reports in the thread.")
+@bot.command(name="ar", help="Sends jump urls to all active reports in the thread.")
 @commands.has_any_role(staff_role)
 async def ar(ctx):
     if isinstance(ctx.channel, discord.Thread):
@@ -7026,7 +7026,7 @@ async def ar(ctx):
     else:
         await ctx.reply("This command can only be used in a thread.")
 
-@bot.command(name='vr', help="Sends a list of all reports in voting in the thread.")
+@bot.command(name="vr", help="Sends a list of all reports in voting in the thread.")
 @commands.has_any_role(staff_role)
 async def vr(ctx):
     if isinstance(ctx.channel, discord.Thread):
@@ -7044,7 +7044,7 @@ async def vr(ctx):
     else:
         await ctx.reply("This command can only be used in a thread.")
 
-@bot.command(name='pr', help="Sends a list of all published reports in the thread.")
+@bot.command(name="pr", help="Sends a list of all published reports in the thread.")
 @commands.has_any_role(staff_role)
 async def pr(ctx):
     if isinstance(ctx.channel, discord.Thread):
@@ -7082,37 +7082,37 @@ async def tp(ctx):
 
 # slash cmds
 
-@bot.tree.command(name='merge', description='Merges the reports of two users. This action is irreversible.')
-@app_commands.describe(user1="Main", user2="Alt")
+@bot.tree.command(name="merge", description="Merges the reports of two users. This action is irreversible.")
+@app_commands.describe(main="Main", alt="Alt")
 @app_commands.checks.has_role(sr_role)
-async def merge_reports(interaction: discord.Interaction, user1: str, user2: str):
-    if user1.strip("<@>") != user2.strip("<@>"):
+async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
+    if main.strip("<@>") != alt.strip("<@>"):
         try:
-            user1 = await bot.fetch_user(int(user1.strip("<@>")))
-            user2 = await bot.fetch_user(int(user2.strip("<@>")))
+            main = await bot.fetch_user(int(main.strip("<@>")))
+            alt = await bot.fetch_user(int(alt.strip("<@>")))
         except discord.NotFound:
             await interaction.response.send_message(f"Please provide valid User IDs.", ephemeral=True)
         else:
-            user1_query = {"_id": str(user1.id)}
-            user1_profile = userscol.find_one(user1_query)
-            user2_query = {"_id": str(user2.id)}
-            user2_profile = userscol.find_one(user2_query)
-            if user1_profile and user2_profile:
-                r_profile_list1 = user1_profile["r_profile_list"]
-                r_profile_list2 = user2_profile["r_profile_list"]
-                user1_alts = r_profile_list1[0].strip("`").split()
-                user2_alts = r_profile_list2[0].strip("`").split()
-                all_alts = user1_alts + user2_alts
-                all_alts.append(str(user2.id))
+            main_query = {"_id": str(main.id)}
+            main_profile = userscol.find_one(main_query)
+            alt_query = {"_id": str(alt.id)}
+            alt_profile = userscol.find_one(alt_query)
+            if main_profile and alt_profile:
+                r_profile_list1 = main_profile["r_profile_list"]
+                r_profile_list2 = alt_profile["r_profile_list"]
+                main_alts = r_profile_list1[0].strip("`").split()
+                alt_alts = r_profile_list2[0].strip("`").split()
+                all_alts = main_alts + alt_alts
+                all_alts.append(str(alt.id))
                 if len(all_alts) != 0:
                     merged_alts_string = alts_string(all_alts)
                 else: merged_alts_string = ""
                 merged_alts_proofs = r_profile_list1[2] + r_profile_list2[2]
                 merged_tags_list = []
-                no_of_cases1 = len(user1_profile) - 2
+                no_of_cases1 = len(main_profile) - 2
                 cases1 = []
                 for i in range(1, no_of_cases1 + 1):
-                    cases1.append(user1_profile[str(i)])
+                    cases1.append(main_profile[str(i)])
                 tags_strings1 = []
                 for case in cases1:
                     tags_strings1.append(case[2])
@@ -7120,10 +7120,10 @@ async def merge_reports(interaction: discord.Interaction, user1: str, user2: str
                     tags_list = tags_string.split(", ")
                     for tag in tags_list:
                         merged_tags_list.append(tag)
-                no_of_cases2 = len(user2_profile) - 2
+                no_of_cases2 = len(alt_profile) - 2
                 cases2 = []
                 for i in range(1, no_of_cases2 + 1):
-                    cases2.append(user2_profile[str(i)])
+                    cases2.append(alt_profile[str(i)])
                 tags_strings1 = []
                 tags_strings2 = []
                 for case in cases2:
@@ -7143,29 +7143,32 @@ async def merge_reports(interaction: discord.Interaction, user1: str, user2: str
                 merged_cases.sort(key=lambda x: int(x[0][3:13]))
                 #
                 merged_profile = {
-                    "_id": str(user1.id),
+                    "_id": str(main.id),
                     "r_profile_list": merged_r_profile_list,
                 }
                 i=0
                 for case in merged_cases:
                     i+=1
                     merged_profile[str(i)] = case
-                for alt in user2_alts:
+                for alt in alt_alts:
                     alts_query = {"_id": alt}
-                    alt_profile = {"_id": alt, "main": str(user1.id)}
+                    alt_profile = {"_id": alt, "main": str(main.id)}
                     userscol.replace_one(alts_query, alt_profile)
-                new_user2_profile = {"_id": str(user2.id), "main": str(user1.id)}
-                userscol.replace_one(user2_query, new_user2_profile)
-                userscol.replace_one(user1_query, merged_profile)
-                await interaction.response.send_message(f"`{user2.id}` successfully merged into `{user1.id}`.")
-            elif user1_profile:
-                await interaction.response.send_message(f"Report on `{user2.id}` not found.")
-            elif user2_profile:
-                await interaction.response.send_message(f"Report on `{user1.id}` not found.")
+                new_alt_profile = {"_id": str(alt.id), "main": str(main.id)}
+                userscol.replace_one(alt_query, new_alt_profile)
+                userscol.replace_one(main_query, merged_profile)
+                await interaction.response.send_message(f"`{alt.id}` successfully merged into `{main.id}`.")
+            elif main_profile:
+                await interaction.response.send_message(f"Report on `{alt.id}` not found.")
+            elif alt_profile:
+                await interaction.response.send_message(f"Report on `{main.id}` not found.")
             else:
                 await interaction.response.send_message(f"Neither user reported.")
 
-@bot.tree.command(name='disable_vote', description='Disables a staff vote.')
+disable = app_commands.Group(name="disable", description="Disable.")
+bot.tree.add_command(disable)
+
+@disable.command(name="vote", description="Disables a staff vote.")
 @app_commands.describe(message_id="Message ID of vote")
 @app_commands.checks.has_role(adm_role)
 async def disable_vote(interaction: discord.Interaction, message_id: str):
@@ -7186,7 +7189,7 @@ async def disable_vote(interaction: discord.Interaction, message_id: str):
         else:
             await interaction.response.send_message("That is not a valid staff vote. Please try again.", ephemeral=True)
 
-@bot.tree.command(name='disable', description='Disables a report/appeal.')
+@disable.command(name="report", description="Disables a report/appeal.")
 @app_commands.describe(message_id="Message ID of report/appeal")
 @app_commands.checks.has_role(sr_role)
 async def disable(interaction: discord.Interaction, message_id: str):
@@ -7404,9 +7407,8 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
             else:
                 await interaction.response.send_message(f"Please enter a valid role.", ephemeral=True)
             trusteduser_profile = trusteduserscol.find_one(user_query)
-            if trusteduser_profile["current_staff"] == "0" and trusteduser_profile["staff"] == "0" and \
-                    trusteduser_profile["mm"] == "0" and trusteduser_profile["pilot"] == "0" and trusteduser_profile[
-                "trader"] == "0":
+            if trusteduser_profile["staff"] == "0" and trusteduser_profile["mm"] == "0" and \
+                    trusteduser_profile["pilot"] == "0" and trusteduser_profile["trader"] == "0":
                 trusteduserscol.delete_one(user_query)
 
 trusted = app_commands.Group(name="trusted", description="Manage trusted servers.")
