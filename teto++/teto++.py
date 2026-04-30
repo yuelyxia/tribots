@@ -9,6 +9,7 @@ import pymongo
 import asyncio
 
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 
 TOKEN = os.getenv("TOKEN")
@@ -802,12 +803,15 @@ class MemberView(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(discord.ui.Button(label="Report", style=discord.ButtonStyle.grey, url="https://discord.com/channels/1371673839695826974/1375261699111784478"))
 
-@bot.tree.command(name="check_all", description="Check all users in the server for bannable report(s).")
+check = app_commands.Group(name="check", description="Check.")
+bot.tree.add_command(check)
+
+@check.command(name="all", description="Check all users in the server for bannable report(s).")
 @commands.has_permissions(administrator=True)
 async def check_all(interaction: discord.Interaction):
     if interaction.guild is None:
         return
-    await interaction.response.defer()
+    await interaction.response.send_message(f"Checking {interaction.guild.member_count} users for bannable report(s).", ephemeral=True)
     ban_users = []
     for idx, member in enumerate(interaction.guild.members):
         if idx % 50 == 0:
@@ -829,7 +833,6 @@ async def check_all(interaction: discord.Interaction):
         all_tags_list = sort_user_tags(all_tags_list)
         if all_tags_list and all_tags_list[0] in red_tags:
             ban_users.append(str(member.id))
-
     if ban_users and len(ban_users) <= 1000:
         embeds = []
         ban_users_grouped = [ban_users[i:i + 100] for i in range(0, len(ban_users), 100)]
@@ -837,7 +840,7 @@ async def check_all(interaction: discord.Interaction):
             embed = discord.Embed(description=f"`{" ".join(group)}`")
             embeds.append(embed)
         await interaction.followup.send(f"{len(ban_users)} users with bannable report(s) were found.", embeds=embeds)
-    elif ban_users and len(ban_users) > 1800:
+    elif ban_users and len(ban_users) > 1000:
         embeds = []
         ban_users_grouped = [ban_users[i:i + 100] for i in range(0, 1001, 100)]
         for group in ban_users_grouped:
