@@ -9,6 +9,7 @@ from pymongo import UpdateOne
 
 import io
 import aiohttp
+from asyncio import Lock
 import re
 from collections import defaultdict
 
@@ -56,6 +57,34 @@ async def on_ready():
     quota_check.start()
 
 TIMEZONES = sorted(available_timezones())
+
+guild_locks = {}
+def get_lock(guild_id):
+    if guild_id not in guild_locks:
+        guild_locks[guild_id] = Lock()
+    return guild_locks[guild_id]
+
+def parse_duration(s: str):
+    match = re.fullmatch(r"(\d+)([smhd])", s.lower())
+    if not match:
+        return None
+    value, unit = match.groups()
+    value = int(value)
+    multipliers = {
+        "s": 1,
+        "m": 60,
+        "h": 3600,
+        "d": 86400
+    }
+    return value * multipliers[unit]
+
+@bot.command()
+async def help(ctx):
+    if not ctx.guild.id == TRI_Archive:
+        embed = discord.Embed(title="KAFU commands", colour=0xffffff)
+        embed.description = """wip
+        """
+        await ctx.send(embed=embed)
 
 # loop tasks
 
@@ -201,6 +230,21 @@ async def on_message(message: discord.Message):
                         await message.add_reaction("<:whitecross:1462774085737119828>")
 
     await bot.process_commands(message)
+
+@bot.event
+async def on_member_remove(member):
+    server = servers.find_one({"_id": str(member.guild.id)})
+    roles = server.get("custom_roles", {})
+    async with get_lock(member.guild.id):
+        for role_id, data in list(roles.items()):
+            if data["owner"] == str(member.id):
+                role = member.guild.get_role(int(role_id))
+                if role:
+                    await role.delete()
+                servers.update_one(
+                    {"_id": member.guild.id},
+                    {"$unset": {f"custom_roles.{role_id}": ""}}
+                )
 
 # text commands
 
@@ -967,15 +1011,364 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
     else:
         await interaction.followup.send(f"This server is not whitelisted.", ephemeral=False)
 
-@bot.command()
-async def help(ctx):
-    if not ctx.guild.id == TRI_Archive:
-        embed = discord.Embed(title="KAFU commands", colour=0xffffff)
-        embed.description = """wip
-        """
-        await ctx.send(embed=embed)
+@bot.command(name="cr")
+async def cr(ctx):
+    server_info = servers.find_one({"_id": str(ctx.guild.id)})
+    if not server_info:
+        await ctx.reply("This server is not whitelisted.")
+        return
+    custom_roles = server_info.get("custom_roles", {})
+    role_id = next((r for r, d in custom_roles.items() if d.get("owner") == str(ctx.author.id)), None)
+    role = ctx.guild.get_role(int(role_id))
+    if not role_id:
+        await ctx.reply("You do not have a custom role.")
+        return
+    if not role:
+        await ctx.reply("Your custom role no longer exists.")
+        return
+    data = custom_roles[role_id]
+    if data["type"] == "booster":
+        expiry = "booster (active while boosting)"
+    elif data.get("expires_at"):
+        expiry = f"<t:{data["expires_at"]}:R>"
+    else:
+        expiry = "no expiry"
+    embed = discord.Embed(
+        colour=role.colour,
+        description=f"**Role:** {role.mention} `{role.id}`\n**Owner:** {ctx.author.mention}\n**Expires:** {expiry}"
+    )
+    embed.set_author(name=role.name, icon_url=role.icon.url if role.icon else None)
+    await ctx.reply(embed=embed)
 
-# slash commands
+@tasks.loop(hours=1)
+async def customrole_expiry_loop():
+    now = int(time.time())
+    for server_info in servers.find({}):
+        guild = bot.get_guild(int(server_info["_id"]))
+        if not guild:
+            continue
+        roles = server_info.get("custom_roles", {})
+        for role_id, data in list(roles.items()):
+            role = guild.get_role(int(role_id))
+            if not role:
+                continue
+            owner = guild.get_member(int(data["owner"]))
+            if data["type"] == "booster":
+                if not owner or not owner.premium_since:
+                    await role.delete(reason="Booster custom role expired")
+                    servers.update_one(
+                        {"_id": server_info["_id"]},
+                        {"$unset": {f"custom_roles.{role_id}": ""}}
+                    )
+                continue
+            if data["expires_at"] and now >= data["expires_at"]:
+                await role.delete(reason="Custom role expired")
+                servers.update_one(
+                    {"_id": server_info["_id"]},
+                    {"$unset": {f"custom_roles.{role_id}": ""}}
+                )
+
+@tasks.loop(hours=6)
+async def cleanup_custom_roles():
+    for server in servers.find({}):
+        guild = bot.get_guild(int(server["_id"]))
+        if not guild:
+            continue
+        custom_roles = server.get("custom_roles", {})
+        for role_id in list(custom_roles.keys()):
+            role = guild.get_role(int(role_id))
+            if role is None:
+                servers.update_one(
+                    {"_id": server["_id"]},
+                    {"$unset": {f"custom_roles.{role_id}": ""}}
+                )
+
+customrole = app_commands.Group(name="customrole", description="Manage custom roles.")
+bot.tree.add_command(customrole)
+
+@customrole.command(name="list", description="List all custom roles.")
+async def customrole_list(interaction: discord.Interaction):
+    server_info = servers.find_one({"_id": str(interaction.guild.id)})
+    roles = server_info.get("custom_roles", {})
+    desc = ""
+    for role_id, data in roles.items():
+        role = interaction.guild.get_role(int(role_id))
+        if not role:
+            continue
+        owner = f"<@{data["owner"]}>"
+        if data["type"] == "booster":
+            expiry = "booster"
+        elif data["expires_at"]:
+            expiry = f"<t:{data["expires_at"]}:R>"
+        else:
+            expiry = "no expiry"
+        desc += f"{role.mention}　–　{owner}　–　expires {expiry}\n"
+    embed = discord.Embed(description=desc or "No custom roles.")
+    await interaction.response.send_message(embed=embed)
+
+@customrole.command(name="edit", description="Edit a custom role.")
+async def customrole_edit(interaction: discord.Interaction,
+                            name: Optional[str]=None,
+                            colour: Optional[str] = None,
+                            emoji: Optional[str] = None,
+                            image: Optional[discord.Attachment] = None
+                            ):
+    await interaction.response.defer(ephemeral=True)
+    server_info = servers.find_one({"_id": str(interaction.guild.id)})
+    if not server_info:
+        await interaction.followup.send("This server is not whitelisted.")
+        return
+    custom_roles = server_info.get("custom_roles", {})
+    role_id = next((r for r, d in custom_roles.items() if d.get("owner") == str(interaction.user.id)), None)
+    role = interaction.guild.get_role(int(role_id))
+    if not role_id:
+        await interaction.followup.send("You do not have a custom role.")
+        return
+    if not role:
+        await interaction.followup.send("Your custom role no longer exists.")
+        return
+    if not name and not colour and not emoji and not image:
+        await interaction.followup.send("Specify at least one change.")
+    bot_member = interaction.guild.me
+    if role.position >= bot_member.top_role.position:
+        await interaction.followup.send(
+            "Missing permissions. Check if KAFU’s highest role is above the role you are trying to edit.",
+            ephemeral=True)
+        return
+    if role.managed:
+        await interaction.followup.send("KAFU cannot edit integration-managed roles.", ephemeral=True)
+        return
+    if name:
+        await role.edit(name=name)
+    if colour:
+        try: await role.edit(colour=discord.Colour(int(colour.strip("#"), 16)))
+        except Exception: await interaction.followup.send("Invalid HEX code.", ephemeral=True)
+    # role icon
+    if image:
+        data = await image.read()
+        try: await role.edit(display_icon=data)
+        except Exception:
+            await interaction.followup.send("An error occured while uploading role icon.", ephemeral=True)
+    match = re.search(r"<a?:\w+:(\d+)>", emoji or "")
+    if not match:
+        await interaction.followup.send("Invalid custom emoji format.", ephemeral=True)
+    if match:
+        emoji_id = match.group(1)
+        is_animated = emoji.startswith("<a:")
+        ext = "gif" if is_animated else "png"
+        url = f"https://cdn.discordapp.com/emojis/{emoji_id}.{ext}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status != 200:
+                    await interaction.followup.send("Failed to fetch emoji.", ephemeral=True)
+                else:
+                    data = await resp.read()
+                    try:
+                        await role.edit(display_icon=data)
+                    except Exception:
+                        await interaction.followup.send("An error occured while uploading role icon.", ephemeral=True)
+
+@customrole.command(name="create", description="Create a custom role.")
+@app_commands.default_permissions(manage_roles=True)
+async def customrole_create(interaction: discord.Interaction,
+    owner: discord.Member,
+    name: str,
+    duration: Optional[str] = None,  # seconds
+    booster: Optional[bool] = False,
+    colour: Optional[str] = None,
+    emoji: Optional[str] = None,
+    image: Optional[discord.Attachment] = None
+):
+    await interaction.response.defer(ephemeral=True)
+    guild = interaction.guild
+    guild_id = guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if not server_info:
+        await interaction.response.send_message("Server not whitelisted.", ephemeral=True)
+        return
+    custom_roles = server_info.get("custom_roles", {})
+    for role_id, data in custom_roles.items():
+        if data["owner"] == str(owner.id):
+            role = guild.get_role(int(role_id))
+            if role:
+                await interaction.followup.send("User already has a custom role.", ephemeral=True)
+                return
+    # create role
+    role = await guild.create_role(
+        name=name,
+        colour=discord.Colour(int(colour.strip("#"), 16)) if colour else discord.Colour.default()
+    )
+    # move role under bot
+    bot_top = guild.me.top_role
+    await guild.edit_role_positions({role: bot_top.position - 1})
+    # role icon
+    if image:
+        data = await image.read()
+        try: await role.edit(display_icon=data)
+        except Exception:
+            await interaction.followup.send("An error occured while uploading role icon.", ephemeral=True)
+    match = re.search(r"<a?:\w+:(\d+)>", emoji or "")
+    if not match:
+        await interaction.followup.send("Invalid custom emoji format.", ephemeral=True)
+    if match:
+        emoji_id = match.group(1)
+        is_animated = emoji.startswith("<a:")
+        ext = "gif" if is_animated else "png"
+        url = f"https://cdn.discordapp.com/emojis/{emoji_id}.{ext}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status != 200:
+                    await interaction.followup.send("Failed to fetch emoji.", ephemeral=True)
+                else:
+                    data = await resp.read()
+                    try:
+                        await role.edit(display_icon=data)
+                    except Exception:
+                        await interaction.followup.send("An error occured while uploading role icon.", ephemeral=True)
+    # assign
+    await owner.add_roles(role)
+    # expiry
+    if booster:
+        expires_at = None
+        role_type = "booster"
+    else:
+        duration = parse_duration(duration) if duration else None
+        expires_at = int(time.time()) + duration if duration else None
+        role_type = "time"
+    servers.update_one(
+        {"_id": str(guild.id)},
+        {
+            "$set": {
+                f"custom_roles.{role.id}": {
+                    "owner": str(owner.id),
+                    "expires_at": expires_at,
+                    "type": role_type
+                }
+            }
+        },
+        upsert=True
+    )
+    await interaction.followup.send(f"Custom role {role.mention} created for {owner.mention}")
+
+@customrole.command(name="delete", description="Delete a custom role.")
+async def customrole_delete(interaction: discord.Interaction, role: discord.Role):
+    await interaction.response.defer(ephemeral=True)
+    server_info = servers.find_one({"_id": str(interaction.guild.id)})
+    if not server_info:
+        await interaction.followup.send("This server is not whitelisted.")
+        return
+    bot_member = interaction.guild.me
+    if role:
+        if role.managed:
+            await interaction.followup.send("Cannot delete integration-managed role.")
+        elif role.position >= bot_member.top_role.position:
+            await interaction.followup.send("Missing permissions. Check if KAFU’s highest role is above the role you are trying to delete.")
+        else:
+            try:
+                await role.delete(reason="Custom role deleted")
+            except discord.Forbidden:
+                await interaction.followup.send("Missing permissions to delete role.")
+    if str(role.id) in server_info.get("custom_roles", {}):
+        servers.update_one(
+            {"_id": str(interaction.guild.id)},
+            {"$unset": {f"custom_roles.{role.id}": ""}}
+        )
+    await interaction.followup.send(f"Custom role deleted.")
+
+@customrole.command(name="add", description="Add an existing role to custom roles.")
+@app_commands.default_permissions(manage_roles=True)
+async def customrole_add(
+    interaction: discord.Interaction,
+    role: discord.Role,
+    owner: discord.Member,
+    duration: Optional[str] = None,
+    booster: Optional[bool] = False
+):
+    await interaction.response.defer(ephemeral=True)
+    guild = interaction.guild
+    guild_id = guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if not server_info:
+        await interaction.response.send_message("Server not whitelisted.", ephemeral=True)
+        return
+    custom_roles = server_info.get("custom_roles", {})
+    for role_id, data in custom_roles.items():
+        if data["owner"] == str(owner.id):
+            role = guild.get_role(int(role_id))
+            if role:
+                await interaction.followup.send("User already has a custom role.", ephemeral=True)
+                return
+    bot_top = interaction.guild.me.top_role
+    try: await interaction.guild.edit_role_positions({role: bot_top.position - 1})
+    except discord.Forbidden: pass
+    duration = parse_duration(duration) if duration else None
+    expires_at = None if booster else int(time.time()) + duration if duration else None
+    servers.update_one(
+        {"_id": str(interaction.guild.id)},
+        {
+            "$set": {
+                f"custom_roles.{role.id}": {
+                    "owner": str(owner.id),
+                    "expires_at": expires_at,
+                    "type": "booster" if booster else "time"
+                }
+            }
+        },
+        upsert=True
+    )
+    await interaction.followup.send("Custom role added.")
+
+@customrole.command(name="remove", description="Remove a role from custom roles.")
+@app_commands.default_permissions(manage_roles=True)
+async def customrole_remove(interaction: discord.Interaction, role: discord.Role):
+    await interaction.response.defer(ephemeral=True)
+    server_info = servers.find_one({"_id": str(interaction.guild.id)})
+    if not server_info:
+        await interaction.followup.send("Server not whitelisted.")
+        return
+    if str(role.id) not in server_info.get("custom_roles", {}):
+        await interaction.followup.send("This role is not registered as a custom role.")
+        return
+    servers.update_one(
+        {"_id": str(interaction.guild.id)},
+        {"$unset": {f"custom_roles.{role.id}": ""}}
+    )
+    await interaction.followup.send(f"{role.mention} removed from database.")
+
+@customrole.command(name="setexpiry", description="Set expiry for an existing custom role.")
+@app_commands.default_permissions(manage_roles=True)
+async def customrole_setexpiry(
+    interaction: discord.Interaction,
+    role: discord.Role,
+    duration: Optional[str] = None,
+    booster: Optional[bool] = False
+):
+    await interaction.response.defer(ephemeral=True)
+    guild = interaction.guild
+    guild_id = guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if not server_info:
+        await interaction.response.send_message("Server not whitelisted.", ephemeral=True)
+        return
+    custom_roles = server_info.get("custom_roles", {})
+    for role_id, data in custom_roles.items():
+        role = guild.get_role(int(role_id))
+        if not role:
+            await interaction.followup.send("Custom role no longer exists.", ephemeral=True)
+            return
+    duration = parse_duration(duration) if duration else None
+    expires_at = None if booster else int(time.time()) + duration if duration else None
+    servers.update_one(
+        {"_id": str(interaction.guild.id)},
+        {
+            "$set": {
+            f"custom_roles.{role.id}.expires_at": expires_at,
+            f"custom_roles.{role.id}.type": "booster" if booster else "time"
+        }}, upsert=True)
+    await interaction.followup.send("Custom role updated.")
 
 @bot.tree.command(name="ban", description="Bans a user.")
 @app_commands.describe(user="User to ban", reason="Reason for ban")
