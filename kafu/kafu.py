@@ -234,16 +234,17 @@ async def on_message(message: discord.Message):
 @bot.event
 async def on_member_remove(member):
     server = servers.find_one({"_id": str(member.guild.id)})
-    roles = server.get("custom_roles", {})
-    async with get_lock(member.guild.id):
-        for role_id, data in list(roles.items()):
-            if data["owner"] == str(member.id):
-                role = member.guild.get_role(int(role_id))
-                if role:
-                    await role.delete()
-                servers.update_one(
-                    {"_id": member.guild.id},
-                    {"$unset": {f"custom_roles.{role_id}": ""}}
+    if server:
+        roles = server.get("custom_roles", {})
+        async with get_lock(member.guild.id):
+            for role_id, data in list(roles.items()):
+                if data["owner"] == str(member.id):
+                    role = member.guild.get_role(int(role_id))
+                    if role:
+                        await role.delete()
+                    servers.update_one(
+                        {"_id": member.guild.id},
+                        {"$unset": {f"custom_roles.{role_id}": ""}}
                 )
 
 # text commands
