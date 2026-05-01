@@ -1019,10 +1019,10 @@ async def cr(ctx):
         return
     custom_roles = server_info.get("custom_roles", {})
     role_id = next((r for r, d in custom_roles.items() if d.get("owner") == str(ctx.author.id)), None)
-    role = ctx.guild.get_role(int(role_id))
     if not role_id:
         await ctx.reply("You do not have a custom role.")
         return
+    role = ctx.guild.get_role(int(role_id))
     if not role:
         await ctx.reply("Your custom role no longer exists.")
         return
@@ -1120,10 +1120,10 @@ async def customrole_edit(interaction: discord.Interaction,
         return
     custom_roles = server_info.get("custom_roles", {})
     role_id = next((r for r, d in custom_roles.items() if d.get("owner") == str(interaction.user.id)), None)
-    role = interaction.guild.get_role(int(role_id))
     if not role_id:
         await interaction.followup.send("You do not have a custom role.")
         return
+    role = interaction.guild.get_role(int(role_id))
     if not role:
         await interaction.followup.send("Your custom role no longer exists.")
         return
