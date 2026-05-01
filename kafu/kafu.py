@@ -1209,24 +1209,25 @@ async def customrole_create(interaction: discord.Interaction,
         try: await role.edit(display_icon=data)
         except Exception:
             await interaction.followup.send("An error occured while uploading role icon.", ephemeral=True)
-    match = re.search(r"<a?:\w+:(\d+)>", emoji or "")
-    if not match:
-        await interaction.followup.send("Invalid custom emoji format.", ephemeral=True)
-    if match:
-        emoji_id = match.group(1)
-        is_animated = emoji.startswith("<a:")
-        ext = "gif" if is_animated else "png"
-        url = f"https://cdn.discordapp.com/emojis/{emoji_id}.{ext}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                if resp.status != 200:
-                    await interaction.followup.send("Failed to fetch emoji.", ephemeral=True)
-                else:
-                    data = await resp.read()
-                    try:
-                        await role.edit(display_icon=data)
-                    except Exception:
-                        await interaction.followup.send("An error occured while uploading role icon.", ephemeral=True)
+    if emoji:
+        match = re.search(r"<a?:\w+:(\d+)>", emoji or "")
+        if not match:
+            await interaction.followup.send("Invalid custom emoji format.", ephemeral=True)
+        if match:
+            emoji_id = match.group(1)
+            is_animated = emoji.startswith("<a:")
+            ext = "gif" if is_animated else "png"
+            url = f"https://cdn.discordapp.com/emojis/{emoji_id}.{ext}"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    if resp.status != 200:
+                        await interaction.followup.send("Failed to fetch emoji.", ephemeral=True)
+                    else:
+                        data = await resp.read()
+                        try:
+                            await role.edit(display_icon=data)
+                        except Exception:
+                            await interaction.followup.send("An error occured while uploading role icon.", ephemeral=True)
     # assign
     await owner.add_roles(role)
     # expiry
