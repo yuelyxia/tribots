@@ -90,9 +90,7 @@ async def quota_check():
                             alltime = data.get("alltime", 0)
                             desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
                             total_credits += monthly
-                        embed = discord.Embed(
-                            description=desc if desc else "No staff found.",
-                        )
+                        embed = discord.Embed(description=desc if desc else "No staff found.", colour = 0xffffff)
                         summary = discord.Embed(colour=0xffffff)
                         summary.description = (
                             f"✦　　┈　　total credits　　┈　　**{total_credits}**")
@@ -120,9 +118,7 @@ async def quota_check():
                             desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
                             total_services += monthly
                             total_mm_services += monthly
-                        mms_embed = discord.Embed(
-                            description=desc if desc else "No mms found.",
-                        )
+                        mms_embed = discord.Embed(description=desc if desc else "No mms found.", colour = 0xffffff)
                         pilots = server_info.get("pilots", {})
                         sorted_pilots = sorted(
                             pilots.items(),
@@ -136,14 +132,12 @@ async def quota_check():
                             desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
                             total_services += monthly
                             total_pilot_services += monthly
-                        pilots_embed = discord.Embed(
-                            description=desc if desc else "No pilots found.",
-                        )
-                        embeds = [mms_embed, pilots_embed]
+                        pilots_embed = discord.Embed(description=desc if desc else "No pilots found.", colour = 0xffffff)
                         summary = discord.Embed(colour=0xffffff)
                         summary.description = (
                             f"✦　　┈　　total services　　┈　　**{total_services}**\n✦　　┈　　total mm services　　┈　　**{total_mm_services}**\n✦　　┈　　total pilot services　　┈　　**{total_pilot_services}**")
-                        await channel.send("## _ _　　　services leaderboard", embeds=embeds)
+                        await channel.send("## _ _　　　mm leaderboard", embed=mms_embed)
+                        await channel.send("## _ _　　　pilot leaderboard", embed=pilots_embed)
                         await channel.send("## _ _　　　monthly summary", embed=summary)
                     except discord.NotFound: pass
                     except discord.Forbidden: pass
@@ -467,9 +461,7 @@ async def lb(ctx, *, category: str=None):
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
             desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
-        embed = discord.Embed(
-            description=desc if desc else "No staff found.",
-        )
+        embed = discord.Embed(description=desc if desc else "No staff found.", colour = 0xffffff)
         await ctx.send("## _ _　　　staff leaderboard", embed=embed)
     if category == "m":
         mms = server_info.get("mms", {})
@@ -485,9 +477,7 @@ async def lb(ctx, *, category: str=None):
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
             desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
-        embed = discord.Embed(
-            description=desc if desc else "No mms found.",
-        )
+        embed = discord.Embed(description=desc if desc else "No mms found.", colour = 0xffffff)
         await ctx.send("## _ _　　　mm leaderboard", embed=embed)
     if category == "p":
         pilots = server_info.get("pilots", {})
@@ -503,9 +493,7 @@ async def lb(ctx, *, category: str=None):
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
             desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
-        embed = discord.Embed(
-            description=desc if desc else "No pilots found.",
-        )
+        embed = discord.Embed(description=desc if desc else "No pilots found.", colour = 0xffffff)
         await ctx.send("## _ _　　　pilot leaderboard", embed=embed)
 
 
