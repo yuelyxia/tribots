@@ -7199,7 +7199,7 @@ async def report(
         reason,
         contributor_value,
         f"<@{interaction.user.id}>",
-        f"<@{interaction.user.id}>",
+        "",
         proof_links
     ]
     r_profile = format_user_r_profile(user, r_profile_list, case_title)
