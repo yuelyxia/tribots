@@ -726,7 +726,7 @@ async def c(ctx, *, to_check: str = None):
 # reported user
 class ReportedUserView(discord.ui.View):
     def __init__(self, user, user_profile, requested_by, current_case):
-        super().__init__(timeout=None)
+        super().__init__(timeout=600)
         self.user = user
         self.user_profile = user_profile
         self.requested_by = requested_by
@@ -850,7 +850,7 @@ class ReportedUserView(discord.ui.View):
 # reported server
 class ReportedServerView(discord.ui.View):
     def __init__(self, guild, server_profile, requested_by, current_case):
-        super().__init__(timeout=None)
+        super().__init__(timeout=600)
         self.guild = guild
         self.server_profile = server_profile
         self.requested_by = requested_by
@@ -969,7 +969,7 @@ class MemberView(discord.ui.View):
 # new user
 class NewUserReportView(discord.ui.View):
     def __init__(self, user, requested_by):
-        super().__init__(timeout=None)
+        super().__init__(timeout=600)
         self.user = user
         self.requested_by = requested_by
 
@@ -4377,7 +4377,7 @@ class UserVoteView(discord.ui.View):
 # new server
 class NewServerReportView(discord.ui.View):
     def __init__(self, guild, requested_by):
-        super().__init__(timeout=None)
+        super().__init__(timeout=600)
         self.guild = guild
         self.requested_by = requested_by
     @discord.ui.button(label="Report", style=discord.ButtonStyle.red, custom_id="newserverreport:report")
