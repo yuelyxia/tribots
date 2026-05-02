@@ -7086,16 +7086,16 @@ async def tp(ctx):
 @bot.tree.command(name="report", description="Create a report directly (staff only)")
 @app_commands.describe(
     user="User to report",
-    alts="Alt IDs",
-    alt_proof1="Alt proof image 1",
-    alt_proof2="Alt proof image 2",
-    alt_proof3="Alt proof image 3",
-    alt_proof4="Alt proof image 4",
-    alt_proof5="Alt proof image 5",
+    alts="Alts",
+    alt_proof1="Alts proof image 1",
+    alt_proof2="Alts proof image 2",
+    alt_proof3="Alts proof image 3",
+    alt_proof4="Alts proof image 4",
+    alt_proof5="Alts proof image 5",
     tags="Tag(s)",
     games="Game(s)",
     reason="Reason",
-    contributor="Contributor user (optional)",
+    contributor="Contributor (optional)",
     proof1="Proof image 1",
     proof2="Proof image 2",
     proof3="Proof image 3",
@@ -7168,7 +7168,8 @@ async def report(
     if alts:
         for alt in alts.split():
             try:
-                alt_ids.append(int(alt.strip("<@>")))
+                alt_user = await bot.fetch_user(int(alt.strip("<@>")))
+                alt_ids.append(alt_user.id)
             except:
                 pass
     alt_string = alts_string(alt_ids) if alt_ids else ""
