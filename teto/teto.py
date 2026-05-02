@@ -7144,6 +7144,34 @@ async def report(
         await interaction.followup.send(
             f"`{user_id}` is trusted. Ask adm+ to dismiss them before using ,c to report.", ephemeral=True)
         return
+    ongoing_report = []
+    tickets_channel = bot.get_channel(TICKETS_CHANNEL)
+    active_threads = tickets_channel.threads
+    for thread in active_threads:
+        try:
+            async for message in thread.history():
+                if message.content.startswith(f"Adding report on `{user.id}`") or \
+                        message.content.startswith(f"Editing alts for `{user.id}`") or \
+                        message.content.startswith(f"Appealing for `{user.id}`") or \
+                        message.content.startswith(f"Initializing report on `{user.id}`") \
+                        and message.author.id == bot.user.id:
+                    ongoing_report.append(message.jump_url)
+        except Exception:
+            pass
+    if ongoing_report:
+        await interaction.followup.send(
+            f"There already exists an ongoing report on `{user.id}`: {ongoing_report[0]}")
+        return
+    ongoing_vote = []
+    vote_channel = bot.get_channel(VOTE_CHANNEL)
+    active_threads = vote_channel.threads
+    for thread in active_threads:
+        if thread.name == f"{user.id}":
+            ongoing_vote.append(thread.jump_url)
+    if ongoing_vote:
+        await interaction.followup.send(
+            f"There already exists an ongoing vote on `{user.id}`: {ongoing_vote[0]}")
+        return
     async def upload_attachment(att):
         if not att:
             return None
@@ -7221,6 +7249,12 @@ async def report(
         "title": case_title,
         "case_title": case_title
     })
+    if alt_proof_links:
+        image_embeds = image_links_to_embeds(r_profile_list[2])
+        await interaction.followup.send(f"Alts Proofs for `{user.id}`", embeds=image_embeds)
+    if proof_links:
+        image_embeds = image_links_to_embeds(add_case_list[7])
+        await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds)
 
 @bot.tree.command(name="merge", description="Merges the reports of two users. This action is irreversible.")
 @app_commands.describe(main="Main", alt="Alt")
