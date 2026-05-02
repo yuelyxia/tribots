@@ -77,6 +77,7 @@ yellow_tags = ["Suspect", "Service Ban", "Unprofessional MM", "Unprofessional Pi
 red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "Fake Event Server"]
 yellow_server_tags = ["Suspect Server"]
 
+games_list = ["Genshin Impact", "Honkai: Star Rail", "Wuthering Waves", "Roblox", "Project Sekai", "Cookie Run: Kingdom", "Identity V", "Valorant", "Others", "N/A"]
 
 # formatting functions
 
@@ -7081,6 +7082,144 @@ async def tp(ctx):
 
 
 # slash cmds
+
+@bot.tree.command(name="report", description="Create a report directly (staff only)")
+@app_commands.describe(
+    user="User to report",
+    alts="Alt IDs",
+    alt_proof1="Alt proof image 1",
+    alt_proof2="Alt proof image 2",
+    alt_proof3="Alt proof image 3",
+    alt_proof4="Alt proof image 4",
+    alt_proof5="Alt proof image 5",
+    tags="Tag(s)",
+    games="Game(s)",
+    reason="Reason",
+    contributor="Contributor user (optional)",
+    proof1="Proof image 1",
+    proof2="Proof image 2",
+    proof3="Proof image 3",
+    proof4="Proof image 4",
+    proof5="Proof image 5",
+    proof6="Proof image 6",
+    proof7="Proof image 7",
+    proof8="Proof image 8",
+    proof9="Proof image 9",
+    proof10="Proof image 10",
+)
+@app_commands.checks.has_role(ticket_ping)
+async def report(
+    interaction: discord.Interaction,
+    user: discord.User,
+    tags: str,
+    games: str,
+    reason: str,
+    alts: str = None,
+    contributor: discord.User = None,
+    alt_proof1: discord.Attachment = None,
+    alt_proof2: discord.Attachment = None,
+    alt_proof3: discord.Attachment = None,
+    alt_proof4: discord.Attachment = None,
+    alt_proof5: discord.Attachment = None,
+    proof1: discord.Attachment = None,
+    proof2: discord.Attachment = None,
+    proof3: discord.Attachment = None,
+    proof4: discord.Attachment = None,
+    proof5: discord.Attachment = None,
+    proof6: discord.Attachment = None,
+    proof7: discord.Attachment = None,
+    proof8: discord.Attachment = None,
+    proof9: discord.Attachment = None,
+    proof10: discord.Attachment = None,
+):
+    await interaction.response.defer()
+    user_id = user.id
+    existing = userscol.find_one({"_id": str(user_id)})
+    trusted = trusteduserscol.find_one({"_id": str(user_id)})
+    if existing:
+        await interaction.followup.send(
+            f"`{user_id}` is reported. Use ,c to add on a report.", ephemeral=True)
+        return
+    if trusted:
+        await interaction.followup.send(
+            f"`{user_id}` is trusted. Ask adm+ to dismiss them before using ,c to report.", ephemeral=True)
+        return
+    async def upload_attachment(att):
+        if not att:
+            return None
+        if not att.content_type.startswith("image/"):
+            return None
+        channel = bot.get_channel(PROOFS_CHANNEL)
+        sent = await channel.send(file=await att.to_file())
+        return sent.attachments[0].url if sent.attachments else None
+    alt_proofs_raw = [alt_proof1, alt_proof2, alt_proof3, alt_proof4, alt_proof5]
+    alt_proof_links = []
+    for att in alt_proofs_raw:
+        url = await upload_attachment(att)
+        if url:
+            alt_proof_links.append(url)
+    proof_raw = [proof1, proof2, proof3, proof4, proof5, proof6, proof7, proof8, proof9, proof10]
+    proof_links = []
+    for att in proof_raw:
+        url = await upload_attachment(att)
+        if url:
+            proof_links.append(url)
+    alt_ids = []
+    if alts:
+        for alt in alts.split():
+            try:
+                alt_ids.append(int(alt.strip("<@>")))
+            except:
+                pass
+    alt_string = alts_string(alt_ids) if alt_ids else ""
+    if contributor:
+        contributor_value = f"<@{contributor.id}>"
+    else:
+        contributor_value = "Anonymous"
+    r_profile_list = [
+        alt_string,                    # [0] alts
+        "",                            # [1] other tags (auto below)
+        alt_proof_links               # [2] alt proofs
+    ]
+    sorted_tags = sort_user_tags(tags.title().split(", "))
+    case_title = sorted_tags[0]
+    r_profile_list[1] = selected_string(sorted_tags[1:])
+    games_map = {g.lower(): g for g in games_list}
+    filtered_games = []
+    if games:
+        for g in games.split(","):
+            key = g.strip().lower()
+            if key in games_map and games_map[key] not in filtered_games:
+                filtered_games.append(games_map[key])
+    games_string = ", ".join(filtered_games) if filtered_games else "N/A"
+    add_case_list = [
+        f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
+        games_string,
+        selected_string(sorted_tags),
+        reason,
+        contributor_value,
+        f"<@{interaction.user.id}>",
+        f"<@{interaction.user.id}>",
+        proof_links
+    ]
+    r_profile = format_user_r_profile(user, r_profile_list, case_title)
+    add_case = format_user_add_case(add_case_list, case_title)
+    embeds = [r_profile, add_case]
+    msg = await interaction.followup.send(
+        content=f"Initializing report on `{user_id}`...",
+        embeds=embeds,
+        view=UserProofsView()
+    )
+    inprogresscol.insert_one({
+        "_id": msg.id,
+        "user_id": user_id,
+        "requested_by": interaction.user.id,
+        "channel_id": interaction.channel.id,
+        "r_profile_list": r_profile_list,
+        "add_case_list": add_case_list,
+        "title": case_title,
+        "case_title": case_title
+    })
 
 @bot.tree.command(name="merge", description="Merges the reports of two users. This action is irreversible.")
 @app_commands.describe(main="Main", alt="Alt")
