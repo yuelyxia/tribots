@@ -7134,8 +7134,8 @@ async def report(
 ):
     await interaction.response.defer()
     user_id = user.id
-    if user.bot:
-        await interaction.followup.send(f"You cannot report a bot.", ephemeral=True)
+    if user.id in tri_bots:
+        await interaction.followup.send(f"You cannot report a TRI bot.", ephemeral=True)
         return
     existing = userscol.find_one({"_id": str(user_id)})
     trusted = trusteduserscol.find_one({"_id": str(user_id)})
