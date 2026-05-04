@@ -620,7 +620,7 @@ async def get_active_claims(channel):
         if not msg.embeds:
             continue
         for embed in msg.embeds:
-            content = embed.description
+            content = embed.description or ""
             match = CLAIM_REGEX.search(content)
             if match:
                 user_id = int(match.group(1))
@@ -676,18 +676,21 @@ async def claim(ctx, mode: str = None, member: discord.Member = None):
         staff_role = server_info.get("staff_role")
         adm_role = server_info.get("adm_role")
         if get(ctx.guild.roles, id=int(staff_role.strip("<@&>"))) in ctx.author.roles:
-            target = ctx.author
             if mode == "force":
-                if get(ctx.guild.roles, id=int(adm_role.strip("<@&>"))) in ctx.author.roles:
+                if get(ctx.guild.roles, id=int(adm_role.strip("<@&>"))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles:
                     if not member:
                         await ctx.send("Please specify a user to force claim.")
                         return
                     already_claimed = await active_claim(channel=ctx.channel, user_id=member.id)
-                    if not already_claimed:
+                    if already_claimed:
                         await ctx.reply("They have already claimed this ticket.")
                         return
                     target = member
+                else:
+                    await ctx.reply("Unauthorised.")
+                    return
             else:
+                target = ctx.author
                 already_claimed = await active_claim(channel=ctx.channel, user_id=ctx.author.id)
                 if already_claimed:
                     await ctx.reply("You have already claimed this ticket.")
@@ -712,9 +715,8 @@ async def unclaim(ctx, mode: str = None, member: discord.Member = None):
         staff_role = server_info.get("staff_role")
         adm_role = server_info.get("adm_role")
         if get(ctx.guild.roles, id=int(staff_role.strip("<@&>"))) in ctx.author.roles:
-            target = ctx.author
             if mode == "force":
-                if get(ctx.guild.roles, id=int(adm_role.strip("<@&>"))) in ctx.author.roles:
+                if get(ctx.guild.roles, id=int(adm_role.strip("<@&>"))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles:
                     if not member:
                         await ctx.send("Please specify a user to force claim.")
                         return
@@ -723,7 +725,11 @@ async def unclaim(ctx, mode: str = None, member: discord.Member = None):
                         await ctx.reply("They have not claimed this ticket.")
                         return
                     target = member
+                else:
+                    await ctx.reply("Unauthorised.")
+                    return
             else:
+                target = ctx.author
                 already_claimed = await active_claim(channel=ctx.channel, user_id=ctx.author.id)
                 if not already_claimed:
                     await ctx.reply("You have not claimed this ticket.")
