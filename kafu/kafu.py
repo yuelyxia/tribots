@@ -972,8 +972,8 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
                 utc = f"UTC{hours:+}:{minutes:02d}"
             await interaction.response.send_message(f"Your timezone has been set to **{timezone.replace("_", " ")} ({utc})**.")
 
-@settings.command(name="points")
-async def set_points(interaction: discord.Interaction, user: str, category: Literal["staff", "mm", "pilot"], timeframe: Literal["monthly", "alltime"], value: str):
+@settings.command(name="points", description="Set points to a certain value.")
+async def set_points(interaction: discord.Interaction, user: str, category: Literal["staff", "mm", "pilot", "tickets"], timeframe: Literal["monthly", "alltime"], value: str):
     await interaction.response.defer(ephemeral=True)
     if not is_int(value):
         await interaction.followup.send("Please input a valid integer value.", ephemeral=True)
@@ -1023,6 +1023,16 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
                             pilot["monthly"] = int(value)
                         if timeframe == "alltime":
                             pilot["alltime"] = int(value)
+                if category == "tickets":
+                    if not interaction.user.guild_permissions.manage_roles:
+                        await interaction.followup.send(f"Unauthorised.", ephemeral=True)
+                        return
+                    staff = server_info.get("staff", {}).get(str(user_id))
+                    if staff:
+                        if timeframe == "monthly":
+                            staff["monthly_tickets"] = int(value)
+                        if timeframe == "alltime":
+                            staff["tickets"] = int(value)
                 servers.replace_one(server_query, server_info)
                 await interaction.followup.send(f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
     else:
