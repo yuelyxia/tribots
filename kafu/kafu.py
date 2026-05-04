@@ -196,6 +196,8 @@ async def quota_check():
 async def on_message(message: discord.Message):
     if message.author.bot:
         return
+    if message.guild is None:
+        return
     guild_id = message.guild.id
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one(server_query)
