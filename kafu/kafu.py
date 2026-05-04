@@ -1378,6 +1378,7 @@ bot.tree.add_command(role)
 
 @role.command(name="massadd", description="Adds a role to multiple users.")
 @app_commands.describe(role="Role to add", users="Users or IDs (separate with a space)")
+@app_commands.default_permissions(manage_roles=True)
 async def role_massadd(interaction: discord.Interaction, role: discord.Role, users: str):
     await interaction.response.defer(ephemeral=True)
     guild = interaction.guild
