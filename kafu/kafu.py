@@ -1973,7 +1973,7 @@ async def appoint_staff(interaction: discord.Interaction, user: str, role: Optio
         await interaction.followup.send(f"This server is not whitelisted.", ephemeral=False)
         return
     staff_role = server_info.get("staff_role")
-    if not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+    if staff_role and not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
         return
     try:
@@ -2014,7 +2014,7 @@ async def appoint_staff(interaction: discord.Interaction, user: str, role: Optio
         if staff_ping: await member.add_roles(interaction.guild.get_role(int(staff_ping.strip("<@&>"))))
         if role is not None and server_info.get("staff_roles"):
             staff_roles = server_info["staff_roles"].split()
-            if str(role.id) in staff_roles:
+            if str(role.mention) in staff_roles:
                 for r in staff_roles:
                     await member.remove_roles(interaction.guild.get_role(int(r.strip("<@&>"))))
                 await member.add_roles(role)
@@ -2072,7 +2072,7 @@ async def appoint_mm(interaction: discord.Interaction, user: str, role: Optional
         if mm_ping: await member.add_roles(interaction.guild.get_role(int(mm_ping.strip("<@&>"))))
         if role is not None and server_info.get("mm_roles"):
             mm_roles = server_info["mm_roles"].split()
-            if str(role.id) in mm_roles:
+            if str(role.mention) in mm_roles:
                 for r in mm_roles:
                     await member.remove_roles(interaction.guild.get_role(int(r.strip("<@&>"))))
                 await member.add_roles(role)
@@ -2130,7 +2130,7 @@ async def appoint_pilot(interaction: discord.Interaction, user: str, role: Optio
         if pilot_ping: await member.add_roles(interaction.guild.get_role(int(pilot_ping.strip("<@&>"))))
         if role is not None and server_info.get("pilot_roles"):
             pilot_roles = server_info["pilot_roles"].split()
-            if str(role.id) in pilot_roles:
+            if str(role.mention) in pilot_roles:
                 for r in pilot_roles:
                     await member.remove_roles(interaction.guild.get_role(int(r.strip("<@&>"))))
                 await member.add_roles(role)
