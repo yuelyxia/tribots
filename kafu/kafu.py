@@ -1382,7 +1382,7 @@ bot.tree.add_command(role)
 @app_commands.describe(role="Role to add", users="Users or IDs (separate with a space)")
 @app_commands.default_permissions(manage_roles=True)
 async def role_massadd(interaction: discord.Interaction, role: discord.Role, users: str):
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer()
     guild = interaction.guild
     bot_member = guild.me
     if role.position >= bot_member.top_role.position:
@@ -1963,8 +1963,8 @@ appoint = app_commands.Group(name="appoint", description="Appoint a staff/mm/pil
 bot.tree.add_command(appoint)
 
 @appoint.command(name="staff", description="Appoint a staff.")
-@app_commands.describe(user="User/role to appoint as staff", desc="Staff role to assign.")
-async def appoint_staff(interaction: discord.Interaction, user: str, desc: Optional[str]=None):
+@app_commands.describe(user="User/role to appoint as staff", role="Staff role to assign.")
+async def appoint_staff(interaction: discord.Interaction, user: str, role: Optional[discord.Role]=None):
     await interaction.response.defer(ephemeral=True)
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
@@ -2012,19 +2012,19 @@ async def appoint_staff(interaction: discord.Interaction, user: str, desc: Optio
         if staff_role: await member.add_roles(interaction.guild.get_role(int(staff_role.strip("<@&>"))))
         staff_ping = server_info.get("staff_ping")
         if staff_ping: await member.add_roles(interaction.guild.get_role(int(staff_ping.strip("<@&>"))))
-        if desc is not None and server_info.get("staff_roles"):
+        if role is not None and server_info.get("staff_roles"):
             staff_roles = server_info["staff_roles"].split()
-            if desc in staff_roles:
-                for role in staff_roles:
-                    await member.remove_roles(interaction.guild.get_role(int(role.strip("<@&>"))))
-                await member.add_roles(interaction.guild.get_role(int(desc.strip("<@&>"))))
-                await interaction.followup.send(f"`{user_id}` has been assigned the {desc} role.", ephemeral=True)
-        elif desc is not None:
+            if role in staff_roles:
+                for r in staff_roles:
+                    await member.remove_roles(interaction.guild.get_role(int(r.strip("<@&>"))))
+                await member.add_roles(interaction.guild.get_role(int(role.strip("<@&>"))))
+                await interaction.followup.send(f"`{user_id}` has been assigned the {role} role.", ephemeral=True)
+        elif role is not None:
             await interaction.followup.send("**staff roles** have not been set up.", ephemeral=True)
 
 @appoint.command(name="mm", description="Appoint a mm.")
-@app_commands.describe(user="User/role to appoint as mm", desc="mm role to assign.")
-async def appoint_mm(interaction: discord.Interaction, user: str, desc: Optional[str]=None):
+@app_commands.describe(user="User/role to appoint as mm", role="mm role to assign.")
+async def appoint_mm(interaction: discord.Interaction, user: str, role: Optional[discord.Role]=None):
     await interaction.response.defer(ephemeral=True)
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
@@ -2069,19 +2069,19 @@ async def appoint_mm(interaction: discord.Interaction, user: str, desc: Optional
         if mm_role: await member.add_roles(interaction.guild.get_role(int(mm_role.strip("<@&>"))))
         mm_ping = server_info.get("mm_ping")
         if mm_ping: await member.add_roles(interaction.guild.get_role(int(mm_ping.strip("<@&>"))))
-        if desc is not None and server_info.get("mm_roles"):
+        if role is not None and server_info.get("mm_roles"):
             mm_roles = server_info["mm_roles"].split()
-            if desc in mm_roles:
-                for role in mm_roles:
-                    await member.remove_roles(interaction.guild.get_role(int(role.strip("<@&>"))))
-                await member.add_roles(interaction.guild.get_role(int(desc.strip("<@&>"))))
-                await interaction.followup.send(f"`{user_id}` has been assigned the {desc} role.", ephemeral=True)
-        elif desc is not None:
+            if role in mm_roles:
+                for r in mm_roles:
+                    await member.remove_roles(interaction.guild.get_role(int(r.strip("<@&>"))))
+                await member.add_roles(interaction.guild.get_role(int(role.strip("<@&>"))))
+                await interaction.followup.send(f"`{user_id}` has been assigned the {role} role.", ephemeral=True)
+        elif role is not None:
             await interaction.followup.send("**mm roles** have not been set up.", ephemeral=True)
 
 @appoint.command(name="pilot", description="Appoint a pilot.")
-@app_commands.describe(user="User/role to appoint as pilot", desc="pilot role to assign.")
-async def appoint_pilot(interaction: discord.Interaction, user: str, desc: Optional[str]=None):
+@app_commands.describe(user="User/role to appoint as pilot", role="pilot role to assign.")
+async def appoint_pilot(interaction: discord.Interaction, user: str, role: Optional[discord.Role]=None):
     await interaction.response.defer(ephemeral=True)
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
@@ -2126,14 +2126,14 @@ async def appoint_pilot(interaction: discord.Interaction, user: str, desc: Optio
         if pilot_role: await member.add_roles(interaction.guild.get_role(int(pilot_role.strip("<@&>"))))
         pilot_ping = server_info.get("pilot_ping")
         if pilot_ping: await member.add_roles(interaction.guild.get_role(int(pilot_ping.strip("<@&>"))))
-        if desc is not None and server_info.get("pilot_roles"):
+        if role is not None and server_info.get("pilot_roles"):
             pilot_roles = server_info["pilot_roles"].split()
-            if desc in pilot_roles:
-                for role in pilot_roles:
-                    await member.remove_roles(interaction.guild.get_role(int(role.strip("<@&>"))))
-                await member.add_roles(interaction.guild.get_role(int(desc.strip("<@&>"))))
-                await interaction.followup.send(f"`{user_id}` has been assigned the {desc} role.", ephemeral=True)
-        elif desc is not None:
+            if role in pilot_roles:
+                for r in pilot_roles:
+                    await member.remove_roles(interaction.guild.get_role(int(r.strip("<@&>"))))
+                await member.add_roles(interaction.guild.get_role(int(role.strip("<@&>"))))
+                await interaction.followup.send(f"`{user_id}` has been assigned the {role} role.", ephemeral=True)
+        elif role is not None:
             await interaction.followup.send("**pilot roles** have not been set up.", ephemeral=True)
 
 @appoint.error
