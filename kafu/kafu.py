@@ -1414,9 +1414,7 @@ async def role_massadd(interaction: discord.Interaction, role: discord.Role, use
         except Exception:
             failed += 1
             failed_ids.append(uid)
-    await interaction.followup.send(
-        f"Added {role.mention} to **{success}** users. Failed: `{"` `".join(failed_ids)}`."
-    )
+    await interaction.followup.send(f"Added {role.mention} to **{success}** users. Failed: `{"` `".join(failed_ids)}`" if failed_ids else f"Added {role.mention} to **{success}** users.")
 
 @bot.tree.command(name="ban", description="Bans a user.")
 @app_commands.describe(user="User to ban", reason="Reason for ban")
