@@ -1373,6 +1373,48 @@ async def customrole_setexpiry(
         }}, upsert=True)
     await interaction.followup.send("Custom role updated.")
 
+role = app_commands.Group(name="role", description="Manage roles.")
+bot.tree.add_command(role)
+
+@role.command(name="massadd", description="Adds a role to multiple users.")
+@app_commands.describe(role="Role to add", users="Users or IDs (separate with a space)")
+async def role_massadd(interaction: discord.Interaction, role: discord.Role, users: str):
+    await interaction.response.defer(ephemeral=True)
+    guild = interaction.guild
+    bot_member = guild.me
+    if role.position >= bot_member.top_role.position:
+        await interaction.followup.send("Missing permissions. Check if KAFU’s highest role is above the role you are trying to assign.")
+        return
+    ids = re.findall(r"\d+", users)
+    if not ids:
+        await interaction.followup.send("No valid users provided.")
+        return
+    success = 0
+    failed = 0
+    failed_ids = []
+    for uid in ids:
+        member = guild.get_member(int(uid))
+        if not member:
+            failed += 1
+            failed_ids.append(uid)
+            continue
+        if member.bot:
+            failed += 1
+            failed_ids.append(uid)
+            continue
+        try:
+            await member.add_roles(role)
+            success += 1
+        except discord.Forbidden:
+            failed += 1
+            failed_ids.append(uid)
+        except Exception:
+            failed += 1
+            failed_ids.append(uid)
+    await interaction.followup.send(
+        f"Added {role.mention} to **{success}** users. Failed: `{"` `".join(failed_ids)}`."
+    )
+
 @bot.tree.command(name="ban", description="Bans a user.")
 @app_commands.describe(user="User to ban", reason="Reason for ban")
 async def ban(interaction: discord.Interaction, user: str, reason: Optional[str], image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
