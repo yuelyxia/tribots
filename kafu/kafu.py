@@ -120,7 +120,7 @@ async def quota_check():
                         for rank, (user_id, data) in enumerate(sorted_staff, start=1):
                             monthly = data.get("monthly", 0)
                             alltime = data.get("alltime", 0)
-                            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
+                            desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{alltime}** all ㆍ **{monthly}** month\n"
                             total_credits += monthly
                         staff_embed = discord.Embed(description=desc if desc else "No staff found.", colour = 0xffffff)
                         sorted_tickets = sorted(
@@ -132,7 +132,7 @@ async def quota_check():
                         for rank, (user_id, data) in enumerate(sorted_tickets, start=1):
                             monthly_tickets = data.get("monthly_tickets", 0)
                             tickets = data.get("tickets", 0)
-                            desc += f"-# {rank}﹒　<@{user_id}>　–　**{tickets}** all ﹒ **{monthly_tickets}** month\n"
+                            desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{tickets}** all ㆍ **{monthly_tickets}** month\n"
                             total_tickets += monthly_tickets
                         tickets_embed = discord.Embed(description=desc if desc else "No staff found.", colour = 0xffffff)
                         summary = discord.Embed(colour=0xffffff)
@@ -160,7 +160,7 @@ async def quota_check():
                         for rank, (user_id, data) in enumerate(sorted_mms, start=1):
                             monthly = data.get("monthly", 0)
                             alltime = data.get("alltime", 0)
-                            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
+                            desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{alltime}** all ㆍ **{monthly}** month\n"
                             total_services += monthly
                             total_mm_services += monthly
                         mms_embed = discord.Embed(description=desc if desc else "No mms found.", colour = 0xffffff)
@@ -174,7 +174,7 @@ async def quota_check():
                         for rank, (user_id, data) in enumerate(sorted_pilots, start=1):
                             monthly = data.get("monthly", 0)
                             alltime = data.get("alltime", 0)
-                            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
+                            desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{alltime}** all ㆍ **{monthly}** month\n"
                             total_services += monthly
                             total_pilot_services += monthly
                         pilots_embed = discord.Embed(description=desc if desc else "No pilots found.", colour = 0xffffff)
@@ -525,7 +525,7 @@ async def lb(ctx, *, category: str=None):
                 break
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
-            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
+            desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{alltime}** all ㆍ **{monthly}** month\n"
         embed = discord.Embed(description=desc if desc else "No staff found.", colour = 0xffffff)
         await ctx.send("## _ _　　　staff leaderboard", embed=embed)
     if category == "t":
@@ -541,7 +541,7 @@ async def lb(ctx, *, category: str=None):
                 break
             monthly_tickets = data.get("monthly_tickets", 0)
             tickets = data.get("tickets", 0)
-            desc += f"-# {rank}﹒　<@{user_id}>　–　**{tickets}** all ﹒ **{monthly_tickets}** month\n"
+            desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{tickets}** all ㆍ **{monthly_tickets}** month\n"
         embed = discord.Embed(description=desc if desc else "No staff found.", colour=0xffffff)
         await ctx.send("## _ _　　　tickets leaderboard", embed=embed)
     if category == "m":
@@ -557,7 +557,7 @@ async def lb(ctx, *, category: str=None):
                 break
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
-            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
+            desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{alltime}** all ㆍ **{monthly}** month\n"
         embed = discord.Embed(description=desc if desc else "No mms found.", colour = 0xffffff)
         await ctx.send("## _ _　　　mm leaderboard", embed=embed)
     if category == "p":
@@ -573,7 +573,7 @@ async def lb(ctx, *, category: str=None):
                 break
             monthly = data.get("monthly", 0)
             alltime = data.get("alltime", 0)
-            desc += f"-# {rank}﹒　<@{user_id}>　–　**{alltime}** all ﹒ **{monthly}** month\n"
+            desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{alltime}** all ㆍ **{monthly}** month\n"
         embed = discord.Embed(description=desc if desc else "No pilots found.", colour = 0xffffff)
         await ctx.send("## _ _　　　pilot leaderboard", embed=embed)
 
@@ -682,6 +682,10 @@ async def claim(ctx, mode: str = None, member: discord.Member = None):
                     if not member:
                         await ctx.send("Please specify a user to force claim.")
                         return
+                    already_claimed = await active_claim(channel=ctx.channel, user_id=member.id)
+                    if not already_claimed:
+                        await ctx.reply("They have already claimed this ticket.")
+                        return
                     target = member
             else:
                 already_claimed = await active_claim(channel=ctx.channel, user_id=ctx.author.id)
@@ -713,6 +717,10 @@ async def unclaim(ctx, mode: str = None, member: discord.Member = None):
                 if get(ctx.guild.roles, id=int(adm_role.strip("<@&>"))) in ctx.author.roles:
                     if not member:
                         await ctx.send("Please specify a user to force claim.")
+                        return
+                    already_claimed = await active_claim(channel=ctx.channel, user_id=member.id)
+                    if not already_claimed:
+                        await ctx.reply("They have not claimed this ticket.")
                         return
                     target = member
             else:
@@ -816,19 +824,19 @@ def user_info(user, staff_data=None, mm_data=None, pilot_data=None):
     if staff_data is not None:
         profile.add_field(
             name="staff",
-            value=f"**{staff_data.get('alltime', 0)}** all ﹒ **{staff_data.get('monthly', 0)}** month",
+            value=f"**{staff_data.get('alltime', 0)}** all ㆍ **{staff_data.get('monthly', 0)}** month",
             inline=False
         )
     if mm_data is not None:
         profile.add_field(
             name="mm",
-            value=f"**{mm_data.get('alltime', 0)}** all ﹒ **{mm_data.get('monthly', 0)}** month",
+            value=f"**{mm_data.get('alltime', 0)}** all ㆍ **{mm_data.get('monthly', 0)}** month",
             inline=False
         )
     if pilot_data is not None:
         profile.add_field(
             name="pilot",
-            value=f"**{pilot_data.get('alltime', 0)}** all ﹒ **{pilot_data.get('monthly', 0)}** month",
+            value=f"**{pilot_data.get('alltime', 0)}** all ㆍ **{pilot_data.get('monthly', 0)}** month",
             inline=False
         )
     profile.set_footer(text="✦　Use ,c to check if user is reported, unreported or trusted.")
@@ -1474,14 +1482,14 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                                     files_to_send.append(discord.File(data, filename=img.filename))
                 if files_to_send:
                     await bans_warns_channel.send(
-                        content=f"**Ban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Banned by: {interaction.user.id}\n﹒　Proof:",
+                        content=f"**Ban**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Banned by: {interaction.user.id}\nㆍ　Proof:",
                         files=files_to_send)
                 else:
                     await bans_warns_channel.send(
-                        content=f"**Ban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Banned by: {interaction.user.id}")
+                        content=f"**Ban**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Banned by: {interaction.user.id}")
             except Exception:
                 await bans_warns_channel.send(
-                    content=f"**Ban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Banned by: {interaction.user.id}")
+                    content=f"**Ban**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Banned by: {interaction.user.id}")
                 await interaction.followup.send(f"Unable to send ban log images.", ephemeral=True)
             try:
                 server_info.get("staff").get(str(interaction.user.id))["monthly"] = server_info.get("staff").get(
@@ -1525,29 +1533,29 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                         if files_to_send:
                             if ban_perms:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{ban_perms}\n**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                     files=files_to_send, view=BanReqView())
                             else:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                     files=files_to_send, view=BanReqView())
                         else:
                             if ban_perms:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{ban_perms}\n**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                     view=BanReqView())
                             else:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                     view=BanReqView())
                     except Exception:
                         if ban_perms:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                content=f"{ban_perms}\n**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 view=BanReqView())
                         else:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                content=f"**Ban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 view=BanReqView())
                         await interaction.followup.send(f"Unable to send ban log images.", ephemeral=True)
                     await interaction.followup.send(f"A ban request has been sent: [Jump]({ban_req.jump_url})",
@@ -1582,7 +1590,7 @@ class BanReqView(discord.ui.View):
                     pass
                 await interaction.guild.ban(user, reason=reason)
                 await interaction.response.edit_message(
-                    content=f"**Ban Accepted**\n﹒　User ID: {user_id}\n﹒　Reason: {reason}\n﹒　Requested by: <@{requested_by}>\n﹒　Accepted by: {interaction.user.mention}\n﹒　Proof:",
+                    content=f"**Ban Accepted**\nㆍ　User ID: {user_id}\nㆍ　Reason: {reason}\nㆍ　Requested by: <@{requested_by}>\nㆍ　Accepted by: {interaction.user.mention}\nㆍ　Proof:",
                     view=None)
                 server_info["bans_warns_req"].pop(str(interaction.message.id))
                 server_info["bans_warns_req"].pop(str(user_id))
@@ -1614,7 +1622,7 @@ class BanReqView(discord.ui.View):
                 reason = server_info["bans_warns_req"][user_id][0]
                 requested_by = server_info["bans_warns_req"][user_id][1]
                 await interaction.response.edit_message(
-                    content=f"> **Ban Rejected**\n> ﹒　User ID: {user_id}\n> ﹒　Reason: {reason}\n> ﹒　Requested by: <@{requested_by}>\n> ﹒　Rejected by: {interaction.user.mention}\n> ﹒　Proof:",
+                    content=f"> **Ban Rejected**\n> ㆍ　User ID: {user_id}\n> ㆍ　Reason: {reason}\n> ㆍ　Requested by: <@{requested_by}>\n> ㆍ　Rejected by: {interaction.user.mention}\n> ㆍ　Proof:",
                     view=None)
                 server_info["bans_warns_req"].pop(str(interaction.message.id))
                 server_info["bans_warns_req"].pop(str(user_id))
@@ -1678,14 +1686,14 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
                                     files_to_send.append(discord.File(data, filename=img.filename))
                 if files_to_send:
                     await bans_warns_channel.send(
-                        content=f"**Unban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Unbanned by: {interaction.user.id}\n﹒　Proof:",
+                        content=f"**Unban**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Unbanned by: {interaction.user.id}\nㆍ　Proof:",
                         files=files_to_send)
                 else:
                     await bans_warns_channel.send(
-                        content=f"**Unban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Unbanned by: {interaction.user.id}")
+                        content=f"**Unban**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Unbanned by: {interaction.user.id}")
             except Exception:
                 await bans_warns_channel.send(
-                    content=f"**Unban**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Unbanned by: {interaction.user.id}")
+                    content=f"**Unban**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Unbanned by: {interaction.user.id}")
                 await interaction.followup.send(f"Unable to send ban log images.", ephemeral=True)
             try:
                 server_info.get("staff").get(str(interaction.user.id))["monthly"] = server_info.get("staff").get(
@@ -1732,29 +1740,29 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
                         if files_to_send:
                             if ban_perms:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{ban_perms}\n**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                     files=files_to_send, view=UnbanReqView())
                             else:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                     files=files_to_send, view=UnbanReqView())
                         else:
                             if ban_perms:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{ban_perms}\n**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                     view=UnbanReqView())
                             else:
                                 ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                    content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                     view=UnbanReqView())
                     except Exception:
                         if ban_perms:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                content=f"{ban_perms}\n**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 view=BanReqView())
                         else:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                content=f"**Unban Request**\n﹒　User ID: {user.id}\n﹒　Reason: {reason}\n﹒　Requested by: {interaction.user.id}\n﹒　Proof:",
+                                content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 view=BanReqView())
                         await interaction.followup.send(f"Unable to send unban log images.", ephemeral=True)
                     await interaction.followup.send(f"An unban request has been sent: [Jump]({ban_req.jump_url})",
@@ -1792,7 +1800,7 @@ class UnbanReqView(discord.ui.View):
                 except discord.Forbidden:
                     pass
                 await interaction.response.edit_message(
-                    content=f"**Unban Accepted**\n﹒　User ID: {user_id}\n﹒　Reason: {reason}\n﹒　Requested by: <@{requested_by}>\n﹒　Accepted by: {interaction.user.mention}\n﹒　Proof:",
+                    content=f"**Unban Accepted**\nㆍ　User ID: {user_id}\nㆍ　Reason: {reason}\nㆍ　Requested by: <@{requested_by}>\nㆍ　Accepted by: {interaction.user.mention}\nㆍ　Proof:",
                     view=None)
                 server_info["bans_warns_req"].pop(str(interaction.message.id))
                 server_info["bans_warns_req"].pop(str(user_id))
@@ -1823,7 +1831,7 @@ class UnbanReqView(discord.ui.View):
                 reason = server_info["bans_warns_req"][user_id][0]
                 requested_by = server_info["bans_warns_req"][user_id][1]
                 await interaction.response.edit_message(
-                    content=f"> **Unban Rejected**\n> ﹒　User ID: {user_id}\n> ﹒　Reason: {reason}\n> ﹒　Requested by: <@{requested_by}>\n> ﹒　Rejected by: {interaction.user.mention}\n> ﹒　Proof:",
+                    content=f"> **Unban Rejected**\n> ㆍ　User ID: {user_id}\n> ㆍ　Reason: {reason}\n> ㆍ　Requested by: <@{requested_by}>\n> ㆍ　Rejected by: {interaction.user.mention}\n> ㆍ　Proof:",
                     view=None)
                 server_info["bans_warns_req"].pop(str(interaction.message.id))
                 server_info["bans_warns_req"].pop(str(user_id))
@@ -2598,10 +2606,10 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
 # TRI
 
 tri_ticket_options = [
-    discord.SelectOption(emoji="<:whitebutterfly:1459750881611354237>", label="﹒﹒Report", value="report"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="﹒﹒Appeal", value="appeal"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Verify", value="verify"),
-    discord.SelectOption(emoji="<:redbow:1462286246763040921>", label="﹒﹒Others", value="others"),
+    discord.SelectOption(emoji="<:whitebutterfly:1459750881611354237>", label="ㆍㆍReport", value="report"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="ㆍㆍAppeal", value="appeal"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍVerify", value="verify"),
+    discord.SelectOption(emoji="<:redbow:1462286246763040921>", label="ㆍㆍOthers", value="others"),
     ]
 
 class TRITicketView(discord.ui.View):
@@ -2621,24 +2629,24 @@ class TRITicketView(discord.ui.View):
             elif self.select_callback.values[0] == "others":
                 await interaction.response.send_modal(OthersModal())
 
-class ReportModal(discord.ui.Modal, title="﹒﹒Report"):
+class ReportModal(discord.ui.Modal, title="ㆍㆍReport"):
     user_id = discord.ui.TextInput(
-        label='﹒﹒Who are you reporting?',
+        label='ㆍㆍWho are you reporting?',
         style=discord.TextStyle.short,
         placeholder='User ID / Server Invite',
     )
     game = discord.ui.TextInput(
-        label='﹒﹒Game?',
+        label='ㆍㆍGame?',
         style=discord.TextStyle.short,
         placeholder='N/A if not applicable',
     )
     anon = discord.ui.TextInput(
-        label='﹒﹒Anonymous?',
+        label='ㆍㆍAnonymous?',
         style=discord.TextStyle.short,
         placeholder='Yes (Remain Anonymous) / No (Credit as Contributor)',
     )
     desc = discord.ui.TextInput(
-        label='﹒﹒Briefly describe the situation.',
+        label='ㆍㆍBriefly describe the situation.',
         style=discord.TextStyle.long,
     )
 
@@ -2673,14 +2681,14 @@ class ReportModal(discord.ui.Modal, title="﹒﹒Report"):
         }
         tickets.insert_one(new_ticket)
 
-class AppealModal(discord.ui.Modal, title="﹒﹒Appeal"):
+class AppealModal(discord.ui.Modal, title="ㆍㆍAppeal"):
     user_id = discord.ui.TextInput(
-        label='﹒﹒Who are you appealing?',
+        label='ㆍㆍWho are you appealing?',
         style=discord.TextStyle.short,
         placeholder='Self / User ID',
     )
     desc = discord.ui.TextInput(
-        label='﹒﹒Briefly describe the situation.',
+        label='ㆍㆍBriefly describe the situation.',
         style=discord.TextStyle.long,
     )
     async def on_submit(self, interaction: discord.Interaction):
@@ -2712,9 +2720,9 @@ class AppealModal(discord.ui.Modal, title="﹒﹒Appeal"):
         }
         tickets.insert_one(new_ticket)
 
-class VerifyModal(discord.ui.Modal, title="﹒﹒Verify"):
+class VerifyModal(discord.ui.Modal, title="ㆍㆍVerify"):
     desc = discord.ui.TextInput(
-        label='﹒﹒Verification issue?',
+        label='ㆍㆍVerification issue?',
         style=discord.TextStyle.long,
         placeholder='Alt Intrusion / VPN, explain if needed.',
     )
@@ -2746,9 +2754,9 @@ class VerifyModal(discord.ui.Modal, title="﹒﹒Verify"):
         }
         tickets.insert_one(new_ticket)
 
-class OthersModal(discord.ui.Modal, title="﹒﹒Others"):
+class OthersModal(discord.ui.Modal, title="ㆍㆍOthers"):
     desc = discord.ui.TextInput(
-        label='﹒﹒Reason for opening?',
+        label='ㆍㆍReason for opening?',
         style=discord.TextStyle.long,
     )
     async def on_submit(self, interaction: discord.Interaction):

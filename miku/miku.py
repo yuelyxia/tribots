@@ -160,7 +160,7 @@ async def weekly_quota():
             total_reviews += int(weekly_reviews)
             staff = guild.get_member(int(staff_id))
             if not staff: continue
-            o5_lbr.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ {weekly_reviews} week"
+            o5_lbr.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ㆍ {weekly_reviews} week"
         adm_lbr = discord.Embed(colour=0xffffff)
         adm_lbr.description = "✦　　┈　　admins"
         for staff_info in adm_reviews:
@@ -170,7 +170,7 @@ async def weekly_quota():
             total_reviews += int(weekly_reviews)
             staff = guild.get_member(int(staff_id))
             if not staff: continue
-            adm_lbr.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ {weekly_reviews} week"
+            adm_lbr.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ㆍ {weekly_reviews} week"
         sr_lbr = discord.Embed(colour=0xffffff)
         sr_lbr.description = "✦　　┈　　senior reporters"
         for staff_info in sr_reviews:
@@ -180,7 +180,7 @@ async def weekly_quota():
             total_reviews += int(weekly_reviews)
             staff = guild.get_member(int(staff_id))
             if not staff: continue
-            sr_lbr.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ {weekly_reviews} week"
+            sr_lbr.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ㆍ {weekly_reviews} week"
         embeds=[o5_lbr, adm_lbr, sr_lbr]
         await quota_channel.send(f"## _ _　　　weekly leaderboards .ᐟ\n_ _　　　　　　||<@&{staff_role}>||")
         await quota_channel.send("## _ _　　　reviews leaderboard", embeds=embeds)
@@ -194,7 +194,7 @@ async def weekly_quota():
             total_reports += int(weekly_reports)
             staff = guild.get_member(int(staff_id))
             if not staff: continue
-            o5_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
+            o5_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ {weekly_reports} week"
         adm_lb = discord.Embed(colour=0xffffff)
         adm_lb.description = "✦　　┈　　admins"
         for staff_info in adm_reports:
@@ -204,7 +204,7 @@ async def weekly_quota():
             total_reports += int(weekly_reports)
             staff = guild.get_member(int(staff_id))
             if not staff: continue
-            adm_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
+            adm_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ {weekly_reports} week"
         sr_lb = discord.Embed(colour=0xffffff)
         sr_lb.description = "✦　　┈　　senior reporters"
         for staff_info in sr_reports:
@@ -214,7 +214,7 @@ async def weekly_quota():
             total_reports += int(weekly_reports)
             staff = guild.get_member(int(staff_id))
             if not staff: continue
-            sr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
+            sr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ {weekly_reports} week"
         rep_lb = discord.Embed(colour=0xffffff)
         rep_lb.description = "✦　　┈　　reporters"
         for staff_info in rep_reports:
@@ -224,7 +224,7 @@ async def weekly_quota():
             total_reports += int(weekly_reports)
             staff = guild.get_member(int(staff_id))
             if not staff: continue
-            rep_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
+            rep_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ {weekly_reports} week"
         tr_lb = discord.Embed(colour=0xffffff)
         tr_lb.description = "✦　　┈　　trial reporters"
         for staff_info in tr_reports:
@@ -234,7 +234,7 @@ async def weekly_quota():
             total_reports += int(weekly_reports)
             staff = guild.get_member(int(staff_id))
             if not staff: continue
-            tr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ {weekly_reports} week"
+            tr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ {weekly_reports} week"
         embeds = [o5_lb, adm_lb, sr_lb, rep_lb, tr_lb]
         await quota_channel.send("## _ _　　　reports leaderboard", embeds=embeds)
         summary = discord.Embed(colour=0xffffff)
@@ -348,22 +348,22 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
 closing_options = [
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Report", value="report"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Appeal", value="appeal"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Verify", value="verify"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Others", value="others"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒SR+", value="sr+"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍReport", value="report"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍAppeal", value="appeal"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍVerify", value="verify"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍOthers", value="others"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍSR+", value="sr+"),
 ]
 
 @bot.command(name='cl', help="Sends closing guide.")
 async def cl(ctx, *, string: str = None):
     if ctx.guild.id == TRI_Archive:
         await ctx.reply(embed=discord.Embed(colour=0xffffff, title = "closing　guide　⸝⸝.ᐟ", description="""
-﹒rename ticket　┈　`,rn (name) tbc`
-﹒ping sr+　┈　`,sr`
-﹒see format for closing statements using the dropdown below.
-﹒please merge identical reasons.
-﹒for mass reports, you may wish to use `,pr` after reports are published to retrieve IDs easily.
+ㆍrename ticket　┈　`,rn (name) tbc`
+ㆍping sr+　┈　`,sr`
+ㆍsee format for closing statements using the dropdown below.
+ㆍplease merge identical reasons.
+ㆍfor mass reports, you may wish to use `,pr` after reports are published to retrieve IDs easily.
         """), view=ClosingView())
 
 class ClosingView(discord.ui.View):
@@ -375,42 +375,42 @@ class ClosingView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "report":
             await interaction.response.send_message(embed=discord.Embed(description="""
-﹒new report　┈　`new report on (ID) as (tags)`
-﹒added report　┈　`report added on (ID) as (tags)`
-﹒edited alts　┈　`edited alts for (ID) - added (alt alt alt), removed (alt alt alt)`
-﹒edited server owner　┈　`server owner edited for (ID)`
-﹒insufficient proof　┈　`no report on (ID) // insufficient proof`
-﹒unresponsive contributor　┈　`no report on (ID) // unresponsive contributor`
-﹒contributor left server　┈　`no report on (ID) // contributor left server`
+ㆍnew report　┈　`new report on (ID) as (tags)`
+ㆍadded report　┈　`report added on (ID) as (tags)`
+ㆍedited alts　┈　`edited alts for (ID) - added (alt alt alt), removed (alt alt alt)`
+ㆍedited server owner　┈　`server owner edited for (ID)`
+ㆍinsufficient proof　┈　`no report on (ID) // insufficient proof`
+ㆍunresponsive contributor　┈　`no report on (ID) // unresponsive contributor`
+ㆍcontributor left server　┈　`no report on (ID) // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "appeal":
             await interaction.response.send_message(embed=discord.Embed(description="""
-﹒accepted appeal　┈　`appeal on (ID) as (tags)`
-﹒rejected appeal　┈　`no appeal on (ID) // invalid reason`
-﹒insufficient proof　┈　`no appeal on (ID) // insufficient proof`
-﹒unresponsive contributor　┈　`no appeal on (ID) // unresponsive contributor`
-﹒contributor left server　┈　`no appeal on (ID) // contributor left server`
+ㆍaccepted appeal　┈　`appeal on (ID) as (tags)`
+ㆍrejected appeal　┈　`no appeal on (ID) // invalid reason`
+ㆍinsufficient proof　┈　`no appeal on (ID) // insufficient proof`
+ㆍunresponsive contributor　┈　`no appeal on (ID) // unresponsive contributor`
+ㆍcontributor left server　┈　`no appeal on (ID) // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "verify":
             await interaction.response.send_message(embed=discord.Embed(description="""
-﹒successful manual verification　┈　`(ID) manually verified`
-﹒unresponsive contributor　┈　`unresponsive contributor`
-﹒contributor left server　┈　`contributor left server`
+ㆍsuccessful manual verification　┈　`(ID) manually verified`
+ㆍunresponsive contributor　┈　`unresponsive contributor`
+ㆍcontributor left server　┈　`contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "others":
             await interaction.response.send_message(embed=discord.Embed(description="""
-﹒answered question(s)　┈　`query answered`
-﹒banned user(s)　┈　`no report // banned (ID) for (reason)`
+ㆍanswered question(s)　┈　`query answered`
+ㆍbanned user(s)　┈　`no report // banned (ID) for (reason)`
 """), ephemeral=True)
         if self.select_callback.values[0] == "sr+":
             await interaction.response.send_message(embed=discord.Embed(description="""
-﹒rename ticket　┈　`,rn (name) tbc (sr name)`
-﹒check active reports and give feedback　┈　`,ar`
-﹒if done correctly, accept reports for voting in order.
-﹒check reports in voting　┈　`,vr`
-﹒wait until 4 agree votes before you can publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
-﹒check published reports　┈　`,pr` and `,c (ID)` or `,mc (IDs)`
-﹒ask reporter for closing and close the ticket.
+ㆍrename ticket　┈　`,rn (name) tbc (sr name)`
+ㆍcheck active reports and give feedback　┈　`,ar`
+ㆍif done correctly, accept reports for voting in order.
+ㆍcheck reports in voting　┈　`,vr`
+ㆍwait until 4 agree votes before you can publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
+ㆍcheck published reports　┈　`,pr` and `,c (ID)` or `,mc (IDs)`
+ㆍask reporter for closing and close the ticket.
 """), ephemeral=True)
 
 @bot.command(name='getids', help="Extracts valid user IDs from the string provided.")
@@ -514,7 +514,7 @@ async def lb(ctx, *args):
         weekly_reports = staff_info[2]
         staff = ctx.guild.get_member(int(staff_id))
         if not staff: continue
-        o5_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
+        o5_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ **{weekly_reports}** week"
     adm_lb = discord.Embed(colour=0xffffff)
     adm_lb.description = "✦　　┈　　admins"
     for staff_info in adm:
@@ -523,7 +523,7 @@ async def lb(ctx, *args):
         weekly_reports = staff_info[2]
         staff = ctx.guild.get_member(int(staff_id))
         if not staff: continue
-        adm_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
+        adm_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ **{weekly_reports}** week"
     sr_lb = discord.Embed(colour=0xffffff)
     sr_lb.description = "✦　　┈　　senior reporters"
     for staff_info in sr:
@@ -532,7 +532,7 @@ async def lb(ctx, *args):
         weekly_reports = staff_info[2]
         staff = ctx.guild.get_member(int(staff_id))
         if not staff: continue
-        sr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
+        sr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ **{weekly_reports}** week"
     rep_lb = discord.Embed(colour=0xffffff)
     rep_lb.description = "✦　　┈　　reporters"
     for staff_info in rep:
@@ -541,7 +541,7 @@ async def lb(ctx, *args):
         weekly_reports = staff_info[2]
         staff = ctx.guild.get_member(int(staff_id))
         if not staff: continue
-        rep_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
+        rep_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ **{weekly_reports}** week"
     tr_lb = discord.Embed(colour=0xffffff)
     tr_lb.description = "✦　　┈　　trial reporters"
     for staff_info in tr:
@@ -550,7 +550,7 @@ async def lb(ctx, *args):
         weekly_reports = staff_info[2]
         staff = ctx.guild.get_member(int(staff_id))
         if not staff: continue
-        tr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ﹒ **{weekly_reports}** week"
+        tr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reports}** all ㆍ **{weekly_reports}** week"
     embeds=[o5_lb, adm_lb, sr_lb, rep_lb, tr_lb]
     await ctx.reply("## _ _　　　reports leaderboard", embeds=embeds)
 
@@ -586,7 +586,7 @@ async def lbr(ctx):
         weekly_reviews = staff_info[2]
         staff = ctx.guild.get_member(int(staff_id))
         if not staff: continue
-        o5_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ **{weekly_reviews}** week"
+        o5_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ㆍ **{weekly_reviews}** week"
     adm_lb = discord.Embed(colour=0xffffff)
     adm_lb.description = "✦　　┈　　admins"
     for staff_info in adm:
@@ -595,7 +595,7 @@ async def lbr(ctx):
         weekly_reviews = staff_info[2]
         staff = ctx.guild.get_member(int(staff_id))
         if not staff: continue
-        adm_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ **{weekly_reviews}** week"
+        adm_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ㆍ **{weekly_reviews}** week"
     sr_lb = discord.Embed(colour=0xffffff)
     sr_lb.description = "✦　　┈　　senior reporters"
     for staff_info in sr:
@@ -604,7 +604,7 @@ async def lbr(ctx):
         weekly_reviews = staff_info[2]
         staff = ctx.guild.get_member(int(staff_id))
         if not staff: continue
-        sr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ﹒ **{weekly_reviews}** week"
+        sr_lb.description += f"\n-# <:reply:1459162938303578213>　{staff.mention}　–　**{reviews}** all ㆍ **{weekly_reviews}** week"
     embeds=[o5_lb, adm_lb, sr_lb]
     await ctx.reply("## _ _　　　reviews leaderboard", embeds=embeds)
 
@@ -615,11 +615,11 @@ class StaffRulesView(discord.ui.View):
                                         url="https://docs.google.com/document/d/18GPfRrvzJ4b1d6cJ_yLyd1HELJbE4y9PqBH5-FVQktc/"))
 
 staff_guide_options = [
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Trial", value="trial"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Breaks", value="breaks"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Quota", value="quota"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Tickets", value="tickets"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="﹒﹒Autoresponders", value="autoresponders"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍTrial", value="trial"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍBreaks", value="breaks"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍQuota", value="quota"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍTickets", value="tickets"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍAutoresponders", value="autoresponders"),
 ]
 
 class StaffGuideView(discord.ui.View):
@@ -632,87 +632,87 @@ class StaffGuideView(discord.ui.View):
         if self.select_callback.values[0] == "trial":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### Trial Period
-﹒**14–90 days**
-﹒Exceeding 90 days results in an **unappealable demotion** (you may reapply)
-﹒**Asking questions is encouraged** and will not affect your status
-﹒**No breaks in the first 14 days** unless it’s an emergency
+ㆍ**14–90 days**
+ㆍExceeding 90 days results in an **unappealable demotion** (you may reapply)
+ㆍ**Asking questions is encouraged** and will not affect your status
+ㆍ**No breaks in the first 14 days** unless it’s an emergency
 ### Promotion Requirements
-﹒**2 weeks of quota** (not necessarily consecutive)
-﹒**15 non-hitter reports**
-﹒**3 appeals**
-﹒**20 votes**
+ㆍ**2 weeks of quota** (not necessarily consecutive)
+ㆍ**15 non-hitter reports**
+ㆍ**3 appeals**
+ㆍ**20 votes**
             """), ephemeral=True)
         if self.select_callback.values[0] == "breaks":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### Break Types
-﹒**Half Break** — weekly quota is **halved (rounded down)**
-﹒**Full Break** — weekly quota is **not counted**
+ㆍ**Half Break** — weekly quota is **halved (rounded down)**
+ㆍ**Full Break** — weekly quota is **not counted**
 ### Break Rules
-﹒Staff **cannot earn Annual Leave** while on break
-﹒**1 Full Break** may be split into **2 Half Breaks**
+ㆍStaff **cannot earn Annual Leave** while on break
+ㆍ**1 Full Break** may be split into **2 Half Breaks**
 ### Annual Leave
-﹒Includes **all types of leave**
-﹒Basic entitlement: **12 Full Breaks**
-﹒**1/8 Full Break** for each **week of completed quota**
+ㆍIncludes **all types of leave**
+ㆍBasic entitlement: **12 Full Breaks**
+ㆍ**1/8 Full Break** for each **week of completed quota**
             """), ephemeral=True)
         if self.select_callback.values[0] == "quota":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### Quota Basics
-﹒Weekly quota ranges between **5–10 reports/appeals**
-﹒Only **successfully published** reports/appeals are counted
-﹒Hitter reports count toward quota but have **low promotion value**
+ㆍWeekly quota ranges between **5–10 reports/appeals**
+ㆍOnly **successfully published** reports/appeals are counted
+ㆍHitter reports count toward quota but have **low promotion value**
 ### Strikes
-﹒Each week of **incomplete quota** while **not on a Full Break = 1 strike**
+ㆍEach week of **incomplete quota** while **not on a Full Break = 1 strike**
 ### Consequences for Incomplete Quota
-﹒**Demotion in rank:**
-　﹒2 consecutive strikes with **no breaks taken**
-　﹒3 consecutive strikes with **≤ 1 Full Break** taken in total
-　﹒4 or more strikes (not necessarily consecutive) within the **past 8 weeks**
-﹒**Demotion from Staff:**
-　﹒Average activity of **below 50%** over the **past 8 weeks**
-　﹒Full Break weeks are **excluded** from calculation, but Half Break weeks are **included**
-　﹒Activity is measured by **quota fulfilled**, capped at **100% per week**
+ㆍ**Demotion in rank:**
+　ㆍ2 consecutive strikes with **no breaks taken**
+　ㆍ3 consecutive strikes with **≤ 1 Full Break** taken in total
+　ㆍ4 or more strikes (not necessarily consecutive) within the **past 8 weeks**
+ㆍ**Demotion from Staff:**
+　ㆍAverage activity of **below 50%** over the **past 8 weeks**
+　ㆍFull Break weeks are **excluded** from calculation, but Half Break weeks are **included**
+　ㆍActivity is measured by **quota fulfilled**, capped at **100% per week**
             """), ephemeral=True)
         if self.select_callback.values[0] == "tickets":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### Ticket Claiming
-﹒The **first Staff** to send a proper greeting (e.g. hi) handles the ticket
-﹒If multiple greetings are sent, **reload Discord** to see who was first
-﹒Other Staff must **delete their messages**
+ㆍThe **first Staff** to send a proper greeting (e.g. hi) handles the ticket
+ㆍIf multiple greetings are sent, **reload Discord** to see who was first
+ㆍOther Staff must **delete their messages**
 ### Ticket Handling
-﹒Only **one Staff** may handle a ticket at a time
-﹒A **Defender** may assist if required
-﹒Only **one Senior Reporter** may review when requested
-﹒After acceptance for voting, the **sr+ who publishes** the report is responsible for **closing the ticket**
+ㆍOnly **one Staff** may handle a ticket at a time
+ㆍA **Defender** may assist if required
+ㆍOnly **one Senior Reporter** may review when requested
+ㆍAfter acceptance for voting, the **sr+ who publishes** the report is responsible for **closing the ticket**
 ### Ticket Priority
-﹒Handle **older tickets first**
-﹒Do not skip tickets because they seem difficult
+ㆍHandle **older tickets first**
+ㆍDo not skip tickets because they seem difficult
 ### Ticket Limits
-﹒**Trial Reporter** — 1 active, 2 on-hold, 1 self ticket
-﹒**Reporter** — 2 active, 2 on-hold, 1 self ticket
-﹒If an on-hold ticket becomes active and exceeds your limit, you must **open one active ticket to other Staff**
+ㆍ**Trial Reporter** — 1 active, 2 on-hold, 1 self ticket
+ㆍ**Reporter** — 2 active, 2 on-hold, 1 self ticket
+ㆍIf an on-hold ticket becomes active and exceeds your limit, you must **open one active ticket to other Staff**
 ### On-Hold
-﹒Staff may place **their own tickets** on hold when necessary
-﹒Common reasons include:
-　﹒Waiting for Defendant response
-　﹒Waiting for Contributor response
-﹒Abuse of on-hold may result in **warnings or demotion**
+ㆍStaff may place **their own tickets** on hold when necessary
+ㆍCommon reasons include:
+　ㆍWaiting for Defendant response
+　ㆍWaiting for Contributor response
+ㆍAbuse of on-hold may result in **warnings or demotion**
 ### Ticket Closure
-﹒If the Contributor does not reply within **12 hours**, you may request closure
-﹒If no meaningful proof is provided within **4 hours**, you may request closure
+ㆍIf the Contributor does not reply within **12 hours**, you may request closure
+ㆍIf no meaningful proof is provided within **4 hours**, you may request closure
             """), ephemeral=True)
         if self.select_callback.values[0] == "autoresponders":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### ,adm
-﹒Pings adm+.
+ㆍPings adm+.
 ### ,sr
-﹒Pings sr+.
+ㆍPings sr+.
 ### ,tp
-﹒Pings ticket ping, e.g. when you want open a ticket to other Staff.
+ㆍPings ticket ping, e.g. when you want open a ticket to other Staff.
 ### ,ban
-﹒Pings ban perms.
+ㆍPings ban perms.
 ### ,cl
-﹒Sends closing guide.
+ㆍSends closing guide.
                 """), ephemeral=True)
 
 
@@ -724,32 +724,32 @@ async def staff_rules(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
 ## <:2paperclip:1449650494044639335>　　staff　　rules　　୨୧
 ### Follow Server Rules
-﹒Adhere to all [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160)
-﹒Particular focus on **No Discrimination**, **No Hate or Threats**, and **No NSFW Content**
+ㆍAdhere to all [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160)
+ㆍParticular focus on **No Discrimination**, **No Hate or Threats**, and **No NSFW Content**
 ### Confidentiality
-﹒Follow the Non-Disclosure Agreement (NDA)
-﹒Violation may result in immediate removal from Staff, a report as Unprofessional Staff, and/or a server ban depending on severity
+ㆍFollow the Non-Disclosure Agreement (NDA)
+ㆍViolation may result in immediate removal from Staff, a report as Unprofessional Staff, and/or a server ban depending on severity
 ### Ticket Protocol
-﹒Only one Staff should handle a ticket at a time, unless a Defender is required
-﹒Do not hijack tickets assigned to others
-﹒Avoid tickets where you are related to the Defendant
-﹒Keep communication on-topic and case-related; no side-chatting
-﹒When handling multiple reports in a ticket, address one at a time in order
+ㆍOnly one Staff should handle a ticket at a time, unless a Defender is required
+ㆍDo not hijack tickets assigned to others
+ㆍAvoid tickets where you are related to the Defendant
+ㆍKeep communication on-topic and case-related; no side-chatting
+ㆍWhen handling multiple reports in a ticket, address one at a time in order
 ### Professionalism
-﹒Reports on Staff may result in quarantine and demotion if accepted
-﹒Speaking negatively about ticket participants or Staff (current or former) is Unprofessional and will be addressed
+ㆍReports on Staff may result in quarantine and demotion if accepted
+ㆍSpeaking negatively about ticket participants or Staff (current or former) is Unprofessional and will be addressed
 ### Respect
-﹒Remain respectful, even toward those you dislike
-﹒Personal feelings are not an excuse for rudeness or unprofessional behavior
+ㆍRemain respectful, even toward those you dislike
+ㆍPersonal feelings are not an excuse for rudeness or unprofessional behavior
 ### No Inappropriate Jokes
-﹒Jokes about ||suicide||, ||self-harm||, or ||body shaming|| (e.g., "||kys||", "||fat||", "||keep yourself safe||") are strictly prohibited
-﹒Even if said without ill-intention, these are not acceptable as they may make others uncomfortable
+ㆍJokes about ||suicide||, ||self-harm||, or ||body shaming|| (e.g., "||kys||", "||fat||", "||keep yourself safe||") are strictly prohibited
+ㆍEven if said without ill-intention, these are not acceptable as they may make others uncomfortable
 ### No Drama
-﹒Keep personal conflicts out of the server
-﹒Resolve issues privately and respectfully, or seek proper mediation
+ㆍKeep personal conflicts out of the server
+ㆍResolve issues privately and respectfully, or seek proper mediation
 ### No Favouritism
-﹒Do not excessively praise, defend, or favour specific individuals
-﹒Favoritism that undermines neutrality, decision-making, or report handling is prohibited
+ㆍDo not excessively praise, defend, or favour specific individuals
+ㆍFavoritism that undermines neutrality, decision-making, or report handling is prohibited
 """), view=StaffRulesView())
     await interaction.response.send_message("Staff Rules have been sent.", ephemeral=True)
 
