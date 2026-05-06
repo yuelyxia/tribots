@@ -836,6 +836,11 @@ def user_info(user, staff_data=None, mm_data=None, pilot_data=None):
             value=f"**{staff_data.get('alltime', 0)}** all ㆍ **{staff_data.get('monthly', 0)}** month",
             inline=False
         )
+        profile.add_field(
+            name="tickets",
+            value=f"**{staff_data.get('tickets', 0)}** all ㆍ **{staff_data.get('monthly_tickets', 0)}** month",
+            inline=False
+        )
     if mm_data is not None:
         profile.add_field(
             name="mm",
