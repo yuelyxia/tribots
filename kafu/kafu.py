@@ -94,7 +94,7 @@ QUOTA_CHECK_DAY = 1
 async def quota_check():
     now = datetime.datetime.now(datetime.timezone.utc)
     if now.day == QUOTA_CHECK_DAY:
-        guilds = servers.find({})  # all whitelisted servers
+        guilds = servers.find({})  # all servers
         for server_info in guilds:
             guild_id = int(server_info["_id"])
             try:
@@ -661,11 +661,12 @@ async def credits_already_given(channel):
 
 @bot.command(name="claim")
 async def claim(ctx, mode: str = None, member: discord.Member = None):
-    server_query = {"_id": str(ctx.guild.id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await ctx.reply("Server not whitelisted.")
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(ctx.guild.id)},
+        {"$setOnInsert": {"_id": str(ctx.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     if server_info:
         if not server_info.get("staff_role"):
             await ctx.reply("**staff role** has not been set up for this server.")
@@ -700,11 +701,12 @@ async def claim(ctx, mode: str = None, member: discord.Member = None):
 
 @bot.command(name="unclaim")
 async def unclaim(ctx, mode: str = None, member: discord.Member = None):
-    server_query = {"_id": str(ctx.guild.id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await ctx.reply("Server not whitelisted.")
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(ctx.guild.id)},
+        {"$setOnInsert": {"_id": str(ctx.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     if server_info:
         if not server_info.get("staff_role"):
             await ctx.reply("**staff role** has not been set up for this server.")
@@ -739,29 +741,30 @@ async def unclaim(ctx, mode: str = None, member: discord.Member = None):
 
 @bot.command(name="claims")
 async def claims(ctx):
-    server_query = {"_id": str(ctx.guild.id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await ctx.reply("Server not whitelisted.")
+    server_info = servers.find_one_and_update(
+        {"_id": str(ctx.guild.id)},
+        {"$setOnInsert": {"_id": str(ctx.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
+    if not server_info.get("staff_role"):
+        await ctx.reply("**staff role** has not been set up for this server.")
         return
-    if server_info:
-        if not server_info.get("staff_role"):
-            await ctx.reply("**staff role** has not been set up for this server.")
-            return
-        staff_role = server_info.get("staff_role")
-        if get(ctx.guild.roles, id=int(staff_role.strip("<@&>"))) in ctx.author.roles:
-            active_claims = await get_active_claims(ctx.channel)
-            mentions = [f"<@{uid}>" for uid in active_claims]
-            embed = discord.Embed(colour=0xffffff, description = f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
-            await ctx.reply(embed=embed)
+    staff_role = server_info.get("staff_role")
+    if get(ctx.guild.roles, id=int(staff_role.strip("<@&>"))) in ctx.author.roles:
+        active_claims = await get_active_claims(ctx.channel)
+        mentions = [f"<@{uid}>" for uid in active_claims]
+        embed = discord.Embed(colour=0xffffff, description = f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
+        await ctx.reply(embed=embed)
 
 @bot.command(name="close")
 async def close(ctx):
-    server_query = {"_id": str(ctx.guild.id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await ctx.reply("Server not whitelisted.")
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(ctx.guild.id)},
+        {"$setOnInsert": {"_id": str(ctx.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     if server_info:
         if not server_info.get("staff_role"):
             await ctx.reply("**staff role** has not been set up for this server.")
@@ -941,11 +944,12 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
     if interaction.guild is None:
         await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
         return
-    server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.response.send_message("Server not whitelisted.", ephemeral=True)
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     if server_info:
         if not server_info.get("staff_role"):
             await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
@@ -980,70 +984,75 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
         return
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if server_info:
-        if not server_info.get("staff_role"):
-            await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
-            return
-        if not server_info.get("bans_warns_channel"):
-            await interaction.followup.send("**bans warns channel** has not been set up for this server.",
-                                            ephemeral=True)
-            return
-        staff_role = server_info.get("staff_role")
-        if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
-            try:
-                user = await bot.fetch_user(int(user.strip("<@>")))
-            except Exception:
-                await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
-            else:
-                user_id = user.id
-                member = interaction.guild.get_member(int(user_id))
-                if not member: return
-                if category == "staff":
-                    if not interaction.user.guild_permissions.manage_roles:
-                        await interaction.followup.send(f"Unauthorised.", ephemeral=True)
-                        return
-                    staff = server_info.get("staff", {}).get(str(user_id))
-                    if staff:
-                        if timeframe == "monthly":
-                            staff["monthly"] = int(value)
-                        if timeframe == "alltime":
-                            staff["alltime"] = int(value)
-                if category == "mm":
-                    mm = server_info.get("mm", {}).get(str(user_id))
-                    if mm:
-                        if timeframe == "monthly":
-                            mm["monthly"] = int(value)
-                        if timeframe == "alltime":
-                            mm["alltime"] = int(value)
-                if category == "pilot":
-                    pilot = server_info.get("pilot", {}).get(str(user_id))
-                    if pilot:
-                        if timeframe == "monthly":
-                            pilot["monthly"] = int(value)
-                        if timeframe == "alltime":
-                            pilot["alltime"] = int(value)
-                if category == "tickets":
-                    if not interaction.user.guild_permissions.manage_roles:
-                        await interaction.followup.send(f"Unauthorised.", ephemeral=True)
-                        return
-                    staff = server_info.get("staff", {}).get(str(user_id))
-                    if staff:
-                        if timeframe == "monthly":
-                            staff["monthly_tickets"] = int(value)
-                        if timeframe == "alltime":
-                            staff["tickets"] = int(value)
-                servers.replace_one(server_query, server_info)
-                await interaction.followup.send(f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
-    else:
-        await interaction.followup.send(f"This server is not whitelisted.", ephemeral=False)
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
+    if not server_info.get("staff_role"):
+        await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
+        return
+    if not server_info.get("bans_warns_channel"):
+        await interaction.followup.send("**bans warns channel** has not been set up for this server.",
+                                        ephemeral=True)
+        return
+    staff_role = server_info.get("staff_role")
+    if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+        try:
+            user = await bot.fetch_user(int(user.strip("<@>")))
+        except Exception:
+            await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
+        else:
+            user_id = user.id
+            member = interaction.guild.get_member(int(user_id))
+            if not member: return
+            if category == "staff":
+                if not interaction.user.guild_permissions.manage_roles:
+                    await interaction.followup.send(f"Unauthorised.", ephemeral=True)
+                    return
+                staff = server_info.get("staff", {}).get(str(user_id))
+                if staff:
+                    if timeframe == "monthly":
+                        staff["monthly"] = int(value)
+                    if timeframe == "alltime":
+                        staff["alltime"] = int(value)
+            if category == "mm":
+                mm = server_info.get("mm", {}).get(str(user_id))
+                if mm:
+                    if timeframe == "monthly":
+                        mm["monthly"] = int(value)
+                    if timeframe == "alltime":
+                        mm["alltime"] = int(value)
+            if category == "pilot":
+                pilot = server_info.get("pilot", {}).get(str(user_id))
+                if pilot:
+                    if timeframe == "monthly":
+                        pilot["monthly"] = int(value)
+                    if timeframe == "alltime":
+                        pilot["alltime"] = int(value)
+            if category == "tickets":
+                if not interaction.user.guild_permissions.manage_roles:
+                    await interaction.followup.send(f"Unauthorised.", ephemeral=True)
+                    return
+                staff = server_info.get("staff", {}).get(str(user_id))
+                if staff:
+                    if timeframe == "monthly":
+                        staff["monthly_tickets"] = int(value)
+                    if timeframe == "alltime":
+                        staff["tickets"] = int(value)
+            servers.replace_one(server_query, server_info)
+            await interaction.followup.send(f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
+
 
 @bot.command(name="cr")
 async def cr(ctx):
-    server_info = servers.find_one({"_id": str(ctx.guild.id)})
-    if not server_info:
-        await ctx.reply("This server is not whitelisted.")
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(ctx.guild.id)},
+        {"$setOnInsert": {"_id": str(ctx.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     custom_roles = server_info.get("custom_roles", {})
     role_id = next((r for r, d in custom_roles.items() if d.get("owner") == str(ctx.author.id)), None)
     if not role_id:
@@ -1141,10 +1150,12 @@ async def customrole_edit(interaction: discord.Interaction,
                             image: Optional[discord.Attachment] = None
                             ):
     await interaction.response.defer(ephemeral=True)
-    server_info = servers.find_one({"_id": str(interaction.guild.id)})
-    if not server_info:
-        await interaction.followup.send("This server is not whitelisted.")
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     custom_roles = server_info.get("custom_roles", {})
     role_id = next((r for r, d in custom_roles.items() if d.get("owner") == str(interaction.user.id)), None)
     if not role_id:
@@ -1208,28 +1219,27 @@ async def customrole_create(interaction: discord.Interaction,
     image: Optional[discord.Attachment] = None
 ):
     await interaction.response.defer(ephemeral=True)
-    guild = interaction.guild
-    guild_id = guild.id
-    server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.response.send_message("Server not whitelisted.", ephemeral=True)
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     custom_roles = server_info.get("custom_roles", {})
     for role_id, data in custom_roles.items():
         if data["owner"] == str(owner.id):
-            role = guild.get_role(int(role_id))
+            role = interaction.guild.get_role(int(role_id))
             if role:
                 await interaction.followup.send("User already has a custom role.", ephemeral=True)
                 return
     # create role
-    role = await guild.create_role(
+    role = await interaction.guild.create_role(
         name=name,
         colour=discord.Colour(int(colour.strip("#"), 16)) if colour else discord.Colour.default()
     )
     # move role under bot
-    bot_top = guild.me.top_role
-    await guild.edit_role_positions({role: bot_top.position - 1})
+    bot_top = interaction.guild.me.top_role
+    await interaction.guild.edit_role_positions({role: bot_top.position - 1})
     # role icon
     if image:
         data = await image.read()
@@ -1266,7 +1276,7 @@ async def customrole_create(interaction: discord.Interaction,
         expires_at = int(time.time()) + duration if duration else None
         role_type = "time"
     servers.update_one(
-        {"_id": str(guild.id)},
+        {"_id": str(interaction.guild.id)},
         {
             "$set": {
                 f"custom_roles.{role.id}": {
@@ -1283,10 +1293,12 @@ async def customrole_create(interaction: discord.Interaction,
 @customrole.command(name="delete", description="Delete a custom role.")
 async def customrole_delete(interaction: discord.Interaction, role: discord.Role):
     await interaction.response.defer(ephemeral=True)
-    server_info = servers.find_one({"_id": str(interaction.guild.id)})
-    if not server_info:
-        await interaction.followup.send("This server is not whitelisted.")
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     bot_member = interaction.guild.me
     if role:
         if role.managed:
@@ -1315,17 +1327,16 @@ async def customrole_add(
     booster: Optional[bool] = False
 ):
     await interaction.response.defer(ephemeral=True)
-    guild = interaction.guild
-    guild_id = guild.id
-    server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.response.send_message("Server not whitelisted.", ephemeral=True)
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     custom_roles = server_info.get("custom_roles", {})
     for role_id, data in custom_roles.items():
         if data["owner"] == str(owner.id):
-            role = guild.get_role(int(role_id))
+            role = interaction.guild.get_role(int(role_id))
             if role:
                 await interaction.followup.send("User already has a custom role.", ephemeral=True)
                 return
@@ -1353,10 +1364,12 @@ async def customrole_add(
 @app_commands.default_permissions(manage_roles=True)
 async def customrole_remove(interaction: discord.Interaction, role: discord.Role):
     await interaction.response.defer(ephemeral=True)
-    server_info = servers.find_one({"_id": str(interaction.guild.id)})
-    if not server_info:
-        await interaction.followup.send("Server not whitelisted.")
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     if str(role.id) not in server_info.get("custom_roles", {}):
         await interaction.followup.send("This role is not registered as a custom role.")
         return
@@ -1375,16 +1388,15 @@ async def customrole_setexpiry(
     booster: Optional[bool] = False
 ):
     await interaction.response.defer(ephemeral=True)
-    guild = interaction.guild
-    guild_id = guild.id
-    server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.response.send_message("Server not whitelisted.", ephemeral=True)
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     custom_roles = server_info.get("custom_roles", {})
     for role_id, data in custom_roles.items():
-        role = guild.get_role(int(role_id))
+        role = interaction.guild.get_role(int(role_id))
         if not role:
             await interaction.followup.send("Custom role no longer exists.", ephemeral=True)
             return
@@ -1518,53 +1530,48 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
     else:
         guild_id = interaction.guild.id
         server_query = {"_id": str(guild_id)}
-        server_info = servers.find_one(server_query)
-        if server_info:
-            if not server_info.get("staff_role"):
-                await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
-                return
-            if not server_info.get("bans_warns_channel"):
-                await interaction.followup.send("**bans warns channel** has not been set up for this server.", ephemeral=True)
-                return
-            staff_role = server_info.get("staff_role")
-            ban_perms = server_info.get("ban_perms")
-            bans_warns_channel = server_info.get("bans_warns_channel")
-            server_info.setdefault("bans_warns_req", {})
-            if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
-                if str(user.id) in server_info["bans_warns_req"]:
-                    await interaction.followup.send(f"There already exists a ban/unban request on `{user.id}`: [Jump]({server_info["bans_warns_req"][str(user.id)][2]}).")
-                else:
-                    try:
-                        images = [img for img in
-                                  [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if
-                                  img is not None]
-                        files_to_send = []
-                        async with aiohttp.ClientSession() as session:
-                            for img in images:
-                                if img.content_type and img.content_type.startswith('image/'):
-                                    async with session.get(img.url) as resp:
-                                        if resp.status == 200:
-                                            data = io.BytesIO(await resp.read())
-                                            files_to_send.append(discord.File(data, filename=img.filename))
-                        if files_to_send:
-                            if ban_perms:
-                                ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                    files=files_to_send, view=BanReqView())
-                            else:
-                                ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                    files=files_to_send, view=BanReqView())
+        server_info = servers.find_one_and_update(
+            {"_id": str(interaction.guild.id)},
+            {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+            upsert=True,
+            return_document=True
+        )
+        if not server_info.get("staff_role"):
+            await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
+            return
+        if not server_info.get("bans_warns_channel"):
+            await interaction.followup.send("**bans warns channel** has not been set up for this server.", ephemeral=True)
+            return
+        staff_role = server_info.get("staff_role")
+        ban_perms = server_info.get("ban_perms")
+        bans_warns_channel = server_info.get("bans_warns_channel")
+        server_info.setdefault("bans_warns_req", {})
+        if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+            if str(user.id) in server_info["bans_warns_req"]:
+                await interaction.followup.send(f"There already exists a ban/unban request on `{user.id}`: [Jump]({server_info["bans_warns_req"][str(user.id)][2]}).")
+            else:
+                try:
+                    images = [img for img in
+                              [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if
+                              img is not None]
+                    files_to_send = []
+                    async with aiohttp.ClientSession() as session:
+                        for img in images:
+                            if img.content_type and img.content_type.startswith('image/'):
+                                async with session.get(img.url) as resp:
+                                    if resp.status == 200:
+                                        data = io.BytesIO(await resp.read())
+                                        files_to_send.append(discord.File(data, filename=img.filename))
+                    if files_to_send:
+                        if ban_perms:
+                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                                content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
+                                files=files_to_send, view=BanReqView())
                         else:
-                            if ban_perms:
-                                ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                    view=BanReqView())
-                            else:
-                                ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                    view=BanReqView())
-                    except Exception:
+                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                                content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
+                                files=files_to_send, view=BanReqView())
+                    else:
                         if ban_perms:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
                                 content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
@@ -1573,14 +1580,21 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
                                 content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 view=BanReqView())
-                        await interaction.followup.send(f"Unable to send ban log images.", ephemeral=True)
-                    await interaction.followup.send(f"A ban request has been sent: [Jump]({ban_req.jump_url})",
-                                                            ephemeral=True)
-                    server_info["bans_warns_req"][str(user.id)] = [reason, str(interaction.user.id), str(ban_req.jump_url)]
-                    server_info["bans_warns_req"][str(ban_req.id)] = str(user.id)
-                    servers.replace_one(server_query, server_info)
-        else:
-            await interaction.followup.send(f"This server is not whitelisted.", ephemeral=True)
+                except Exception:
+                    if ban_perms:
+                        ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
+                            view=BanReqView())
+                    else:
+                        ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
+                            view=BanReqView())
+                    await interaction.followup.send(f"Unable to send ban log images.", ephemeral=True)
+                await interaction.followup.send(f"A ban request has been sent: [Jump]({ban_req.jump_url})",
+                                                        ephemeral=True)
+                server_info["bans_warns_req"][str(user.id)] = [reason, str(interaction.user.id), str(ban_req.jump_url)]
+                server_info["bans_warns_req"][str(ban_req.id)] = str(user.id)
+                servers.replace_one(server_query, server_info)
 @ban.error
 async def ban_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
@@ -1723,72 +1737,75 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
     else:
         guild_id = interaction.guild.id
         server_query = {"_id": str(guild_id)}
-        server_info = servers.find_one(server_query)
-        if server_info:
-            if not server_info.get("staff_role"):
-                await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
-                return
-            if not server_info.get("bans_warns_channel"):
-                await interaction.followup.send("**bans warns channel** has not been set up for this server.",
-                                                ephemeral=True)
-                return
-            staff_role = server_info.get("staff_role")
-            ban_perms = server_info.get("ban_perms")
-            bans_warns_channel = server_info.get("bans_warns_channel")
-            server_info.setdefault("bans_warns_req", {})
-            if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
-                if str(user.id) in server_info["bans_warns_req"]:
-                    await interaction.followup.send(
-                        f"There already exists a ban/unban request on `{user.id}`: [Jump]({server_info["bans_warns_req"][str(user.id)][2]}).")
-                else:
-                    try:
-                        images = [img for img in
-                                  [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if
-                                  img is not None]
-                        files_to_send = []
-                        async with aiohttp.ClientSession() as session:
-                            for img in images:
-                                if img.content_type and img.content_type.startswith('image/'):
-                                    async with session.get(img.url) as resp:
-                                        if resp.status == 200:
-                                            data = io.BytesIO(await resp.read())
-                                            files_to_send.append(discord.File(data, filename=img.filename))
-                        if files_to_send:
-                            if ban_perms:
-                                ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                    files=files_to_send, view=UnbanReqView())
-                            else:
-                                ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                    files=files_to_send, view=UnbanReqView())
-                        else:
-                            if ban_perms:
-                                ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                    view=UnbanReqView())
-                            else:
-                                ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
-                                    content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                    view=UnbanReqView())
-                    except Exception:
+        server_info = servers.find_one_and_update(
+            {"_id": str(interaction.guild.id)},
+            {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+            upsert=True,
+            return_document=True
+        )
+        if not server_info.get("staff_role"):
+            await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
+            return
+        if not server_info.get("bans_warns_channel"):
+            await interaction.followup.send("**bans warns channel** has not been set up for this server.",
+                                            ephemeral=True)
+            return
+        staff_role = server_info.get("staff_role")
+        ban_perms = server_info.get("ban_perms")
+        bans_warns_channel = server_info.get("bans_warns_channel")
+        server_info.setdefault("bans_warns_req", {})
+        if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+            if str(user.id) in server_info["bans_warns_req"]:
+                await interaction.followup.send(
+                    f"There already exists a ban/unban request on `{user.id}`: [Jump]({server_info["bans_warns_req"][str(user.id)][2]}).")
+            else:
+                try:
+                    images = [img for img in
+                              [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if
+                              img is not None]
+                    files_to_send = []
+                    async with aiohttp.ClientSession() as session:
+                        for img in images:
+                            if img.content_type and img.content_type.startswith('image/'):
+                                async with session.get(img.url) as resp:
+                                    if resp.status == 200:
+                                        data = io.BytesIO(await resp.read())
+                                        files_to_send.append(discord.File(data, filename=img.filename))
+                    if files_to_send:
                         if ban_perms:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
                                 content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                view=BanReqView())
+                                files=files_to_send, view=UnbanReqView())
                         else:
                             ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
                                 content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
-                                view=BanReqView())
-                        await interaction.followup.send(f"Unable to send unban log images.", ephemeral=True)
-                    await interaction.followup.send(f"An unban request has been sent: [Jump]({ban_req.jump_url})",
-                                                    ephemeral=True)
-                    server_info["bans_warns_req"][str(user.id)] = [reason, str(interaction.user.id),
-                                                                   str(ban_req.jump_url)]
-                    server_info["bans_warns_req"][str(ban_req.id)] = str(user.id)
-                    servers.replace_one(server_query, server_info)
-        else:
-            await interaction.followup.send(f"This server is not whitelisted.", ephemeral=True)
+                                files=files_to_send, view=UnbanReqView())
+                    else:
+                        if ban_perms:
+                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                                content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
+                                view=UnbanReqView())
+                        else:
+                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                                content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
+                                view=UnbanReqView())
+                except Exception:
+                    if ban_perms:
+                        ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
+                            view=BanReqView())
+                    else:
+                        ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
+                            view=BanReqView())
+                    await interaction.followup.send(f"Unable to send unban log images.", ephemeral=True)
+                await interaction.followup.send(f"An unban request has been sent: [Jump]({ban_req.jump_url})",
+                                                ephemeral=True)
+                server_info["bans_warns_req"][str(user.id)] = [reason, str(interaction.user.id),
+                                                               str(ban_req.jump_url)]
+                server_info["bans_warns_req"][str(ban_req.id)] = str(user.id)
+                servers.replace_one(server_query, server_info)
+
 @unban.error
 async def unban_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
@@ -1870,11 +1887,14 @@ async def panel(interaction: discord.Interaction, type: Optional[str]):
                 """), view=TRITicketView())
         await interaction.response.send_message("Panel has been sent.", ephemeral=True)
     else:
+        """guild_id = interaction.guild.id
         server_query = {"_id": str(guild_id)}
-        server_info = servers.find_one(server_query)
-        if not server_info:
-            await interaction.response.send_message(f"This server is not whitelisted.")
-            return
+        server_info = servers.find_one_and_update(
+            {"_id": str(interaction.guild.id)},
+            {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+            upsert=True,
+            return_document=True
+        )"""
         if type == "support":
             pass
         elif type == "services":
@@ -1885,7 +1905,7 @@ class TranscriptView(discord.ui.View):
         super().__init__(timeout=None)
 
 
-@bot.tree.command(name="whitelist")
+"""@bot.tree.command(name="whitelist")
 @app_commands.describe(server="Server invite")
 @app_commands.checks.has_permissions(administrator=True)
 async def whitelist(interaction: discord.Interaction, server: str):
@@ -1909,17 +1929,17 @@ async def whitelist(interaction: discord.Interaction, server: str):
                     "_id": str(guild_id),
                 }
                 servers.insert_one(server_info)
-                await interaction.response.send_message(f"`{guild_id}` has been whitelisted.")
+                await interaction.response.send_message(f"`{guild_id}` has been whitelisted.")"""
 
 @bot.tree.command(name="break", description="Toggle staff/mm/pilot break.")
 async def break_command(interaction: discord.Interaction, category: Literal["staff", "mm", "pilot"]):
     await interaction.response.defer()
-    guild_id = interaction.guild.id
-    server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.followup.send(f"This server is not whitelisted.")
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     staff_break = server_info.get("staff_break")
     mm_break = server_info.get("mm_break")
     pilot_break = server_info.get("pilot_break")
@@ -1992,10 +2012,12 @@ async def appoint_staff(interaction: discord.Interaction, user: str, role: Optio
     await interaction.response.defer(ephemeral=True)
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.followup.send(f"This server is not whitelisted.", ephemeral=False)
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     staff_role = server_info.get("staff_role")
     if staff_role and not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
@@ -2053,10 +2075,12 @@ async def appoint_mm(interaction: discord.Interaction, user: str, role: Optional
     await interaction.response.defer(ephemeral=True)
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.followup.send(f"This server is not whitelisted.", ephemeral=False)
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     staff_role = server_info.get("staff_role")
     if not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
@@ -2111,10 +2135,12 @@ async def appoint_pilot(interaction: discord.Interaction, user: str, role: Optio
     await interaction.response.defer(ephemeral=True)
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.followup.send(f"This server is not whitelisted.", ephemeral=False)
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     staff_role = server_info.get("staff_role")
     if not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
@@ -2176,10 +2202,12 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
     await interaction.response.defer(ephemeral=True)
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.followup.send(f"This server is not whitelisted.", ephemeral=False)
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     staff_role = server_info.get("staff_role")
     if not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
@@ -2314,20 +2342,22 @@ async def dismiss_error(interaction: discord.Interaction, error: app_commands.Ap
     else:
         await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
-@bot.tree.command(name="setup")
+@bot.tree.command(name="setup", description="Set up KAFU.")
 @app_commands.checks.has_permissions(administrator=True)
 async def setup(interaction: discord.Interaction, topic: Optional[Literal[
     "bans warns channel", "transcripts channel", "staff lb channel", "services lb channel", "revive ping",
     "staff roles", "staff role", "staff ping", "staff break", "adm role", "ban perms",
     "mm roles", "mm role", "mm ping", "mm supervisor", "mm trainer", "mm break", "mm vouch channel",
     "pilot roles", "pilot role", "pilot ping", "pilot supervisor", "pilot trainer", "pilot break", "pilot vouch channel"
-]]=None, desc: Optional[str]=None):
+]]=None, input: Optional[str]=None):
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one(server_query)
-    if not server_info:
-        await interaction.response.send_message(f"This server is not whitelisted.")
-        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
     if topic is None:
         general_embed = discord.Embed(colour=0xffffff)
         general_embed.add_field(name="bans warns channel", value=server_info.get("bans_warns_channel", "unset"), inline=False) #
@@ -2359,33 +2389,33 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         service_embed.add_field(name="pilot vouch channel", value=server_info.get("pilot_vouch_channel", "unset"), inline=False)
         embeds = [general_embed, staff_embed, service_embed]
         await interaction.response.send_message(embeds=embeds, ephemeral=True)
-    if topic == "bans warns channel" and desc is not None:
-        try: bans_warns_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+    if topic == "bans warns channel" and input is not None:
+        try: bans_warns_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
         except discord.NotFound: await interaction.response.send_message("Invalid channel.")
         else:
             bans_warns_channel = f"<#{bans_warns_channel.id}>"
             server_info["bans_warns_channel"] = bans_warns_channel
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **bans warns channel** has been set to {bans_warns_channel}.")
-    if topic == "transcripts channel" and desc is not None:
-        try: transcripts_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+    if topic == "transcripts channel" and input is not None:
+        try: transcripts_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
         except discord.NotFound: await interaction.response.send_message("Invalid channel.")
         else:
             transcripts_channel = f"<#{transcripts_channel.id}>"
             server_info["transcripts_channel"] = transcripts_channel
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **transcripts channel** has been set to {transcripts_channel}.")
-    if topic == "staff lb channel" and desc is not None:
-        try: staff_lb_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+    if topic == "staff lb channel" and input is not None:
+        try: staff_lb_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
         except discord.NotFound: await interaction.response.send_message("Invalid channel.")
         else:
             staff_lb_channel = f"<#{staff_lb_channel.id}>"
             server_info["staff_lb_channel"] = staff_lb_channel
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **staff lb channel** has been set to {staff_lb_channel}.")
-    if topic == "services lb channel" and desc is not None:
+    if topic == "services lb channel" and input is not None:
         try:
-            services_lb_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+            services_lb_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
         except discord.NotFound:
             await interaction.response.send_message("Invalid channel.")
         else:
@@ -2394,8 +2424,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(
                 f"The **services lb channel** has been set to {services_lb_channel}.")
-    if topic == "revive ping" and desc is not None:
-        revive_ping = desc.strip("<@&>")
+    if topic == "revive ping" and input is not None:
+        revive_ping = input.strip("<@&>")
         role = interaction.guild.get_role(int(revive_ping))
         if role:
             revive_ping = f"<@&{role.id}>"
@@ -2404,8 +2434,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**revive ping** has been set to {revive_ping}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "staff roles" and desc is not None:
-        staff_roles = desc.replace("<@&", "").replace(">", "").split()
+    if topic == "staff roles" and input is not None:
+        staff_roles = input.replace("<@&", "").replace(">", "").split()
         valid_roles = []
         for staff_role in staff_roles:
             role = interaction.guild.get_role(int(staff_role))
@@ -2418,8 +2448,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**staff roles** have been set to {staff_roles}.")
         else:
             await interaction.response.send_message(f"Invalid roles.")
-    if topic == "staff role" and desc is not None:
-        staff_role = desc.strip("<@&>")
+    if topic == "staff role" and input is not None:
+        staff_role = input.strip("<@&>")
         role = interaction.guild.get_role(int(staff_role))
         if role:
             staff_role = f"<@&{role.id}>"
@@ -2428,8 +2458,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**staff role** has been set to {staff_role}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "staff ping" and desc is not None:
-        staff_ping = desc.strip("<@&>")
+    if topic == "staff ping" and input is not None:
+        staff_ping = input.strip("<@&>")
         role = interaction.guild.get_role(int(staff_ping))
         if role:
             staff_ping = f"<@&{role.id}>"
@@ -2438,8 +2468,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**staff ping** has been set to {staff_ping}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "staff break" and desc is not None:
-        staff_break = desc.strip("<@&>")
+    if topic == "staff break" and input is not None:
+        staff_break = input.strip("<@&>")
         role = interaction.guild.get_role(int(staff_break))
         if role:
             staff_break = f"<@&{role.id}>"
@@ -2448,8 +2478,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**staff break** has been set to {staff_break}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "adm role" and desc is not None:
-        adm_role = desc.strip("<@&>")
+    if topic == "adm role" and input is not None:
+        adm_role = input.strip("<@&>")
         role = interaction.guild.get_role(int(adm_role))
         if role:
             adm_role = f"<@&{role.id}>"
@@ -2458,8 +2488,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**adm role** has been set to {adm_role}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "ban perms" and desc is not None:
-        ban_perms = desc.strip("<@&>")
+    if topic == "ban perms" and input is not None:
+        ban_perms = input.strip("<@&>")
         role = interaction.guild.get_role(int(ban_perms))
         if role:
             ban_perms = f"<@&{role.id}>"
@@ -2468,8 +2498,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**ban perms** has been set to {ban_perms}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "mm roles" and desc is not None:
-        mm_roles = desc.replace("<@&", "").replace(">", "").split()
+    if topic == "mm roles" and input is not None:
+        mm_roles = input.replace("<@&", "").replace(">", "").split()
         valid_roles = []
         for mm_role in mm_roles:
             role = interaction.guild.get_role(int(mm_role))
@@ -2482,8 +2512,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**mm roles** have been set to {mm_roles}.")
         else:
             await interaction.response.send_message(f"Invalid roles.")
-    if topic == "mm role" and desc is not None:
-        mm_role = desc.strip("<@&>")
+    if topic == "mm role" and input is not None:
+        mm_role = input.strip("<@&>")
         role = interaction.guild.get_role(int(mm_role))
         if role:
             mm_role = f"<@&{role.id}>"
@@ -2492,8 +2522,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**mm role** has been set to {mm_role}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "mm ping" and desc is not None:
-        mm_ping = desc.strip("<@&>")
+    if topic == "mm ping" and input is not None:
+        mm_ping = input.strip("<@&>")
         role = interaction.guild.get_role(int(mm_ping))
         if role:
             mm_ping = f"<@&{role.id}>"
@@ -2502,8 +2532,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**mm ping** has been set to {mm_ping}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "mm supervisor" and desc is not None:
-        mm_supervisor = desc.strip("<@&>")
+    if topic == "mm supervisor" and input is not None:
+        mm_supervisor = input.strip("<@&>")
         role = interaction.guild.get_role(int(mm_supervisor))
         if role:
             mm_supervisor = f"<@&{role.id}>"
@@ -2512,8 +2542,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**mm supervisor** has been set to {mm_supervisor}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "mm trainer" and desc is not None:
-        mm_trainer = desc.strip("<@&>")
+    if topic == "mm trainer" and input is not None:
+        mm_trainer = input.strip("<@&>")
         role = interaction.guild.get_role(int(mm_trainer))
         if role:
             mm_trainer = f"<@&{role.id}>"
@@ -2522,8 +2552,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**mm trainer** has been set to {mm_trainer}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "mm break" and desc is not None:
-        mm_break = desc.strip("<@&>")
+    if topic == "mm break" and input is not None:
+        mm_break = input.strip("<@&>")
         role = interaction.guild.get_role(int(mm_break))
         if role:
             mm_break = f"<@&{role.id}>"
@@ -2532,9 +2562,9 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**mm break** has been set to {mm_break}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "mm vouch channel" and desc is not None:
+    if topic == "mm vouch channel" and input is not None:
         try:
-            mm_vouch_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+            mm_vouch_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
         except discord.NotFound:
             await interaction.response.send_message("Invalid channel.")
         else:
@@ -2542,8 +2572,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             server_info["mm_vouch_channel"] = mm_vouch_channel
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **mm vouch channel** has been set to {mm_vouch_channel}.")
-    if topic == "pilot roles" and desc is not None:
-        pilot_roles = desc.replace("<@&", "").replace(">", "").split()
+    if topic == "pilot roles" and input is not None:
+        pilot_roles = input.replace("<@&", "").replace(">", "").split()
         valid_roles = []
         for pilot_role in pilot_roles:
             role = interaction.guild.get_role(int(pilot_role))
@@ -2556,8 +2586,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**pilot roles** have been set to {pilot_roles}.")
         else:
             await interaction.response.send_message(f"Invalid roles.")
-    if topic == "pilot role" and desc is not None:
-        pilot_role = desc.strip("<@&>")
+    if topic == "pilot role" and input is not None:
+        pilot_role = input.strip("<@&>")
         role = interaction.guild.get_role(int(pilot_role))
         if role:
             pilot_role = f"<@&{role.id}>"
@@ -2566,8 +2596,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**pilot role** has been set to {pilot_role}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "pilot ping" and desc is not None:
-        pilot_ping = desc.strip("<@&>")
+    if topic == "pilot ping" and input is not None:
+        pilot_ping = input.strip("<@&>")
         role = interaction.guild.get_role(int(pilot_ping))
         if role:
             pilot_ping = f"<@&{role.id}>"
@@ -2576,8 +2606,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**pilot ping** has been set to {pilot_ping}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "pilot supervisor" and desc is not None:
-        pilot_supervisor = desc.strip("<@&>")
+    if topic == "pilot supervisor" and input is not None:
+        pilot_supervisor = input.strip("<@&>")
         role = interaction.guild.get_role(int(pilot_supervisor))
         if role:
             pilot_supervisor = f"<@&{role.id}>"
@@ -2586,8 +2616,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**pilot supervisor** has been set to {pilot_supervisor}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "pilot trainer" and desc is not None:
-        pilot_trainer = desc.strip("<@&>")
+    if topic == "pilot trainer" and input is not None:
+        pilot_trainer = input.strip("<@&>")
         role = interaction.guild.get_role(int(pilot_trainer))
         if role:
             pilot_trainer = f"<@&{role.id}>"
@@ -2596,8 +2626,8 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**pilot trainer** has been set to {pilot_trainer}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "pilot break" and desc is not None:
-        pilot_break = desc.strip("<@&>")
+    if topic == "pilot break" and input is not None:
+        pilot_break = input.strip("<@&>")
         role = interaction.guild.get_role(int(pilot_break))
         if role:
             pilot_break = f"<@&{role.id}>"
@@ -2606,9 +2636,9 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**pilot break** has been set to {pilot_break}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "pilot vouch channel" and desc is not None:
+    if topic == "pilot vouch channel" and input is not None:
         try:
-            pilot_vouch_channel = await interaction.guild.fetch_channel(int(desc.strip("<#>")))
+            pilot_vouch_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
         except discord.NotFound:
             await interaction.response.send_message("Invalid channel.")
         else:
