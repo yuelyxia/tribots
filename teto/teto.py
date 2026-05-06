@@ -7358,9 +7358,18 @@ async def disable_vote(interaction: discord.Interaction, message_id: str):
                 and "Disagree:" in message.content and "has been published." not in message.content \
                 and message.author.id == bot.user.id:
             await message.edit(view=None)
-            inprogresscol.delete_one({"_id": message.id})
+            session = inprogresscol.find_one({"_id": message.id})
+            if session:
+                channel_id = session["channel_id"]
+                message_id = session["message_id"]
+                try:
+                    report_message = await bot.get_channel(channel_id).fetch_message(message_id)
+                    await report_message.edit(content=f"**Disabled by {interaction.user.mention}.**", view=None)
+                except Exception:
+                    pass
+                inprogresscol.delete_one({"_id": message.id})
             thread = message.channel
-            new_name = f"r-{thread.name}"
+            new_name = f"d-{thread.name}"
             await interaction.response.send_message(f"Vote has been disabled by {interaction.user.mention}.")
             await thread.edit(name=new_name, archived=True)
         else:
@@ -7369,7 +7378,7 @@ async def disable_vote(interaction: discord.Interaction, message_id: str):
 @disable.command(name="report", description="Disables a report/appeal.")
 @app_commands.describe(message_id="Message ID of report/appeal")
 @app_commands.checks.has_role(sr_role)
-async def disable(interaction: discord.Interaction, message_id: str):
+async def disable_report(interaction: discord.Interaction, message_id: str):
     try:
         message = await interaction.channel.fetch_message(int(message_id))
     except discord.NotFound:
