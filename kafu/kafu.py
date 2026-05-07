@@ -106,7 +106,7 @@ async def quota_check():
                 staff_lb_channel = server_info.get("staff_lb_channel")
                 if staff_lb_channel:
                     try:
-                        channel = await guild.fetch_channel(int(staff_lb_channel.strip("<#>")))
+                        channel = await guild.fetch_channel(int(staff_lb_channel.replace("<#", "").replace(">", "")))
                         total_credits = 0
                         total_tickets = 0
                         staff = server_info.get("staff", {})
@@ -145,7 +145,7 @@ async def quota_check():
                 services_lb_channel = server_info.get("services_lb_channel")
                 if services_lb_channel:
                     try:
-                        channel = await guild.fetch_channel(int(services_lb_channel.strip("<#>")))
+                        channel = await guild.fetch_channel(int(services_lb_channel.replace("<#", "").replace(">", "")))
                         total_services = 0
                         total_mm_services = 0
                         total_pilot_services = 0
@@ -203,7 +203,7 @@ async def on_message(message: discord.Message):
     if server_info:
         mm_vouch_channel = server_info.get("mm_vouch_channel")
         if mm_vouch_channel:
-            if message.channel.id == int(mm_vouch_channel.strip("<#>")):
+            if message.channel.id == int(mm_vouch_channel.replace("<#", "").replace(">", "")):
                 if message.mentions:
                     first_user = message.mentions[0]
                     user_id = str(first_user.id)
@@ -216,7 +216,7 @@ async def on_message(message: discord.Message):
                         await message.add_reaction("<:whitecross:1462774085737119828>")
         pilot_vouch_channel = server_info.get("pilot_vouch_channel")
         if pilot_vouch_channel:
-            if message.channel.id == int(pilot_vouch_channel.strip("<#>")):
+            if message.channel.id == int(pilot_vouch_channel.replace("<#", "").replace(">", "")):
                 if message.mentions:
                     first_user = message.mentions[0]
                     user_id = str(first_user.id)
@@ -586,7 +586,7 @@ async def rn(ctx, *, new_name: str):
     server_info = servers.find_one({"_id": guild_id})
     if server_info:
         staff_role = server_info.get("staff_role")
-    if (staff_role and get(ctx.guild.roles, id=int(staff_role.strip("<@&>")))) in ctx.author.roles or ctx.author.guild_permissions.manage_channels:
+    if (staff_role and get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", "")))) in ctx.author.roles or ctx.author.guild_permissions.manage_channels:
         if isinstance(ctx.channel, discord.Thread):
             try:
                 await ctx.channel.edit(name=new_name)
@@ -675,9 +675,9 @@ async def claim(ctx, mode: str = None, member: discord.Member = None):
             return
         staff_role = server_info.get("staff_role")
         adm_role = server_info.get("adm_role")
-        if get(ctx.guild.roles, id=int(staff_role.strip("<@&>"))) in ctx.author.roles:
+        if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
             if mode == "force":
-                if get(ctx.guild.roles, id=int(adm_role.strip("<@&>"))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles:
+                if get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles:
                     if not member:
                         await ctx.send("Please specify a user to force claim.")
                         return
@@ -715,9 +715,9 @@ async def unclaim(ctx, mode: str = None, member: discord.Member = None):
             return
         staff_role = server_info.get("staff_role")
         adm_role = server_info.get("adm_role")
-        if get(ctx.guild.roles, id=int(staff_role.strip("<@&>"))) in ctx.author.roles:
+        if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
             if mode == "force":
-                if get(ctx.guild.roles, id=int(adm_role.strip("<@&>"))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles:
+                if get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles:
                     if not member:
                         await ctx.send("Please specify a user to force claim.")
                         return
@@ -750,7 +750,7 @@ async def claims(ctx):
         await ctx.reply("**staff role** has not been set up for this server.")
         return
     staff_role = server_info.get("staff_role")
-    if get(ctx.guild.roles, id=int(staff_role.strip("<@&>"))) in ctx.author.roles:
+    if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
         active_claims = await get_active_claims(ctx.channel)
         mentions = [f"<@{uid}>" for uid in active_claims]
         embed = discord.Embed(colour=0xffffff, description = f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
@@ -770,8 +770,8 @@ async def close(ctx):
             return
         staff_role = server_info.get("staff_role")
         adm_role = server_info.get("adm_role")
-        if get(ctx.guild.roles, id=int(staff_role.strip("<@&>"))) in ctx.author.roles:
-            if ctx.guild.id == TRI_Archive and not get(ctx.guild.roles, id=int(adm_role.strip("<@&>"))) in ctx.author.roles:
+        if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
+            if ctx.guild.id == TRI_Archive and not get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
                 await ctx.reply("You are not authorised to close this ticket.")
                 return
             already_given = await credits_already_given(ctx.channel)
@@ -797,8 +797,8 @@ class TicketCloseView(discord.ui.View):
         staff_role = server_info.get("staff_role")
         adm_role = server_info.get("adm_role")
         if not staff_role: return
-        if get(interaction.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
-            if interaction.guild.id == TRI_Archive and not get(interaction.guild.roles, id=int(adm_role.strip("<@&>"))) in interaction.user.roles:
+        if get(interaction.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
+            if interaction.guild.id == TRI_Archive and not get(interaction.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
                 await interaction.followup.send("You are not authorised to close this ticket.", ephemeral=True)
             operations = []
             for uid in self.active_claims:
@@ -861,7 +861,7 @@ async def profile(ctx, user:str = None):
         user = ctx.author
     else:
         try:
-            user = await bot.fetch_user(int(user.strip('<@>')))
+            user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
         except Exception:
             await ctx.reply("Please provide a valid user ID.")
             return
@@ -911,7 +911,7 @@ async def tz(ctx, user:str = None):
         user = ctx.author
     else:
         try:
-            user = await bot.fetch_user(int(user.strip('<@>')))
+            user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
         except Exception:
             await ctx.reply("Please provide a valid user ID.")
             return
@@ -959,7 +959,7 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
             await interaction.response.send_message("**staff role** has not been set up for this server.", ephemeral=True)
             return
         staff_role = server_info.get("staff_role")
-        if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+        if get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
             server_info.setdefault("staff", {})
             uid = str(interaction.user.id)
             staff = server_info.get("staff", {})
@@ -1002,9 +1002,9 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
                                         ephemeral=True)
         return
     staff_role = server_info.get("staff_role")
-    if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+    if get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
         try:
-            user = await bot.fetch_user(int(user.strip("<@>")))
+            user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
         except Exception:
             await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
         else:
@@ -1528,7 +1528,7 @@ async def role_massadd(interaction: discord.Interaction, role: discord.Role, use
 async def ban(interaction: discord.Interaction, user: str, reason: Optional[str], image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
     await interaction.response.defer(ephemeral=True)
     try:
-        user = await bot.fetch_user(int(user.strip("<@>")))
+        user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
     except ValueError:
         await interaction.followup.send("Please provide a valid user or user ID.", ephemeral=True)
         return
@@ -1567,7 +1567,7 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                 await interaction.followup.send("**bans warns channel** has not been set up for this server.")
                 return
             bans_warns_channel = server_info.get("bans_warns_channel")
-            bans_warns_channel = bot.get_channel(int(bans_warns_channel.strip("<#>")))
+            bans_warns_channel = bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", "")))
             try:
                 images = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if
                           img is not None]
@@ -1617,7 +1617,7 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
         ban_perms = server_info.get("ban_perms")
         bans_warns_channel = server_info.get("bans_warns_channel")
         server_info.setdefault("bans_warns_req", {})
-        if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+        if get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
             if str(user.id) in server_info["bans_warns_req"]:
                 await interaction.followup.send(f"There already exists a ban/unban request on `{user.id}`: [Jump]({server_info["bans_warns_req"][str(user.id)][2]}).")
             else:
@@ -1635,29 +1635,29 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                                         files_to_send.append(discord.File(data, filename=img.filename))
                     if files_to_send:
                         if ban_perms:
-                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                                 content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 files=files_to_send, view=BanReqView())
                         else:
-                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                                 content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 files=files_to_send, view=BanReqView())
                     else:
                         if ban_perms:
-                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                                 content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 view=BanReqView())
                         else:
-                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                                 content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 view=BanReqView())
                 except Exception:
                     if ban_perms:
-                        ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                        ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                             content=f"{ban_perms}\n**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                             view=BanReqView())
                     else:
-                        ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                        ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                             content=f"**Ban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                             view=BanReqView())
                     await interaction.followup.send(f"Unable to send ban log images.", ephemeral=True)
@@ -1683,7 +1683,7 @@ class BanReqView(discord.ui.View):
                 user_id = server_info["bans_warns_req"][str(interaction.message.id)]
                 reason = server_info["bans_warns_req"][user_id][0]
                 requested_by = server_info["bans_warns_req"][user_id][1]
-                user = await bot.fetch_user(int(user_id.strip("<@>")))
+                user = await bot.fetch_user(int(user_id.replace("<@", "").replace(">", "")))
                 try:
                     await user.send(
                         f"You have been banned from {interaction.guild.name} for the following reason: {reason}")
@@ -1735,7 +1735,7 @@ class BanReqView(discord.ui.View):
 async def unban(interaction: discord.Interaction, user: str, reason: Optional[str], image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
     await interaction.response.defer(ephemeral=True)
     try:
-        user = await bot.fetch_user(int(user.strip("<@>")))
+        user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
     except ValueError:
         await interaction.followup.send("Please provide a valid user or user ID.", ephemeral=True)
         return
@@ -1772,7 +1772,7 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
                 await interaction.followup.send("**bans warns channel** has not been set up for this server.")
                 return
             bans_warns_channel = server_info.get("bans_warns_channel")
-            bans_warns_channel = bot.get_channel(int(bans_warns_channel.strip("<#>")))
+            bans_warns_channel = bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", "")))
             try:
                 images = [img for img in
                           [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if
@@ -1825,7 +1825,7 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
         ban_perms = server_info.get("ban_perms")
         bans_warns_channel = server_info.get("bans_warns_channel")
         server_info.setdefault("bans_warns_req", {})
-        if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+        if get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
             if str(user.id) in server_info["bans_warns_req"]:
                 await interaction.followup.send(
                     f"There already exists a ban/unban request on `{user.id}`: [Jump]({server_info["bans_warns_req"][str(user.id)][2]}).")
@@ -1844,29 +1844,29 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
                                         files_to_send.append(discord.File(data, filename=img.filename))
                     if files_to_send:
                         if ban_perms:
-                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                                 content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 files=files_to_send, view=UnbanReqView())
                         else:
-                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                                 content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 files=files_to_send, view=UnbanReqView())
                     else:
                         if ban_perms:
-                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                                 content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 view=UnbanReqView())
                         else:
-                            ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                            ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                                 content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                                 view=UnbanReqView())
                 except Exception:
                     if ban_perms:
-                        ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                        ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                             content=f"{ban_perms}\n**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                             view=BanReqView())
                     else:
-                        ban_req = await bot.get_channel(int(bans_warns_channel.strip("<#>"))).send(
+                        ban_req = await bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", ""))).send(
                             content=f"**Unban Request**\nㆍ　User ID: {user.id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}\nㆍ　Proof:",
                             view=BanReqView())
                     await interaction.followup.send(f"Unable to send unban log images.", ephemeral=True)
@@ -1894,7 +1894,7 @@ class UnbanReqView(discord.ui.View):
                 user_id = server_info["bans_warns_req"][str(interaction.message.id)]
                 reason = server_info["bans_warns_req"][user_id][0]
                 requested_by = server_info["bans_warns_req"][user_id][1]
-                user = await bot.fetch_user(int(user_id.strip("<@>")))
+                user = await bot.fetch_user(int(user_id.replace("<@", "").replace(">", "")))
                 await interaction.guild.unban(user, reason=reason)
                 await interaction.followup.send(embed=discord.Embed(description=
                                                                     f"Successfully unbanned {user.mention} `{user.id}`. Reason: {reason}"))
@@ -2021,13 +2021,13 @@ async def break_command(interaction: discord.Interaction, category: Literal["sta
     if category == "staff":
         if staff_break:
             if uid in server_info.get("staff", {}):
-                if get(interaction.user.guild.roles, id=int(staff_break.strip("<@&>"))) in interaction.user.roles:
-                    await interaction.user.remove_roles(interaction.guild.get_role(int(staff_break.strip("<@&>"))))
-                    if staff_ping: await interaction.user.add_roles(interaction.guild.get_role(int(staff_ping.strip("<@&>"))))
+                if get(interaction.user.guild.roles, id=int(staff_break.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
+                    await interaction.user.remove_roles(interaction.guild.get_role(int(staff_break.replace("<@&", "").replace(">", ""))))
+                    if staff_ping: await interaction.user.add_roles(interaction.guild.get_role(int(staff_ping.replace("<@&", "").replace(">", ""))))
                     await interaction.followup.send(f"You have been unroled **staff break**.")
                 else:
-                    await interaction.user.add_roles(interaction.guild.get_role(int(staff_break.strip("<@&>"))))
-                    if staff_ping: await interaction.user.remove_roles(interaction.guild.get_role(int(staff_ping.strip("<@&>"))))
+                    await interaction.user.add_roles(interaction.guild.get_role(int(staff_break.replace("<@&", "").replace(">", ""))))
+                    if staff_ping: await interaction.user.remove_roles(interaction.guild.get_role(int(staff_ping.replace("<@&", "").replace(">", ""))))
                     await interaction.followup.send(f"You have been roled **staff break**.")
             else:
                 await interaction.followup.send(f"Unauthorised.")
@@ -2037,13 +2037,13 @@ async def break_command(interaction: discord.Interaction, category: Literal["sta
     if category == "mm":
         if mm_break:
             if uid in server_info.get("mms", {}):
-                if get(interaction.user.guild.roles, id=int(mm_break.strip("<@&>"))) in interaction.user.roles:
-                    await interaction.user.remove_roles(interaction.guild.get_role(int(mm_break.strip("<@&>"))))
-                    if mm_ping: await interaction.user.add_roles(interaction.guild.get_role(int(mm_ping.strip("<@&>"))))
+                if get(interaction.user.guild.roles, id=int(mm_break.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
+                    await interaction.user.remove_roles(interaction.guild.get_role(int(mm_break.replace("<@&", "").replace(">", ""))))
+                    if mm_ping: await interaction.user.add_roles(interaction.guild.get_role(int(mm_ping.replace("<@&", "").replace(">", ""))))
                     await interaction.followup.send(f"You have been unroled **mm break**.")
                 else:
-                    await interaction.user.add_roles(interaction.guild.get_role(int(mm_break.strip("<@&>"))))
-                    if mm_ping: await interaction.user.remove_roles(interaction.guild.get_role(int(mm_ping.strip("<@&>"))))
+                    await interaction.user.add_roles(interaction.guild.get_role(int(mm_break.replace("<@&", "").replace(">", ""))))
+                    if mm_ping: await interaction.user.remove_roles(interaction.guild.get_role(int(mm_ping.replace("<@&", "").replace(">", ""))))
                     await interaction.followup.send(f"You have been roled **mm break**.")
             else:
                 await interaction.followup.send(f"Unauthorised.")
@@ -2053,13 +2053,13 @@ async def break_command(interaction: discord.Interaction, category: Literal["sta
     if category == "pilot":
         if pilot_break:
             if uid in server_info.get("pilots", {}):
-                if get(interaction.user.guild.roles, id=int(pilot_break.strip("<@&>"))) in interaction.user.roles:
-                    await interaction.user.remove_roles(interaction.guild.get_role(int(pilot_break.strip("<@&>"))))
-                    if pilot_ping: await interaction.user.add_roles(interaction.guild.get_role(int(pilot_ping.strip("<@&>"))))
+                if get(interaction.user.guild.roles, id=int(pilot_break.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
+                    await interaction.user.remove_roles(interaction.guild.get_role(int(pilot_break.replace("<@&", "").replace(">", ""))))
+                    if pilot_ping: await interaction.user.add_roles(interaction.guild.get_role(int(pilot_ping.replace("<@&", "").replace(">", ""))))
                     await interaction.followup.send(f"You have been unroled **pilot break**.")
                 else:
-                    await interaction.user.add_roles(interaction.guild.get_role(int(pilot_break.strip("<@&>"))))
-                    if pilot_ping: await interaction.user.remove_roles(interaction.guild.get_role(int(pilot_ping.strip("<@&>"))))
+                    await interaction.user.add_roles(interaction.guild.get_role(int(pilot_break.replace("<@&", "").replace(">", ""))))
+                    if pilot_ping: await interaction.user.remove_roles(interaction.guild.get_role(int(pilot_ping.replace("<@&", "").replace(">", ""))))
                     await interaction.followup.send(f"You have been roled **pilot break**.")
             else:
                 await interaction.followup.send(f"Unauthorised.")
@@ -2090,13 +2090,13 @@ async def appoint_staff(interaction: discord.Interaction, user: str, role: Optio
         return_document=True
     )
     staff_role = server_info.get("staff_role")
-    if staff_role and not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+    if staff_role and not get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
         return
     try:
-        user = await bot.fetch_user(int(user.strip("<@>")))
+        user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
     except Exception:
-        try: user_role = interaction.guild.get_role(int(user.strip("<@&>")))
+        try: user_role = interaction.guild.get_role(int(user.replace("<@&", "").replace(">", "")))
         except Exception:
             await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
         else:
@@ -2126,14 +2126,14 @@ async def appoint_staff(interaction: discord.Interaction, user: str, role: Optio
         servers.replace_one(server_query, server_info)
         await interaction.followup.send(f"`{user_id}` has been added to staff.")
         staff_role = server_info.get("staff_role")
-        if staff_role: await member.add_roles(interaction.guild.get_role(int(staff_role.strip("<@&>"))))
+        if staff_role: await member.add_roles(interaction.guild.get_role(int(staff_role.replace("<@&", "").replace(">", ""))))
         staff_ping = server_info.get("staff_ping")
-        if staff_ping: await member.add_roles(interaction.guild.get_role(int(staff_ping.strip("<@&>"))))
+        if staff_ping: await member.add_roles(interaction.guild.get_role(int(staff_ping.replace("<@&", "").replace(">", ""))))
         if role is not None and server_info.get("staff_roles"):
             staff_roles = server_info["staff_roles"].split()
             if str(role.mention) in staff_roles:
                 for r in staff_roles:
-                    await member.remove_roles(interaction.guild.get_role(int(r.strip("<@&>"))))
+                    await member.remove_roles(interaction.guild.get_role(int(r.replace("<@&", "").replace(">", ""))))
                 await member.add_roles(role)
                 await interaction.followup.send(f"`{user_id}` has been assigned the {role.mention} role.",
                                                 ephemeral=True)
@@ -2153,13 +2153,13 @@ async def appoint_mm(interaction: discord.Interaction, user: str, role: Optional
         return_document=True
     )
     staff_role = server_info.get("staff_role")
-    if not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+    if not get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
         return
     try:
-        user = await bot.fetch_user(int(user.strip("<@>")))
+        user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
     except Exception:
-        try: user_role = interaction.guild.get_role(int(user.strip("<@&>")))
+        try: user_role = interaction.guild.get_role(int(user.replace("<@&", "").replace(">", "")))
         except Exception:
             await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
         else:
@@ -2186,14 +2186,14 @@ async def appoint_mm(interaction: discord.Interaction, user: str, role: Optional
         servers.replace_one(server_query, server_info)
         await interaction.followup.send(f"`{user_id}` has been added to mms.")
         mm_role = server_info.get("mm_role")
-        if mm_role: await member.add_roles(interaction.guild.get_role(int(mm_role.strip("<@&>"))))
+        if mm_role: await member.add_roles(interaction.guild.get_role(int(mm_role.replace("<@&", "").replace(">", ""))))
         mm_ping = server_info.get("mm_ping")
-        if mm_ping: await member.add_roles(interaction.guild.get_role(int(mm_ping.strip("<@&>"))))
+        if mm_ping: await member.add_roles(interaction.guild.get_role(int(mm_ping.replace("<@&", "").replace(">", ""))))
         if role is not None and server_info.get("mm_roles"):
             mm_roles = server_info["mm_roles"].split()
             if str(role.mention) in mm_roles:
                 for r in mm_roles:
-                    await member.remove_roles(interaction.guild.get_role(int(r.strip("<@&>"))))
+                    await member.remove_roles(interaction.guild.get_role(int(r.replace("<@&", "").replace(">", ""))))
                 await member.add_roles(role)
                 await interaction.followup.send(f"`{user_id}` has been assigned the {role.mention} role.",
                                                 ephemeral=True)
@@ -2213,13 +2213,13 @@ async def appoint_pilot(interaction: discord.Interaction, user: str, role: Optio
         return_document=True
     )
     staff_role = server_info.get("staff_role")
-    if not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+    if not get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
         return
     try:
-        user = await bot.fetch_user(int(user.strip("<@>")))
+        user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
     except Exception:
-        try: user_role = interaction.guild.get_role(int(user.strip("<@&>")))
+        try: user_role = interaction.guild.get_role(int(user.replace("<@&", "").replace(">", "")))
         except Exception:
             await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
         else:
@@ -2246,14 +2246,14 @@ async def appoint_pilot(interaction: discord.Interaction, user: str, role: Optio
         servers.replace_one(server_query, server_info)
         await interaction.followup.send(f"`{user_id}` has been added to pilots.")
         pilot_role = server_info.get("pilot_role")
-        if pilot_role: await member.add_roles(interaction.guild.get_role(int(pilot_role.strip("<@&>"))))
+        if pilot_role: await member.add_roles(interaction.guild.get_role(int(pilot_role.replace("<@&", "").replace(">", ""))))
         pilot_ping = server_info.get("pilot_ping")
-        if pilot_ping: await member.add_roles(interaction.guild.get_role(int(pilot_ping.strip("<@&>"))))
+        if pilot_ping: await member.add_roles(interaction.guild.get_role(int(pilot_ping.replace("<@&", "").replace(">", ""))))
         if role is not None and server_info.get("pilot_roles"):
             pilot_roles = server_info["pilot_roles"].split()
             if str(role.mention) in pilot_roles:
                 for r in pilot_roles:
-                    await member.remove_roles(interaction.guild.get_role(int(r.strip("<@&>"))))
+                    await member.remove_roles(interaction.guild.get_role(int(r.replace("<@&", "").replace(">", ""))))
                 await member.add_roles(role)
                 await interaction.followup.send(f"`{user_id}` has been assigned the {role.mention} role.", ephemeral=True)
         elif role is not None:
@@ -2280,13 +2280,13 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
         return_document=True
     )
     staff_role = server_info.get("staff_role")
-    if not get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
+    if not get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
         return
     try:
-        user = await bot.fetch_user(int(user.strip("<@>")))
+        user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
     except Exception:
-        try: user_role = interaction.guild.get_role(int(user.strip("<@&>")))
+        try: user_role = interaction.guild.get_role(int(user.replace("<@&", "").replace(">", "")))
         except Exception:
             await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
         else:
@@ -2461,7 +2461,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         embeds = [general_embed, staff_embed, service_embed]
         await interaction.response.send_message(embeds=embeds, ephemeral=True)
     if topic == "bans warns channel" and input is not None:
-        try: bans_warns_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
+        try: bans_warns_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound: await interaction.response.send_message("Invalid channel.")
         else:
             bans_warns_channel = f"<#{bans_warns_channel.id}>"
@@ -2469,7 +2469,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **bans warns channel** has been set to {bans_warns_channel}.")
     if topic == "transcripts channel" and input is not None:
-        try: transcripts_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
+        try: transcripts_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound: await interaction.response.send_message("Invalid channel.")
         else:
             transcripts_channel = f"<#{transcripts_channel.id}>"
@@ -2477,7 +2477,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **transcripts channel** has been set to {transcripts_channel}.")
     if topic == "staff lb channel" and input is not None:
-        try: staff_lb_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
+        try: staff_lb_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound: await interaction.response.send_message("Invalid channel.")
         else:
             staff_lb_channel = f"<#{staff_lb_channel.id}>"
@@ -2486,7 +2486,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"The **staff lb channel** has been set to {staff_lb_channel}.")
     if topic == "services lb channel" and input is not None:
         try:
-            services_lb_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
+            services_lb_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound:
             await interaction.response.send_message("Invalid channel.")
         else:
@@ -2496,7 +2496,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(
                 f"The **services lb channel** has been set to {services_lb_channel}.")
     if topic == "revive ping" and input is not None:
-        revive_ping = input.strip("<@&>")
+        revive_ping = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(revive_ping))
         if role:
             revive_ping = f"<@&{role.id}>"
@@ -2520,7 +2520,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid roles.")
     if topic == "staff role" and input is not None:
-        staff_role = input.strip("<@&>")
+        staff_role = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(staff_role))
         if role:
             staff_role = f"<@&{role.id}>"
@@ -2530,7 +2530,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "staff ping" and input is not None:
-        staff_ping = input.strip("<@&>")
+        staff_ping = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(staff_ping))
         if role:
             staff_ping = f"<@&{role.id}>"
@@ -2540,7 +2540,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "staff break" and input is not None:
-        staff_break = input.strip("<@&>")
+        staff_break = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(staff_break))
         if role:
             staff_break = f"<@&{role.id}>"
@@ -2550,7 +2550,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "adm role" and input is not None:
-        adm_role = input.strip("<@&>")
+        adm_role = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(adm_role))
         if role:
             adm_role = f"<@&{role.id}>"
@@ -2560,7 +2560,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "ban perms" and input is not None:
-        ban_perms = input.strip("<@&>")
+        ban_perms = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(ban_perms))
         if role:
             ban_perms = f"<@&{role.id}>"
@@ -2584,7 +2584,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid roles.")
     if topic == "mm role" and input is not None:
-        mm_role = input.strip("<@&>")
+        mm_role = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_role))
         if role:
             mm_role = f"<@&{role.id}>"
@@ -2594,7 +2594,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm ping" and input is not None:
-        mm_ping = input.strip("<@&>")
+        mm_ping = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_ping))
         if role:
             mm_ping = f"<@&{role.id}>"
@@ -2604,7 +2604,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm supervisor" and input is not None:
-        mm_supervisor = input.strip("<@&>")
+        mm_supervisor = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_supervisor))
         if role:
             mm_supervisor = f"<@&{role.id}>"
@@ -2614,7 +2614,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm trainer" and input is not None:
-        mm_trainer = input.strip("<@&>")
+        mm_trainer = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_trainer))
         if role:
             mm_trainer = f"<@&{role.id}>"
@@ -2624,7 +2624,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm break" and input is not None:
-        mm_break = input.strip("<@&>")
+        mm_break = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_break))
         if role:
             mm_break = f"<@&{role.id}>"
@@ -2635,7 +2635,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm vouch channel" and input is not None:
         try:
-            mm_vouch_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
+            mm_vouch_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound:
             await interaction.response.send_message("Invalid channel.")
         else:
@@ -2658,7 +2658,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid roles.")
     if topic == "pilot role" and input is not None:
-        pilot_role = input.strip("<@&>")
+        pilot_role = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_role))
         if role:
             pilot_role = f"<@&{role.id}>"
@@ -2668,7 +2668,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot ping" and input is not None:
-        pilot_ping = input.strip("<@&>")
+        pilot_ping = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_ping))
         if role:
             pilot_ping = f"<@&{role.id}>"
@@ -2678,7 +2678,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot supervisor" and input is not None:
-        pilot_supervisor = input.strip("<@&>")
+        pilot_supervisor = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_supervisor))
         if role:
             pilot_supervisor = f"<@&{role.id}>"
@@ -2688,7 +2688,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot trainer" and input is not None:
-        pilot_trainer = input.strip("<@&>")
+        pilot_trainer = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_trainer))
         if role:
             pilot_trainer = f"<@&{role.id}>"
@@ -2698,7 +2698,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot break" and input is not None:
-        pilot_break = input.strip("<@&>")
+        pilot_break = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_break))
         if role:
             pilot_break = f"<@&{role.id}>"
@@ -2709,7 +2709,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot vouch channel" and input is not None:
         try:
-            pilot_vouch_channel = await interaction.guild.fetch_channel(int(input.strip("<#>")))
+            pilot_vouch_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound:
             await interaction.response.send_message("Invalid channel.")
         else:
