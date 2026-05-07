@@ -1051,7 +1051,7 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
 @settings.command(name="vouchserver", description="Set your vouch server invite.")
 @app_commands.describe(invite="Invite link to your vouch server.")
 async def set_vouchserver(interaction: discord.Interaction, invite: str):
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer()
     if not interaction.guild:
         await interaction.followup.send("This command can only be used in a server.")
         return
@@ -1066,23 +1066,23 @@ async def set_vouchserver(interaction: discord.Interaction, invite: str):
     is_mm = user_id in server_info.get("mms", {})
     is_pilot = user_id in server_info.get("pilots", {})
     if not is_mm and not is_pilot:
-        await interaction.followup.send("Only appointed mms or pilots can set a vouch server.", ephemeral=True)
+        await interaction.followup.send("Only appointed mms or pilots can set a vouch server.")
         return
     try:
         invite = await bot.fetch_invite(invite)
     except discord.NotFound:
-        await interaction.followup.send("Invalid invite link.", ephemeral=True)
+        await interaction.followup.send("Invalid invite link.")
         return
     except discord.HTTPException:
-        await interaction.followup.send("Failed to fetch invite.", ephemeral=True)
+        await interaction.followup.send("Failed to fetch invite.")
         return
     if not invite.guild:
-        await interaction.followup.send("Invalid invite link.", ephemeral=True)
+        await interaction.followup.send("Invalid invite link.")
         return
     servers.update_one(
         {"_id": guild_id},
         {"$set": {f"vouch_servers.{user_id}": invite.url}},upsert=True)
-    await interaction.followup.send(f"Your vouch server has been set to:\n{invite}", ephemeral=True)
+    await interaction.followup.send(f"Your vouch server has been set to:\n{invite}")
 
 @bot.command(name="vouch")
 async def vouch(ctx):
