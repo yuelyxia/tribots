@@ -34,6 +34,7 @@ kafu = client["kafu"]
 tickets = kafu["tickets"]
 servers = kafu["servers"]
 timezones = kafu["timezones"]
+vouch_servers = kafu["vouch_servers"]
 
 TRI_Archive = 1371673839695826974
 Tethys = 1434471275723493388
@@ -1055,7 +1056,6 @@ async def set_vouchserver(interaction: discord.Interaction, invite: str):
     if not interaction.guild:
         await interaction.followup.send("This command can only be used in a server.")
         return
-    guild_id = str(interaction.guild.id)
     server_info = servers.find_one_and_update(
         {"_id": str(interaction.guild.id)},
         {"$setOnInsert": {"_id": str(interaction.guild.id)}},
@@ -1079,9 +1079,7 @@ async def set_vouchserver(interaction: discord.Interaction, invite: str):
     if not invite.guild:
         await interaction.followup.send("Invalid invite link.")
         return
-    servers.update_one(
-        {"_id": guild_id},
-        {"$set": {f"vouch_servers.{user_id}": invite.url}},upsert=True)
+    vouch_servers.update_one({"_id": user_id}, {"$set": {"invite": invite.url}}, upsert=True)
     await interaction.followup.send(f"Your vouch server has been set to:\n{invite.url}")
 
 @bot.command(name="vouch")
@@ -1095,25 +1093,25 @@ async def vouch(ctx):
         return_document=True
     )
     user_id = str(ctx.author.id)
-    vouch_servers = server_info.get("vouch_servers", {})
+    vouch_server = vouch_servers.find_one({"_id": user_id})
     is_mm = user_id in server_info.get("mms", {})
     is_pilot = user_id in server_info.get("pilots", {})
     if not is_mm and not is_pilot:
         await ctx.reply("You are not appointed as a mm or pilot.")
         return
-    if user_id not in vouch_servers:
+    if not vouch_server:
         await ctx.reply("You have not set a vouch server.")
         return
-    invite = vouch_servers[user_id]
-    lines = [f"<:whiteheart:1434538078747365507>　Please vouch for {ctx.author.mention} at the links below:", f"ㆍ[vouch server]({invite})"]
+    invite = vouch_server["invite"]
+    lines = [f"<:whiteheart:1434538078747365507>　Please vouch for {ctx.author.mention} at the links below:", f"<:greyreply:1448474301673115748><:blank:1383116055550890095>[vouch server]({invite})"]
     if is_mm:
         mm_vouch_channel = server_info.get("mm_vouch_channel")
         if mm_vouch_channel:
-            lines.append(f"ㆍ{mm_vouch_channel}")
+            lines.append(f"<:greyreply:1448474301673115748><:blank:1383116055550890095>{mm_vouch_channel}")
     if is_pilot:
         pilot_vouch_channel = server_info.get("pilot_vouch_channel")
         if pilot_vouch_channel:
-            lines.append(f"ㆍ{pilot_vouch_channel}")
+            lines.append(f"<:greyreply:1448474301673115748><:blank:1383116055550890095>{pilot_vouch_channel}")
     await ctx.send("\n".join(lines))
 
 @bot.command(name="cr")
