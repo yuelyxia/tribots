@@ -1051,7 +1051,7 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
 @settings.command(name="vouchserver", description="Set your vouch server invite.")
 @app_commands.describe(invite="Invite link to your vouch server.")
 async def set_vouchserver(interaction: discord.Interaction, invite: str):
-    await interaction.response.defer()
+    await interaction.response.defer(ephemeral=True)
     if not interaction.guild:
         await interaction.followup.send("This command can only be used in a server.")
         return
@@ -1082,7 +1082,7 @@ async def set_vouchserver(interaction: discord.Interaction, invite: str):
     servers.update_one(
         {"_id": guild_id},
         {"$set": {f"vouch_servers.{user_id}": invite.url}},upsert=True)
-    await interaction.followup.send(f"Your vouch server has been set to:\n{invite}")
+    await interaction.followup.send(f"Your vouch server has been set to:\n{invite.url}")
 
 @bot.command(name="vouch")
 async def vouch(ctx):
@@ -1105,7 +1105,7 @@ async def vouch(ctx):
         await ctx.reply("You have not set a vouch server.")
         return
     invite = vouch_servers[user_id]
-    lines = [f"<:whiteheart:1434538078747365507>　Please vouch for {ctx.author.mention} at the links below:", f"ㆍ{invite}"]
+    lines = [f"<:whiteheart:1434538078747365507>　Please vouch for {ctx.author.mention} at the links below:", f"ㆍ[vouch server]({invite})"]
     if is_mm:
         mm_vouch_channel = server_info.get("mm_vouch_channel")
         if mm_vouch_channel:
