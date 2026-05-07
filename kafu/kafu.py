@@ -40,6 +40,8 @@ Tethys = 1434471275723493388
 ticket_ping = 1449382692671193294
 KAFU = 1457009979817988241
 
+USERGUIDE = "https://docs.google.com/document/d/1Af_bHhXTjpJ9GkIPihmSQYibDVMYTFnUBhaA7DlQ29s/"
+
 yuelyxia = 1303291812282372137
 
 intents = discord.Intents.all()
@@ -78,13 +80,10 @@ def parse_duration(s: str):
     }
     return value * multipliers[unit]
 
-@bot.command()
-async def help(ctx):
-    if not ctx.guild.id == TRI_Archive:
-        embed = discord.Embed(title="KAFU commands", colour=0xffffff)
-        embed.description = """wip
-        """
-        await ctx.send(embed=embed)
+@bot.tree.command(name="help", description="KAFU user guide.")
+async def help(interaction: discord.Interaction):
+    if not interaction.guild.id == TRI_Archive:
+        await interaction.response.send_message(f"KAFU user guide [here]({USERGUIDE})")
 
 # loop tasks
 
@@ -957,7 +956,7 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
     )
     if server_info:
         if not server_info.get("staff_role"):
-            await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
+            await interaction.response.send_message("**staff role** has not been set up for this server.", ephemeral=True)
             return
         staff_role = server_info.get("staff_role")
         if get(interaction.user.guild.roles, id=int(staff_role.strip("<@&>"))) in interaction.user.roles:
@@ -1049,6 +1048,73 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
             servers.replace_one(server_query, server_info)
             await interaction.followup.send(f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
 
+@settings.command(name="vouchserver", description="Set your vouch server invite.")
+@app_commands.describe(invite="Invite link to your vouch server.")
+async def set_vouchserver(interaction: discord.Interaction, invite: str):
+    await interaction.response.defer(ephemeral=True)
+    if not interaction.guild:
+        await interaction.followup.send("This command can only be used in a server.")
+        return
+    guild_id = str(interaction.guild.id)
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
+    user_id = str(interaction.user.id)
+    is_mm = user_id in server_info.get("mms", {})
+    is_pilot = user_id in server_info.get("pilots", {})
+    if not is_mm and not is_pilot:
+        await interaction.followup.send("Only appointed mms or pilots can set a vouch server.", ephemeral=True)
+        return
+    try:
+        invite = await bot.fetch_invite(invite)
+    except discord.NotFound:
+        await interaction.followup.send("Invalid invite link.", ephemeral=True)
+        return
+    except discord.HTTPException:
+        await interaction.followup.send("Failed to fetch invite.", ephemeral=True)
+        return
+    if not invite.guild:
+        await interaction.followup.send("Invalid invite link.", ephemeral=True)
+        return
+    servers.update_one(
+        {"_id": guild_id},
+        {"$set": {f"vouch_servers.{user_id}": invite}},upsert=True)
+    await interaction.followup.send(f"Your vouch server has been set to:\n{invite}", ephemeral=True)
+
+@bot.command(name="vouch")
+async def vouch(ctx):
+    if not ctx.guild:
+        return
+    server_info = servers.find_one_and_update(
+        {"_id": str(ctx.guild.id)},
+        {"$setOnInsert": {"_id": str(ctx.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
+    user_id = str(ctx.author.id)
+    vouch_servers = server_info.get("vouch_servers", {})
+    is_mm = user_id in server_info.get("mms", {})
+    is_pilot = user_id in server_info.get("pilots", {})
+    if not is_mm and not is_pilot:
+        await ctx.reply("You are not appointed as a mm or pilot.")
+        return
+    if user_id not in vouch_servers:
+        await ctx.reply("You have not set a vouch server.")
+        return
+    invite = vouch_servers[user_id]
+    lines = [f"<:whiteheart:1434538078747365507>　Please vouch for {ctx.author.mention} at the links below:", f"ㆍ{invite}"]
+    if is_mm:
+        mm_vouch_channel = server_info.get("mm_vouch_channel")
+        if mm_vouch_channel:
+            lines.append(f"ㆍ{mm_vouch_channel}")
+    if is_pilot:
+        pilot_vouch_channel = server_info.get("pilot_vouch_channel")
+        if pilot_vouch_channel:
+            lines.append(f"ㆍ{pilot_vouch_channel}")
+    await ctx.send("\n".join(lines))
 
 @bot.command(name="cr")
 async def cr(ctx):
@@ -1492,7 +1558,7 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
             await user.send(f"You have been banned from {interaction.guild.name} for the following reason: {reason}")
         except discord.Forbidden:
             pass
-        await interaction.guild.ban(user, reason=reason)
+        await interaction.guild.ban(user, reason=reason, delete_message_seconds=604800)
         guild_id = interaction.guild.id
         server_query = {"_id": str(guild_id)}
         server_info = servers.find_one(server_query)
@@ -1623,7 +1689,7 @@ class BanReqView(discord.ui.View):
                         f"You have been banned from {interaction.guild.name} for the following reason: {reason}")
                 except discord.Forbidden:
                     pass
-                await interaction.guild.ban(user, reason=reason)
+                await interaction.guild.ban(user, reason=reason, delete_message_seconds=604800)
                 await interaction.response.edit_message(
                     content=f"**Ban Accepted**\nㆍ　User ID: {user_id}\nㆍ　Reason: {reason}\nㆍ　Requested by: <@{requested_by}>\nㆍ　Accepted by: {interaction.user.mention}\nㆍ　Proof:",
                     view=None)
