@@ -1051,7 +1051,7 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
 @settings.command(name="vouchserver", description="Set your vouch server invite.")
 @app_commands.describe(invite="Invite link to your vouch server.")
 async def set_vouchserver(interaction: discord.Interaction, invite: str):
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer()
     if not interaction.guild:
         await interaction.followup.send("This command can only be used in a server.")
         return
@@ -2293,59 +2293,63 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
             if not interaction.user.guild_permissions.manage_roles:
                 await interaction.followup.send(f"Unauthorised.", ephemeral=True)
                 return
-            if category in ["staff", "mm", "pilot"]:
-                role_members = user_role.members
-                await interaction.followup.send(f"Dismissing {len(role_members)} users from {category}.", ephemeral=True)
-                #
-                def parse_roles(raw):
-                    if not raw:
-                        return []
-                    return raw.replace("<@&", "").replace(">", "").split()
-                staff_roles = parse_roles(server_info.get("staff_roles"))
-                staff_roles += parse_roles(server_info.get("staff_role"))
-                staff_roles += parse_roles(server_info.get("staff_ping"))
-                staff_roles += parse_roles(server_info.get("staff_break"))
-                staff_roles += parse_roles(server_info.get("adm_role"))
-                staff_roles += parse_roles(server_info.get("ban_perms"))
-                mm_roles = parse_roles(server_info.get("mm_roles"))
-                mm_roles += parse_roles(server_info.get("mm_role"))
-                mm_roles += parse_roles(server_info.get("mm_ping"))
-                mm_roles += parse_roles(server_info.get("mm_break"))
-                mm_roles += parse_roles(server_info.get("mm_supervisor"))
-                mm_roles += parse_roles(server_info.get("mm_trainer"))
-                mm_roles += parse_roles(server_info.get("mm_break"))
-                pilot_roles = parse_roles(server_info.get("pilot_roles"))
-                pilot_roles += parse_roles(server_info.get("pilot_role"))
-                pilot_roles += parse_roles(server_info.get("pilot_ping"))
-                pilot_roles += parse_roles(server_info.get("pilot_break"))
-                pilot_roles += parse_roles(server_info.get("pilot_supervisor"))
-                pilot_roles += parse_roles(server_info.get("pilot_trainer"))
-                pilot_roles += parse_roles(server_info.get("pilot_break"))
-                for m in role_members:
-                    uid = str(m.id)
-                    if category == "staff":
-                        server_info.setdefault("staff", {}).pop(uid, None)
-                        roles = staff_roles
-                        await interaction.followup.send(f"`{uid}` has been dismissed from staff.")
-                        still_staff = servers.find_one({
-                            f"staff.{uid}": {"$exists": True}
-                        })
-                        if not still_staff:
-                            timezones.delete_one({"_id": uid})
-                    elif category == "mm":
-                        server_info.setdefault("mms", {}).pop(uid, None)
-                        roles = mm_roles
-                        await interaction.followup.send(f"`{uid}` has been dismissed from mms.")
-                    elif category == "pilot":
-                        server_info.setdefault("pilots", {}).pop(uid, None)
-                        roles = pilot_roles
-                        await interaction.followup.send(f"`{uid}` has been dismissed from pilots.")
-                    # remove roles
-                    for role_id in roles:
-                        role = interaction.guild.get_role(int(role_id))
-                        if role:
-                            await m.remove_roles(role)
-                servers.replace_one(server_query, server_info)
+            role_members = user_role.members
+            await interaction.followup.send(f"Dismissing {len(role_members)} users from {category}.", ephemeral=True)
+            #
+            def parse_roles(raw):
+                if not raw:
+                    return []
+                return raw.replace("<@&", "").replace(">", "").split()
+            staff_roles = parse_roles(server_info.get("staff_roles"))
+            staff_roles += parse_roles(server_info.get("staff_role"))
+            staff_roles += parse_roles(server_info.get("staff_ping"))
+            staff_roles += parse_roles(server_info.get("staff_break"))
+            staff_roles += parse_roles(server_info.get("adm_role"))
+            staff_roles += parse_roles(server_info.get("ban_perms"))
+            mm_roles = parse_roles(server_info.get("mm_roles"))
+            mm_roles += parse_roles(server_info.get("mm_role"))
+            mm_roles += parse_roles(server_info.get("mm_ping"))
+            mm_roles += parse_roles(server_info.get("mm_break"))
+            mm_roles += parse_roles(server_info.get("mm_supervisor"))
+            mm_roles += parse_roles(server_info.get("mm_trainer"))
+            mm_roles += parse_roles(server_info.get("mm_break"))
+            pilot_roles = parse_roles(server_info.get("pilot_roles"))
+            pilot_roles += parse_roles(server_info.get("pilot_role"))
+            pilot_roles += parse_roles(server_info.get("pilot_ping"))
+            pilot_roles += parse_roles(server_info.get("pilot_break"))
+            pilot_roles += parse_roles(server_info.get("pilot_supervisor"))
+            pilot_roles += parse_roles(server_info.get("pilot_trainer"))
+            pilot_roles += parse_roles(server_info.get("pilot_break"))
+            for m in role_members:
+                uid = str(m.id)
+                if category == "staff":
+                    server_info.setdefault("staff", {}).pop(uid, None)
+                    roles = staff_roles
+                    await interaction.followup.send(f"`{uid}` has been dismissed from staff.")
+                    still_staff = servers.find_one({
+                        f"staff.{uid}": {"$exists": True}
+                    })
+                    if not still_staff:
+                        timezones.delete_one({"_id": uid})
+                elif category == "mm":
+                    server_info.setdefault("mms", {}).pop(uid, None)
+                    roles = mm_roles
+                    await interaction.followup.send(f"`{uid}` has been dismissed from mms.")
+                elif category == "pilot":
+                    server_info.setdefault("pilots", {}).pop(uid, None)
+                    roles = pilot_roles
+                    await interaction.followup.send(f"`{uid}` has been dismissed from pilots.")
+                # remove roles
+                for role_id in roles:
+                    role = interaction.guild.get_role(int(role_id))
+                    if role:
+                        await m.remove_roles(role)
+                still_mm = uid in server_info.get("mms", {})
+                still_pilot = uid in server_info.get("pilots", {})
+                if not still_mm and not still_pilot:
+                    if "vouch_servers" in server_info and uid in server_info["vouch_servers"]:
+                        del server_info["vouch_servers"][uid]
+            servers.replace_one(server_query, server_info)
     else:
         user_id = user.id
         if user_id == interaction.user.id and not interaction.user.guild_permissions.administrator:
@@ -2403,6 +2407,11 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
                 role = interaction.guild.get_role(int(role_id))
                 if role:
                     await member.remove_roles(role)
+            still_mm = str(user_id) in server_info.get("mms", {})
+            still_pilot = str(user_id) in server_info.get("pilots", {})
+            if not still_mm and not still_pilot:
+                if "vouch_servers" in server_info and str(user_id) in server_info["vouch_servers"]:
+                    del server_info["vouch_servers"][str(user_id)]
         servers.replace_one(server_query, server_info)
 
 @dismiss.error
