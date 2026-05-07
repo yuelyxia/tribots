@@ -1081,7 +1081,7 @@ async def set_vouchserver(interaction: discord.Interaction, invite: str):
         return
     servers.update_one(
         {"_id": guild_id},
-        {"$set": {f"vouch_servers.{user_id}": invite}},upsert=True)
+        {"$set": {f"vouch_servers.{user_id}": invite.url}},upsert=True)
     await interaction.followup.send(f"Your vouch server has been set to:\n{invite}", ephemeral=True)
 
 @bot.command(name="vouch")
