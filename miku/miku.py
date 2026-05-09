@@ -307,7 +307,7 @@ tags_options = [
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="suspect server", value="suspect server"),
 ]
 
-@bot.command(name='tags', help="Sends the descriptions of demerit tags.")
+@bot.command(name="tags", help="Sends the descriptions of demerit tags.")
 async def tags(ctx, *, string: str = None):
     await ctx.reply(embed=discord.Embed(colour=0xffffff, title = "demerit　tags　⸝⸝.ᐟ", description="""
 　　use the dropdown to select a tag and view its description.
@@ -355,7 +355,7 @@ closing_options = [
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍSR+", value="sr+"),
 ]
 
-@bot.command(name='cl', help="Sends closing guide.")
+@bot.command(name="cl", help="Sends closing guide.")
 async def cl(ctx, *, string: str = None):
     if ctx.guild.id == TRI_Archive:
         await ctx.reply(embed=discord.Embed(colour=0xffffff, title = "closing　guide　⸝⸝.ᐟ", description="""
@@ -413,7 +413,7 @@ class ClosingView(discord.ui.View):
 ㆍask reporter for closing and close the ticket.
 """), ephemeral=True)
 
-@bot.command(name='getids', help="Extracts valid user IDs from the string provided.")
+@bot.command(name="getids", help="Extracts valid user IDs from the string provided.")
 async def getids(ctx, *, string: str = None):
     if string:
         digit_strings = re.findall(r'\d+', string)
@@ -437,7 +437,7 @@ async def ban(ctx):
     elif ctx.guild.id == tethys:
         await ctx.reply(f"<@&{tethys_ban_perms}>")
 
-@bot.command(name='rn')
+@bot.command(name="rn")
 @commands.cooldown(2, 600, commands.BucketType.channel)
 @commands.has_any_role(staff_role, tethys_staff_role)
 async def rn(ctx, *, new_name: str):
@@ -469,7 +469,7 @@ async def fm(ctx):
     else:
         await ctx.reply("This command can only be used in a thread.")
 
-@bot.command(name='lb', help="Sends the current week's reports leaderboard.")
+@bot.command(name="lb", help="Sends the current week's reports leaderboard.")
 @commands.has_any_role(staff_role)
 async def lb(ctx, *args):
     if args:
@@ -554,7 +554,7 @@ async def lb(ctx, *args):
     embeds=[o5_lb, adm_lb, sr_lb, rep_lb, tr_lb]
     await ctx.reply("## _ _　　　reports leaderboard", embeds=embeds)
 
-@bot.command(name='lbr', help="Sends the current week's reviews leaderboard.")
+@bot.command(name="lbr", help="Sends the current week's reviews leaderboard.")
 @commands.has_any_role(staff_role)
 async def lbr(ctx):
     o5 = []
@@ -718,7 +718,10 @@ class StaffGuideView(discord.ui.View):
 
 # slash commands
 
-@bot.tree.command(name="staff_rules", description="Sends staff rules.")
+staff = app_commands.Group(name="staff", description="Staff.")
+bot.tree.add_command(staff)
+
+@staff.command(name="rules", description="Sends staff rules.")
 @app_commands.checks.has_role(adm_role)
 async def staff_rules(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
@@ -753,8 +756,7 @@ async def staff_rules(interaction: discord.Interaction):
 """), view=StaffRulesView())
     await interaction.response.send_message("Staff Rules have been sent.", ephemeral=True)
 
-
-@bot.tree.command(name="staff_guide", description="Sends staff guide.")
+@staff.command(name="guide", description="Sends staff guide.")
 @app_commands.checks.has_role(adm_role)
 async def staff_guide(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
@@ -763,8 +765,10 @@ async def staff_guide(interaction: discord.Interaction):
 """), view=StaffGuideView())
     await interaction.response.send_message("Staff Guide has been sent.", ephemeral=True)
 
+anon = app_commands.Group(name="anon", description="Do something anonymously.")
+bot.tree.add_command(anon)
 
-@bot.tree.command(name='anon_say', description='Miku will speak on your behalf.')
+@anon.command(name="say", description="Miku will speak on your behalf.")
 @app_commands.describe(message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
 @app_commands.checks.has_any_role(staff_role, tethys_adm_role)
 async def anon_say(interaction: discord.Interaction, message: str, image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
@@ -796,7 +800,10 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
     except Exception:
         await interaction.followup.send(f"Unable to send message.", ephemeral=True)
 
-@bot.tree.command(name='create_training', description='Creates training thread.')
+create = app_commands.Group(name="create", description="Create.")
+bot.tree.add_command(create)
+
+@create.command(name="training", description="Creates a training thread.")
 @app_commands.describe(name="Name of trainee", user_id="User ID of trainee")
 @app_commands.checks.has_role(adm_role)
 async def create_training(interaction: discord.Interaction, name: str, user_id: str):
