@@ -275,8 +275,8 @@ class PilotFormsView(discord.ui.View):
 Account Size: 
 Server: 
 Task: 
-Time Limit:
-Fee:
+Time Limit: 
+Fee: 
 Do’s & Don’ts: 
 Account Issues: 
 > By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
@@ -289,8 +289,8 @@ Account Issues:
 Account Size: 
 Server: 
 Task: 
-Time Limit:
-Fee:
+Time Limit: 
+Fee: 
 Do’s & Don’ts: 
 Account Issues: 
 > By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
@@ -303,8 +303,8 @@ Account Issues:
 Account Size: 
 Server: 
 Task: 
-Time Limit:
-Fee:
+Time Limit: 
+Fee: 
 Do’s & Don’ts: 
 Account Issues: 
 > By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
@@ -316,8 +316,8 @@ Account Issues:
 ### Roblox Pilot Form
 Roblox Game: 
 Task: 
-Time Limit:
-Fee:
+Time Limit: 
+Fee: 
 Do’s & Don’ts: 
 > By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
 """)
@@ -418,8 +418,8 @@ Fee + who’s providing:
         await interaction.response.send_message("""
 ### Roblox Items MM form
 Username: 
-Roblox Game:
-Roblox Game Items:
+Roblox Game: 
+Roblox Game Items: 
 Fee + who’s providing: 
 > By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
 """)
