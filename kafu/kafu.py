@@ -58,6 +58,7 @@ async def on_ready():
     bot.add_view(MMFormsView())
     bot.add_view(MMRisksView())
     quota_check.start()
+    customrole_expiry_loop.start()
 
 TIMEZONES = sorted(available_timezones())
 
