@@ -30,6 +30,7 @@ serverscol = db["servers"]
 trusteduserscol = db["trusted_users"]
 trustedserverscol = db["trusted_servers"]
 staffweeklycol = db["staff_weekly"]
+filescol = db["files"]
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
@@ -248,6 +249,7 @@ async def on_ready():
     bot.add_view(StaffRulesView())
     bot.add_view(ClosingView())
     bot.add_view(TagsView())
+    bot.add_view(FileView())
     weekly_quota.start()
 
 
@@ -848,6 +850,10 @@ class FileModal(discord.ui.Modal, title="Create File"):
             icon_url=interaction.user.display_avatar.url
         )
         msg = await interaction.channel.send(embed=embed, view=FileView(thread.id))
+        filescol.insert_one({
+            "_id": msg.id,
+            "thread_id": thread.id
+        })
         await interaction.response.send_message(f"File created for `{user.id}`.", ephemeral=True)
 
 class EditFileModal(discord.ui.Modal, title="Edit File"):
@@ -889,28 +895,36 @@ class ConfirmCloseView(discord.ui.View):
         if get(interaction.user.guild.roles, id=adm_role) not in interaction.user.roles:
             await interaction.response.send_message("You do not have permission.", ephemeral=True)
             return
-        thread = interaction.guild.get_thread(self.thread_id)
+        data = filescol.find_one({"_id": self.message_id})
+        if not data:
+            await interaction.response.send_message("File data missing.", ephemeral=True)
+            return
+        thread = interaction.guild.get_thread(data["thread_id"])
         if thread:
             await thread.edit(archived=True, locked=True)
-        await self.message.delete()
+        try:
+            message = await interaction.channel.fetch_message(self.message_id)
+            await message.delete()
+        except Exception:
+            pass
+        filescol.delete_one({"_id": self.message_id})
         await interaction.response.send_message("File closed.", ephemeral=True)
 
 class FileView(discord.ui.View):
-    def __init__(self, thread_id: int):
+    def __init__(self):
         super().__init__(timeout=None)
-        self.thread_id = thread_id
 
-    @discord.ui.button(label="Edit", style=discord.ButtonStyle.grey)
+    @discord.ui.button(label="Edit", style=discord.ButtonStyle.grey, custom_id="file_edit")
     async def edit_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_modal(EditFileModal(interaction.message))
 
-    @discord.ui.button(label="Close", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Close", style=discord.ButtonStyle.red, custom_id="file_close")
     async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if get(interaction.user.guild.roles, id=adm_role) not in interaction.user.roles:
             await interaction.response.send_message("You do not have permission.", ephemeral=True)
             return
         await interaction.response.send_message("Are you sure you want to close this file?", ephemeral=True,
-            view=ConfirmCloseView(self.thread_id, interaction.message))
+            view=ConfirmCloseView(interaction.message.id))
 
 @create.command(name="file", description="Create a file.")
 async def create_file(interaction: discord.Interaction):
