@@ -930,8 +930,16 @@ class FileView(discord.ui.View):
         await interaction.response.send_message("Are you sure you want to close this file?", ephemeral=True,
             view=ConfirmCloseView(interaction.message.id))
 
-@create.command(name="file", description="Create a file.")
+@create.command(name="file", description="Creates a file.")
 async def create_file(interaction: discord.Interaction):
+    allowed_channels = [
+        1503250889031418056,
+        1503248643338272861,
+        1503621921076674726
+    ]
+    if interaction.channel.id not in allowed_channels:
+        await interaction.response.send_message("You cannot use this command in this channel.", ephemeral=True)
+        return
     await interaction.response.send_modal(FileModal())
 
 @bot.command()
