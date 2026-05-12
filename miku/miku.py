@@ -821,7 +821,100 @@ async def create_training(interaction: discord.Interaction, name: str, user_id: 
             await interaction.response.send_message(f"Created a new private thread: {new_thread.jump_url}", ephemeral=True)
             await new_thread.send(f"{user.mention} <@&{staff_trainer}>")
 
-#
+# file
+
+class FileModal(discord.ui.Modal, title="Create File"):
+    user_id = discord.ui.TextInput(label="User ID", placeholder="Enter the user ID", required=True)
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            user = await bot.fetch_user(int(self.user_id.value))
+        except Exception:
+            await interaction.response.send_message("Invalid user ID.", ephemeral=True)
+            return
+        # Create public thread
+        thread = await interaction.channel.create_thread(name=str(user.id), type=discord.ChannelType.public_thread)
+        embed = discord.Embed(
+            description=(
+                f"ㆍ**user id:** {user.id}\n"
+                f"ㆍ**username:** {user.name}\n"
+                f"ㆍ**tag(s):** \n"
+                f"ㆍ**reason:** \n"
+                f"ㆍ**link to thread:** {thread.mention}"
+            ),
+            color=0xffffff
+        )
+        embed.set_footer(
+            text=f"Last edited by {interaction.user}",
+            icon_url=interaction.user.display_avatar.url
+        )
+        msg = await interaction.channel.send(embed=embed, view=FileView(thread.id))
+        await interaction.response.send_message(f"File created for `{user.id}`.", ephemeral=True)
+
+class EditFileModal(discord.ui.Modal, title="Edit File"):
+    tags = discord.ui.TextInput(label="Tags", required=False, style=discord.TextStyle.short)
+    reason = discord.ui.TextInput(label="Reason", required=False, style=discord.TextStyle.paragraph)
+    def __init__(self, message: discord.Message):
+        super().__init__()
+        self.message = message
+        embed = message.embeds[0]
+        desc = embed.description.split("\n")
+        current_tags = desc[2].replace("ㆍ**tag(s):** ", "")
+        current_reason = desc[3].replace("ㆍ**reason:** ", "")
+        self.tags.default = current_tags
+        self.reason.default = current_reason
+
+    async def on_submit(self, interaction: discord.Interaction):
+        embed = self.message.embeds[0]
+        desc = embed.description.split("\n")
+        desc[2] = f"ㆍ**tag(s):** {self.tags.value}"
+        desc[3] = f"ㆍ**reason:** {self.reason.value}"
+        embed.description = "\n".join(desc)
+        embed.set_footer(
+            text=f"Last edited by {interaction.user}",
+            icon_url=interaction.user.display_avatar.url
+        )
+        await self.message.edit(embed=embed)
+        await interaction.response.send_message("File updated.", ephemeral=True)
+
+class ConfirmCloseView(discord.ui.View):
+    def __init__(self, thread_id: int, message: discord.Message):
+        super().__init__(timeout=60)
+        self.thread_id = thread_id
+        self.message = message
+    @discord.ui.button(
+        label="Confirm Close",
+        style=discord.ButtonStyle.red
+    )
+    async def confirm_close(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if get(interaction.user.guild.roles, id=adm_role) not in interaction.user.roles:
+            await interaction.response.send_message("You do not have permission.", ephemeral=True)
+            return
+        thread = interaction.guild.get_thread(self.thread_id)
+        if thread:
+            await thread.edit(archived=True, locked=True)
+        await self.message.delete()
+        await interaction.response.send_message("File closed.", ephemeral=True)
+
+class FileView(discord.ui.View):
+    def __init__(self, thread_id: int):
+        super().__init__(timeout=None)
+        self.thread_id = thread_id
+
+    @discord.ui.button(label="Edit", style=discord.ButtonStyle.grey)
+    async def edit_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(EditFileModal(interaction.message))
+
+    @discord.ui.button(label="Close", style=discord.ButtonStyle.red)
+    async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if get(interaction.user.guild.roles, id=adm_role) not in interaction.user.roles:
+            await interaction.response.send_message("You do not have permission.", ephemeral=True)
+            return
+        await interaction.response.send_message("Are you sure you want to close this file?", ephemeral=True,
+            view=ConfirmCloseView(self.thread_id, interaction.message))
+
+@create.command(name="file", description="Create a file.")
+async def create_file(interaction: discord.Interaction):
+    await interaction.response.send_modal(FileModal())
 
 @bot.command()
 async def sync(ctx: commands.Context):
