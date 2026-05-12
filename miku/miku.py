@@ -905,6 +905,11 @@ class ConfirmCloseView(discord.ui.View):
             return
         thread = interaction.guild.get_thread(data["thread_id"])
         if thread:
+            try:
+                message = await interaction.channel.fetch_message(self.message_id)
+                if message.embeds:
+                    await thread.send(embed=message.embeds[0])
+            except Exception: pass
             await thread.edit(archived=True, locked=True)
         try:
             message = await interaction.channel.fetch_message(self.message_id)
