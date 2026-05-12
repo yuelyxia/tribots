@@ -835,21 +835,22 @@ class FileModal(discord.ui.Modal, title="Create File"):
             return
         # Create public thread
         thread = await interaction.channel.create_thread(name=str(user.id), type=discord.ChannelType.public_thread)
-        embed = discord.Embed(
-            description=(
-                f"ㆍ**user id:** {user.id}\n"
-                f"ㆍ**username:** {user.name}\n"
-                f"ㆍ**tag(s):** \n"
-                f"ㆍ**reason:** \n"
-                f"ㆍ**link to thread:** {thread.mention}"
-            ),
-            color=0xffffff
-        )
+        try:
+            starter_message = await interaction.channel.fetch_message(thread.id)
+            await starter_message.delete()
+        except Exception:
+            pass
+        embed = discord.Embed(color=0xffffff)
+        embed.add_field(name="User ID", value=str(user.id), inline=True)
+        embed.add_field(name="Username", value=str(user.name), inline=True)
+        embed.add_field(name="Tag(s)", value="", inline=False)
+        embed.add_field(name="Reason", value="", inline=False)
+        embed.add_field(name="Link to thread", value=thread.mention, inline=False)
         embed.set_footer(
             text=f"Last edited by {interaction.user}",
             icon_url=interaction.user.display_avatar.url
         )
-        msg = await interaction.channel.send(embed=embed, view=FileView(thread.id))
+        msg = await interaction.channel.send(embed=embed, view=FileView())
         filescol.insert_one({
             "_id": msg.id,
             "thread_id": thread.id
@@ -863,30 +864,33 @@ class EditFileModal(discord.ui.Modal, title="Edit File"):
         super().__init__()
         self.message = message
         embed = message.embeds[0]
-        desc = embed.description.split("\n")
-        current_tags = desc[2].replace("ㆍ**tag(s):** ", "")
-        current_reason = desc[3].replace("ㆍ**reason:** ", "")
+        current_tags = embed.fields[2].value or ""
+        current_reason = embed.fields[3].value or ""
         self.tags.default = current_tags
         self.reason.default = current_reason
 
     async def on_submit(self, interaction: discord.Interaction):
         embed = self.message.embeds[0]
-        desc = embed.description.split("\n")
-        desc[2] = f"ㆍ**tag(s):** {self.tags.value}"
-        desc[3] = f"ㆍ**reason:** {self.reason.value}"
-        embed.description = "\n".join(desc)
-        embed.set_footer(
-            text=f"Last edited by {interaction.user}",
-            icon_url=interaction.user.display_avatar.url
+        embed.set_field_at(
+            2,
+            name="Tag(s)",
+            value=self.tags.value or "",
+            inline=False
         )
+        embed.set_field_at(
+            3,
+            name="Reason",
+            value=self.reason.value or "",
+            inline=False
+        )
+        embed.set_footer(text=f"Last edited by {interaction.user}", icon_url=interaction.user.display_avatar.url)
         await self.message.edit(embed=embed)
         await interaction.response.send_message("File updated.", ephemeral=True)
 
 class ConfirmCloseView(discord.ui.View):
-    def __init__(self, thread_id: int, message: discord.Message):
+    def __init__(self, message_id: int):
         super().__init__(timeout=60)
-        self.thread_id = thread_id
-        self.message = message
+        self.message_id = message_id
     @discord.ui.button(
         label="Confirm Close",
         style=discord.ButtonStyle.red
