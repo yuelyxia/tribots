@@ -363,6 +363,23 @@ async def update_reports_count():
                               )
                               )
 
+# edit queue
+
+old_message_edit_queue = asyncio.Queue()
+
+async def old_message_edit_worker():
+    while True:
+        message, kwargs = await old_message_edit_queue.get()
+        try:
+            await message.edit(**kwargs)
+        except discord.HTTPException as e:
+            if e.code == 30046:
+                await asyncio.sleep(5)
+                await old_message_edit_queue.put((message, kwargs))
+            else:
+                print(e)
+        await asyncio.sleep(5)
+
 # publish queue
 
 publish_queue = asyncio.Queue()
@@ -387,6 +404,7 @@ async def publish_worker():
 async def on_ready():
     update_reports_count.start()
     publish_worker.start()
+    bot.loop.create_task(old_message_edit_worker())
     #
     bot.add_view(AltsView())
     bot.add_view(UserTagsView())
@@ -1781,7 +1799,8 @@ class UserProofsView(discord.ui.View):
                 except DuplicateKeyError: pass
                 await new_report_thread.send(content=f"Alt Proofs for `{user.id}`", embeds=alts_proofs_embeds)
                 await new_report_thread.send(content=f"Proofs for `{user.id}`", embeds=proofs_embeds)
-                await message.edit(content="Report has been submitted for voting.", embeds=embeds, view=None)
+                await old_message_edit_queue.put(
+                    (message, {"content": "Report has been submitted for voting.", "embeds": embeds, "view": None}))
             else:
                 await interaction.followup.send("You do not have permission to accept the report for voting.",
                                                 ephemeral=True)
@@ -2392,7 +2411,8 @@ class EditAltsOnlyView(discord.ui.View):
                 reason_embed = discord.Embed(title="Reason", description=reason)
                 await new_report_thread.send(content=f"Reason for change(s)", embed=reason_embed)
                 embeds = [r_profile, reason_embed]
-                await message.edit(content="Report has been submitted for voting.", embeds=embeds, view=None)
+                await old_message_edit_queue.put(
+                    (message, {"content": "Report has been submitted for voting.", "embeds": embeds, "view": None}))
             else:
                 await interaction.followup.send("You do not have permission to accept the report for voting.",
                                                 ephemeral=True)
@@ -2723,7 +2743,8 @@ class UserAppealView(discord.ui.View):
                 except DuplicateKeyError: pass
                 await new_report_thread.send(content=f"Alt Proofs for `{user.id}`", embeds=alts_proofs_embeds)
                 await new_report_thread.send(content=f"Proofs for `{user.id}`", embeds=proofs_embeds)
-                await message.edit(content="Appeal has been submitted for voting.", embeds=embeds, view=None)
+                await old_message_edit_queue.put(
+                    (message, {"content": "Appeal has been submitted for voting.", "embeds": embeds, "view": None}))
             else:
                 await interaction.followup.send("You do not have permission to accept the report for voting.",
                                                 ephemeral=True)
@@ -3701,7 +3722,8 @@ class AddReportUserProofsView(discord.ui.View):
                 except DuplicateKeyError: pass
                 await new_report_thread.send(content=f"Alt Proofs for `{user.id}`", embeds=alts_proofs_embeds)
                 await new_report_thread.send(content=f"Proofs for `{user.id}`", embeds=proofs_embeds)
-                await message.edit(content="Report has been submitted for voting.", embeds=embeds, view=None)
+                await old_message_edit_queue.put(
+                    (message, {"content": "Report has been submitted for voting.", "embeds": embeds, "view": None}))
             else:
                 await interaction.followup.send("You do not have permission to accept the report for voting.",
                                                 ephemeral=True)
@@ -3817,8 +3839,9 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=r_profile, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
-                        await message.edit(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
@@ -3877,8 +3900,9 @@ class UserVoteView(discord.ui.View):
                             content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
-                        await message.edit(
-                            content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.")
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.",
+                            "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Appeal on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
@@ -3902,8 +3926,9 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
-                        await message.edit(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
@@ -3929,8 +3954,9 @@ class UserVoteView(discord.ui.View):
                         content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
+                    await old_message_edit_queue.put((message, {
+                        "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                        "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
@@ -4035,8 +4061,9 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embed=r_profile, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
-                        await message.edit(
-                            content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.")
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
@@ -4051,8 +4078,9 @@ class UserVoteView(discord.ui.View):
                             content=f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
-                        await message.edit(
-                            content=f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.")
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.",
+                            "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Appeal on `{user.id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
@@ -4065,8 +4093,9 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
-                        await message.edit(
-                            content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.")
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
@@ -4078,8 +4107,9 @@ class UserVoteView(discord.ui.View):
                         content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.")
+                    await old_message_edit_queue.put((message, {
+                        "content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
+                        "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on `{user.id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
@@ -4215,8 +4245,9 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embed=r_profile, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
-                        await message.edit(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
@@ -4273,8 +4304,9 @@ class UserVoteView(discord.ui.View):
                             content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
-                        await message.edit(
-                            content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.")
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.",
+                            "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Appeal on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
@@ -4302,8 +4334,9 @@ class UserVoteView(discord.ui.View):
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
                         message = await bot.get_channel(channel_id).fetch_message(message_id)
-                        await message.edit(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
@@ -4334,8 +4367,9 @@ class UserVoteView(discord.ui.View):
                         content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Report has been published.** Report accepted by <@{accepted_by}>.")
+                    await old_message_edit_queue.put((message, {
+                        "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                        "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
@@ -5041,7 +5075,7 @@ class ServerProofsView(discord.ui.View):
                 view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
                               case_title, accepted_by, agree_users, disagree_users))
             await new_report_thread.send(content=f"Proofs for `{guild.id}`", embeds=image_embeds)
-            await message.edit(content="Report has been submitted for voting.", embeds=embeds, view=None)
+            await old_message_edit_queue.put((message, {"content": "Report has been submitted for voting.", "view": None}))
         else:
             await interaction.followup.send("You do not have permission to accept the report for voting.",
                                             ephemeral=True)
@@ -5485,7 +5519,7 @@ class EditOwnerOnlyView(discord.ui.View):
             reason_embed = discord.Embed(title="Reason", description=reason)
             await new_report_thread.send(content=f"Reason for change(s)", embed=reason_embed)
             embeds = [r_profile, reason_embed]
-            await message.edit(content="Report has been submitted for voting.", embeds=embeds, view=None)
+            await old_message_edit_queue.put((message, {"content": "Report has been submitted for voting.", "view": None}))
         else:
             await interaction.followup.send("You do not have permission to accept the report for voting.",
                                             ephemeral=True)
@@ -5667,7 +5701,7 @@ class ServerAppealView(discord.ui.View):
                 view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
                               case_title, accepted_by, agree_users, disagree_users, reason))
             await new_report_thread.send(content=f"Proofs for `{guild.id}`", embeds=image_embeds)
-            await message.edit(content="Appeal has been submitted for voting.", embeds=embeds, view=None)
+            await old_message_edit_queue.put((message, {"content": "Appeal has been submitted for voting.", "view": None}))
         else:
             await interaction.followup.send("You do not have permission to accept the report for voting.",
                                             ephemeral=True)
@@ -6104,8 +6138,7 @@ class AddReportServerContributorView(discord.ui.View):
             embeds = [r_profile, add_case]
             await message.edit(embeds=embeds,
                                view=AddReportServerReasonView(guild, requested_by, channel_id, message_id, r_profile_list,
-                                               add_case_list,
-                                               title, case_title))
+                                               add_case_list, title, case_title))
 
     @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey,
                        custom_id="addreportservercontributor:next")
@@ -6128,8 +6161,7 @@ class AddReportServerContributorView(discord.ui.View):
             embeds = [r_profile, add_case]
             await message.edit(embeds=embeds,
                                view=AddReportServerProofsView(guild, requested_by, channel_id, message_id, r_profile_list,
-                                               add_case_list,
-                                               title, case_title))
+                                               add_case_list, title, case_title))
 
     @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="addreportservercontributor:input")
     async def contributor_button(self, interaction, button):
@@ -6353,7 +6385,7 @@ class AddReportServerProofsView(discord.ui.View):
                 view=ServerVoteView(guild, requested_by, channel_id, message_id, r_profile_list, add_case_list, title,
                               case_title, accepted_by, agree_users, disagree_users))
             await new_report_thread.send(content=f"Proofs for `{guild.id}`", embeds=image_embeds)
-            await message.edit(content="Report has been submitted for voting.", embeds=embeds, view=None)
+            await old_message_edit_queue.put((message, {"content": "Report has been submitted for voting.", "view": None}))
         else:
             await interaction.followup.send("You do not have permission to accept the report for voting.",
                                             ephemeral=True)
@@ -6434,8 +6466,8 @@ class ServerVoteView(discord.ui.View):
                         content=f"**Report has been published.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Report has been published.** Report accepted by {accepted_by.mention}.")
+                    await old_message_edit_queue.put(
+                        (message, {"content": f"**Report has been published.** Report accepted by {accepted_by.mention}.", "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on `{guild.id}` has been published. {requested_by.mention} {accepted_by.mention}")
 
@@ -6489,8 +6521,10 @@ class ServerVoteView(discord.ui.View):
                         content=f"**Appeal has been published.** Appeal accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Appeal has been published.** Appeal accepted by {accepted_by.mention}.")
+                    await old_message_edit_queue.put(
+                        (message,
+                         {"content": f"**Appeal has been published.** Appeal accepted by {accepted_by.mention}.",
+                          "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Appeal on `{guild.id}` has been published. {requested_by.mention} {accepted_by.mention}")
 
@@ -6514,8 +6548,10 @@ class ServerVoteView(discord.ui.View):
                         content=f"**Report has been published.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Report has been published.** Report accepted by {accepted_by.mention}.")
+                    await old_message_edit_queue.put(
+                        (message,
+                         {"content": f"**Report has been published.** Report accepted by {accepted_by.mention}.",
+                          "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on `{guild.id}` has been published. {requested_by.mention} {accepted_by.mention}")
 
@@ -6538,8 +6574,9 @@ class ServerVoteView(discord.ui.View):
                     content=f"**Report has been published.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                     embeds=embeds, view=None)
                 message = await bot.get_channel(channel_id).fetch_message(message_id)
-                await message.edit(
-                    content=f"**Report has been published.** Report accepted by {accepted_by.mention}.")
+                await old_message_edit_queue.put(
+                    (message, {"content": f"**Report has been published.** Report accepted by {accepted_by.mention}.",
+                               "view": None}))
                 await bot.get_channel(channel_id).send(
                     f"Report on `{guild.id}` has been published. {requested_by.mention} {accepted_by.mention}")
 
@@ -6653,8 +6690,10 @@ class ServerVoteView(discord.ui.View):
                         content=f"**Report has been rejected.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Report has been rejected.** Report accepted by {accepted_by.mention}.")
+                    await old_message_edit_queue.put(
+                        (message,
+                         {"content": f"**Report has been rejected.** Report accepted by {accepted_by.mention}.",
+                          "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on server `{guild.id}` has been rejected. {requested_by.mention} {accepted_by.mention}")
 
@@ -6669,8 +6708,10 @@ class ServerVoteView(discord.ui.View):
                         content=f"**Appeal has been rejected.** Appeal accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Appeal has been rejected.** Appeal accepted by {accepted_by.mention}.")
+                    await old_message_edit_queue.put(
+                        (message,
+                         {"content": f"**Appeal has been rejected.** Appeal accepted by {accepted_by.mention}.",
+                          "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Appeal on server `{guild.id}` has been rejected. {requested_by.mention} {accepted_by.mention}")
 
@@ -6686,8 +6727,10 @@ class ServerVoteView(discord.ui.View):
                         content=f"**Report has been rejected.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Report has been rejected.** Report accepted by {accepted_by.mention}.")
+                    await old_message_edit_queue.put(
+                        (message,
+                         {"content": f"**Report has been rejected.** Report accepted by {accepted_by.mention}.",
+                          "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on server `{guild.id}` has been rejected. {requested_by.mention} {accepted_by.mention}")
 
@@ -6702,8 +6745,10 @@ class ServerVoteView(discord.ui.View):
                     content=f"**Report has been rejected.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                     embeds=embeds, view=None)
                 message = await bot.get_channel(channel_id).fetch_message(message_id)
-                await message.edit(
-                    content=f"**Report has been rejected.** Report accepted by {accepted_by.mention}.")
+                await old_message_edit_queue.put(
+                    (message,
+                     {"content": f"**Report has been rejected.** Report accepted by {accepted_by.mention}.",
+                      "view": None}))
                 await bot.get_channel(channel_id).send(
                     f"Report on server `{guild.id}` has been rejected. {requested_by.mention} {accepted_by.mention}")
 
@@ -6854,8 +6899,10 @@ class ServerVoteView(discord.ui.View):
                         content=f"**Report has been published.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Report has been published.** Report accepted by {accepted_by.mention}.")
+                    await old_message_edit_queue.put(
+                        (message,
+                         {"content": f"**Report has been published.** Report accepted by {accepted_by.mention}.",
+                          "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on `{guild.id}` has been published. {requested_by.mention} {accepted_by.mention}")
 
@@ -6909,8 +6956,10 @@ class ServerVoteView(discord.ui.View):
                         content=f"**Appeal has been published.** Appeal accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Appeal has been published.** Appeal accepted by {accepted_by.mention}.")
+                    await old_message_edit_queue.put(
+                        (message,
+                         {"content": f"**Appeal has been published.** Appeal accepted by {accepted_by.mention}.",
+                          "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Appeal on `{guild.id}` has been published. {requested_by.mention} {accepted_by.mention}")
 
@@ -6936,8 +6985,10 @@ class ServerVoteView(discord.ui.View):
                         content=f"**Report has been published.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
                     message = await bot.get_channel(channel_id).fetch_message(message_id)
-                    await message.edit(
-                        content=f"**Report has been published.** Report accepted by {accepted_by.mention}.")
+                    await old_message_edit_queue.put(
+                        (message,
+                         {"content": f"**Report has been published.** Report accepted by {accepted_by.mention}.",
+                          "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on `{guild.id}` has been published. {requested_by.mention} {accepted_by.mention}")
 
@@ -6961,8 +7012,10 @@ class ServerVoteView(discord.ui.View):
                     content=f"**Report has been published.** Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                     embeds=embeds, view=None)
                 message = await bot.get_channel(channel_id).fetch_message(message_id)
-                await message.edit(
-                    content=f"**Report has been published.** Report accepted by {accepted_by.mention}.")
+                await old_message_edit_queue.put(
+                    (message,
+                     {"content": f"**Report has been published.** Report accepted by {accepted_by.mention}.",
+                      "view": None}))
                 await bot.get_channel(channel_id).send(
                     f"Report on `{guild.id}` has been published. {requested_by.mention} {accepted_by.mention}")
 
