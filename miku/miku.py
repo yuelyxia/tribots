@@ -378,7 +378,7 @@ class ClosingView(discord.ui.View):
         if self.select_callback.values[0] == "report":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ㆍnew report　┈　`new report on (ID) as (tags)`
-ㆍadded report　┈　`report added on (ID) as (tags)`
+ㆍadded report　┈　`added report on (ID) as (tags)`
 ㆍedited alts　┈　`edited alts for (ID) - added (alt alt alt), removed (alt alt alt)`
 ㆍedited server owner　┈　`server owner edited for (ID)`
 ㆍinsufficient proof　┈　`no report on (ID) // insufficient proof`
