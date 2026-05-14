@@ -1805,7 +1805,7 @@ class UserProofsView(discord.ui.View):
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
                 inprogresscol.replace_one(
-                    {"guild_id": guild_id},
+                    {"user_id": user_id},
                     {
                         "_id": vote_message_id,
                         "user_id": user_id,
@@ -2383,7 +2383,7 @@ class EditAltsOnlyView(discord.ui.View):
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
                 inprogresscol.replace_one(
-                    {"guild_id": guild_id},
+                    {"user_id": user_id},
                     {
                         "_id": vote_message_id,
                         "user_id": user_id,
@@ -2718,7 +2718,7 @@ class UserAppealView(discord.ui.View):
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
                 inprogresscol.replace_one(
-                    {"guild_id": guild_id},
+                    {"user_id": user_id},
                     {
                         "_id": vote_message_id,
                         "user_id": user_id,
@@ -3698,7 +3698,7 @@ class AddReportUserProofsView(discord.ui.View):
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
                 inprogresscol.replace_one(
-                    {"guild_id": guild_id},
+                    {"user_id": user_id},
                     {
                         "_id": vote_message_id,
                         "user_id": user_id,
