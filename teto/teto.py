@@ -1804,25 +1804,25 @@ class UserProofsView(discord.ui.View):
                     embeds=embeds, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
-                inprogresscol.replace_one(
-                    {"user_id": user_id},
-                    {
-                        "_id": vote_message_id,
-                        "user_id": user_id,
-                        "requested_by": requested_by,
-                        "channel_id": channel_id,
-                        "message_id": interaction.message.id,
-                        "r_profile_list": r_profile_list,
-                        "add_case_list": add_case_list,
-                        "title": title,
-                        "case_title": case_title,
-                        "vote_channel_id": vote_channel_id,
-                        "accepted_by": accepted_by.id,
-                        "agree_users": agree_users,
-                        "disagree_users": disagree_users,
-                    },
-                    upsert=True
-                )
+                old_session = inprogresscol.find_one({"user_id": user_id})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "user_id": user_id,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "reason": reason,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
                 await new_report_thread.send(content=f"Alt Proofs for `{user.id}`", embeds=alts_proofs_embeds)
                 await new_report_thread.send(content=f"Proofs for `{user.id}`", embeds=proofs_embeds)
                 await old_message_edit_queue.put(
@@ -2382,26 +2382,25 @@ class EditAltsOnlyView(discord.ui.View):
                     embed=r_profile, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
-                inprogresscol.replace_one(
-                    {"user_id": user_id},
-                    {
-                        "_id": vote_message_id,
-                        "user_id": user_id,
-                        "requested_by": requested_by,
-                        "channel_id": channel_id,
-                        "message_id": interaction.message.id,
-                        "r_profile_list": r_profile_list,
-                        "add_case_list": add_case_list,
-                        "title": title,
-                        "case_title": case_title,
-                        "reason": reason,
-                        "vote_channel_id": vote_channel_id,
-                        "accepted_by": accepted_by.id,
-                        "agree_users": agree_users,
-                        "disagree_users": disagree_users,
-                    },
-                    upsert=True
-                )
+                old_session = inprogresscol.find_one({"user_id": user_id})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "user_id": user_id,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "reason": reason,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
                 await new_report_thread.send(content=f"Alts Proofs for `{user.id}`", embeds=image_embeds)
                 reason_embed = discord.Embed(title="Reason", description=reason)
                 await new_report_thread.send(content=f"Reason for change(s)", embed=reason_embed)
@@ -2717,26 +2716,25 @@ class UserAppealView(discord.ui.View):
                     embeds=embeds, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
-                inprogresscol.replace_one(
-                    {"user_id": user_id},
-                    {
-                        "_id": vote_message_id,
-                        "user_id": user_id,
-                        "requested_by": requested_by,
-                        "channel_id": channel_id,
-                        "message_id": interaction.message.id,
-                        "r_profile_list": r_profile_list,
-                        "add_case_list": add_case_list,
-                        "title": title,
-                        "case_title": case_title,
-                        "reason": reason,
-                        "vote_channel_id": vote_channel_id,
-                        "accepted_by": accepted_by.id,
-                        "agree_users": agree_users,
-                        "disagree_users": disagree_users,
-                    },
-                    upsert=True
-                )
+                old_session = inprogresscol.find_one({"user_id": user_id})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "user_id": user_id,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "reason": reason,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
                 await new_report_thread.send(content=f"Alt Proofs for `{user.id}`", embeds=alts_proofs_embeds)
                 await new_report_thread.send(content=f"Proofs for `{user.id}`", embeds=proofs_embeds)
                 await old_message_edit_queue.put(
@@ -3697,25 +3695,24 @@ class AddReportUserProofsView(discord.ui.View):
                     embeds=embeds, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
-                inprogresscol.replace_one(
-                    {"user_id": user_id},
-                    {
-                        "_id": vote_message_id,
-                        "user_id": user_id,
-                        "requested_by": requested_by,
-                        "channel_id": channel_id,
-                        "message_id": interaction.message.id,
-                        "r_profile_list": r_profile_list,
-                        "add_case_list": add_case_list,
-                        "title": title,
-                        "case_title": case_title,
-                        "vote_channel_id": vote_channel_id,
-                        "accepted_by": accepted_by.id,
-                        "agree_users": agree_users,
-                        "disagree_users": disagree_users,
-                    },
-                    upsert=True
-                )
+                old_session = inprogresscol.find_one({"user_id": user_id})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "user_id": user_id,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
                 await new_report_thread.send(content=f"Alt Proofs for `{user.id}`", embeds=alts_proofs_embeds)
                 await new_report_thread.send(content=f"Proofs for `{user.id}`", embeds=proofs_embeds)
                 await old_message_edit_queue.put(
@@ -4979,26 +4976,25 @@ class ServerProofsView(discord.ui.View):
                     embeds=embeds, view=ServerVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
-                inprogresscol.replace_one(
-                    {"guild_id": guild_id},
-                    {
-                        "_id": vote_message_id,
-                        "guild_id": guild_id,
-                        "guild_data": guild_data,
-                        "requested_by": requested_by,
-                        "channel_id": channel_id,
-                        "message_id": interaction.message.id,
-                        "r_profile_list": r_profile_list,
-                        "add_case_list": add_case_list,
-                        "title": title,
-                        "case_title": case_title,
-                        "vote_channel_id": vote_channel_id,
-                        "accepted_by": accepted_by.id,
-                        "agree_users": agree_users,
-                        "disagree_users": disagree_users,
-                    },
-                    upsert=True
-                )
+                old_session = inprogresscol.find_one({"guild_id": guild_id})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "guild_id": guild_id,
+                    "guild_data": guild_data,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
                 await new_report_thread.send(content=f"Proofs for `{guild_id}`", embeds=image_embeds)
                 await old_message_edit_queue.put((message, {"content": "Report has been submitted for voting.", "view": None}))
             else:
@@ -5448,25 +5444,24 @@ class EditOwnerOnlyView(discord.ui.View):
                     embed=r_profile, view=ServerVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
-                inprogresscol.replace_one(
-                    {"guild_id": guild_id},
-                    {
-                        "_id": vote_message_id,
-                        "guild_id": guild_id,
-                        "guild_data": guild_data,
-                        "requested_by": requested_by,
-                        "channel_id": channel_id,
-                        "message_id": interaction.message.id,
-                        "r_profile_list": r_profile_list,
-                        "title": title,
-                        "reason": reason,
-                        "vote_channel_id": vote_channel_id,
-                        "accepted_by": accepted_by.id,
-                        "agree_users": agree_users,
-                        "disagree_users": disagree_users,
-                    },
-                    upsert=True
-                )
+                old_session = inprogresscol.find_one({"guild_id": guild_id})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "guild_id": guild_id,
+                    "guild_data": guild_data,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "title": title,
+                    "reason": reason,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
                 reason_embed = discord.Embed(title="Reason", description=reason)
                 await new_report_thread.send(content=f"Reason for change(s)", embed=reason_embed)
                 await old_message_edit_queue.put((message, {"content": "Report has been submitted for voting.", "view": None}))
@@ -5617,27 +5612,26 @@ class ServerAppealView(discord.ui.View):
                     embeds=embeds, view=ServerVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
-                inprogresscol.replace_one(
-                    {"guild_id": guild_id},
-                    {
-                        "_id": vote_message_id,
-                        "guild_id": guild_id,
-                        "guild_data": guild_data,
-                        "requested_by": requested_by,
-                        "channel_id": channel_id,
-                        "message_id": interaction.message.id,
-                        "r_profile_list": r_profile_list,
-                        "add_case_list": add_case_list,
-                        "title": title,
-                        "case_title": case_title,
-                        "reason": reason,
-                        "vote_channel_id": vote_channel_id,
-                        "accepted_by": accepted_by.id,
-                        "agree_users": agree_users,
-                        "disagree_users": disagree_users,
-                    },
-                    upsert=True
-                )
+                old_session = inprogresscol.find_one({"guild_id": guild_id})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "guild_id": guild_id,
+                    "guild_data": guild_data,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "reason": reason,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
                 await new_report_thread.send(content=f"Proofs for `{guild_id}`", embeds=image_embeds)
                 await old_message_edit_queue.put((message, {"content": "Appeal has been submitted for voting.", "view": None}))
             else:
@@ -6230,26 +6224,25 @@ class AddReportServerProofsView(discord.ui.View):
                     embeds=embeds, view=ServerVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
-                inprogresscol.replace_one(
-                    {"guild_id": guild_id},
-                    {
-                        "_id": vote_message_id,
-                        "guild_id": guild_id,
-                        "guild_data": guild_data,
-                        "requested_by": requested_by,
-                        "channel_id": channel_id,
-                        "message_id": interaction.message.id,
-                        "r_profile_list": r_profile_list,
-                        "add_case_list": add_case_list,
-                        "title": title,
-                        "case_title": case_title,
-                        "vote_channel_id": vote_channel_id,
-                        "accepted_by": accepted_by.id,
-                        "agree_users": agree_users,
-                        "disagree_users": disagree_users,
-                    },
-                    upsert=True
-                )
+                old_session = inprogresscol.find_one({"guild_id": guild_id})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "guild_id": guild_id,
+                    "guild_data": guild_data,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
                 await new_report_thread.send(content=f"Proofs for `{guild_id}`", embeds=image_embeds)
                 await old_message_edit_queue.put((message, {"content": "Report has been submitted for voting.", "view": None}))
             else:
