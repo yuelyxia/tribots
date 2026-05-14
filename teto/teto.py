@@ -1519,8 +1519,8 @@ class UserReasonModal(discord.ui.Modal, title="Reason"):
             user = await bot.fetch_user(user_id)
             #
             message = await bot.get_channel(channel_id).fetch_message(message_id)
-            self.reason.value = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[3] = str(self.reason.value)
+            reason = re.sub(r"\s+", " ", self.reason.value)
+            add_case_list[3] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -3415,8 +3415,8 @@ class AddReportUserReasonModal(discord.ui.Modal, title="Reason"):
             user = await bot.fetch_user(user_id)
             #
             message = await bot.get_channel(channel_id).fetch_message(message_id)
-            self.reason.value = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[3] = str(self.reason.value)
+            reason = re.sub(r"\s+", " ", self.reason.value)
+            add_case_list[3] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -4721,8 +4721,8 @@ class ServerReasonModal(discord.ui.Modal, title="Reason"):
             title = session["title"]
             case_title = session["case_title"]
             message = await bot.get_channel(channel_id).fetch_message(message_id)
-            self.reason.value = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[2] = str(self.reason.value)
+            reason = re.sub(r"\s+", " ", self.reason.value)
+            add_case_list[2] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -5970,8 +5970,8 @@ class AddReportServerReasonModal(discord.ui.Modal, title="Reason"):
             case_title = session["case_title"]
             #
             message = await bot.get_channel(channel_id).fetch_message(message_id)
-            self.reason.value = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[2] = str(self.reason.value)
+            reason = re.sub(r"\s+", " ", self.reason.value)
+            add_case_list[2] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
