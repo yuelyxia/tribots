@@ -656,7 +656,7 @@ async def c(ctx, *, to_check: str = None):
             server_query = {"_id": to_check.strip('<@>')}
             trustedserver_profile = trustedserverscol.find_one(server_query)
             if trustedserver_profile:
-                trusted_embed = format_trustedserver_profile(UnknownGuild(int(to_check.strip('<@>'))), trustedserver_profile)
+                trusted_embed = format_trustedserver_profile(UnknownGuild(int(to_check.strip('<@>'))))
                 await ctx.reply("Server is trusted.", embed=trusted_embed)
             else:
                 server_profile = serverscol.find_one(server_query)
@@ -685,7 +685,7 @@ async def c(ctx, *, to_check: str = None):
                 server_query = {"_id": str(guild_id)}
                 trustedserver_profile = trustedserverscol.find_one(server_query)
                 if trustedserver_profile:
-                    trusted_embed = format_trustedserver_profile(guild, trustedserver_profile)
+                    trusted_embed = format_trustedserver_profile(guild)
                     await ctx.reply("Server is trusted.", embed=trusted_embed)
                 else:
                     server_profile = serverscol.find_one(server_query)
@@ -1038,20 +1038,19 @@ class NewUserReportView(discord.ui.View):
         await interaction.response.defer()
         existing_entry = inprogresscol.find_one({"user_id": user.id})
         if existing_entry:
-            thread = interaction.guild.get_thread(existing_entry["thread_id"])
             # ongoing vote
-            if "vote_msg_channel_id" in existing_entry:
-                if thread:
-                    await interaction.followup.send(f"There already exists an ongoing vote on `{user.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing vote on `{user.id}`.")
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                await interaction.followup.send(f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing report on `{user.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing report on `{user.id}`.")
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                await interaction.followup.send(
+                        f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
         if requested_by == interaction.user:
             await interaction.edit_original_response(view=None)
@@ -1500,7 +1499,7 @@ class UserReasonView(discord.ui.View):
                 await interaction.response.send_modal(UserReasonModal())
 class UserReasonModal(discord.ui.Modal, title="Reason"):
     reason = discord.ui.TextInput(label="Reason", placeholder="Input reason here.", required=True,
-                                  style=discord.TextStyle.short)
+                                  style=discord.TextStyle.long)
 
     def __init__(self):
         super().__init__(timeout=None)
@@ -1510,7 +1509,6 @@ class UserReasonModal(discord.ui.Modal, title="Reason"):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
-            requested_by = session["requested_by"]
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
@@ -1521,6 +1519,7 @@ class UserReasonModal(discord.ui.Modal, title="Reason"):
             user = await bot.fetch_user(user_id)
             #
             message = await bot.get_channel(channel_id).fetch_message(message_id)
+            self.reason.value = re.sub(r"\s+", " ", self.reason.value)
             add_case_list[3] = str(self.reason.value)
             #
             inprogresscol.update_one(
@@ -1971,21 +1970,20 @@ class EditUserReportView(discord.ui.View):
         await interaction.response.defer()
         existing_entry = inprogresscol.find_one({"user_id": user.id})
         if existing_entry:
-            thread = interaction.guild.get_thread(existing_entry["thread_id"])
             # ongoing vote
-            if "vote_msg_channel_id" in existing_entry:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing vote on `{user.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing vote on `{user.id}`.")
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing report on `{user.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing report on `{user.id}`.")
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
         if requested_by == interaction.user:
             await interaction.edit_original_response(view=None)
@@ -2041,21 +2039,20 @@ class EditUserReportView(discord.ui.View):
         await interaction.response.defer()
         existing_entry = inprogresscol.find_one({"user_id": user.id})
         if existing_entry:
-            thread = interaction.guild.get_thread(existing_entry["thread_id"])
             # ongoing vote
-            if "vote_msg_channel_id" in existing_entry:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing vote on `{user.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing vote on `{user.id}`.")
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing report on `{user.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing report on `{user.id}`.")
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
         if requested_by == interaction.user:
             await interaction.edit_original_response(view=None)
@@ -2134,21 +2131,20 @@ class EditUserReportView(discord.ui.View):
         await interaction.response.defer()
         existing_entry = inprogresscol.find_one({"user_id": user.id})
         if existing_entry:
-            thread = interaction.guild.get_thread(existing_entry["thread_id"])
             # ongoing vote
-            if "vote_msg_channel_id" in existing_entry:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing vote on `{user.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing vote on `{user.id}`.")
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing report on `{user.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing report on `{user.id}`.")
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
         if requested_by == interaction.user:
             await interaction.edit_original_response(view=None)
@@ -3399,7 +3395,7 @@ class AddReportUserReasonView(discord.ui.View):
                 await interaction.response.send_modal(AddReportUserReasonModal())
 class AddReportUserReasonModal(discord.ui.Modal, title="Reason"):
     reason = discord.ui.TextInput(label="Reason", placeholder="Input reason here.", required=True,
-                                  style=discord.TextStyle.short)
+                                  style=discord.TextStyle.long)
 
     def __init__(self):
         super().__init__(timeout=None)
@@ -3419,6 +3415,7 @@ class AddReportUserReasonModal(discord.ui.Modal, title="Reason"):
             user = await bot.fetch_user(user_id)
             #
             message = await bot.get_channel(channel_id).fetch_message(message_id)
+            self.reason.value = re.sub(r"\s+", " ", self.reason.value)
             add_case_list[3] = str(self.reason.value)
             #
             inprogresscol.update_one(
@@ -4422,21 +4419,20 @@ class NewServerReportView(discord.ui.View):
         await interaction.response.defer()
         existing_entry = inprogresscol.find_one({"guild_id": guild.id})
         if existing_entry:
-            thread = interaction.guild.get_thread(existing_entry["thread_id"])
             # ongoing vote
-            if "vote_msg_channel_id" in existing_entry:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing vote on `{guild.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing vote on `{guild.id}`.")
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing report on `{guild.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing report on `{guild.id}`.")
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
         if requested_by == interaction.user:
             await interaction.edit_original_response(view=None)
@@ -4702,19 +4698,12 @@ class ServerReasonView(discord.ui.View):
         #
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
-            guild_data = session["guild_data"]
             requested_by = session["requested_by"]
-            channel_id = session["channel_id"]
-            message_id = interaction.message.id
-            r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
-            title = session["title"]
-            case_title = session["case_title"]
             if requested_by == interaction.user.id:
                 await interaction.response.send_modal(ServerReasonModal())
 class ServerReasonModal(discord.ui.Modal, title="Reason"):
     reason = discord.ui.TextInput(label="Reason", placeholder="Input reason here.", required=True,
-                                  style=discord.TextStyle.short)
+                                  style=discord.TextStyle.long)
 
     def __init__(self):
         super().__init__(timeout=None)
@@ -4732,6 +4721,7 @@ class ServerReasonModal(discord.ui.Modal, title="Reason"):
             title = session["title"]
             case_title = session["case_title"]
             message = await bot.get_channel(channel_id).fetch_message(message_id)
+            self.reason.value = re.sub(r"\s+", " ", self.reason.value)
             add_case_list[2] = str(self.reason.value)
             #
             inprogresscol.update_one(
@@ -5141,21 +5131,20 @@ class EditServerReportView(discord.ui.View):
         await interaction.response.defer()
         existing_entry = inprogresscol.find_one({"guild_id": guild.id})
         if existing_entry:
-            thread = interaction.guild.get_thread(existing_entry["thread_id"])
             # ongoing vote
-            if "vote_msg_channel_id" in existing_entry:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing vote on `{guild.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing vote on `{guild.id}`.")
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing report on `{guild.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing report on `{guild.id}`.")
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
         if requested_by == interaction.user:
             await interaction.edit_original_response(view=None)
@@ -5218,21 +5207,20 @@ class EditServerReportView(discord.ui.View):
         await interaction.response.defer()
         existing_entry = inprogresscol.find_one({"guild_id": guild.id})
         if existing_entry:
-            thread = interaction.guild.get_thread(existing_entry["thread_id"])
             # ongoing vote
-            if "vote_msg_channel_id" in existing_entry:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing vote on `{guild.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing vote on `{guild.id}`.")
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing report on `{guild.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing report on `{guild.id}`.")
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
         if requested_by == interaction.user:
             await interaction.edit_original_response(view=None)
@@ -5317,21 +5305,20 @@ class EditServerReportView(discord.ui.View):
         await interaction.response.defer()
         existing_entry = inprogresscol.find_one({"guild_id": guild.id})
         if existing_entry:
-            thread = interaction.guild.get_thread(existing_entry["thread_id"])
             # ongoing vote
-            if "vote_msg_channel_id" in existing_entry:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing vote on `{guild.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing vote on `{guild.id}`.")
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
-                if thread:
-                    await interaction.followup.send(
-                        f"There already exists an ongoing report on `{guild.id}`: {thread.jump_url}")
-                else:
-                    await interaction.followup.send(f"There already exists an ongoing report on `{guild.id}`.")
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
         if requested_by == interaction.user:
             await interaction.edit_original_response(view=None)
@@ -5663,7 +5650,6 @@ class EditOwnerAppealModal(discord.ui.Modal, title="Edit Owner"):
     def __init__(self):
         super().__init__(timeout=None)
 
-
     async def on_submit(self, interaction):
         await interaction.response.defer()
         #
@@ -5966,7 +5952,7 @@ class AddReportServerReasonView(discord.ui.View):
                 await interaction.response.send_modal(AddReportServerReasonModal())
 class AddReportServerReasonModal(discord.ui.Modal, title="Reason"):
     reason = discord.ui.TextInput(label="Reason", placeholder="Input reason here.", required=True,
-                                  style=discord.TextStyle.short)
+                                  style=discord.TextStyle.long)
     def __init__(self):
         super().__init__(timeout=None)
 
@@ -5984,6 +5970,7 @@ class AddReportServerReasonModal(discord.ui.Modal, title="Reason"):
             case_title = session["case_title"]
             #
             message = await bot.get_channel(channel_id).fetch_message(message_id)
+            self.reason.value = re.sub(r"\s+", " ", self.reason.value)
             add_case_list[2] = str(self.reason.value)
             #
             inprogresscol.update_one(
