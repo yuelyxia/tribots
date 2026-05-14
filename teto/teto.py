@@ -211,17 +211,17 @@ def format_trusteduser_profile(user, trusteduser_profile):
     trusted_embed.set_footer(text="✦　This user is trusted.")
     if trusteduser_profile["staff"] == "1":
         trusted_embed.description += "### Staff Info"
-        trusted_embed.description += f"\n**Reports:** {trusteduser_profile['reports']}"
-        trusted_embed.description += f"\n**Reviews:** {trusteduser_profile['reviews']}"
-        trusted_embed.description += f"\n**Votes:** {trusteduser_profile['votes']}"
+        trusted_embed.description += f"\n**Reports:** {trusteduser_profile["reports"]}"
+        trusted_embed.description += f"\n**Reviews:** {trusteduser_profile["reviews"]}"
+        trusted_embed.description += f"\n**Votes:** {trusteduser_profile["votes"]}"
         if trusteduser_profile["mm"] == "1" or trusteduser_profile["pilot"] == "1" or trusteduser_profile["trader"] == "1":
             trusted_embed.description += "\n"
     if trusteduser_profile["mm"] == "1":
-        trusted_embed.description += "\nProfessional Middleman"
+        trusted_embed.description += "\n**Professional Middleman**"
     if trusteduser_profile["pilot"] == "1":
-        trusted_embed.description += "\nProfessional Pilot"
+        trusted_embed.description += "\n**Professional Pilot**"
     if trusteduser_profile["trader"] == "1":
-        trusted_embed.description += "\nTrusted Trader"
+        trusted_embed.description += "\n**Trusted Trader**"
     return trusted_embed
 def format_user_r_profile(user, r_profile_list, title):
     if title == "Ex-offender":
@@ -446,6 +446,19 @@ async def on_ready():
     bot.add_view(AddReportUserContributorView())
     bot.add_view(AddReportUserProofsView())
     bot.add_view(UserVoteView())
+    bot.add_view(ServerOwnerView())
+    bot.add_view(ServerTagsView())
+    bot.add_view(ServerReasonView())
+    bot.add_view(ServerContributorView())
+    bot.add_view(ServerProofsView())
+    bot.add_view(EditOwnerOnlyView())
+    bot.add_view(ServerAppealView())
+    bot.add_view(AddReportOwnerView())
+    bot.add_view(AddReportServerTagsView())
+    bot.add_view(AddReportServerReasonView())
+    bot.add_view(AddReportServerContributorView())
+    bot.add_view(AddReportServerProofsView())
+    bot.add_view(ServerVoteView())
 
 
 @bot.event
