@@ -1049,7 +1049,8 @@ class NewUserReportView(discord.ui.View):
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
-                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
                 await interaction.followup.send(
                         f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
@@ -1131,7 +1132,8 @@ class AltsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1237,7 +1239,8 @@ class AltsModal(discord.ui.Modal, title="Alts"):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             alts_input = self.alts.value
             alts_list = alts_input.split()
             valid_alts = []
@@ -1283,7 +1286,8 @@ class UserTagsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1307,7 +1311,8 @@ class UserTagsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1329,7 +1334,8 @@ class UserTagsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id:
                 sorted_tags = sort_user_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
@@ -1373,7 +1379,8 @@ class GamesView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1397,7 +1404,8 @@ class GamesView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1421,7 +1429,8 @@ class GamesView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id:
                 games = selected_string(self.select_callback.values)
                 add_case_list[1] = games
@@ -1460,7 +1469,8 @@ class UserReasonView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1483,7 +1493,8 @@ class UserReasonView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1519,7 +1530,8 @@ class UserReasonModal(discord.ui.Modal, title="Reason"):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
             add_case_list[3] = reason
             #
@@ -1555,7 +1567,8 @@ class UserContributorView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1579,7 +1592,8 @@ class UserContributorView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1617,7 +1631,8 @@ class UserContributorModal(discord.ui.Modal, title="Contributor"):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
                 add_case_list[4] = "Anonymous"
@@ -1659,7 +1674,8 @@ class UserProofsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -1763,7 +1779,8 @@ class UserProofsView(discord.ui.View):
             message_id = interaction.message.id
             #
             inprogresscol.delete_one({"_id": interaction.message.id})
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
@@ -1783,7 +1800,8 @@ class UserProofsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 add_case_list[6] = f"<@{interaction.user.id}>"
@@ -1981,7 +1999,8 @@ class EditUserReportView(discord.ui.View):
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
-                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
@@ -2050,7 +2069,8 @@ class EditUserReportView(discord.ui.View):
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
-                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
@@ -2142,7 +2162,8 @@ class EditUserReportView(discord.ui.View):
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
-                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
@@ -2344,7 +2365,8 @@ class EditAltsOnlyView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             inprogresscol.delete_one({"_id": interaction.message.id})
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
@@ -2362,7 +2384,8 @@ class EditAltsOnlyView(discord.ui.View):
             reason = session["reason"]
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 r_profile = format_user_r_profile(user, r_profile_list, title)
@@ -2428,7 +2451,8 @@ class AddAltsOnlyModal(discord.ui.Modal, title="Add Alts"):
             user = await bot.fetch_user(user_id)
             #
             original_alts = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             alts_input = self.alts.value
             alts_list = alts_input.split()
             valid_alts = []
@@ -2468,7 +2492,8 @@ class RemoveAltsOnlyModal(discord.ui.Modal, title="Remove Alts"):
             user = await bot.fetch_user(user_id)
             #
             original_alts = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             alts_input = self.alts.value
             alts_list = alts_input.split()
             valid_alts = []
@@ -2513,7 +2538,8 @@ class AltsReasonModal(discord.ui.Modal, title="Reason"):
             reason = session["reason"]
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             reason = str(self.reason_input.value)
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -2674,7 +2700,8 @@ class UserAppealView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             inprogresscol.delete_one({"_id": interaction.message.id})
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
@@ -2694,7 +2721,8 @@ class UserAppealView(discord.ui.View):
             reason = session["reason"]
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 r_profile = format_user_r_profile(user, r_profile_list, title)
@@ -2765,7 +2793,8 @@ class AddAltsAppealModal(discord.ui.Modal, title="Add Alts"):
             user = await bot.fetch_user(user_id)
             #
             original_alts = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             alts_input = self.alts.value
             alts_list = alts_input.split()
             valid_alts = []
@@ -2813,7 +2842,8 @@ class RemoveAltsAppealModal(discord.ui.Modal, title="Remove Alts"):
             user = await bot.fetch_user(user_id)
             #
             original_alts = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             alts_input = self.alts.value
             alts_list = alts_input.split()
             valid_alts = []
@@ -2863,7 +2893,8 @@ class UserAppealReasonModal(discord.ui.Modal, title="Reason"):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             reason = str(self.reason_input.value)
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -2897,7 +2928,8 @@ class AddReportAltsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3068,7 +3100,8 @@ class AddAltsModal(discord.ui.Modal, title="Add Alts"):
             user = await bot.fetch_user(user_id)
             #
             original_alts = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             alts_input = self.alts.value
             alts_list = alts_input.split()
             valid_alts = []
@@ -3114,7 +3147,8 @@ class RemoveAltsModal(discord.ui.Modal, title="Remove Alts"):
             user = await bot.fetch_user(user_id)
             #
             original_alts = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             alts_input = self.alts.value
             alts_list = alts_input.split()
             valid_alts = []
@@ -3163,7 +3197,8 @@ class AddReportUserTagsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3186,7 +3221,8 @@ class AddReportUserTagsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3209,7 +3245,8 @@ class AddReportUserTagsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id:
                 sorted_tags = sort_user_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
@@ -3266,7 +3303,8 @@ class AddReportGamesView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3289,7 +3327,8 @@ class AddReportGamesView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3313,7 +3352,8 @@ class AddReportGamesView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id:
                 games = selected_string(self.select_callback.values)
                 add_case_list[1] = games
@@ -3352,7 +3392,8 @@ class AddReportUserReasonView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3375,7 +3416,8 @@ class AddReportUserReasonView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3412,7 +3454,8 @@ class AddReportUserReasonModal(discord.ui.Modal, title="Reason"):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
             add_case_list[3] = reason
             #
@@ -3447,7 +3490,8 @@ class AddReportUserContributorView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3471,7 +3515,8 @@ class AddReportUserContributorView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3509,7 +3554,8 @@ class AddReportUserContributorModal(discord.ui.Modal, title="Contributor"):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
                 add_case_list[4] = "Anonymous"
@@ -3552,7 +3598,8 @@ class AddReportUserProofsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -3654,7 +3701,8 @@ class AddReportUserProofsView(discord.ui.View):
             message_id = interaction.message.id
             #
             inprogresscol.delete_one({"_id": interaction.message.id})
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
@@ -3674,7 +3722,8 @@ class AddReportUserProofsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 add_case_list[6] = f"<@{interaction.user.id}>"
@@ -3810,7 +3859,6 @@ class UserVoteView(discord.ui.View):
                             userscol.delete_one({"_id": alt})
                         update_operation = {'$set': {"r_profile_list": r_profile_list}}
                         userscol.update_one(user_query, update_operation)
-                    #
                     if not add_case_list:  # only alts edited
                         tags_strings = []
                         all_tags_list = []
@@ -3831,14 +3879,14 @@ class UserVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=r_profile, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
                             "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
                             "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
-
                     elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                         add_case_list = add_case_list[0]
                         appeal_case_number = next((k for k, v in user_profile.items() if v == add_case_list), None)
@@ -3849,7 +3897,6 @@ class UserVoteView(discord.ui.View):
                         user_query = {"_id": str(user_id)}
                         user_profile = userscol.find_one(user_query)
                         alts = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
-
                         if len(user_profile) == 2:
                             userscol.delete_one(user_query)
                             for alt in alts:
@@ -3892,14 +3939,14 @@ class UserVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
                             "content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.",
                             "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Appeal on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
-
                     else:  # new case exists
                         #
                         r_profile = format_user_r_profile(user, r_profile_list, title)
@@ -3918,42 +3965,39 @@ class UserVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
                             "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
                             "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
-
                 else:  # if new reported user
                     r_profile = format_user_r_profile(user, r_profile_list, title)
                     add_case = format_user_add_case(add_case_list, case_title)
                     embeds = [r_profile, add_case]
-
                     new_user = {"_id": str(user.id), "r_profile_list": r_profile_list,
                                 "1": add_case_list}
                     userscol.insert_one(new_user)
-
                     alts_list = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
                     for alt in alts_list:
                         new_user = {"_id": str(alt), "main": str(user.id)}
                         userscol.insert_one(new_user)
-
                     user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
                     await user_reports_channel.send(content=f"<@&{new_user_report_ping}>\nNew report on `{user.id}`",
                                                     embeds=embeds)
                     await interaction.edit_original_response(
                         content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
-                    message = await bot.get_channel(channel_id).fetch_message(message_id)
+                    thread = await bot.fetch_channel(channel_id)
+                    message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put((message, {
                         "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
                         "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
-
                 voters = agree_users + disagree_users
                 for voter in voters:
                     voter_query = {"_id": str(voter)}
@@ -3981,7 +4025,6 @@ class UserVoteView(discord.ui.View):
                 if sr_weekly_profile:
                     sr_weekly_profile["weekly_reviews"]+=1
                     staffweeklycol.replace_one(sr_query, sr_weekly_profile)
-
                 new_name = f"p-{interaction.channel.name}"
                 await interaction.channel.edit(name=new_name, archived=True)
 
@@ -4053,7 +4096,8 @@ class UserVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embed=r_profile, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
                             "content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
                             "view": None}))
@@ -4070,7 +4114,8 @@ class UserVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
                             "content": f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.",
                             "view": None}))
@@ -4085,7 +4130,8 @@ class UserVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
                             "content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
                             "view": None}))
@@ -4099,7 +4145,8 @@ class UserVoteView(discord.ui.View):
                     await interaction.edit_original_response(
                         content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
-                    message = await bot.get_channel(channel_id).fetch_message(message_id)
+                    thread = await bot.fetch_channel(channel_id)
+                    message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put((message, {
                         "content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
                         "view": None}))
@@ -4237,7 +4284,8 @@ class UserVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embed=r_profile, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
                             "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
                             "view": None}))
@@ -4296,7 +4344,8 @@ class UserVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
                             "content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.",
                             "view": None}))
@@ -4326,7 +4375,8 @@ class UserVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
                             "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
                             "view": None}))
@@ -4343,23 +4393,21 @@ class UserVoteView(discord.ui.View):
                     r_profile = format_user_r_profile(user, r_profile_list, title)
                     add_case = format_user_add_case(add_case_list, case_title)
                     embeds = [r_profile, add_case]
-
                     new_user = {"_id": str(user.id), "r_profile_list": r_profile_list,
                                 "1": add_case_list}
                     userscol.insert_one(new_user)
-
                     alts_list = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
                     for alt in alts_list:
                         new_user = {"_id": str(alt), "main": str(user.id)}
                         userscol.insert_one(new_user)
-
                     user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
                     await user_reports_channel.send(content=f"<@&{new_user_report_ping}>\nNew report on `{user.id}`",
                                                     embeds=embeds)
                     await interaction.edit_original_response(
                         content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
-                    message = await bot.get_channel(channel_id).fetch_message(message_id)
+                    thread = await bot.fetch_channel(channel_id)
+                    message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put((message, {
                         "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
                         "view": None}))
@@ -4427,7 +4475,8 @@ class NewServerReportView(discord.ui.View):
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
-                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
@@ -4510,7 +4559,8 @@ class ServerOwnerView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -4541,7 +4591,8 @@ class ServerOwnerModal(discord.ui.Modal, title="Owner"):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             try:
                 valid_owner = await bot.fetch_user(int(self.owner.value))
             except Exception:
@@ -4577,7 +4628,8 @@ class ServerTagsView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -4598,7 +4650,8 @@ class ServerTagsView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -4620,7 +4673,8 @@ class ServerTagsView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id:
                 sorted_tags = sort_server_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
@@ -4662,7 +4716,8 @@ class ServerReasonView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -4683,7 +4738,8 @@ class ServerReasonView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -4717,7 +4773,8 @@ class ServerReasonModal(discord.ui.Modal, title="Reason"):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
             add_case_list[2] = reason
             #
@@ -4750,7 +4807,8 @@ class ServerContributorView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -4772,7 +4830,8 @@ class ServerContributorView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -4808,7 +4867,8 @@ class ServerContributorModal(discord.ui.Modal, title="Contributor"):
             title = session["title"]
             case_title = session["case_title"]
         #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
                 add_case_list[3] = "Anonymous"
@@ -4848,7 +4908,8 @@ class ServerProofsView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -4934,7 +4995,8 @@ class ServerProofsView(discord.ui.View):
             message_id = interaction.message.id
             #
             inprogresscol.delete_one({"_id": interaction.message.id})
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
@@ -4954,7 +5016,8 @@ class ServerProofsView(discord.ui.View):
             case_title = session["case_title"]
             guild_id = guild_data["id"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 add_case_list[5] = f"<@{interaction.user.id}>"
@@ -5138,7 +5201,8 @@ class EditServerReportView(discord.ui.View):
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
-                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
@@ -5214,7 +5278,8 @@ class EditServerReportView(discord.ui.View):
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
-                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
@@ -5312,7 +5377,8 @@ class EditServerReportView(discord.ui.View):
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
-                message = await bot.get_channel(channel_id).fetch_message(message_id)
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
@@ -5409,7 +5475,8 @@ class EditOwnerOnlyView(discord.ui.View):
             message_id = interaction.message.id
             #
             inprogresscol.delete_one({"_id": interaction.message.id})
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
@@ -5428,7 +5495,8 @@ class EditOwnerOnlyView(discord.ui.View):
             reason = session["reason"]
             guild_id = session["guild_id"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
@@ -5487,7 +5555,8 @@ class EditOwnerOnlyModal(discord.ui.Modal, title="Edit Owner"):
             title = session["title"]
             reason = session["reason"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             try:
                 valid_owner = await bot.fetch_user(int(self.owner.value))
             except Exception:
@@ -5520,7 +5589,8 @@ class OwnerReasonModal(discord.ui.Modal, title="Reason"):
             r_profile_list = session["r_profile_list"]
             title = session["title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             reason = str(self.reason_input.value)
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -5570,7 +5640,8 @@ class ServerAppealView(discord.ui.View):
             message_id = interaction.message.id
             #
             inprogresscol.delete_one({"_id": interaction.message.id})
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
@@ -5591,7 +5662,8 @@ class ServerAppealView(discord.ui.View):
             guild_id = session["guild_id"]
             reason = session["reason"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
@@ -5658,7 +5730,8 @@ class EditOwnerAppealModal(discord.ui.Modal, title="Edit Owner"):
             case_title = session["case_title"]
             reason = session["reason"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             try:
                 valid_owner = await bot.fetch_user(int(self.owner.value))
             except Exception:
@@ -5697,7 +5770,8 @@ class ServerAppealReasonModal(discord.ui.Modal, title="Reason"):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             reason = str(self.reason_input.value)
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -5730,7 +5804,8 @@ class AddReportOwnerView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -5767,7 +5842,8 @@ class EditOwnerModal(discord.ui.Modal, title="Edit Owner"):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             try:
                 valid_owner = await bot.fetch_user(int(self.owner.value))
             except Exception:
@@ -5806,7 +5882,8 @@ class AddReportServerTagsView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -5828,7 +5905,8 @@ class AddReportServerTagsView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -5851,7 +5929,8 @@ class AddReportServerTagsView(discord.ui.View):
             title = session["title"]
             guild_id = session["guild_id"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id:
                 sorted_tags = sort_server_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
@@ -5906,7 +5985,8 @@ class AddReportServerReasonView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -5928,7 +6008,8 @@ class AddReportServerReasonView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -5963,7 +6044,8 @@ class AddReportServerReasonModal(discord.ui.Modal, title="Reason"):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
             add_case_list[2] = reason
             #
@@ -5998,7 +6080,8 @@ class AddReportServerContributorView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -6021,7 +6104,8 @@ class AddReportServerContributorView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -6056,7 +6140,8 @@ class AddReportServerContributorModal(discord.ui.Modal, title="Contributor"):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
                 add_case_list[3] = "Anonymous"
@@ -6097,7 +6182,8 @@ class AddReportServerProofsView(discord.ui.View):
             title = session["title"]
             case_title = session["case_title"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -6177,7 +6263,8 @@ class AddReportServerProofsView(discord.ui.View):
             message_id = interaction.message.id
             #
             inprogresscol.delete_one({"_id": interaction.message.id})
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
@@ -6197,7 +6284,8 @@ class AddReportServerProofsView(discord.ui.View):
             case_title = session["case_title"]
             guild_id = session["guild_id"]
             #
-            message = await bot.get_channel(channel_id).fetch_message(message_id)
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 add_case_list[5] = f"<@{interaction.user.id}>"
@@ -6299,7 +6387,8 @@ class ServerVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
                             (message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.", "view": None}))
                         await bot.get_channel(channel_id).send(
@@ -6355,7 +6444,8 @@ class ServerVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
                             (message,
                              {"content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.",
@@ -6381,7 +6471,8 @@ class ServerVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
                             (message,
                              {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
@@ -6405,7 +6496,8 @@ class ServerVoteView(discord.ui.View):
                     await interaction.edit_original_response(
                         content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
-                    message = await bot.get_channel(channel_id).fetch_message(message_id)
+                    thread = await bot.fetch_channel(channel_id)
+                    message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put(
                         (message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
                                    "view": None}))
@@ -6504,7 +6596,8 @@ class ServerVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
                             (message,
                              {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
@@ -6522,7 +6615,8 @@ class ServerVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
                             (message,
                              {"content": f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.",
@@ -6539,7 +6633,8 @@ class ServerVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
                             (message,
                              {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
@@ -6555,7 +6650,8 @@ class ServerVoteView(discord.ui.View):
                     await interaction.edit_original_response(
                         content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
-                    message = await bot.get_channel(channel_id).fetch_message(message_id)
+                    thread = await bot.fetch_channel(channel_id)
+                    message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put(
                         (message,
                          {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
@@ -6687,7 +6783,8 @@ class ServerVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
                             (message,
                              {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
@@ -6743,7 +6840,8 @@ class ServerVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
                             (message,
                              {"content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.",
@@ -6774,7 +6872,8 @@ class ServerVoteView(discord.ui.View):
                         await interaction.edit_original_response(
                             content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             embeds=embeds, view=None)
-                        message = await bot.get_channel(channel_id).fetch_message(message_id)
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
                             (message,
                              {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
@@ -6803,7 +6902,8 @@ class ServerVoteView(discord.ui.View):
                     await interaction.edit_original_response(
                         content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                         embeds=embeds, view=None)
-                    message = await bot.get_channel(channel_id).fetch_message(message_id)
+                    thread = await bot.fetch_channel(channel_id)
+                    message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put(
                         (message,
                          {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
@@ -7208,7 +7308,8 @@ async def disable_vote(interaction: discord.Interaction, message_id: str):
                 channel_id = session["channel_id"]
                 message_id = session["message_id"]
                 try:
-                    report_message = await bot.get_channel(channel_id).fetch_message(message_id)
+                    report_thread = await bot.fetch_channel(channel_id)
+                    report_message = await report_thread.fetch_message(message_id)
                     await report_message.edit(content=f"**Disabled by {interaction.user.mention}.**", view=None)
                 except Exception:
                     pass

@@ -464,7 +464,9 @@ async def cleanup(interaction: discord.Interaction):
         ephemeral=True
     )
 
-@bot.tree.command(name="import_dc", description="Import Double Counter alt intrusions from recent 200 messages.")
+imports = app_commands.Group(name="import", description="Import Double Counter alt intrusions.")
+
+@imports.command(name="dc", description="Import Double Counter alt intrusions from recent 200 messages.")
 async def import_dc(interaction: discord.Interaction):
     neru_logs_channel = bot.get_channel(NERU_LOGS)
     channel = interaction.channel
@@ -743,8 +745,8 @@ async def import_dc(interaction: discord.Interaction):
             await interaction.followup.send(f"Success!", ephemeral=True)
         await msg.edit(content=f"Successfully imported {count} alt intrusions.")
 
-@bot.tree.command(name="import_all", description="Import Double Counter alt intrusions from all messages.")
-async def import_dc(interaction: discord.Interaction):
+@imports.command(name="all", description="Import Double Counter alt intrusions from all messages.")
+async def import_all(interaction: discord.Interaction):
     if interaction.user.id != 1303291812282372137:
         return
     neru_logs_channel = bot.get_channel(NERU_LOGS)
@@ -1024,10 +1026,12 @@ async def import_dc(interaction: discord.Interaction):
             await interaction.followup.send(f"Success!", ephemeral=True)
         await msg.edit(content=f"Successfully imported {count} alt intrusions.")
 
-@bot.tree.command(name="add_alts", description="Adds a pair of users as alts.")
+alts = app_commands.Group(name="alts", description="Add/remove alts.")
+
+@alts.command(name="add", description="Adds a pair of users as alts.")
 @app_commands.describe(user1="User 1", user2="User 2", reason="Reason/Proof")
 @app_commands.checks.has_role(adm_role)
-async def add_alts(interaction: discord.Interaction, user1: str, user2: str, reason: str):
+async def alts_add(interaction: discord.Interaction, user1: str, user2: str, reason: str):
     if interaction.channel.id != NERU_LOGS:
         await interaction.response.send_message("This command does not work here.", ephemeral=True)
         return
