@@ -1690,7 +1690,7 @@ class BanReqView(discord.ui.View):
                     pass
                 await interaction.guild.ban(user, reason=reason, delete_message_seconds=604800)
                 await interaction.response.edit_message(
-                    content=f"**Ban Accepted**\nㆍ　User ID: {user_id}\nㆍ　Reason: {reason}\nㆍ　Requested by: <@{requested_by}>\nㆍ　Accepted by: {interaction.user.mention}\nㆍ　Proof:",
+                    content=f"**Ban Accepted**\nㆍ　User ID: {user_id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {requested_by}\nㆍ　Accepted by: {interaction.user.id}\nㆍ　Proof:",
                     view=None)
                 server_info["bans_warns_req"].pop(str(interaction.message.id))
                 server_info["bans_warns_req"].pop(str(user_id))
@@ -1722,7 +1722,7 @@ class BanReqView(discord.ui.View):
                 reason = server_info["bans_warns_req"][user_id][0]
                 requested_by = server_info["bans_warns_req"][user_id][1]
                 await interaction.response.edit_message(
-                    content=f"> **Ban Rejected**\n> ㆍ　User ID: {user_id}\n> ㆍ　Reason: {reason}\n> ㆍ　Requested by: <@{requested_by}>\n> ㆍ　Rejected by: {interaction.user.mention}\n> ㆍ　Proof:",
+                    content=f"> **Ban Rejected**\n> ㆍ　User ID: {user_id}\n> ㆍ　Reason: {reason}\n> ㆍ　Requested by: {requested_by}\n> ㆍ　Rejected by: {interaction.user.id}\n> ㆍ　Proof:",
                     view=None)
                 server_info["bans_warns_req"].pop(str(interaction.message.id))
                 server_info["bans_warns_req"].pop(str(user_id))
@@ -1903,7 +1903,7 @@ class UnbanReqView(discord.ui.View):
                 except discord.Forbidden:
                     pass
                 await interaction.response.edit_message(
-                    content=f"**Unban Accepted**\nㆍ　User ID: {user_id}\nㆍ　Reason: {reason}\nㆍ　Requested by: <@{requested_by}>\nㆍ　Accepted by: {interaction.user.mention}\nㆍ　Proof:",
+                    content=f"**Unban Accepted**\nㆍ　User ID: {user_id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {requested_by}\nㆍ　Accepted by: {interaction.user.id}\nㆍ　Proof:",
                     view=None)
                 server_info["bans_warns_req"].pop(str(interaction.message.id))
                 server_info["bans_warns_req"].pop(str(user_id))
@@ -1934,7 +1934,7 @@ class UnbanReqView(discord.ui.View):
                 reason = server_info["bans_warns_req"][user_id][0]
                 requested_by = server_info["bans_warns_req"][user_id][1]
                 await interaction.response.edit_message(
-                    content=f"> **Unban Rejected**\n> ㆍ　User ID: {user_id}\n> ㆍ　Reason: {reason}\n> ㆍ　Requested by: <@{requested_by}>\n> ㆍ　Rejected by: {interaction.user.mention}\n> ㆍ　Proof:",
+                    content=f"> **Unban Rejected**\n> ㆍ　User ID: {user_id}\n> ㆍ　Reason: {reason}\n> ㆍ　Requested by: {requested_by}\n> ㆍ　Rejected by: {interaction.user.id}\n> ㆍ　Proof:",
                     view=None)
                 server_info["bans_warns_req"].pop(str(interaction.message.id))
                 server_info["bans_warns_req"].pop(str(user_id))
