@@ -999,10 +999,6 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
     if not server_info.get("staff_role"):
         await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
         return
-    if not server_info.get("bans_warns_channel"):
-        await interaction.followup.send("**bans warns channel** has not been set up for this server.",
-                                        ephemeral=True)
-        return
     staff_role = server_info.get("staff_role")
     if get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
         try:
@@ -1017,36 +1013,32 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
                 if not interaction.user.guild_permissions.manage_roles:
                     await interaction.followup.send(f"Unauthorised.", ephemeral=True)
                     return
-                staff = server_info.get("staff", {}).get(str(user_id))
-                if staff:
+                if str(user_id) in server_info.get("staff", {}):
                     if timeframe == "monthly":
-                        staff["monthly"] = int(value)
+                        server_info["staff"][str(user_id)]["monthly"] = int(value)
                     if timeframe == "alltime":
-                        staff["alltime"] = int(value)
+                        server_info["staff"][str(user_id)]["alltime"] = int(value)
             if category == "mm":
-                mm = server_info.get("mm", {}).get(str(user_id))
-                if mm:
+                if str(user_id) in server_info.get("mm", {}):
                     if timeframe == "monthly":
-                        mm["monthly"] = int(value)
+                        server_info["mm"][str(user_id)]["monthly"] = int(value)
                     if timeframe == "alltime":
-                        mm["alltime"] = int(value)
+                        server_info["mm"][str(user_id)]["alltime"] = int(value)
             if category == "pilot":
-                pilot = server_info.get("pilot", {}).get(str(user_id))
-                if pilot:
+                if str(user_id) in server_info.get("pilot", {}):
                     if timeframe == "monthly":
-                        pilot["monthly"] = int(value)
+                        server_info["pilot"][str(user_id)]["monthly"] = int(value)
                     if timeframe == "alltime":
-                        pilot["alltime"] = int(value)
+                        server_info["pilot"][str(user_id)]["alltime"] = int(value)
             if category == "tickets":
                 if not interaction.user.guild_permissions.manage_roles:
                     await interaction.followup.send(f"Unauthorised.", ephemeral=True)
                     return
-                staff = server_info.get("staff", {}).get(str(user_id))
-                if staff:
+                if str(user_id) in server_info.get("staff", {}):
                     if timeframe == "monthly":
-                        staff["monthly_tickets"] = int(value)
+                        server_info["staff"][str(user_id)]["monthly_tickets"] = int(value)
                     if timeframe == "alltime":
-                        staff["tickets"] = int(value)
+                        server_info["staff"][str(user_id)]["tickets"] = int(value)
             servers.replace_one(server_query, server_info)
             await interaction.followup.send(f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
 
