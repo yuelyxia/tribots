@@ -806,7 +806,7 @@ class TicketCloseView(discord.ui.View):
             for uid in self.active_claims:
                 try:
                     staff_data = server_info.get("staff").get(str(uid))
-                    if not staff_data:
+                    if staff_data is None:
                         raise KeyError(uid)
                     staff_data["monthly_tickets"] = staff_data.get("monthly_tickets", 0) + 1
                     staff_data["tickets"] = staff_data.get("tickets", 0) + 1
