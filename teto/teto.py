@@ -32,7 +32,8 @@ trustedserverscol = db["trusted_servers"]
 staffweeklycol = db["staff_weekly"]
 inprogresscol = db["in_progress"]
 
-inprogresscol.create_index("user_id", unique=True)
+inprogresscol.create_index("user_id", unique=True, sparse=True)
+inprogresscol.create_index("guild_id", unique=True, sparse=True)
 
 # tri channels info
 PROOFS_CHANNEL = 1455055877034868769
