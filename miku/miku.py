@@ -770,7 +770,7 @@ async def staff_guide(interaction: discord.Interaction):
 anon = app_commands.Group(name="anon", description="Do something anonymously.")
 bot.tree.add_command(anon)
 
-@anon.command(name="say", description="Miku will speak on your behalf.")
+@anon.command(name="say", description="MIKU will speak on your behalf.")
 @app_commands.describe(message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
 @app_commands.checks.has_any_role(staff_role, tethys_adm_role)
 async def anon_say(interaction: discord.Interaction, message: str, image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
@@ -801,6 +801,39 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
         await interaction.followup.send("Your message has been sent.", ephemeral=True)
     except Exception:
         await interaction.followup.send(f"Unable to send message.", ephemeral=True)
+
+@anon.command(name="edit", description="Edit MIKU's message.")
+@app_commands.describe(message_id="The message to edit", message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
+@app_commands.checks.has_permissions(administrator=True)
+async def anon_edit(interaction: discord.Interaction, message_id: str, message: str, image1: Optional[discord.Attachment] = None, image2: Optional[discord.Attachment] = None, image3: Optional[discord.Attachment] = None, image4: Optional[discord.Attachment] = None, image5: Optional[discord.Attachment] = None, image6: Optional[discord.Attachment] = None, image7: Optional[discord.Attachment] = None, image8: Optional[discord.Attachment] = None, image9: Optional[discord.Attachment] = None, image10: Optional[discord.Attachment] = None):
+    await interaction.response.defer(ephemeral=True)
+    try:
+        target_message = await interaction.channel.fetch_message(int(message_id))
+        if target_message.author.id != bot.user.id:
+            await interaction.followup.send("I can only edit messages sent by the bot.", ephemeral=True)
+            return
+        images = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10]
+                  if img is not None]
+        files_to_send = []
+        async with aiohttp.ClientSession() as session:
+            for img in images:
+                if img.content_type and img.content_type.startswith("image/"):
+                    async with session.get(img.url) as resp:
+                        if resp.status == 200:
+                            data = io.BytesIO(await resp.read())
+                            files_to_send.append(discord.File(data, filename=img.filename))
+        allowed_mentions = discord.AllowedMentions.all()
+        if files_to_send:
+            await target_message.edit(content=message, attachments=files_to_send, allowed_mentions=allowed_mentions)
+        else:
+            await target_message.edit(content=message, allowed_mentions=allowed_mentions)
+        await interaction.followup.send("Message edited successfully.", ephemeral=True)
+    except discord.NotFound:
+        await interaction.followup.send("Message not found.", ephemeral=True)
+    except discord.Forbidden:
+        await interaction.followup.send("Missing permissions to edit message.", ephemeral=True)
+    except Exception as e:
+        await interaction.followup.send(f"Unable to edit message.\n```{e}```", ephemeral=True)
 
 create = app_commands.Group(name="create", description="Create.")
 bot.tree.add_command(create)
