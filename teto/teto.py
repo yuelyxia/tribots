@@ -6268,6 +6268,7 @@ class ServerVoteView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
+            accepted_by = session["accepted_by"]
             reason = session.get("reason")
             guild_id = session["guild_id"]
             agree_users, disagree_users = await handle_vote(interaction, session, "agree")
@@ -6480,6 +6481,7 @@ class ServerVoteView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
+            accepted_by = session["accepted_by"]
             reason = session.get("reason")
             guild_id = session["guild_id"]
             agree_users, disagree_users = await handle_vote(interaction, session, "disagree")
@@ -6609,6 +6611,7 @@ class ServerVoteView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
+            accepted_by = session["accepted_by"]
             reason = session.get("reason")
             guild_id = session["guild_id"]
             agree_users, disagree_users = await handle_vote(interaction, session, "remove")
@@ -6652,6 +6655,8 @@ class ServerVoteView(discord.ui.View):
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
+            agree_users = session["agree_users"]
+            disagree_users = session["disagree_users"]
             reason = session.get("reason")
             guild_id = session["guild_id"]
             #
