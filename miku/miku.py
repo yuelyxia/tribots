@@ -8,6 +8,7 @@ import pymongo
 
 import io
 import aiohttp
+import asyncio
 import re
 
 import datetime
@@ -41,6 +42,7 @@ QUOTA_CHANNEL = 1375271142092308582
 CMDS_CHANNEL = 1375260303817838694
 VERIFY_CHANNEL = 1375260857772150804
 TRAINING_CHANNEL = 1375271729680748635
+TICKET_CHANNEL = 1375261699111784478
 
 # tri roles info
 staff_role = 1373803879623430268
@@ -871,6 +873,87 @@ async def create_file(interaction: discord.Interaction):
         await interaction.response.send_message("You cannot use this command in this channel.", ephemeral=True)
         return
     await interaction.response.send_modal(FileModal())
+
+tickets = app_commands.Group(name="tickets", description="Add/remove users to/from ticket threads.")
+bot.tree.add_command(tickets)
+
+@tickets.command(name="add", description="Add a user or role to all active ticket threads.")
+@app_commands.describe(target="User or Role ID / mention")
+@app_commands.checks.has_role(adm_role)
+async def tickets_add(interaction: discord.Interaction, target: str):
+    guild = interaction.guild
+    ticket_channel = guild.get_channel(TICKET_CHANNEL)
+    if not ticket_channel:
+        return await interaction.response.send_message("Ticket channel not found.", ephemeral=True)
+    threads = list(ticket_channel.threads)
+    if not threads:
+        return await interaction.response.send_message("No active threads found.", ephemeral=True)
+    role = None
+    if target.isdigit():
+        role = discord.utils.get(guild.roles, id=int(target))
+    if not role:
+        role = discord.utils.get(guild.roles, name=target)
+    if role:
+        member_list = role.members
+    else:
+        member = guild.get_member(int(target)) if target.isdigit() else None
+        if member:
+            member_list = [member]
+        else:
+            return await interaction.response.send_message("Invalid user or role.", ephemeral=True)
+    added_count = 0
+    await interaction.response.send_message(f"Adding {len(member_list)} users to {len(threads)} threads...", ephemeral=True)
+    for thread in threads:
+        for member in member_list:
+            try:
+                if member in thread.members:
+                    continue
+                await thread.add_user(member)
+                added_count += 1
+                await asyncio.sleep(0.25)
+            except:
+                continue
+    await interaction.followup.send(f"**{added_count}** user(s) added to **{len(threads)}** thread(s).")
+
+@tickets.command(name="remove", description="Remove a user or role from all active ticket threads")
+@app_commands.describe(target="User or Role ID / mention")
+@app_commands.checks.has_role(adm_role)
+async def tickets_remove(interaction: discord.Interaction, target: str):
+    guild = interaction.guild
+    ticket_channel = guild.get_channel(TICKET_CHANNEL)
+    if not ticket_channel:
+        return await interaction.response.send_message("Ticket channel not found.", ephemeral=True)
+    threads = list(ticket_channel.threads)
+    if not threads:
+        return await interaction.response.send_message("No active threads found.", ephemeral=True)
+    # resolve target
+    role = None
+    if target.isdigit():
+        role = discord.utils.get(guild.roles, id=int(target))
+    if not role:
+        role = discord.utils.get(guild.roles, name=target)
+    if role:
+        members = role.members
+    else:
+        member = guild.get_member(int(target)) if target.isdigit() else None
+        if member:
+            members = [member]
+        else:
+            return await interaction.response.send_message("Invalid user or role.", ephemeral=True)
+    removed_count = 0
+    await interaction.response.send_message(
+        f"Removing {len(members)} users from {len(threads)} threads...", ephemeral=True)
+    for thread in threads:
+        for member in members:
+            try:
+                if member not in thread.members:
+                    continue
+                await thread.remove_user(member)
+                removed_count += 1
+                await asyncio.sleep(0.25)
+            except:
+                continue
+    await interaction.followup.send(f"**{removed_count}** user(s) removed from **{len(threads)}** thread(s).")
 
 @bot.command()
 async def sync(ctx: commands.Context):
