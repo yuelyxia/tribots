@@ -889,19 +889,21 @@ async def tickets_add(interaction: discord.Interaction, target: str):
     if not threads:
         return await interaction.response.send_message("No active threads found.", ephemeral=True)
     role = None
+    target_display = ""
     if target.isdigit():
         role = discord.utils.get(guild.roles, id=int(target))
     if not role:
         role = discord.utils.get(guild.roles, name=target)
     if role:
         member_list = role.members
+        target_display = role.mention
     else:
         member = guild.get_member(int(target)) if target.isdigit() else None
         if member:
+            target_display = member.mention
             member_list = [member]
         else:
             return await interaction.response.send_message("Invalid user or role.", ephemeral=True)
-    added_count = 0
     await interaction.response.send_message(f"Adding {len(member_list)} user(s) to {len(threads)} threads...", ephemeral=True)
     for thread in threads:
         for member in member_list:
@@ -909,11 +911,10 @@ async def tickets_add(interaction: discord.Interaction, target: str):
                 if member in thread.members:
                     continue
                 await thread.add_user(member)
-                added_count += 1
                 await asyncio.sleep(0.25)
             except:
                 continue
-    await interaction.followup.send(f"Successfully added user(s) to **{len(threads)}** thread(s).")
+    await interaction.followup.send(f"Successfully added {target_display} to **{len(threads)}** thread(s).", ephemeral=True)
 
 @tickets.command(name="remove", description="Remove a user or role from all active ticket threads")
 @app_commands.describe(target="User or Role ID / mention")
@@ -928,32 +929,32 @@ async def tickets_remove(interaction: discord.Interaction, target: str):
         return await interaction.response.send_message("No active threads found.", ephemeral=True)
     # resolve target
     role = None
+    target_display = ""
     if target.isdigit():
         role = discord.utils.get(guild.roles, id=int(target))
     if not role:
         role = discord.utils.get(guild.roles, name=target)
     if role:
         members = role.members
+        target_display = role.mention
     else:
         member = guild.get_member(int(target)) if target.isdigit() else None
         if member:
+            target_display = member.mention
             members = [member]
         else:
             return await interaction.response.send_message("Invalid user or role.", ephemeral=True)
-    removed_count = 0
     await interaction.response.send_message(
         f"Removing {len(members)} user(s) from {len(threads)} threads...", ephemeral=True)
     for thread in threads:
         for member in members:
             try:
                 if member not in thread.members:
-                    continue
-                await thread.remove_user(member)
-                removed_count += 1
+                    await thread.remove_user(member)
                 await asyncio.sleep(0.25)
             except:
                 continue
-    await interaction.followup.send(f"Successfully removed user(s) from **{len(threads)}** thread(s).")
+    await interaction.followup.send(f"Successfully removed {target_display} from **{len(threads)}** thread(s).", ephemeral=True)
 
 @bot.command()
 async def sync(ctx: commands.Context):
