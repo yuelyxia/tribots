@@ -3876,9 +3876,8 @@ class UserVoteView(discord.ui.View):
                                                         embed=r_profile)
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await user_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
-                        await interaction.edit_original_response(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=r_profile, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "embed": r_profile, "view": None}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -3936,9 +3935,8 @@ class UserVoteView(discord.ui.View):
                         await user_reports_channel.send(content=f"<@&{appealed_user_report_ping}>\nAppeal on `{user.id}`",
                                                         embeds=embeds)
                         await user_reports_channel.send(content=f"Reason for appeal", embed=reason_embed)
-                        await interaction.edit_original_response(
-                            content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -3962,9 +3960,8 @@ class UserVoteView(discord.ui.View):
                         user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
                         await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nReport added on `{user.id}`",
                                                         embeds=embeds)
-                        await interaction.edit_original_response(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -3987,9 +3984,8 @@ class UserVoteView(discord.ui.View):
                     user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
                     await user_reports_channel.send(content=f"<@&{new_user_report_ping}>\nNew report on `{user.id}`",
                                                     embeds=embeds)
-                    await interaction.edit_original_response(
-                        content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                        embeds=embeds, view=None)
+                    await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                        "view": None, "embeds": embeds}))
                     thread = await bot.fetch_channel(channel_id)
                     message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put((message, {
@@ -4030,27 +4026,22 @@ class UserVoteView(discord.ui.View):
 
             #
             if not add_case_list:  # only alts edited
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embed=r_profile, view=UserVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embed": r_profile, "view": UserVoteView()}))
 
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
                 add_case = format_user_add_case(add_case_list, case_title)
                 reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
                 embeds = [r_profile, add_case, reason_embed]
-                await interaction.edit_original_response(
-                    content=f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds,
-                    view=UserVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": UserVoteView()}))
 
             else:  # new case exists
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds,
-                    view=UserVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": UserVoteView()}))
 
     @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="uservote:disagree")
     async def disagree_button(self, interaction, button):
@@ -4093,9 +4084,8 @@ class UserVoteView(discord.ui.View):
                         all_tags_list = sort_user_tags(all_tags_list)
                         title = all_tags_list[0]
                         r_profile = format_user_r_profile(user, r_profile_list, title)
-                        await interaction.edit_original_response(
-                            content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embed=r_profile, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "embed": r_profile, "view": None}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -4111,9 +4101,8 @@ class UserVoteView(discord.ui.View):
                         add_case = format_user_add_case(add_case_list, case_title)
                         embeds = [r_profile, add_case]
                         #
-                        await interaction.edit_original_response(
-                            content=f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -4127,9 +4116,8 @@ class UserVoteView(discord.ui.View):
                         r_profile = format_user_r_profile(user, r_profile_list, title)
                         add_case = format_user_add_case(add_case_list, case_title)
                         embeds = [r_profile, add_case]
-                        await interaction.edit_original_response(
-                            content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -4142,9 +4130,8 @@ class UserVoteView(discord.ui.View):
                     r_profile = format_user_r_profile(user, r_profile_list, title)
                     add_case = format_user_add_case(add_case_list, case_title)
                     embeds = [r_profile, add_case]
-                    await interaction.edit_original_response(
-                        content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                        embeds=embeds, view=None)
+                    await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                        "view": None, "embeds": embeds}))
                     thread = await bot.fetch_channel(channel_id)
                     message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put((message, {
@@ -4164,23 +4151,20 @@ class UserVoteView(discord.ui.View):
                 await interaction.channel.edit(name=new_name, archived=True)
                 return
             if not add_case_list:  # only alts edited
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embed=r_profile, view=UserVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embed": r_profile, "view": UserVoteView()}))
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
                 add_case = format_user_add_case(add_case_list, case_title)
                 reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
                 embeds = [r_profile, add_case, reason_embed]
-                await interaction.edit_original_response(
-                    content=f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=UserVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": UserVoteView()}))
             else:  # new case exists
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=UserVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": UserVoteView()}))
 
     @discord.ui.button(label="Remove Vote", style=discord.ButtonStyle.primary, custom_id="uservote:removevote")
     async def remove_vote_button(self, interaction, button):
@@ -4202,23 +4186,20 @@ class UserVoteView(discord.ui.View):
             if not add_case_list:
                 reason_embed = discord.Embed(title="Reason", description=reason)
                 embeds = [r_profile, reason_embed]
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=UserVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": UserVoteView()}))
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
                 add_case = format_user_add_case(add_case_list, case_title)
                 reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
                 embeds = [r_profile, add_case, reason_embed]
-                await interaction.edit_original_response(
-                    content=f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=UserVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": UserVoteView()}))
             else:
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=UserVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": UserVoteView()}))
 
     @discord.ui.button(label="Publish", style=discord.ButtonStyle.grey, custom_id="uservote:publish")
     async def publish_button(self, interaction, button):
@@ -4281,9 +4262,8 @@ class UserVoteView(discord.ui.View):
                                                         embed=r_profile)
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await user_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
-                        await interaction.edit_original_response(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embed=r_profile, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "embed": r_profile, "view": None}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -4341,9 +4321,8 @@ class UserVoteView(discord.ui.View):
                         await user_reports_channel.send(content=f"<@&{appealed_user_report_ping}>\nAppeal on `{user.id}`",
                                                         embeds=embeds)
                         await user_reports_channel.send(content=f"Reason for appeal", embed=reason_embed)
-                        await interaction.edit_original_response(
-                            content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -4372,9 +4351,8 @@ class UserVoteView(discord.ui.View):
                         user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
                         await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nReport added on `{user.id}`",
                                                         embeds=embeds)
-                        await interaction.edit_original_response(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -4403,9 +4381,8 @@ class UserVoteView(discord.ui.View):
                     user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
                     await user_reports_channel.send(content=f"<@&{new_user_report_ping}>\nNew report on `{user.id}`",
                                                     embeds=embeds)
-                    await interaction.edit_original_response(
-                        content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                        embeds=embeds, view=None)
+                    await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                        "view": None, "embeds": embeds}))
                     thread = await bot.fetch_channel(channel_id)
                     message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put((message, {
@@ -6384,9 +6361,9 @@ class ServerVoteView(discord.ui.View):
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await server_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
                         embeds = [r_profile, reason_embed]
-                        await interaction.edit_original_response(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                                                                                "view": None,
+                                                                                "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
@@ -6441,9 +6418,9 @@ class ServerVoteView(discord.ui.View):
                         await server_reports_channel.send(content=f"<@&{appealed_server_report_ping}>\nAppeal on `{guild_id}`",
                                                           embeds=embeds)
                         await server_reports_channel.send(content=f"Reason for appeal", embed=reason_embed)
-                        await interaction.edit_original_response(
-                            content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                                                                                "view": None,
+                                                                                "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
@@ -6468,9 +6445,9 @@ class ServerVoteView(discord.ui.View):
                         server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
                         await server_reports_channel.send(content=f"<@&{updated_server_report_ping}>\nReport added on `{guild_id}`",
                                                           embeds=embeds)
-                        await interaction.edit_original_response(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                                                                                "view": None,
+                                                                                "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
@@ -6493,9 +6470,9 @@ class ServerVoteView(discord.ui.View):
                     server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
                     await server_reports_channel.send(content=f"<@&{new_server_report_ping}>\nNew report on `{guild_id}`",
                                                       embeds=embeds)
-                    await interaction.edit_original_response(
-                        content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                        embeds=embeds, view=None)
+                    await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                                                                            "view": None,
+                                                                            "embeds": embeds}))
                     thread = await bot.fetch_channel(channel_id)
                     message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put(
@@ -6539,10 +6516,9 @@ class ServerVoteView(discord.ui.View):
                 return
 
             #
-            if add_case_list == []:  # only alts edited
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embed=r_profile, view=ServerVoteView())
+            if add_case_list == []:  # only owner edited
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embed": r_profile, "view": ServerVoteView()}))
 
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
@@ -6550,16 +6526,14 @@ class ServerVoteView(discord.ui.View):
                 reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
                 embeds = [r_profile, add_case, reason_embed]
                 add_case_list = [add_case_list]
-                await interaction.edit_original_response(
-                    content=f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=ServerVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": ServerVoteView()}))
 
             else:  # new case exists
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=ServerVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": ServerVoteView()}))
 
     @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="servervote:disagree")
     async def disagree_button(self, interaction, button):
@@ -6593,14 +6567,12 @@ class ServerVoteView(discord.ui.View):
                         r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         embeds = [r_profile, reason_embed]
-                        await interaction.edit_original_response(
-                            content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
-                            (message,
-                             {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
+                            (message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
                               "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on server `{guild_id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
@@ -6612,9 +6584,8 @@ class ServerVoteView(discord.ui.View):
                         reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
                         embeds = [r_profile, add_case]
                         #
-                        await interaction.edit_original_response(
-                            content=f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
@@ -6630,9 +6601,8 @@ class ServerVoteView(discord.ui.View):
                         add_case = format_server_add_case(add_case_list, case_title)
                         embeds = [r_profile, add_case]
 
-                        await interaction.edit_original_response(
-                            content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
@@ -6647,14 +6617,12 @@ class ServerVoteView(discord.ui.View):
                     r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                     add_case = format_server_add_case(add_case_list, case_title)
                     embeds = [r_profile, add_case]
-                    await interaction.edit_original_response(
-                        content=f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                        embeds=embeds, view=None)
+                    await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                        "view": None, "embeds": embeds}))
                     thread = await bot.fetch_channel(channel_id)
                     message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put(
-                        (message,
-                         {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
+                        (message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
                           "view": None}))
                     await bot.get_channel(channel_id).send(
                         f"Report on server `{guild_id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
@@ -6672,10 +6640,9 @@ class ServerVoteView(discord.ui.View):
 
                 return
             #
-            if not add_case_list:  # only alts edited
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embed=r_profile, view=ServerVoteView())
+            if not add_case_list:  # only owner edited
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embed": r_profile, "view": ServerVoteView()}))
 
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
@@ -6683,16 +6650,14 @@ class ServerVoteView(discord.ui.View):
                 reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
                 embeds = [r_profile, add_case, reason_embed]
                 add_case_list = [add_case_list]
-                await interaction.edit_original_response(
-                    content=f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=ServerVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": ServerVoteView()}))
 
             else:  # new case exists
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=ServerVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": ServerVoteView()}))
 
     @discord.ui.button(label="Remove Vote", style=discord.ButtonStyle.primary, custom_id="servervote:removevote")
     async def remove_vote_button(self, interaction, button):
@@ -6717,9 +6682,8 @@ class ServerVoteView(discord.ui.View):
             if not add_case_list:
                 reason_embed = discord.Embed(title="Reason", description=reason)
                 embeds = [r_profile, reason_embed]
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=ServerVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": ServerVoteView()}))
 
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
@@ -6727,16 +6691,14 @@ class ServerVoteView(discord.ui.View):
                 reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
                 embeds = [r_profile, add_case, reason_embed]
                 add_case_list = [add_case_list]
-                await interaction.edit_original_response(
-                    content=f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=ServerVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": ServerVoteView()}))
 
             else:
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
-                await interaction.edit_original_response(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    embeds=embeds, view=ServerVoteView())
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": ServerVoteView()}))
 
     @discord.ui.button(label="Publish", style=discord.ButtonStyle.grey, custom_id="servervote:publish")
     async def publish_button(self, interaction, button):
@@ -6780,14 +6742,12 @@ class ServerVoteView(discord.ui.View):
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await server_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
                         embeds = [r_profile, reason_embed]
-                        await interaction.edit_original_response(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
-                            (message,
-                             {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                            (message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
                               "view": None}))
                         await bot.get_channel(channel_id).send(
                             f"Report on `{guild_id}` has been published. <@{requested_by}> <@{accepted_by}>")
@@ -6837,9 +6797,8 @@ class ServerVoteView(discord.ui.View):
                         await server_reports_channel.send(content=f"<@&{appealed_server_report_ping}>\nAppeal on `{guild_id}`",
                                                         embeds=embeds)
                         await server_reports_channel.send(content=f"Reason for appeal", embed=reason_embed)
-                        await interaction.edit_original_response(
-                            content=f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
@@ -6869,9 +6828,8 @@ class ServerVoteView(discord.ui.View):
                         server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
                         await server_reports_channel.send(content=f"<@&{updated_server_report_ping}>\nReport added on `{guild_id}`",
                                                         embeds=embeds)
-                        await interaction.edit_original_response(
-                            content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            embeds=embeds, view=None)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put(
@@ -6899,9 +6857,8 @@ class ServerVoteView(discord.ui.View):
                     server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
                     await server_reports_channel.send(content=f"<@&{new_server_report_ping}>\nNew report on `{guild_id}`",
                                                     embeds=embeds)
-                    await interaction.edit_original_response(
-                        content=f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                        embeds=embeds, view=None)
+                    await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                        "view": None, "embeds": embeds}))
                     thread = await bot.fetch_channel(channel_id)
                     message = await thread.fetch_message(message_id)
                     await old_message_edit_queue.put(
