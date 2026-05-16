@@ -902,7 +902,7 @@ async def tickets_add(interaction: discord.Interaction, target: str):
         else:
             return await interaction.response.send_message("Invalid user or role.", ephemeral=True)
     added_count = 0
-    await interaction.response.send_message(f"Adding {len(member_list)} users to {len(threads)} threads...", ephemeral=True)
+    await interaction.response.send_message(f"Adding {len(member_list)} user(s) to {len(threads)} threads...", ephemeral=True)
     for thread in threads:
         for member in member_list:
             try:
@@ -913,7 +913,7 @@ async def tickets_add(interaction: discord.Interaction, target: str):
                 await asyncio.sleep(0.25)
             except:
                 continue
-    await interaction.followup.send(f"**{added_count}** user(s) added to **{len(threads)}** thread(s).")
+    await interaction.followup.send(f"Successfully added user(s) to **{len(threads)}** thread(s).")
 
 @tickets.command(name="remove", description="Remove a user or role from all active ticket threads")
 @app_commands.describe(target="User or Role ID / mention")
@@ -942,7 +942,7 @@ async def tickets_remove(interaction: discord.Interaction, target: str):
             return await interaction.response.send_message("Invalid user or role.", ephemeral=True)
     removed_count = 0
     await interaction.response.send_message(
-        f"Removing {len(members)} users from {len(threads)} threads...", ephemeral=True)
+        f"Removing {len(members)} user(s) from {len(threads)} threads...", ephemeral=True)
     for thread in threads:
         for member in members:
             try:
@@ -953,7 +953,7 @@ async def tickets_remove(interaction: discord.Interaction, target: str):
                 await asyncio.sleep(0.25)
             except:
                 continue
-    await interaction.followup.send(f"**{removed_count}** user(s) removed from **{len(threads)}** thread(s).")
+    await interaction.followup.send(f"Successfully removed user(s) from **{len(threads)}** thread(s).")
 
 @bot.command()
 async def sync(ctx: commands.Context):
