@@ -200,9 +200,9 @@ def image_links_to_embeds(image_links):
     # returns a list
 
 def format_trusteduser_profile(user, trusteduser_profile):
-    if trusteduser_profile["current_staff"] == "1":
+    if trusteduser_profile["current_staff"] == 1:
         trusted_embed = discord.Embed(title="TRI Staff", colour=0xbba8dd)
-    elif trusteduser_profile["staff"] == "1":
+    elif trusteduser_profile["staff"] == 1:
         trusted_embed = discord.Embed(title="Former TRI Staff", colour=0x9279b5)
     else:
         trusted_embed = discord.Embed(title="Trusted User", colour=0x9279b5)
@@ -210,18 +210,18 @@ def format_trusteduser_profile(user, trusteduser_profile):
     trusted_embed.description = f"{user.name}\n`{user.id}`\n{user.mention}"
     trusted_embed.description += "\n**Account Created:** " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     trusted_embed.set_footer(text="✦　This user is trusted.")
-    if trusteduser_profile["staff"] == "1":
+    if trusteduser_profile["staff"] == 1:
         trusted_embed.description += "### Staff Info"
         trusted_embed.description += f"\n**Reports:** {trusteduser_profile["reports"]}"
         trusted_embed.description += f"\n**Reviews:** {trusteduser_profile["reviews"]}"
         trusted_embed.description += f"\n**Votes:** {trusteduser_profile["votes"]}"
-        if trusteduser_profile["mm"] == "1" or trusteduser_profile["pilot"] == "1" or trusteduser_profile["trader"] == "1":
+        if trusteduser_profile["mm"] == 1 or trusteduser_profile["pilot"] == 1 or trusteduser_profile["trader"] == 1:
             trusted_embed.description += "\n"
-    if trusteduser_profile["mm"] == "1":
+    if trusteduser_profile["mm"] == 1:
         trusted_embed.description += "\n**Professional Middleman**"
-    if trusteduser_profile["pilot"] == "1":
+    if trusteduser_profile["pilot"] == 1:
         trusted_embed.description += "\n**Professional Pilot**"
-    if trusteduser_profile["trader"] == "1":
+    if trusteduser_profile["trader"] == 1:
         trusted_embed.description += "\n**Trusted Trader**"
     return trusted_embed
 def format_user_r_profile(user, r_profile_list, title):
@@ -588,7 +588,7 @@ async def c(ctx, *, to_check: str = None):
                     #
                     user_query = {"_id": str(user_id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
-                    if trusteduser_profile and (trusteduser_profile["current_staff"] == "1"
+                    if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                 and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
                                                      or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                         await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
@@ -605,7 +605,7 @@ async def c(ctx, *, to_check: str = None):
                     #
                     user_query = {"_id": str(user_id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
-                    if trusteduser_profile and (trusteduser_profile["current_staff"] == "1"
+                    if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                 and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
                                                      or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                         await ctx.reply(f"User is reported.",
@@ -621,7 +621,7 @@ async def c(ctx, *, to_check: str = None):
                 #
                 user_query = {"_id": str(user_id)}
                 trusteduser_profile = trusteduserscol.find_one(user_query)
-                if trusteduser_profile and (trusteduser_profile["current_staff"] == "1"
+                if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                             and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
                                                  or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                     await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
@@ -694,7 +694,7 @@ async def c(ctx, *, to_check: str = None):
                         #
                         user_query = {"_id": str(ctx.author.id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
-                        if trusteduser_profile and (trusteduser_profile["current_staff"] == "1"
+                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
                                                          or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                             await ctx.reply(f"Server is reported.",
@@ -711,7 +711,7 @@ async def c(ctx, *, to_check: str = None):
                         #
                         user_query = {"_id": str(ctx.author.id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
-                        if trusteduser_profile and (trusteduser_profile["current_staff"] == "1"
+                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
                                                          or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                             await ctx.reply(embed=profile, view=NewServerReportView(guild, requested_by))
@@ -736,7 +736,7 @@ async def c(ctx, *, to_check: str = None):
                         #
                         user_query = {"_id": str(ctx.author.id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
-                        if trusteduser_profile and (trusteduser_profile["current_staff"] == "1"
+                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
                                                          or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                             await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
@@ -753,7 +753,7 @@ async def c(ctx, *, to_check: str = None):
                         #
                         user_query = {"_id": str(ctx.author.id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
-                        if trusteduser_profile and (trusteduser_profile["current_staff"] == "1"
+                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
                                                          or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                             await ctx.reply(f"User is reported.",
@@ -771,7 +771,7 @@ async def c(ctx, *, to_check: str = None):
                     #
                     user_query = {"_id": str(ctx.author.id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
-                    if trusteduser_profile and (trusteduser_profile["current_staff"] == "1"
+                    if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                 and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
                                                      or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                         requested_by = ctx.author
@@ -3978,7 +3978,7 @@ class UserVoteView(discord.ui.View):
                     add_case = format_user_add_case(add_case_list, case_title)
                     embeds = [r_profile, add_case]
                     new_user = {"_id": str(user.id), "r_profile_list": r_profile_list,
-                                "1": add_case_list}
+                                1: add_case_list}
                     userscol.insert_one(new_user)
                     alts_list = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
                     for alt in alts_list:
@@ -4394,7 +4394,7 @@ class UserVoteView(discord.ui.View):
                     add_case = format_user_add_case(add_case_list, case_title)
                     embeds = [r_profile, add_case]
                     new_user = {"_id": str(user.id), "r_profile_list": r_profile_list,
-                                "1": add_case_list}
+                                1: add_case_list}
                     userscol.insert_one(new_user)
                     alts_list = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
                     for alt in alts_list:
@@ -6487,7 +6487,7 @@ class ServerVoteView(discord.ui.View):
                     embeds = [r_profile, add_case]
 
                     new_server = {"_id": str(guild_id), "r_profile_list": r_profile_list,
-                                  "1": add_case_list}
+                                  1: add_case_list}
                     serverscol.insert_one(new_server)
 
                     server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
@@ -6893,7 +6893,7 @@ class ServerVoteView(discord.ui.View):
                     embeds = [r_profile, add_case]
 
                     new_server = {"_id": str(guild_id), "r_profile_list": r_profile_list,
-                                "1": add_case_list}
+                                1: add_case_list}
                     serverscol.insert_one(new_server)
 
                     server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
@@ -7411,27 +7411,27 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
             if category == "staff":
                 member = interaction.guild.get_member(int(user_id))
                 if not member: return
-                trusteduser_profile["current_staff"] = "1"
-                trusteduser_profile["staff"] = "1"
+                trusteduser_profile["current_staff"] = 1
+                trusteduser_profile["staff"] = 1
                 trusteduserscol.replace_one(user_query, trusteduser_profile)
                 if not staffweeklycol.find_one(user_query):
                     new_staff = {
                         "_id": str(user.id),
-                        "weekly_reports": "0",
-                        "weekly_reviews": "0",
+                        "weekly_reports": 0,
+                        "weekly_reviews": 0,
                     }
                     staffweeklycol.insert_one(new_staff)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as current TRI Staff.")
             elif category == "mm":
-                trusteduser_profile["mm"] = "1"
+                trusteduser_profile["mm"] = 1
                 trusteduserscol.replace_one(user_query, trusteduser_profile)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as Professional MM.")
             elif category == "pilot":
-                trusteduser_profile["pilot"] = "1"
+                trusteduser_profile["pilot"] = 1
                 trusteduserscol.replace_one(user_query, trusteduser_profile)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as Professional Pilot.")
             elif category == "trader":
-                trusteduser_profile["trader"] = "1"
+                trusteduser_profile["trader"] = 1
                 trusteduserscol.replace_one(user_query, trusteduser_profile)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as Trusted Trader.")
             else:
@@ -7442,61 +7442,61 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
                 if not member: return
                 new_user = {
                     "_id": str(user.id),
-                    "current_staff": "1",
-                    "staff": "1",
-                    "mm": "0",
-                    "pilot": "0",
-                    "trader": "0",
-                    "reports": "0",
-                    "reviews": "0",
-                    "votes": "0",
+                    "current_staff": 1,
+                    "staff": 1,
+                    "mm": 0,
+                    "pilot": 0,
+                    "trader": 0,
+                    "reports": 0,
+                    "reviews": 0,
+                    "votes": 0,
                 }
                 trusteduserscol.insert_one(new_user)
                 new_staff = {
                     "_id": str(user.id),
-                    "weekly_reports": "0",
-                    "weekly_reviews": "0",
+                    "weekly_reports": 0,
+                    "weekly_reviews": 0,
                 }
                 staffweeklycol.insert_one(new_staff)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as current TRI Staff.")
             elif category == "mm":
                 new_user = {
                     "_id": str(user.id),
-                    "current_staff": "0",
-                    "staff": "0",
-                    "mm": "1",
-                    "pilot": "0",
-                    "trader": "0",
-                    "reports": "0",
-                    "reviews": "0",
-                    "votes": "0",
+                    "current_staff": 0,
+                    "staff": 0,
+                    "mm": 1,
+                    "pilot": 0,
+                    "trader": 0,
+                    "reports": 0,
+                    "reviews": 0,
+                    "votes": 0,
                 }
                 trusteduserscol.insert_one(new_user)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as Professional MM.")
             elif category == "pilot":
                 new_user = {
                     "_id": str(user.id),
-                    "current_staff": "0",
-                    "staff": "0",
-                    "mm": "0",
-                    "pilot": "1",
-                    "trader": "0",
-                    "reports": "0",
-                    "reviews": "0",
+                    "current_staff": 0,
+                    "staff": 0,
+                    "mm": 0,
+                    "pilot": 1,
+                    "trader": 0,
+                    "reports": 0,
+                    "reviews": 0,
                 }
                 trusteduserscol.insert_one(new_user)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as Professional Pilot.")
             elif category == "trader":
                 new_user = {
                     "_id": str(user.id),
-                    "current_staff": "0",
-                    "staff": "0",
-                    "mm": "0",
-                    "pilot": "0",
-                    "trader": "1",
-                    "reports": "0",
-                    "reviews": "0",
-                    "votes": "0",
+                    "current_staff": 0,
+                    "staff": 0,
+                    "mm": 0,
+                    "pilot": 0,
+                    "trader": 1,
+                    "reports": 0,
+                    "reviews": 0,
+                    "votes": 0,
                 }
                 trusteduserscol.insert_one(new_user)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as Trusted Trader.")
@@ -7517,30 +7517,37 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
         trusteduser_profile = trusteduserscol.find_one(user_query)
         if trusteduser_profile:
             if category == "staff":
-                if trusteduser_profile["current_staff"] == "1":
-                    trusteduser_profile["current_staff"] = "0"
+                if trusteduser_profile["current_staff"] == 1:
+                    trusteduser_profile["current_staff"] = 0
                     staffweeklycol.delete_one(user_query)
-                elif trusteduser_profile["current_staff"] == "0":
-                    trusteduser_profile["staff"] = "0"
+                elif trusteduser_profile["current_staff"] == 0:
+                    trusteduser_profile["staff"] = 0
                 trusteduserscol.replace_one(user_query, trusteduser_profile)
                 await interaction.response.send_message(f"`{user.id}` has been dismissed as TRI Staff.")
             elif category == "mm":
-                trusteduser_profile["mm"] = "0"
+                trusteduser_profile["mm"] = 0
                 trusteduserscol.replace_one(user_query, trusteduser_profile)
                 await interaction.response.send_message(f"`{user.id}` has been dismissed as Professional MM.")
             elif category == "pilot":
-                trusteduser_profile["pilot"] = "0"
+                trusteduser_profile["pilot"] = 0
                 trusteduserscol.replace_one(user_query, trusteduser_profile)
                 await interaction.response.send_message(f"`{user.id}` has been dismissed as Professional Pilot.")
             elif category == "trader":
-                trusteduser_profile["trader"] = "0"
+                trusteduser_profile["trader"] = 0
                 trusteduserscol.replace_one(user_query, trusteduser_profile)
                 await interaction.response.send_message(f"`{user.id}` has been dismissed as Trusted Trader.")
             else:
                 await interaction.response.send_message(f"Please enter a valid role.", ephemeral=True)
             trusteduser_profile = trusteduserscol.find_one(user_query)
-            if trusteduser_profile["staff"] == "0" and trusteduser_profile["mm"] == "0" and \
-                    trusteduser_profile["pilot"] == "0" and trusteduser_profile["trader"] == "0":
+            if (
+                    trusteduser_profile["staff"] == 0
+                    and trusteduser_profile["mm"] == 0
+                    and trusteduser_profile["pilot"] == 0
+                    and trusteduser_profile["trader"] == 0
+                    and not trusteduser_profile.get("reports")
+                    and not trusteduser_profile.get("reviews")
+                    and not trusteduser_profile.get("votes")
+            ):
                 trusteduserscol.delete_one(user_query)
 
 trusted = app_commands.Group(name="trusted", description="Manage trusted servers.")
