@@ -173,9 +173,9 @@ def image_links_to_embeds(image_links):
 
 
 def format_trusteduser_profile(user, trusteduser_profile):
-    if trusteduser_profile["current_staff"] == "1":
+    if trusteduser_profile["current_staff"] == 1:
         trusted_embed = discord.Embed(title="TRI Staff", colour=0xbba8dd)
-    elif trusteduser_profile["staff"] == "1":
+    elif trusteduser_profile["staff"] == 1:
         trusted_embed = discord.Embed(title="Former TRI Staff", colour=0x9279b5)
     else:
         trusted_embed = discord.Embed(title="Trusted User", colour=0x9279b5)
@@ -183,19 +183,19 @@ def format_trusteduser_profile(user, trusteduser_profile):
     trusted_embed.description = f"{user.name}\n`{user.id}`\n{user.mention}"
     trusted_embed.description += "\n**Account Created:** " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     trusted_embed.set_footer(text="✦　This user is trusted.")
-    if trusteduser_profile["staff"] == "1":
+    if trusteduser_profile["staff"] == 1:
         trusted_embed.description += "### Staff Info"
         trusted_embed.description += f"\n**Reports:** {trusteduser_profile['reports']}"
         trusted_embed.description += f"\n**Reviews:** {trusteduser_profile['reviews']}"
         trusted_embed.description += f"\n**Votes:** {trusteduser_profile['votes']}"
-        if trusteduser_profile["mm"] == "1" or trusteduser_profile["pilot"] == "1" or trusteduser_profile["trader"] == "1":
+        if trusteduser_profile["mm"] == 1 or trusteduser_profile["pilot"] == 1 or trusteduser_profile["trader"] == 1:
             trusted_embed.description += "\n"
-    if trusteduser_profile["mm"] == "1":
-        trusted_embed.description += "\nProfessional Middleman"
-    if trusteduser_profile["pilot"] == "1":
-        trusted_embed.description += "\nProfessional Pilot"
-    if trusteduser_profile["trader"] == "1":
-        trusted_embed.description += "\nTrusted Trader"
+    if trusteduser_profile["mm"] == 1:
+        trusted_embed.description += "\n**Professional Middleman**"
+    if trusteduser_profile["pilot"] == 1:
+        trusted_embed.description += "\n**Professional Pilot**"
+    if trusteduser_profile["trader"] == 1:
+        trusted_embed.description += "\n**Trusted Trader**"
     return trusted_embed
 def format_user_r_profile(user, r_profile_list, title):
     if title == "Ex-offender":
@@ -230,7 +230,7 @@ def format_user_add_case(add_case_list, case_title):
         add_case.description += "\n> **TRI Staff:** " + add_case_list[5]
         add_case.description += "\n> **Accepted by:** " + add_case_list[6]
     return add_case
-def format_trustedserver_profile(guild, trustedserver_profile):
+def format_trustedserver_profile(guild):
     if guild.id == TRI_Archive:
         trusted_embed = discord.Embed(title="Trade Report Investigation Archive", colour=0xbba8dd)
     else:
@@ -384,8 +384,7 @@ async def c(ctx, *, to_check: str = None):
             server_query = {"_id": to_check.strip('<@>')}
             trustedserver_profile = trustedserverscol.find_one(server_query)
             if trustedserver_profile:
-                trusted_embed = format_trustedserver_profile(UnknownGuild(int(to_check.strip('<@>'))),
-                                                             trustedserver_profile)
+                trusted_embed = format_trustedserver_profile(UnknownGuild(int(to_check.strip('<@>'))))
                 await ctx.reply("Server is trusted.", embed=trusted_embed)
             else:
                 server_profile = serverscol.find_one(server_query)
@@ -417,7 +416,7 @@ async def c(ctx, *, to_check: str = None):
                 server_query = {"_id": str(guild_id)}
                 trustedserver_profile = trustedserverscol.find_one(server_query)
                 if trustedserver_profile:
-                    trusted_embed = format_trustedserver_profile(guild, trustedserver_profile)
+                    trusted_embed = format_trustedserver_profile(guild)
                     await ctx.reply("Server is trusted.", embed=trusted_embed)
                 else:
                     server_profile = serverscol.find_one(server_query)
