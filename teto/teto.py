@@ -3978,7 +3978,7 @@ class UserVoteView(discord.ui.View):
                     add_case = format_user_add_case(add_case_list, case_title)
                     embeds = [r_profile, add_case]
                     new_user = {"_id": str(user.id), "r_profile_list": r_profile_list,
-                                1: add_case_list}
+                                "1": add_case_list}
                     userscol.insert_one(new_user)
                     alts_list = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
                     for alt in alts_list:
@@ -4394,7 +4394,7 @@ class UserVoteView(discord.ui.View):
                     add_case = format_user_add_case(add_case_list, case_title)
                     embeds = [r_profile, add_case]
                     new_user = {"_id": str(user.id), "r_profile_list": r_profile_list,
-                                1: add_case_list}
+                                "1": add_case_list}
                     userscol.insert_one(new_user)
                     alts_list = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
                     for alt in alts_list:
@@ -6487,7 +6487,7 @@ class ServerVoteView(discord.ui.View):
                     embeds = [r_profile, add_case]
 
                     new_server = {"_id": str(guild_id), "r_profile_list": r_profile_list,
-                                  1: add_case_list}
+                                  "1": add_case_list}
                     serverscol.insert_one(new_server)
 
                     server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
@@ -6893,7 +6893,7 @@ class ServerVoteView(discord.ui.View):
                     embeds = [r_profile, add_case]
 
                     new_server = {"_id": str(guild_id), "r_profile_list": r_profile_list,
-                                1: add_case_list}
+                                "1": add_case_list}
                     serverscol.insert_one(new_server)
 
                     server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
