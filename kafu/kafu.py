@@ -592,22 +592,21 @@ async def rn(ctx, *, new_name: str):
         if isinstance(ctx.channel, discord.Thread):
             try:
                 await ctx.channel.edit(name=new_name)
-                await ctx.send(f"Thread renamed to **{new_name}**.")
             except Exception as e:
-                await ctx.send(f"Renaming failed due to an error: {e}", ephemeral=True)
+                await ctx.send(f"Renaming failed due to an error: {e}")
         elif isinstance(ctx.channel, discord.TextChannel):
             try:
                 await ctx.channel.edit(name=new_name)
                 await ctx.send(f"Channel renamed to **{new_name}**.")
             except Exception as e:
-                await ctx.send(f"Renaming failed due to an error: {e}", ephemeral=True)
+                await ctx.send(f"Renaming failed due to an error: {e}")
         else:
-            await ctx.send("This command can only be used in a channel or thread.", ephemeral=True)
+            await ctx.send("This command can only be used in a channel or thread.")
 @rn.error
 async def rn_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         remaining = error.retry_after  # cooldown time in seconds
-        return await ctx.send(f"This command is on cooldown. Retry in {round(remaining)} seconds.", ephemeral=True)
+        return await ctx.send(f"This command is on cooldown. Retry in {round(remaining)} seconds.")
     raise error
 
 CLAIM_REGEX = re.compile(r"<@!?(\d+)> has claimed the ticket\.")
