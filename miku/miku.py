@@ -36,8 +36,6 @@ filescol = db["files"]
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
 
-GUILD_ID = 1371673839695826974
-
 LB_CHANNEL = 1375271142092308582
 CMDS_CHANNEL = 1375260303817838694
 VERIFY_CHANNEL = 1375260857772150804
@@ -52,6 +50,7 @@ adm_role = 1375276457890287748
 sr_role = 1375254710952661102
 rep_role = 1372426736205303808
 tr_role = 1372426794585817088
+t_role = 1396701840321679391
 ban_perms = 1373517806921973900
 staff_trainer = 1498599499893837874
 full_break = 1505568168880636014
@@ -148,7 +147,7 @@ def get_quota_config():
 
 @tasks.loop(time=datetime.time(hour=9, minute=9))
 async def weekly_quota():
-    guild = bot.get_guild(GUILD_ID)
+    guild = bot.get_guild(TRI_Archive)
     if not guild:
         return
     if datetime.datetime.now(datetime.timezone.utc).weekday() != 5:
@@ -170,7 +169,6 @@ async def weekly_quota():
     sr_r = get(guild.roles, id=sr_role)
     rep_r = get(guild.roles, id=rep_role)
     tr_r = get(guild.roles, id=tr_role)
-    staff_r = get(guild.roles, id=staff_role)
     # helpers
     def apply_break(quota, member):
         if get(member.guild.roles, id=full_break) in member.roles:
@@ -182,7 +180,7 @@ async def weekly_quota():
         if quota in (-1, 0):
             return -1 if quota == -1 else 1
         return round(min(done / quota, 1), 3)
-    staff_members = set(staff_r.members)
+    staff_members = set(o5_r.members + adm_r.members + sr_r.members + rep_r.members + tr_r.members)
     for member in staff_members:
         staff_id = str(member.id)
         staff_profile = trusteduserscol.find_one({"_id": staff_id}) or {}
@@ -223,18 +221,18 @@ async def weekly_quota():
             vratios = [x[2] for x in weekly_profile["reviews_quota_list"] if x[2] != -1]
             ravg = sum(rratios) / len(rratios) if rratios else None
             vavg = sum(vratios) / len(vratios) if vratios else None
-            if (ravg is not None and ravg < 0.5) or (vavg is not None and vavg < 0.5):
+            if (ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 2) or (vavg is not None and vavg < 0.5 and len(weekly_profile.get("reviews_quota_list", [])) > 2):
                 sr_demotion_list.append([staff_id, round(ravg, 3), round(vavg, 3)])
-            if (ravg is not None and ravg < 1) or (vavg is not None and vavg < 1):
+            if (ravg is not None and ravg < 1 and len(weekly_profile.get("reports_quota_list", [])) > 2) or (vavg is not None and vavg < 1 and len(weekly_profile.get("reviews_quota_list", [])) > 2):
                 member = guild.get_member(int(staff_id))
                 if member:
                     await send_low_performance_dm(member, vavg, ravg)
         else:
             if rratios:
                 ravg = sum(rratios) / len(rratios)
-                if ravg is not None and ravg < 0.5:
+                if ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 2:
                     demotion_list.append([staff_id, round(ravg, 3)])
-                if ravg is not None and ravg < 1:
+                if ravg is not None and ravg < 1 and len(weekly_profile.get("reports_quota_list", [])) > 2:
                     member = guild.get_member(int(staff_id))
                     if member:
                         await send_low_performance_dm(member, ravg)
@@ -318,8 +316,10 @@ async def weekly_quota():
     else:
         desc = ""
         for user, qtype, done, quota, ratio in sorted(sr_not_met_quota, key=lambda x: x[4]):
+            member = guild.get_member(int(user))
+            mention = member.mention if member else f"`{user}`"
             desc += (
-                f"\n-# <:reply:1459162938303578213>　<@{user}>　–　{qtype}: "
+                f"\n-# <:reply:1459162938303578213>　{mention}　–　{qtype}: "
                 f"**{done}** / {quota}　({ratio:.2f})"
             )
         sr_nmq_embed.description = desc[:4000]
@@ -332,13 +332,42 @@ async def weekly_quota():
     else:
         desc = ""
         for user, done, quota, ratio in sorted(not_met_quota, key=lambda x: x[3]):
+            member = guild.get_member(int(user))
+            mention = member.mention if member else f"`{user}`"
             desc += (
-                f"\n-# <:reply:1459162938303578213>　<@{user}>　–　**{done}** / {quota}　"
+                f"\n-# <:reply:1459162938303578213>　{mention}　–　**{done}** / {quota}　"
                 f"({ratio:.2f})"
             )
         nmq_embed.description = desc[:4000]
-    await QUOTA_CHANNEL.send(embed=sr_nmq_embed)
-    await QUOTA_CHANNEL.send(embed=nmq_embed)
+    quota_channel = bot.get_channel(QUOTA_CHANNEL)
+    await quota_channel.send(embed=sr_nmq_embed)
+    await quota_channel.send(embed=nmq_embed)
+    if sr_demotion_list:
+        sr_demotion_embed = discord.Embed(
+            title="sr+ demotion candidates",
+            colour=0x992D22
+        )
+        desc = ""
+        for staff_id, ravg, vavg in sr_demotion_list:
+            member = guild.get_member(int(staff_id))
+            mention = member.mention if member else f"`{staff_id}`"
+            desc += f"\n-# <:reply:1459162938303578213>　{mention}　–　reports: `{ravg:.2f}`　ㆍ　reviews: `{vavg:.2f}`"
+        sr_demotion_embed.description = desc
+        if desc:
+            await quota_channel.send(embed=sr_demotion_embed)
+    if demotion_list:
+        demotion_embed = discord.Embed(
+            title="Demotion Candidates",
+            colour=0xE74C3C
+        )
+        desc = ""
+        for staff_id, avg in demotion_list:
+            member = guild.get_member(int(staff_id))
+            mention = member.mention if member else f"`{staff_id}`"
+            desc += f"\n-# <:reply:1459162938303578213>　{mention}　–　reports: `{avg:.2f}`"
+        demotion_embed.description = desc
+        if desc:
+            await quota_channel.send(embed=demotion_embed)
 
 settings = app_commands.Group(name="set", description="Set.")
 bot.tree.add_command(settings)
@@ -406,6 +435,10 @@ async def quota_history(ctx, user_id: str = None):
     weekly_profile = staffweeklycol.find_one({"_id": target_id})
     if not weekly_profile:
         return await ctx.send("No quota history found for this user.")
+    t_r = get(ctx.guild.roles, id=t_role)
+    in_training = set(t_r.members)
+    if member in in_training:
+        return await ctx.send("This staff is still in training.")
     embeds = []
     rank = get_staff_rank(member)
     profile = discord.Embed(colour=0xffffff)
@@ -461,9 +494,14 @@ async def quota_history(ctx, user_id: str = None):
             f"\nWeek {i}　–　**{done}** / {quota_display}　–　`{ratio_display}`")
     reports_embed.description = (f"Staff: {member.mention}\n" + desc)
     current_reports = weekly_profile.get("weekly_reports", 0)
-    current_reports_quota = (
-        get_quota_config().get("reports_quota", 0)
-    )
+    if is_sr:
+        current_reports_quota = (
+            get_quota_config().get("sr_reports_quota", 0)
+        )
+    else:
+        current_reports_quota = (
+            get_quota_config().get("reports_quota", 0)
+        )
     current_reports_ratio = (
         round(min(current_reports / current_reports_quota, 1), 2)
         if current_reports_quota > 0 else 0
