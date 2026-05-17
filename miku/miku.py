@@ -18,7 +18,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from discord.utils import get
 
-from typing import Optional
+from typing import Optional, Literal
 
 TOKEN = os.getenv("TOKEN")
 CLIENT = os.getenv("CLIENT")
@@ -38,11 +38,12 @@ bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
 
 GUILD_ID = 1371673839695826974
 
-QUOTA_CHANNEL = 1375271142092308582
+LB_CHANNEL = 1375271142092308582
 CMDS_CHANNEL = 1375260303817838694
 VERIFY_CHANNEL = 1375260857772150804
 TRAINING_CHANNEL = 1375271729680748635
 TICKET_CHANNEL = 1375261699111784478
+QUOTA_CHANNEL = 1505563131655749712
 
 # tri roles info
 staff_role = 1373803879623430268
@@ -53,6 +54,8 @@ rep_role = 1372426736205303808
 tr_role = 1372426794585817088
 ban_perms = 1373517806921973900
 staff_trainer = 1498599499893837874
+full_break = 1505568168880636014
+half_break = 1505568134617235546
 tri_supporter = 1465630182462460040
 
 TRI_Archive = 1371673839695826974
@@ -104,7 +107,44 @@ async def on_member_update(before, after):
                     await target_member.add_roles(target_role, reason="tri supporter role synced from TRI Archive.")
                 except Exception: pass
 
+@bot.event
+async def on_ready():
+    bot.add_view(StaffGuideView())
+    bot.add_view(StaffRulesView())
+    bot.add_view(ClosingView())
+    bot.add_view(TagsView())
+    bot.add_view(FileView())
+    weekly_quota.start()
+
 # loop tasks
+
+async def send_low_performance_dm(member, rratio, vratio=None):
+    try:
+        embed = discord.Embed(
+            title="Performance Warning",
+            description=(
+                "Your recent staff activity is below expected quota levels.\n\n"
+                f"8-week average **reports** quota completion: **{rratio:.2f}**\n"
+            ),
+            colour=0xE74C3C
+        )
+        if rratio < 0.7:
+            embed.title = "CRITICAL Performance Warning"
+        if vratio:
+            embed.description+=f"8-week average **reviews** quota completion: **{vratio:.2f}**\n"
+            if vratio < 0.7:
+                embed.title = "CRITICAL Performance Warning"
+        embed.description+="\nPlease improve your activity. Thank you."
+        await member.send(embed=embed)
+    except:
+        pass
+
+def get_quota_config():
+    return staffweeklycol.find_one({"_id": "global"}) or {
+        "reports_quota": 0,
+        "sr_reports_quota": 0,
+        "sr_reviews_quota": 0
+    }
 
 @tasks.loop(time=datetime.time(hour=9, minute=9))
 async def weekly_quota():
@@ -113,9 +153,13 @@ async def weekly_quota():
         return
     if datetime.datetime.now(datetime.timezone.utc).weekday() != 5:
         return
-    quota_channel = bot.get_channel(QUOTA_CHANNEL)
-    if not quota_channel:
+    lb_channel = bot.get_channel(LB_CHANNEL)
+    if not lb_channel:
         return
+    sr_not_met_quota = []
+    not_met_quota = []
+    sr_demotion_list = []
+    demotion_list = []
     o5_reviews, adm_reviews, sr_reviews = [], [], []
     o5_reports, adm_reports, sr_reports = [], [], []
     rep_reports, tr_reports = [], []
@@ -126,7 +170,20 @@ async def weekly_quota():
     sr_r = get(guild.roles, id=sr_role)
     rep_r = get(guild.roles, id=rep_role)
     tr_r = get(guild.roles, id=tr_role)
-    for member in guild.members:
+    staff_r = get(guild.roles, id=staff_role)
+    # helpers
+    def apply_break(quota, member):
+        if get(member.guild.roles, id=full_break) in member.roles:
+            return -1
+        if get(member.guild.roles, id=half_break) in member.roles:
+            return max(1, quota // 2)
+        return quota
+    def ratio(done, quota):
+        if quota in (-1, 0):
+            return -1 if quota == -1 else 1
+        return round(min(done / quota, 1), 3)
+    staff_members = set(staff_r.members)
+    for member in staff_members:
         staff_id = str(member.id)
         staff_profile = trusteduserscol.find_one({"_id": staff_id}) or {}
         weekly_profile = staffweeklycol.find_one({"_id": staff_id}) or {}
@@ -134,6 +191,59 @@ async def weekly_quota():
         reports = staff_profile.get("reports", 0)
         weekly_reviews = int(weekly_profile.get("weekly_reviews", 0))
         weekly_reports = int(weekly_profile.get("weekly_reports", 0))
+        config = staffweeklycol.find_one({"_id": "global"}) or {
+            "reports_quota": 0,
+            "sr_reports_quota": 0,
+            "sr_reviews_quota": 0
+        }
+        is_sr = any(role.id == sr_role for role in member.roles)
+        rq = config["reports_quota"]
+        rq = apply_break(rq, member)
+        rr = ratio(weekly_reports, rq)
+        weekly_profile.setdefault("reports_quota_list", [])
+        weekly_profile["reports_quota_list"].append([weekly_reports, rq, rr])
+        weekly_profile["reports_quota_list"] = weekly_profile["reports_quota_list"][-8:]
+        if is_sr:
+            vq = config["sr_reviews_quota"]
+            vq = apply_break(vq, member)
+            vr = ratio(weekly_reviews, vq)
+            weekly_profile.setdefault("reviews_quota_list", [])
+            weekly_profile["reviews_quota_list"].append([weekly_reviews, vq, vr])
+            weekly_profile["reviews_quota_list"] = weekly_profile["reviews_quota_list"][-8:]
+            if vq != -1 and vr != -1 and vr < 1:
+                sr_not_met_quota.append([staff_id, "reviews", weekly_reviews, vq, vr])
+            if rq != -1 and rr != -1 and rr < 1:
+                sr_not_met_quota.append([staff_id, "reports", weekly_reports, rq, rr])
+        else:
+            if rq != -1 and rr != -1 and rr < 1:
+                not_met_quota.append([staff_id, weekly_reports, rq, rr])
+        staffweeklycol.replace_one({"_id": staff_id}, weekly_profile, upsert=True)
+        rratios = [x[2] for x in weekly_profile["reports_quota_list"] if x[2] != -1]
+        if is_sr:
+            vratios = [x[2] for x in weekly_profile["reviews_quota_list"] if x[2] != -1]
+            ravg = sum(rratios) / len(rratios) if rratios else None
+            vavg = sum(vratios) / len(vratios) if vratios else None
+            if (ravg is not None and ravg < 0.5) or (vavg is not None and vavg < 0.5):
+                sr_demotion_list.append([staff_id, round(ravg, 3), round(vavg, 3)])
+            if (ravg is not None and ravg < 1) or (vavg is not None and vavg < 1):
+                member = guild.get_member(int(staff_id))
+                if member:
+                    await send_low_performance_dm(member, vavg, ravg)
+        else:
+            if rratios:
+                ravg = sum(rratios) / len(rratios)
+                if ravg is not None and ravg < 0.5:
+                    demotion_list.append([staff_id, round(ravg, 3)])
+                if ravg is not None and ravg < 1:
+                    member = guild.get_member(int(staff_id))
+                    if member:
+                        await send_low_performance_dm(member, ravg)
+
+        staffweeklycol.update_one(
+            {"_id": staff_id},
+            {"$set": {"weekly_reports": 0, "weekly_reviews": 0}}
+        )
+
         if o5_r in member.roles:
             o5_reviews.append((member, reviews, weekly_reviews))
             o5_reports.append((member, reports, weekly_reports))
@@ -163,8 +273,8 @@ async def weekly_quota():
     for m, r, w in sr_reviews:
         total_reviews += w
         sr_lbr.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
-    await quota_channel.send(f"## _ _　　　weekly leaderboards .ᐟ\n_ _　　　　　　||<@&{staff_role}>||")
-    await quota_channel.send("## _ _　　　reviews leaderboard", embeds=[o5_lbr, adm_lbr, sr_lbr])
+    await lb_channel.send(f"## _ _　　　weekly leaderboards .ᐟ\n_ _　　　　　　||<@&{staff_role}>||")
+    await lb_channel.send("## _ _　　　reviews leaderboard", embeds=[o5_lbr, adm_lbr, sr_lbr])
     # reports
     o5_lb = discord.Embed(colour=0xffffff)
     o5_lb.description = "✦　　┈　　overseers"
@@ -191,25 +301,163 @@ async def weekly_quota():
     for m, r, w in tr_reports:
         total_reports += w
         tr_lb.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
-    await quota_channel.send("## _ _　　　reports leaderboard", embeds=[o5_lb, adm_lb, sr_lb, rep_lb, tr_lb])
+    await lb_channel.send("## _ _　　　reports leaderboard", embeds=[o5_lb, adm_lb, sr_lb, rep_lb, tr_lb])
     summary = discord.Embed(colour=0xffffff)
     summary.description = (
         f"✦　　┈　　total reviews　　┈　　**{total_reviews}**\n"
         f"✦　　┈　　total reports　　┈　　**{total_reports}**"
     )
-    await quota_channel.send("## _ _　　　weekly summary", embed=summary)
+    await lb_channel.send("## _ _　　　weekly summary", embed=summary)
 
-@bot.event
-async def on_ready():
-    bot.add_view(StaffGuideView())
-    bot.add_view(StaffRulesView())
-    bot.add_view(ClosingView())
-    bot.add_view(TagsView())
-    bot.add_view(FileView())
-    weekly_quota.start()
+    sr_nmq_embed = discord.Embed(
+        title="sr+ weekly quota summary",
+        colour=0xffffff
+    )
+    if not sr_not_met_quota:
+        sr_nmq_embed.description = "All staff met their weekly quota <a:pinkconfetti:1505564994731905065>"
+    else:
+        desc = ""
+        for user, qtype, done, quota, ratio in sorted(sr_not_met_quota, key=lambda x: x[4]):
+            desc += (
+                f"\n-# <:reply:1459162938303578213>　<@{user}>　–　{qtype}: "
+                f"**{done}** / {quota}　({ratio:.2f})"
+            )
+        sr_nmq_embed.description = desc[:4000]
+    nmq_embed = discord.Embed(
+        title="staff weekly quota summary",
+        colour=0xffffff
+    )
+    if not not_met_quota:
+        nmq_embed.description = "All staff met their weekly quota <a:pinkconfetti:1505564994731905065>"
+    else:
+        desc = ""
+        for user, done, quota, ratio in sorted(not_met_quota, key=lambda x: x[3]):
+            desc += (
+                f"\n-# <:reply:1459162938303578213>　<@{user}>　–　**{done}** / {quota}　"
+                f"({ratio:.2f})"
+            )
+        nmq_embed.description = desc[:4000]
+    await QUOTA_CHANNEL.send(embed=sr_nmq_embed)
+    await QUOTA_CHANNEL.send(embed=nmq_embed)
 
+settings = app_commands.Group(name="set", description="Set.")
+bot.tree.add_command(settings)
+
+@settings.command(name="quota", description="Set weekly report quota for staff")
+@app_commands.describe(quota="Weekly report quota")
+@app_commands.checks.has_role(adm_role)
+async def set_quota(interaction: discord.Interaction, quota: int):
+    if quota < 0:
+        return await interaction.response.send_message("Quota must be at least 0.", ephemeral=True)
+    staffweeklycol.update_one(
+        {"_id": "global"},
+        {"$set": {"reports_quota": quota}},
+        upsert=True
+    )
+    await interaction.response.send_message(
+        f"Reporters report quota set to **{quota}**.",
+        ephemeral=True
+    )
+
+@settings.command(name="srquota", description="Set weekly quota for SR+")
+@app_commands.describe(quota="Weekly report quota", type="Reports/Reviews")
+@app_commands.checks.has_role(adm_role)
+async def set_srquota(interaction: discord.Interaction, quota: int, type: Literal["reports", "reviews"]):
+    if quota < 1:
+        return await interaction.response.send_message(
+            "Quota must be at least 1.",
+            ephemeral=True
+        )
+    if type == "reports":
+        field = "sr_reports_quota"
+    elif type == "reviews":
+        field = "sr_reviews_quota"
+    staffweeklycol.update_one(
+        {"_id": "global"},
+        {"$set": {field: quota}},
+        upsert=True
+    )
+    await interaction.response.send_message(
+        f"SR+ {type} quota set to **{quota}**.",
+        ephemeral=True
+    )
 
 # text commands
+
+@bot.command(name="qh")
+async def quota_history(ctx, user_id: str = None):
+    target_id = user_id or str(ctx.author.id)
+    member = ctx.guild.get_member(int(target_id))
+    if not member:
+        return await ctx.send("Invalid user or user not in this server.")
+    weekly_profile = staffweeklycol.find_one({"_id": target_id})
+    if not weekly_profile:
+        return await ctx.send("No quota history found for this user.")
+    embeds = []
+    is_sr = any(role.id == sr_role for role in member.roles)
+    if is_sr:
+        current_reviews = weekly_profile.get("weekly_reviews", 0)
+        current_reviews_quota = (
+            get_quota_config().get("sr_reviews_quota", 0)
+        )
+        reviews_history = weekly_profile.get("reviews_quota_list", [])
+        reviews_embed = discord.Embed(
+            title="reviews quota history",
+            description=f"User: {member.mention}",
+            colour=0xffffff
+        )
+        for i, entry in enumerate(reviews_history[-8:], start=1):
+            done, quota, ratio = entry
+            quota_display = "FULL BREAK" if quota == -1 else str(quota)
+            ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
+            reviews_embed.add_field(
+                name=f"Week {i}",
+                value=f"Done: **{done}** / {quota_display}\nRatio: `{ratio_display}`",
+                inline=False
+            )
+        current_review_ratio = (
+            round(min(current_reviews / current_reviews_quota, 1), 2)
+            if current_reviews_quota > 0 else 0
+        )
+        reviews_embed.add_field(
+            name="Current Week",
+            value=(
+                f"Done: **{current_reviews}** / {current_reviews_quota}\n"
+                f"Ratio: `{current_review_ratio:.2f}`"
+            ),
+            inline=False
+        )
+        embeds.append(reviews_embed)
+    current_reports = weekly_profile.get("weekly_reports", 0)
+    current_reports_quota = (
+        get_quota_config().get("reports_quota", 0)
+    )
+    reports_history = weekly_profile.get("reports_quota_list", [])
+    reports_embed = discord.Embed(
+        title="reports quota history",
+        description=f"Staff: {member.mention}",
+        colour=0xffffff
+    )
+    for i, entry in enumerate(reports_history[-8:], start=1):
+        done, quota, ratio = entry
+        quota_display = "FULL BREAK" if quota == -1 else str(quota)
+        ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
+        reports_embed.add_field(
+            name=f"Week {i}",
+            value=f"Done: **{done}** / {quota_display}\nRatio: `{ratio_display}`",
+            inline=False
+        )
+    current_ratio = (
+        round(min(current_reports / current_reports_quota, 1), 2)
+        if current_reports_quota > 0 else 0
+    )
+    reports_embed.add_field(
+        name="Current Week",
+        value=f"Done: **{current_reports}** / {current_reports_quota}\nRatio: `{current_ratio:.2f}`",
+        inline=False
+    )
+    embeds.append(reports_embed)
+    await ctx.send(embeds=embeds)
 
 @bot.command()
 async def help(ctx):
