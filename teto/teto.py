@@ -4034,12 +4034,10 @@ class UserVoteView(discord.ui.View):
                 new_name = f"p-{interaction.channel.name}"
                 await asyncio.sleep(2)
                 await interaction.channel.edit(name=new_name, archived=True, locked=True)
-
             #
             if not add_case_list:  # only alts edited
                 await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                     "embed": r_profile, "view": UserVoteView()}))
-
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -4047,7 +4045,6 @@ class UserVoteView(discord.ui.View):
                 embeds = [r_profile, add_case, reason_embed]
                 await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                     "embeds": embeds, "view": UserVoteView()}))
-
             else:  # new case exists
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -5007,7 +5004,7 @@ class ServerProofsView(discord.ui.View):
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
-                accepted_by = interaction.user
+                accepted_by = interaction.user.id
                 add_case_list[5] = f"<@{interaction.user.id}>"
                 #
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
@@ -6340,7 +6337,7 @@ class ServerVoteView(discord.ui.View):
             guild_data = session["guild_data"]
             requested_by = session["requested_by"]
             channel_id = session["channel_id"]
-            message_id = interaction.message.id
+            message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
             add_case_list = session["add_case_list"]
             title = session["title"]
@@ -6553,7 +6550,7 @@ class ServerVoteView(discord.ui.View):
             guild_data = session["guild_data"]
             requested_by = session["requested_by"]
             channel_id = session["channel_id"]
-            message_id = interaction.message.id
+            message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
             add_case_list = session["add_case_list"]
             title = session["title"]
@@ -6675,16 +6672,13 @@ class ServerVoteView(discord.ui.View):
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
             guild_data = session["guild_data"]
-            requested_by = session["requested_by"]
             channel_id = session["channel_id"]
-            message_id = interaction.message.id
             r_profile_list = session["r_profile_list"]
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
-            guild_id = session["guild_id"]
             agree_users, disagree_users = await handle_vote(interaction, session, "remove")
             #
             r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
@@ -6718,7 +6712,7 @@ class ServerVoteView(discord.ui.View):
             guild_data = session["guild_data"]
             requested_by = session["requested_by"]
             channel_id = session["channel_id"]
-            message_id = interaction.message.id
+            message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
             add_case_list = session["add_case_list"]
             title = session["title"]
