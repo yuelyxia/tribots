@@ -396,25 +396,25 @@ old_message_edit_queue = asyncio.Queue()
 async def old_message_edit_worker():
     while True:
         message, kwargs = await old_message_edit_queue.get()
-        thread_id = getattr(message.channel, "id", None)
-        lock = get_lock(thread_id)
-        async with lock:
-            try:
-                await message.edit(**kwargs)
-            except discord.HTTPException as e:
-                if e.code == 30046:
-                    await asyncio.sleep(5)
-                    await old_message_edit_queue.put((message, kwargs))
-                else:
-                    print(e)
-        old_message_edit_queue.task_done()
-        await asyncio.sleep(0.5)
-
-thread_locks = {}
-def get_lock(thread_id):
-    if thread_id not in thread_locks:
-        thread_locks[thread_id] = asyncio.Lock()
-    return thread_locks[thread_id]
+        try:
+            await message.edit(**kwargs)
+        except discord.HTTPException as e:
+            if e.code == 30046:
+                await asyncio.sleep(5)
+                await old_message_edit_queue.put((message, kwargs))
+            elif e.code in [50083]:
+                try:
+                    thread = message.channel
+                    await thread.edit(archived=False, locked=False)
+                    await asyncio.sleep(1)
+                    await message.edit(**kwargs)
+                    await asyncio.sleep(1)
+                    await thread.edit(archived=True, locked=True)
+                except Exception as inner_e:
+                    print(inner_e)
+            else:
+                print(e)
+        await asyncio.sleep(5)
 
 # publish queue
 
@@ -4032,10 +4032,8 @@ class UserVoteView(discord.ui.View):
                     sr_weekly_profile["weekly_reviews"]+=1
                     staffweeklycol.replace_one(sr_query, sr_weekly_profile)
                 new_name = f"p-{interaction.channel.name}"
-                lock = get_lock(interaction.channel.id)
-                async with lock:
-                    await old_message_edit_queue.join()
-                    await interaction.channel.edit(name=new_name, archived=True, locked=True)
+                await asyncio.sleep(2)
+                await interaction.channel.edit(name=new_name, archived=True, locked=True)
 
             #
             if not add_case_list:  # only alts edited
@@ -4161,10 +4159,8 @@ class UserVoteView(discord.ui.View):
                         voter_profile["votes"]+=1
                         trusteduserscol.replace_one(voter_query, voter_profile)
                 new_name = f"r-{interaction.channel.name}"
-                lock = get_lock(interaction.channel.id)
-                async with lock:
-                    await old_message_edit_queue.join()
-                    await interaction.channel.edit(name=new_name, archived=True, locked=True)
+                await asyncio.sleep(2)
+                await interaction.channel.edit(name=new_name, archived=True, locked=True)
                 return
             if not add_case_list:  # only alts edited
                 await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
@@ -4435,11 +4431,8 @@ class UserVoteView(discord.ui.View):
                     sr_weekly_profile["weekly_reviews"]+=1
                     staffweeklycol.replace_one(sr_query, sr_weekly_profile)
                 new_name = f"p-{interaction.channel.name}"
-                lock = get_lock(interaction.channel.id)
-                async with lock:
-                    await old_message_edit_queue.join()
-                    await interaction.channel.edit(name=new_name, archived=True, locked=True)
-
+                await asyncio.sleep(2)
+                await interaction.channel.edit(name=new_name, archived=True, locked=True)
             else:
                 await interaction.followup.send("You do not have permission to publish the report.", ephemeral=True)
 
@@ -6528,11 +6521,8 @@ class ServerVoteView(discord.ui.View):
                     sr_weekly_profile["weekly_reviews"]+=1
                     staffweeklycol.replace_one(sr_query, sr_weekly_profile)
                 new_name = f"p-{interaction.channel.name}"
-                lock = get_lock(interaction.channel.id)
-                async with lock:
-                    await old_message_edit_queue.join()
-                    await interaction.channel.edit(name=new_name, archived=True, locked=True)
-
+                await asyncio.sleep(2)
+                await interaction.channel.edit(name=new_name, archived=True, locked=True)
                 return
 
             #
@@ -6655,10 +6645,8 @@ class ServerVoteView(discord.ui.View):
                         voter_profile["votes"]+=1
                         trusteduserscol.replace_one(voter_query, voter_profile)
                 new_name = f"r-{interaction.channel.name}"
-                lock = get_lock(interaction.channel.id)
-                async with lock:
-                    await old_message_edit_queue.join()
-                    await interaction.channel.edit(name=new_name, archived=True, locked=True)
+                await asyncio.sleep(2)
+                await interaction.channel.edit(name=new_name, archived=True, locked=True)
                 return
             #
             if not add_case_list:  # only owner edited
@@ -6917,10 +6905,8 @@ class ServerVoteView(discord.ui.View):
                     sr_weekly_profile["weekly_reviews"]+=1
                     staffweeklycol.replace_one(sr_query, sr_weekly_profile)
                 new_name = f"p-{interaction.channel.name}"
-                lock = get_lock(interaction.channel.id)
-                async with lock:
-                    await old_message_edit_queue.join()
-                    await interaction.channel.edit(name=new_name, archived=True, locked=True)
+                await asyncio.sleep(2)
+                await interaction.channel.edit(name=new_name, archived=True, locked=True)
             else:
                 await interaction.followup.send("You do not have permission to publish the report.", ephemeral=True)
 
@@ -7296,7 +7282,8 @@ async def disable_vote(interaction: discord.Interaction, message_id: str):
             thread = message.channel
             new_name = f"d-{thread.name}"
             await interaction.response.send_message(f"Vote has been disabled by {interaction.user.mention}.")
-            await thread.edit(name=new_name, archived=True)
+            await asyncio.sleep(2)
+            await thread.edit(name=new_name, archived=True, locked=True)
         else:
             await interaction.response.send_message("That is not a valid staff vote. Please try again.", ephemeral=True)
 
