@@ -5004,7 +5004,7 @@ class ServerProofsView(discord.ui.View):
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
-                accepted_by = interaction.user.id
+                accepted_by = interaction.user
                 add_case_list[5] = f"<@{interaction.user.id}>"
                 #
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
@@ -6726,7 +6726,7 @@ class ServerVoteView(discord.ui.View):
             sr_check = get(interaction.user.guild.roles, id=sr_role) in interaction.user.roles and interaction.user.id != requested_by and len(
                 agree_users) >= 4
             if o5_check or sr_check:
-                accepted_by = interaction.user
+                accepted_by = interaction.user.id
                 server_query = {"_id": str(guild_id)}
                 server_profile = serverscol.find_one(server_query)
                 if server_profile:  # if editing existing reported user
