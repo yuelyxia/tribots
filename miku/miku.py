@@ -384,6 +384,19 @@ async def set_srquota(interaction: discord.Interaction, quota: int, type: Litera
 
 # text commands
 
+def get_staff_rank(member):
+    if get(member.guild.roles, id=o5_role) in member.roles:
+        return "Overseer"
+    elif get(member.guild.roles, id=adm_role) in member.roles:
+        return "Admin"
+    elif get(member.guild.roles, id=sr_role) in member.roles:
+        return "Senior Reporter"
+    elif get(member.guild.roles, id=rep_role) in member.roles:
+        return "Reporter"
+    elif get(member.guild.roles, id=tr_role) in member.roles:
+        return "Trial Reporter"
+    return "Staff"
+
 @bot.command(name="qh")
 async def quota_history(ctx, user_id: str = None):
     target_id = user_id or str(ctx.author.id)
@@ -394,70 +407,84 @@ async def quota_history(ctx, user_id: str = None):
     if not weekly_profile:
         return await ctx.send("No quota history found for this user.")
     embeds = []
+    rank = get_staff_rank(member)
+    profile = discord.Embed(colour=0xffffff)
+    profile.set_thumbnail(url=f"{member.display_avatar}")
+    profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
+    embeds.append(profile)
     is_sr = any(role.id == sr_role for role in member.roles)
     if is_sr:
+        reviews_history = weekly_profile.get("reviews_quota_list", [])
+        reviews_embed = discord.Embed(title="reviews quota history", colour=0xffffff)
+        desc = ""
+        for i, entry in enumerate(reviews_history[-7:], start=1):
+            done, quota, ratio = entry
+            quota_display = "FULL BREAK" if quota == -1 else str(quota)
+            ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
+            desc += (
+                f"\nWeek {i}　–　**{done}** / {quota_display}　–　`{ratio_display}`")
+        reviews_embed.description = (f"Staff: {member.mention}\n" + desc)
         current_reviews = weekly_profile.get("weekly_reviews", 0)
         current_reviews_quota = (
             get_quota_config().get("sr_reviews_quota", 0)
         )
-        reviews_history = weekly_profile.get("reviews_quota_list", [])
-        reviews_embed = discord.Embed(
-            title="reviews quota history",
-            description=f"User: {member.mention}",
-            colour=0xffffff
-        )
-        for i, entry in enumerate(reviews_history[-8:], start=1):
-            done, quota, ratio = entry
-            quota_display = "FULL BREAK" if quota == -1 else str(quota)
-            ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
-            reviews_embed.add_field(
-                name=f"Week {i}",
-                value=f"Done: **{done}** / {quota_display}\nRatio: `{ratio_display}`",
-                inline=False
-            )
-        current_review_ratio = (
+        current_reviews_ratio = (
             round(min(current_reviews / current_reviews_quota, 1), 2)
             if current_reviews_quota > 0 else 0
         )
-        reviews_embed.add_field(
-            name="Current Week",
-            value=(
-                f"Done: **{current_reviews}** / {current_reviews_quota}\n"
-                f"Ratio: `{current_review_ratio:.2f}`"
-            ),
-            inline=False
+        quota_display = "FULL BREAK" if current_reviews_quota == -1 else str(current_reviews_quota)
+        ratio_display = "N/A" if current_reviews_ratio == -1 else f"{current_reviews_ratio:.2f}"
+        reviews_embed.description+= f"\nCurrent Week　–　**{current_reviews}** / {quota_display}　–　`{ratio_display}`"
+        historical_reviews_ratios = [
+            x[2]
+            for x in reviews_history[-7:]
+            if x[2] != -1
+        ]
+        if current_reviews_ratio != -1:
+            historical_reviews_ratios.append(current_reviews_ratio)
+        overall_reviews_ratio = (
+            round(sum(historical_reviews_ratios) / len(historical_reviews_ratios), 3)
+            if historical_reviews_ratios else 0
         )
+        reviews_embed.description+=f"\n\n**Overall Ratio**　ㆍ　`{overall_reviews_ratio:.2f}`"
         embeds.append(reviews_embed)
+    reports_history = weekly_profile.get("reports_quota_list", [])
+    reports_embed = discord.Embed(
+        title="reports quota history", colour=0xffffff
+    )
+    desc = ""
+    for i, entry in enumerate(reports_history[-7:], start=1):
+        done, quota, ratio = entry
+        quota_display = "FULL BREAK" if quota == -1 else str(quota)
+        ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
+        desc += (
+            f"\nWeek {i}　–　**{done}** / {quota_display}　–　`{ratio_display}`")
+    reports_embed.description = (f"Staff: {member.mention}\n" + desc)
     current_reports = weekly_profile.get("weekly_reports", 0)
     current_reports_quota = (
         get_quota_config().get("reports_quota", 0)
     )
-    reports_history = weekly_profile.get("reports_quota_list", [])
-    reports_embed = discord.Embed(
-        title="reports quota history",
-        description=f"Staff: {member.mention}",
-        colour=0xffffff
-    )
-    for i, entry in enumerate(reports_history[-8:], start=1):
-        done, quota, ratio = entry
-        quota_display = "FULL BREAK" if quota == -1 else str(quota)
-        ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
-        reports_embed.add_field(
-            name=f"Week {i}",
-            value=f"Done: **{done}** / {quota_display}\nRatio: `{ratio_display}`",
-            inline=False
-        )
-    current_ratio = (
+    current_reports_ratio = (
         round(min(current_reports / current_reports_quota, 1), 2)
         if current_reports_quota > 0 else 0
     )
-    reports_embed.add_field(
-        name="Current Week",
-        value=f"Done: **{current_reports}** / {current_reports_quota}\nRatio: `{current_ratio:.2f}`",
-        inline=False
+    quota_display = "FULL BREAK" if current_reports_quota == -1 else str(current_reports_quota)
+    ratio_display = "N/A" if current_reports_ratio == -1 else f"{current_reports_ratio:.2f}"
+    reports_embed.description += f"\nCurrent Week　–　**{current_reports}** / {quota_display}　–　`{ratio_display}`"
+    historical_reports_ratios = [
+        x[2]
+        for x in reports_history[-7:]
+        if x[2] != -1
+    ]
+    if current_reports_ratio != -1:
+        historical_reports_ratios.append(current_reports_ratio)
+    overall_reports_ratio = (
+        round(sum(historical_reports_ratios) / len(historical_reports_ratios), 3)
+        if historical_reports_ratios else 0
     )
+    reports_embed.description+=f"\n\n**Overall Ratio**　ㆍ　`{overall_reports_ratio:.2f}`"
     embeds.append(reports_embed)
-    await ctx.send(embeds=embeds)
+    await ctx.reply(embeds=embeds)
 
 @bot.command()
 async def help(ctx):
