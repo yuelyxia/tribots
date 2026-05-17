@@ -1027,6 +1027,7 @@ async def import_all(interaction: discord.Interaction):
         await msg.edit(content=f"Successfully imported {count} alt intrusions.")
 
 alts = app_commands.Group(name="alts", description="Add/remove alts.")
+bot.tree.add_command(alts)
 
 @alts.command(name="add", description="Adds a pair of users as alts.")
 @app_commands.describe(user1="User 1", user2="User 2", reason="Reason/Proof")
