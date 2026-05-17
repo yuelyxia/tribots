@@ -604,6 +604,8 @@ async def rn(ctx, *, new_name: str):
             await ctx.send("This command can only be used in a channel or thread.")
 @rn.error
 async def rn_error(ctx, error):
+    if ctx.guild.id == TRI_Archive or ctx.guild.id == Tethys:
+        return
     if isinstance(error, commands.CommandOnCooldown):
         remaining = error.retry_after  # cooldown time in seconds
         return await ctx.send(f"This command is on cooldown. Retry in {round(remaining)} seconds.")
