@@ -145,12 +145,12 @@ def get_quota_config():
         "sr_reviews_quota": 0
     }
 
-@tasks.loop(time=datetime.time(hour=9, minute=9))
+@tasks.loop(time=datetime.time(hour=0, minute=0))
 async def weekly_quota():
     guild = bot.get_guild(TRI_Archive)
     if not guild:
         return
-    if datetime.datetime.now(datetime.timezone.utc).weekday() != 5:
+    if datetime.datetime.now(datetime.timezone.utc).weekday() != 0:
         return
     lb_channel = bot.get_channel(LB_CHANNEL)
     if not lb_channel:
