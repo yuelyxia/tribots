@@ -6924,11 +6924,10 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         "$or": [{"user_id": id}, {"guild_id": id}]
     })
     if not session:
-        return await interaction.followup.send("No ongoing report found.", ephemeral=True)
+        return await interaction.followup.send("Unable to find ongoing report.", ephemeral=True)
     requested_by = session["requested_by"]
     if interaction.user.id != requested_by:
         return await interaction.followup.send("You are not authorised to edit this report.", ephemeral=True)
-    message = None
     try:
         channel = interaction.channel
         message = await channel.fetch_message(session["_id"])
@@ -6943,9 +6942,9 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         )
     is_user_report = "user_id" in session
     edited_fields = []
-    r_profile_list = session["r_profile_list"]
-    add_case_list = session["add_case_list"]
-    add_case_invalid = not isinstance(add_case_list, list) or len(add_case_list) <= 1 or add_case_list == ""
+    r_profile_list = session.get("r_profile_list", [])
+    add_case_list = session.get("add_case_list", [])
+    add_case_invalid = not isinstance(add_case_list, list) or len(add_case_list) < 2
     if any([tags, games, reason, contributor, proofs]) and (add_case_invalid or restricted_flow):
         return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
     title = session["title"]
@@ -7084,21 +7083,26 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         if add_case_list:
             add_case = format_server_add_case(add_case_list, case_title)
             embeds.append(add_case)
-
-    try:
-        vote_channel_id = session.get("vote_channel_id")
-        if vote_channel_id:
+    if not embeds:
+        return
+    vote_message = None
+    ticket_message = None
+    vote_channel_id = session.get("vote_channel_id")
+    if vote_channel_id:
+        try:
             vote_channel = await bot.fetch_channel(vote_channel_id)
             vote_message = await vote_channel.fetch_message(session["_id"])
-            await old_message_edit_queue.put((vote_message, {"embeds": embeds}))
-    except:
-        pass
-    try:
-        thread = await bot.fetch_channel(session["channel_id"])
-        ticket_message = await thread.fetch_message(session["message_id"])
-        await old_message_edit_queue.put((ticket_message, {"embeds": embeds}))
-    except:
-        pass
+        except:
+            vote_message = None
+    if not vote_message:
+        try:
+            thread = await bot.fetch_channel(session["channel_id"])
+            ticket_message = await thread.fetch_message(session["_id"])
+        except:
+            ticket_message = None
+    target = vote_message or ticket_message
+    if target:
+        await old_message_edit_queue.put((target, {"embeds": embeds}))
 
     if edited_fields:
         edit_embed = discord.Embed(
@@ -7107,8 +7111,6 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
                 f"<:reply:1459162938303578213>　{x}" for x in edited_fields), colour=0xffffff)
         edit_embed.set_footer(text=f"Edited by {interaction.user}", icon_url=interaction.user.display_avatar)
         await interaction.channel.send(embed=edit_embed)
-
-
 
 
 # staff utils
