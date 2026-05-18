@@ -155,13 +155,22 @@ async def weekly_quota():
     lb_channel = bot.get_channel(LB_CHANNEL)
     if not lb_channel:
         return
+    reviews_role_categories = {
+        o5_role: ("overseers", []),
+        adm_role: ("admins", []),
+        sr_role: ("senior reporters", [])
+    }
+    reports_role_categories = {
+        o5_role: ("overseers", []),
+        adm_role: ("admins", []),
+        sr_role: ("senior reporters", []),
+        rep_role: ("reporters", []),
+        tr_role: ("trial reporters", [])
+    }
     sr_not_met_quota = []
     not_met_quota = []
     sr_demotion_list = []
     demotion_list = []
-    o5_reviews, adm_reviews, sr_reviews = [], [], []
-    o5_reports, adm_reports, sr_reports = [], [], []
-    rep_reports, tr_reports = [], []
     total_reviews = 0
     total_reports = 0
     o5_r = get(guild.roles, id=o5_role)
@@ -180,20 +189,19 @@ async def weekly_quota():
         if quota in (-1, 0):
             return -1 if quota == -1 else 1
         return round(min(done / quota, 1), 3)
+
+    config = staffweeklycol.find_one({"_id": "global"}) or {
+        "reports_quota": 0,
+        "sr_reports_quota": 0,
+        "sr_reviews_quota": 0
+    }
     staff_members = set(o5_r.members + adm_r.members + sr_r.members + rep_r.members + tr_r.members)
     for member in staff_members:
         staff_id = str(member.id)
         staff_profile = trusteduserscol.find_one({"_id": staff_id}) or {}
         weekly_profile = staffweeklycol.find_one({"_id": staff_id}) or {}
-        reviews = staff_profile.get("reviews", 0)
-        reports = staff_profile.get("reports", 0)
         weekly_reviews = int(weekly_profile.get("weekly_reviews", 0))
         weekly_reports = int(weekly_profile.get("weekly_reports", 0))
-        config = staffweeklycol.find_one({"_id": "global"}) or {
-            "reports_quota": 0,
-            "sr_reports_quota": 0,
-            "sr_reviews_quota": 0
-        }
         is_sr = any(role.id == sr_role for role in member.roles)
         rq = config["reports_quota"]
         rq = apply_break(rq, member)
@@ -237,69 +245,58 @@ async def weekly_quota():
                     if member:
                         await send_low_performance_dm(member, ravg)
 
-        staffweeklycol.update_one(
-            {"_id": staff_id},
-            {"$set": {"weekly_reports": 0, "weekly_reviews": 0}}
-        )
+        matched_role = None
+        for role_id in reports_role_categories:
+            if get(member.roles, id=role_id):
+                matched_role = role_id
+                break
+        if not matched_role:
+            continue
+        reports = staff_profile.get("reports", 0)
+        weekly_reports = weekly_profile.get("weekly_reports", 0)
+        reports_role_categories[matched_role][1].append((member, reports, weekly_reports))
 
-        if o5_r in member.roles:
-            o5_reviews.append((member, reviews, weekly_reviews))
-            o5_reports.append((member, reports, weekly_reports))
-        elif adm_r in member.roles:
-            adm_reviews.append((member, reviews, weekly_reviews))
-            adm_reports.append((member, reports, weekly_reports))
-        elif sr_r in member.roles:
-            sr_reviews.append((member, reviews, weekly_reviews))
-            sr_reports.append((member, reports, weekly_reports))
-        elif rep_r in member.roles:
-            rep_reports.append((member, reports, weekly_reports))
-        elif tr_r in member.roles:
-            tr_reports.append((member, reports, weekly_reports))
+        matched_role = None
+        for rid in reviews_role_categories:
+            if get(member.roles, id=rid):
+                matched_role = rid
+                break
+        if not matched_role:
+            continue
+        reviews = staff_profile.get("reviews", 0)
+        weekly_reviews = weekly_profile.get("weekly_reviews", 0)
+        reviews_role_categories[matched_role][1].append((member, reviews, weekly_reviews))
+
     # reviews
-    o5_lbr = discord.Embed(colour=0xffffff)
-    o5_lbr.description = "✦　　┈　　overseers"
-    for m, r, w in o5_reviews:
-        total_reviews += w
-        o5_lbr.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
-    adm_lbr = discord.Embed(colour=0xffffff)
-    adm_lbr.description = "✦　　┈　　admins"
-    for m, r, w in adm_reviews:
-        total_reviews += w
-        adm_lbr.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
-    sr_lbr = discord.Embed(colour=0xffffff)
-    sr_lbr.description = "✦　　┈　　senior reporters"
-    for m, r, w in sr_reviews:
-        total_reviews += w
-        sr_lbr.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
+    embeds = []
+    for role_id, (title, staff_list) in reviews_role_categories.items():
+        embed = discord.Embed(colour=0xffffff)
+        embed.description = f"✦　　┈　　{title}"
+        staff_list.sort(key=lambda x: x[2], reverse=True)
+        for member, reviews, weekly_reviews in staff_list:
+            total_reviews += weekly_reviews
+            embed.description += (
+                f"\n-# <:reply:1459162938303578213>　"
+                f"{member.mention}　–　"
+                f"**{reviews}** all ㆍ **{weekly_reviews}** week")
+        embeds.append(embed)
     await lb_channel.send(f"## _ _　　　weekly leaderboards .ᐟ\n_ _　　　　　　||<@&{staff_role}>||")
-    await lb_channel.send("## _ _　　　reviews leaderboard", embeds=[o5_lbr, adm_lbr, sr_lbr])
+    await lb_channel.send("## _ _　　　reviews leaderboard", embeds=embeds)
     # reports
-    o5_lb = discord.Embed(colour=0xffffff)
-    o5_lb.description = "✦　　┈　　overseers"
-    for m, r, w in o5_reports:
-        total_reports += w
-        o5_lb.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
-    adm_lb = discord.Embed(colour=0xffffff)
-    adm_lb.description = "✦　　┈　　admins"
-    for m, r, w in adm_reports:
-        total_reports += w
-        adm_lb.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
-    sr_lb = discord.Embed(colour=0xffffff)
-    sr_lb.description = "✦　　┈　　senior reporters"
-    for m, r, w in sr_reports:
-        total_reports += w
-        sr_lb.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
-    rep_lb = discord.Embed(colour=0xffffff)
-    rep_lb.description = "✦　　┈　　reporters"
-    for m, r, w in rep_reports:
-        total_reports += w
-        rep_lb.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
-    tr_lb = discord.Embed(colour=0xffffff)
-    tr_lb.description = "✦　　┈　　trial reporters"
-    for m, r, w in tr_reports:
-        total_reports += w
-        tr_lb.description += f"\n-# <:reply:1459162938303578213>　{m.mention}　–　**{r}** all ㆍ {w} week"
-    await lb_channel.send("## _ _　　　reports leaderboard", embeds=[o5_lb, adm_lb, sr_lb, rep_lb, tr_lb])
+    embeds = []
+    for role_id, (title, staff_list) in reports_role_categories.items():
+        embed = discord.Embed(colour=0xffffff)
+        embed.description = f"✦　　┈　　{title}"
+        # optional sorting
+        staff_list.sort(key=lambda x: x[2], reverse=True)
+        for member, reports, weekly_reports in staff_list:
+            total_reports += weekly_reports
+            embed.description += (
+                f"\n-# <:reply:1459162938303578213>　"
+                f"{member.mention}　–　"
+                f"**{reports}** all ㆍ **{weekly_reports}** week")
+        embeds.append(embed)
+    await lb_channel.send("## _ _　　　reports leaderboard", embeds=embeds)
     summary = discord.Embed(colour=0xffffff)
     summary.description = (
         f"✦　　┈　　total reviews　　┈　　**{total_reviews}**\n"
@@ -368,6 +365,11 @@ async def weekly_quota():
         demotion_embed.description = desc
         if desc:
             await quota_channel.send(embed=demotion_embed)
+
+    staffweeklycol.update_many(
+        {},
+        {"$set": {"weekly_reports": 0, "weekly_reviews": 0}}
+    )
 
 settings = app_commands.Group(name="set", description="Set.")
 bot.tree.add_command(settings)
