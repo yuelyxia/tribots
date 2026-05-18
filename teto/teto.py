@@ -6928,13 +6928,25 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
     requested_by = session["requested_by"]
     if interaction.user.id != requested_by:
         return await interaction.followup.send("You are not authorised to edit this report.", ephemeral=True)
+    message = None
+    try:
+        channel = interaction.channel
+        message = await channel.fetch_message(session["_id"])
+    except:
+        return await interaction.followup.send("Report not found in this channel.", ephemeral=True)
+    restricted_flow = False
+    if message and message.content:
+        restricted_flow = (
+                message.content.startswith("Editing alts for") or
+                message.content.startswith("Editing owner for") or
+                message.content.startswith("Appealing for")
+        )
     is_user_report = "user_id" in session
     edited_fields = []
     r_profile_list = session["r_profile_list"]
     add_case_list = session["add_case_list"]
-    editable_case = isinstance(add_case_list, list) and len(add_case_list) > 1
-    attempted_case_edit = any([tags, games, reason, contributor, proofs])
-    if attempted_case_edit and not editable_case:
+    add_case_invalid = not isinstance(add_case_list, list) or len(add_case_list) <= 1 or add_case_list == ""
+    if any([tags, games, reason, contributor, proofs]) and (add_case_invalid or restricted_flow):
         return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
     title = session["title"]
     case_title = session["case_title"]
@@ -6962,7 +6974,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             case_title = sorted_tags[0]
             r_profile_list[1] = selected_string(sorted_tags[1:])
             add_case_list[1] = ", ".join(sorted_tags)
-            edited_fields.append(f"tags　–　{", ".join(sorted_tags)}")
+            edited_fields.append(f"tags　–　{', '.join(sorted_tags)}")
             all_tags = []
             existing_cases = []
             if is_user_report:
@@ -6996,7 +7008,10 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         add_case_list[2] = games_string
         edited_fields.append(f"games　–　{games_string}")
     if reason is not None:
-        add_case_list[3] = reason
+        if is_user_report:
+            add_case_list[3] = reason
+        else:
+            add_case_list[2] = reason
         edited_fields.append("reason updated")
     if contributor is not None:
         contributor_value = None
