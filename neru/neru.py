@@ -13,6 +13,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+from typing import Optional, Literal
+
 TOKEN = os.getenv("TOKEN")
 CLIENT = os.getenv("CLIENT")
 
@@ -30,6 +32,7 @@ sr_role = 1375254710952661102
 adm_role = 1375276457890287748
 
 NERU_LOGS = 1460858907491569816
+PROOFS_CHANNEL = 1455055877034868769
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
@@ -400,7 +403,7 @@ class RelatedIDsView(discord.ui.View):
         await interaction.response.send_message(f"`{string}`", ephemeral=True)
 
 
-@bot.tree.command(name="cleanup", description="Cleanup alts database.")
+"""@bot.tree.command(name="cleanup", description="Cleanup alts database.")
 async def cleanup(interaction: discord.Interaction):
     if interaction.user.id != 1303291812282372137:  # replace with your admin ID
         await interaction.response.send_message("Unauthorized.", ephemeral=True)
@@ -409,7 +412,7 @@ async def cleanup(interaction: discord.Interaction):
     def repair_job():
         id_pattern = re.compile(r"^\d{17,20}$")
         all_docs = list(altscol.find({}))
-        fixed_count = 0
+        processed_count = 0
         for doc in all_docs:
             user_id = doc["_id"]
 
@@ -439,7 +442,7 @@ async def cleanup(interaction: discord.Interaction):
             }
 
             altscol.replace_one({"_id": user_id}, new_doc)
-            fixed_count += 1
+            processed_count += 1
 
         all_docs = list(altscol.find({}))
 
@@ -447,7 +450,6 @@ async def cleanup(interaction: discord.Interaction):
             user_id = doc["_id"]
             for alt in doc["alts"]:
                 alt_doc = altscol.find_one({"_id": alt})
-
                 if not alt_doc:
                     # create missing node
                     alt_doc = {"_id": alt, "alts": [], "proofs": []}
@@ -457,17 +459,17 @@ async def cleanup(interaction: discord.Interaction):
 
                 altscol.replace_one({"_id": alt}, alt_doc, upsert=True)
 
-    fixed_count = await asyncio.to_thread(repair_job)
+    processed_count = await asyncio.to_thread(repair_job)
 
     await interaction.followup.send(
-        f"Cleanup complete. Processed {fixed_count} documents.",
+        f"Cleanup complete. Processed {processed_count} documents.",
         ephemeral=True
-    )
+    )"""
 
 imports = app_commands.Group(name="import", description="Import Double Counter alt intrusions.")
 
-@imports.command(name="dc", description="Import Double Counter alt intrusions from recent 200 messages.")
-async def import_dc(interaction: discord.Interaction):
+@imports.command(name="recent", description="Import Double Counter alt intrusions from recent 200 messages.")
+async def import_recent(interaction: discord.Interaction):
     neru_logs_channel = bot.get_channel(NERU_LOGS)
     channel = interaction.channel
     if channel:
@@ -745,7 +747,7 @@ async def import_dc(interaction: discord.Interaction):
             await interaction.followup.send(f"Success!", ephemeral=True)
         await msg.edit(content=f"Successfully imported {count} alt intrusions.")
 
-@imports.command(name="all", description="Import Double Counter alt intrusions from all messages.")
+@imports.command(name="all", description="Import Double Counter alt intrusions from all messages in this channel.")
 async def import_all(interaction: discord.Interaction):
     if interaction.user.id != 1303291812282372137:
         return
@@ -1030,13 +1032,26 @@ alts = app_commands.Group(name="alts", description="Add/remove alts.")
 bot.tree.add_command(alts)
 
 @alts.command(name="add", description="Adds a pair of users as alts.")
-@app_commands.describe(user1="User 1", user2="User 2", reason="Reason/Proof")
+@app_commands.describe(user1="User 1", user2="User 2", image="Image")
 @app_commands.checks.has_role(adm_role)
-async def alts_add(interaction: discord.Interaction, user1: str, user2: str, reason: str):
-    if interaction.channel.id != NERU_LOGS:
-        await interaction.response.send_message("This command does not work here.", ephemeral=True)
-        return
-    proof = f"{reason} ┈ added by {interaction.user.mention}"
+async def alts_add(interaction: discord.Interaction, user1: str, user2: str, image: discord.Attachment):
+    if user1 == user2:
+        return await interaction.response.send_message(
+            "You cannot add the user as alt of themselves.",
+            ephemeral=True
+        )
+    async def upload_attachment(att):
+        if not att:
+            return None
+        if not att.content_type.startswith("image/"):
+            return None
+        channel = bot.get_channel(PROOFS_CHANNEL)
+        sent = await channel.send(file=await att.to_file())
+        return sent.attachments[0].url if sent.attachments else None
+    url = await upload_attachment(image)
+    if not url:
+        return await interaction.response.send_message("Please provide a valid image.")
+    proof = f"{url} ┈ added by {interaction.user.mention}"
     if user1.strip("<@>") != user2.strip("<@>"):
         try:
             alt1 = await bot.fetch_user(int(user1.strip("<@>")))
@@ -1118,7 +1133,6 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, rea
                         alt_query = {"_id": alt}
                         alt_info = altscol.find_one(alt_query)
                         if not alt_info:
-                            print(f"[WARNING] Missing alt: {alt}")
                             continue
                         alt_info["alts"].append(alt2_id)
                         alt_info["proofs"].append(proof)
@@ -1210,6 +1224,51 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, rea
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                     else:  # none reported
                         await interaction.response.send_message(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+
+@alts.command(name="remove", description="Removes a pair of users as alts.")
+@app_commands.describe(user1="User 1", user2="User 2")
+@app_commands.checks.has_role(adm_role)
+async def alts_remove(interaction: discord.Interaction, user1: str, user2: str):
+    def parse_id(u: str):
+        return u.strip("<@!>")
+    alt1_id = parse_id(user1)
+    alt2_id = parse_id(user2)
+    if alt1_id == alt2_id:
+        return await interaction.response.send_message(
+            "You cannot remove the user as alt of themselves.",
+            ephemeral=True
+        )
+    doc1 = altscol.find_one({"_id": alt1_id})
+    doc2 = altscol.find_one({"_id": alt2_id})
+    if not doc1 and not doc2:
+        return await interaction.response.send_message(
+            "Neither user is logged as an alt.",
+            ephemeral=True
+        )
+    def remove_pair(doc, target_id):
+        if not doc:
+            return doc
+        alts = doc.get("alts", [])
+        proofs = doc.get("proofs", [])
+        new_alts = []
+        new_proofs = []
+        for i in range(len(alts)):
+            if alts[i] != target_id:
+                new_alts.append(alts[i])
+                if i < len(proofs):
+                    new_proofs.append(proofs[i])
+        doc["alts"] = new_alts
+        doc["proofs"] = new_proofs
+        return doc
+    if doc1:
+        doc1 = remove_pair(doc1, alt2_id)
+        altscol.replace_one({"_id": alt1_id}, doc1)
+    if doc2:
+        doc2 = remove_pair(doc2, alt1_id)
+        altscol.replace_one({"_id": alt2_id}, doc2)
+    return await interaction.response.send_message(
+        f"`{alt1_id}` and `{alt2_id}` have been removed as alts."
+    )
 
 @bot.command()
 async def sync(ctx: commands.Context):
