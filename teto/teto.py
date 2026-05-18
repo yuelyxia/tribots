@@ -6918,7 +6918,7 @@ bot.tree.add_command(edit)
     contributor="New Contributor.",
     proofs="Input anything."
 )
-async def edit_report(interaction: discord.Interaction, id: str, alts: str = None, owner: str = None, tags: str = None, games: str = None, reason: str = None, contributor: str = None, proofs: str = None):
+async def edit_report(interaction: discord.Interaction, id: int, alts: str = None, owner: str = None, tags: str = None, games: str = None, reason: str = None, contributor: str = None, proofs: str = None):
     await interaction.response.defer(ephemeral=True)
     session = inprogresscol.find_one({
         "$or": [{"user_id": id}, {"guild_id": id}]
