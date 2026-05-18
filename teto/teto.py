@@ -6918,8 +6918,10 @@ bot.tree.add_command(edit)
     contributor="New Contributor.",
     proofs="Input anything."
 )
-async def edit_report(interaction: discord.Interaction, id: int, alts: str = None, owner: str = None, tags: str = None, games: str = None, reason: str = None, contributor: str = None, proofs: str = None):
+async def edit_report(interaction: discord.Interaction, id: str, alts: str = None, owner: str = None, tags: str = None, games: str = None, reason: str = None, contributor: str = None, proofs: str = None):
     await interaction.response.defer(ephemeral=True)
+    try: id = int(id)
+    except: return await interaction.followup.send("Please input a valid ID.", ephemeral=True)
     session = inprogresscol.find_one({
         "$or": [{"user_id": id}, {"guild_id": id}]
     })
@@ -7103,10 +7105,10 @@ async def edit_report(interaction: discord.Interaction, id: int, alts: str = Non
     target = vote_message or ticket_message
     if target:
         await old_message_edit_queue.put((target, {"embeds": embeds}))
-
+    await interaction.followup.send("Edited successfully.", ephemeral=True)
     if edited_fields:
         edit_embed = discord.Embed(
-            title="Report Edited",
+            title=f"Edited {id}",
             description="\n".join(
                 f"<:reply:1459162938303578213>　{x}" for x in edited_fields), colour=0xffffff)
         edit_embed.set_footer(text=f"Edited by {interaction.user}", icon_url=interaction.user.display_avatar)
