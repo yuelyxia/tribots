@@ -6904,6 +6904,197 @@ class ServerVoteView(discord.ui.View):
             else:
                 await interaction.followup.send("You do not have permission to publish the report.", ephemeral=True)
 
+edit = app_commands.Group(name="edit", description="Edit.")
+bot.tree.add_command(edit)
+
+@edit.command(name="report", description="Edit an ongoing report.")
+@app_commands.describe(
+    id="User ID or Guild ID",
+    alts="New Alt(s) (user only).",
+    owner="New Owner (server only).",
+    tags="New Tag(s).",
+    games="New Game(s).",
+    reason="New Reason.",
+    contributor="New Contributor.",
+    proofs="Input anything."
+)
+async def edit_report(interaction: discord.Interaction, id: str, alts: str = None, owner: str = None, tags: str = None, games: str = None, reason: str = None, contributor: str = None, proofs: str = None):
+    await interaction.response.defer(ephemeral=True)
+    session = inprogresscol.find_one({
+        "$or": [{"user_id": id}, {"guild_id": id}]
+    })
+    if not session:
+        return await interaction.followup.send("No ongoing report found.", ephemeral=True)
+    requested_by = session["requested_by"]
+    if interaction.user.id != requested_by:
+        return await interaction.followup.send("You are not authorised to edit this report.", ephemeral=True)
+    is_user_report = "user_id" in session
+    edited_fields = []
+    r_profile_list = session["r_profile_list"]
+    add_case_list = session["add_case_list"]
+    editable_case = isinstance(add_case_list, list) and len(add_case_list) > 1
+    attempted_case_edit = any([tags, games, reason, contributor, proofs])
+    if attempted_case_edit and not editable_case:
+        return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
+    title = session["title"]
+    case_title = session["case_title"]
+    if alts is not None and is_user_report:
+        alt_ids = []
+        for alt in alts.split():
+            try:
+                alt_user = await bot.fetch_user(int(alt.strip("<@>")))
+                alt_ids.append(alt_user.id)
+            except:
+                pass
+        r_profile_list[0] = alts_string(alt_ids) if alt_ids else ""
+        edited_fields.append(f"alts　–　{r_profile_list[0]}")
+    if owner is not None and not is_user_report:
+        try:
+            owner_user = await bot.fetch_user(int(owner.strip("<@>")))
+            r_profile_list[0] = owner_user.mention
+            edited_fields.append(f"owner　–　{owner_user.mention}")
+        except:
+            pass
+    if tags is not None:
+        tag_list = [x.strip().title() for x in tags.split(",") if x.strip()]
+        sorted_tags = sort_user_tags(tag_list) if is_user_report else sort_server_tags(tag_list)
+        if sorted_tags:
+            case_title = sorted_tags[0]
+            r_profile_list[1] = selected_string(sorted_tags[1:])
+            add_case_list[1] = ", ".join(sorted_tags)
+            edited_fields.append(f"tags　–　{", ".join(sorted_tags)}")
+            all_tags = []
+            existing_cases = []
+            if is_user_report:
+                user_profile = userscol.find_one({"_id": id})
+            else:
+                user_profile = serverscol.find_one({"_id": id})
+            if user_profile:
+                for k, v in user_profile.items():
+                    if k.isdigit():
+                        existing_cases.append(v)
+            existing_cases.append(add_case_list)
+            for case in existing_cases:
+                try:
+                    case_tags = case[1].split(", ")
+                    for t in case_tags:
+                        all_tags.append(t)
+                except:
+                    pass
+            all_tags = list(dict.fromkeys(all_tags))
+            all_sorted = sort_user_tags(all_tags) if is_user_report else sort_server_tags(all_tags)
+            if all_sorted:
+                title = all_sorted[0]
+    if games is not None and is_user_report:
+        games_map = {g.lower(): g for g in games_list}
+        filtered_games = []
+        for g in games.split(","):
+            key = g.strip().lower()
+            if key in games_map and games_map[key] not in filtered_games:
+                filtered_games.append(games_map[key])
+        games_string = ", ".join(filtered_games) if filtered_games else "N/A"
+        add_case_list[2] = games_string
+        edited_fields.append(f"games　–　{games_string}")
+    if reason is not None:
+        add_case_list[3] = reason
+        edited_fields.append("reason updated")
+    if contributor is not None:
+        contributor_value = None
+        if contributor == "n":
+            contributor_value = "Anonymous"
+        else:
+            try:
+                contributor_user = await bot.fetch_user(int(contributor.strip("<@>")))
+                contributor_value = contributor_user.mention
+            except:
+                pass
+        if is_user_report and contributor_value is not None:
+            add_case_list[6] = contributor_value
+            edited_fields.append(f"contributor　–　{contributor_value}")
+        elif contributor_value is not None:
+            add_case_list[5] = contributor_value
+            edited_fields.append(f"contributor　–　{contributor_value}")
+    if proofs:
+        await interaction.followup.send("Send proofs to be attached to this report.", ephemeral=True)
+        def check(m):
+            return m.author == interaction.user and m.channel == interaction.channel
+        try:
+            msg = await bot.wait_for("message", check=check, timeout=120)
+        except asyncio.TimeoutError:
+            return await interaction.followup.send("You took too long to upload proofs.", ephemeral=True)
+        image_links = []
+        if msg.attachments:
+            for attachment in msg.attachments:
+                if attachment.content_type and attachment.content_type.startswith("image/"):
+                    try:
+                        async with aiohttp.ClientSession() as http_session:
+                            async with http_session.get(attachment.url) as resp:
+                                data = io.BytesIO(await resp.read())
+                                file = discord.File(data, filename=attachment.filename)
+                                channel_to_send = bot.get_channel(PROOFS_CHANNEL)
+                                sent_message = await channel_to_send.send(file=file)
+                                if sent_message.attachments:
+                                    new_image_url = sent_message.attachments[0].url
+                                    image_links.append(new_image_url)
+                    except Exception:
+                        pass
+        if is_user_report:
+            add_case_list[7] = image_links
+            edited_fields.append(f"proofs　–　{len(image_links)} uploaded")
+        else:
+            add_case_list[6] = image_links
+            edited_fields.append(f"proofs　–　{len(image_links)} uploaded")
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Images received from {interaction.user.mention}.",
+                                        embeds=image_embeds, ephemeral=False)
+
+    update_data = {"r_profile_list": r_profile_list, "add_case_list": add_case_list, "title": title,
+                   "case_title": case_title}
+    inprogresscol.update_one(
+        {"_id": session["_id"]},
+        {"$set": update_data}
+    )
+
+    if is_user_report:
+        user = await bot.fetch_user(session["user_id"])
+        r_profile = format_user_r_profile(user, r_profile_list, title)
+        embeds = [r_profile]
+        if add_case_list:
+            add_case = format_user_add_case(add_case_list, case_title)
+            embeds.append(add_case)
+    else:
+        guild_data = session["guild_data"]
+        r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
+        embeds = [r_profile]
+        if add_case_list:
+            add_case = format_server_add_case(add_case_list, case_title)
+            embeds.append(add_case)
+
+    try:
+        vote_channel_id = session.get("vote_channel_id")
+        if vote_channel_id:
+            vote_channel = await bot.fetch_channel(vote_channel_id)
+            vote_message = await vote_channel.fetch_message(session["_id"])
+            await old_message_edit_queue.put((vote_message, {"embeds": embeds}))
+    except:
+        pass
+    try:
+        thread = await bot.fetch_channel(session["channel_id"])
+        ticket_message = await thread.fetch_message(session["message_id"])
+        await old_message_edit_queue.put((ticket_message, {"embeds": embeds}))
+    except:
+        pass
+
+    if edited_fields:
+        edit_embed = discord.Embed(
+            title="Report Edited",
+            description="\n".join(
+                f"<:reply:1459162938303578213>　{x}" for x in edited_fields), colour=0xffffff)
+        edit_embed.set_footer(text=f"Edited by {interaction.user}", icon_url=interaction.user.display_avatar)
+        await interaction.channel.send(embed=edit_embed)
+
+
+
 
 # staff utils
 
