@@ -7105,14 +7105,14 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
     target = vote_message or ticket_message
     if target:
         await old_message_edit_queue.put((target, {"embeds": embeds}))
-    await interaction.followup.send("Edited successfully.", ephemeral=True)
-    if edited_fields:
-        edit_embed = discord.Embed(
-            title=f"Edited {id}",
-            description="\n".join(
-                f"<:reply:1459162938303578213>　{x}" for x in edited_fields), colour=0xffffff)
-        edit_embed.set_footer(text=f"Edited by {interaction.user}", icon_url=interaction.user.display_avatar)
-        await interaction.channel.send(embed=edit_embed)
+        await interaction.followup.send("Edited successfully.", ephemeral=True)
+        if edited_fields:
+            edit_embed = discord.Embed(
+                title=f"Edited {id}",
+                description="\n".join(
+                    f"<:reply:1459162938303578213>　{x}" for x in edited_fields), colour=0xffffff)
+            edit_embed.set_footer(text=f"Edited by {interaction.user}", icon_url=interaction.user.display_avatar)
+            await target.reply(embed=edit_embed)
 
 
 # staff utils
