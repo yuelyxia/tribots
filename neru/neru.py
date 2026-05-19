@@ -1035,8 +1035,9 @@ bot.tree.add_command(alts)
 @app_commands.describe(user1="User 1", user2="User 2", image="Image")
 @app_commands.checks.has_role(adm_role)
 async def alts_add(interaction: discord.Interaction, user1: str, user2: str, image: discord.Attachment):
+    await interaction.response.defer()
     if user1 == user2:
-        return await interaction.response.send_message(
+        return await interaction.followup.send(
             "You cannot add the user as alt of themselves.",
             ephemeral=True
         )
@@ -1050,14 +1051,14 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
         return sent.attachments[0].url if sent.attachments else None
     url = await upload_attachment(image)
     if not url:
-        return await interaction.response.send_message("Please provide a valid image.")
+        return await interaction.followup.send("Please provide a valid image.")
     proof = f"{url} ┈ added by {interaction.user.mention}"
     if user1.strip("<@>") != user2.strip("<@>"):
         try:
             alt1 = await bot.fetch_user(int(user1.strip("<@>")))
             alt2 = await bot.fetch_user(int(user2.strip("<@>")))
         except discord.NotFound:
-            await interaction.response.send_message(f"Please provide valid User IDs.", ephemeral=True)
+            await interaction.followup.send(f"Please provide valid User IDs.", ephemeral=True)
         else:
             alt1_id = str(alt1.id)
             alt2_id = str(alt2.id)
@@ -1068,7 +1069,7 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
             if alt1_info: # alt 1 logged
                 if alt2_info: # alt 2 also logged
                     if alt1_id in alt2_info["alts"] and alt2_id in alt1_info["alts"]: # check if already exists
-                        await interaction.response.send_message(f"`{alt1_id}` and `{alt2_id}` have already been logged.", ephemeral=True)
+                        await interaction.followup.send(f"`{alt1_id}` and `{alt2_id}` have already been logged.", ephemeral=True)
                     else:
                         old_alts1 = alt1_info["alts"].copy()
                         old_alts2 = alt2_info["alts"].copy()
@@ -1111,16 +1112,16 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                         user2_query = {"_id": alt2_id}
                         user2_profile = userscol.find_one(user2_query)
                         if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
-                            await interaction.response.send_message(
+                            await interaction.followup.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
                         elif user1_profile and len(user1_profile)>2: # user 1 reported, user 2 not reported
-                            await interaction.response.send_message(
+                            await interaction.followup.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
                         elif user2_profile and len(user2_profile)>2: # user 2 reported, user 1 not reported
-                            await interaction.response.send_message(
+                            await interaction.followup.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                         else: # none reported
-                            await interaction.response.send_message(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+                            await interaction.followup.send(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
 
                 else: # alt 2 not logged
                     old_alts1 = alt1_info["alts"].copy()
@@ -1146,16 +1147,16 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                     user2_query = {"_id": alt2_id}
                     user2_profile = userscol.find_one(user2_query)
                     if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
-                        await interaction.response.send_message(
+                        await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
                     elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
-                        await interaction.response.send_message(
+                        await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
                     elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
-                        await interaction.response.send_message(
+                        await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                     else:  # none reported
-                        await interaction.response.send_message(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+                        await interaction.followup.send(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
 
             else: # alt 1 not logged
                 if alt2_info: # but alt 2 logged
@@ -1183,16 +1184,16 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                     user2_query = {"_id": alt2_id}
                     user2_profile = userscol.find_one(user2_query)
                     if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
-                        await interaction.response.send_message(
+                        await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
                     elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
-                        await interaction.response.send_message(
+                        await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
                     elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
-                        await interaction.response.send_message(
+                        await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                     else:  # none reported
-                        await interaction.response.send_message(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+                        await interaction.followup.send(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
 
                 else: # both alts not logged
                     alt1_info = {
@@ -1214,34 +1215,35 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                     user2_query = {"_id": alt2_id}
                     user2_profile = userscol.find_one(user2_query)
                     if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
-                        await interaction.response.send_message(
+                        await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
                     elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
-                        await interaction.response.send_message(
+                        await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
                     elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
-                        await interaction.response.send_message(
+                        await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                     else:  # none reported
-                        await interaction.response.send_message(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+                        await interaction.followup.send(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
 
 @alts.command(name="remove", description="Removes a pair of users as alts.")
 @app_commands.describe(user1="User 1", user2="User 2")
 @app_commands.checks.has_role(adm_role)
 async def alts_remove(interaction: discord.Interaction, user1: str, user2: str):
+    await interaction.response.defer()
     def parse_id(u: str):
         return u.strip("<@!>")
     alt1_id = parse_id(user1)
     alt2_id = parse_id(user2)
     if alt1_id == alt2_id:
-        return await interaction.response.send_message(
+        return await interaction.followup.send(
             "You cannot remove the user as alt of themselves.",
             ephemeral=True
         )
     doc1 = altscol.find_one({"_id": alt1_id})
     doc2 = altscol.find_one({"_id": alt2_id})
     if not doc1 and not doc2:
-        return await interaction.response.send_message(
+        return await interaction.followup.send(
             "Neither user is logged as an alt.",
             ephemeral=True
         )
@@ -1266,7 +1268,7 @@ async def alts_remove(interaction: discord.Interaction, user1: str, user2: str):
     if doc2:
         doc2 = remove_pair(doc2, alt1_id)
         altscol.replace_one({"_id": alt2_id}, doc2)
-    return await interaction.response.send_message(
+    return await interaction.followup.send(
         f"`{alt1_id}` and `{alt2_id}` have been removed as alts."
     )
 
