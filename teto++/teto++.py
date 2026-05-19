@@ -7,6 +7,7 @@ load_dotenv()
 import pymongo
 
 import asyncio
+import re
 
 import discord
 from discord import app_commands
@@ -468,17 +469,24 @@ async def mc(ctx, *, to_check: str = None):
         return
     if to_check != None:
         users = to_check.split()
+        if len(users) > 200:
+            return await ctx.reply("Exceeded 200 users.")
+        estimated_seconds = round(len(users) * 0.35, 1)
+        status_message = await ctx.reply(f"Checking **{len(users)}** users.\nEstimated time: **~{estimated_seconds}s**")
         valid_users = []
         invalid_users = []
         embeds = []
-        for user in users:
-            try: user = await bot.fetch_user(int(user.strip('<@>')))
-            except Exception: invalid_users.append(user)
+        for raw_user in users:
+            try:
+                user_id = int(re.sub(r"\D", "", raw_user))
+                fetched_user = await bot.fetch_user(user_id)
+            except:
+                invalid_users.append(raw_user)
             else:
-                if user not in valid_users: valid_users.append(user)
-        if valid_users and len(valid_users) <= 200:
+                if fetched_user not in valid_users:
+                    valid_users.append(fetched_user)
+        if valid_users:
             valid_users_grouped = [valid_users[i:i + 25] for i in range(0, len(valid_users), 25)]
-
             for group in valid_users_grouped:
                 description = ""
                 for user in group:
@@ -551,11 +559,10 @@ async def mc(ctx, *, to_check: str = None):
                     description += f"\nThere are more than 50 invalid users.\n"
                     invalid_embed = discord.Embed(description=description)
                     embeds.append(invalid_embed)
-
             await ctx.reply(embeds=embeds)
+            await status_message.edit(content="Finished checking users.")
         else:
-            if valid_users: await ctx.reply("Exceeded 200 users.")
-            else: await ctx.reply("No valid users provided.")
+            await ctx.reply("No valid users provided.")
 
 class ReportedUserView(discord.ui.View):
     def __init__(self, user, user_profile, requested_by, current_case):
