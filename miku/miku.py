@@ -125,15 +125,28 @@ async def send_low_performance_dm(member, rratio, vratio=None):
                 "Your recent staff activity is below expected quota levels.\n\n"
                 f"8-week average **reports** quota completion: **{rratio:.2f}**\n"
             ),
-            colour=0xE74C3C
+            colour=0xffffff
         )
-        if rratio < 0.7:
+        if rratio < 0.6:
             embed.title = "CRITICAL Performance Warning"
         if vratio:
             embed.description+=f"8-week average **reviews** quota completion: **{vratio:.2f}**\n"
-            if vratio < 0.7:
+            if vratio < 0.6:
                 embed.title = "CRITICAL Performance Warning"
         embed.description+="\nPlease improve your activity. Thank you."
+        await member.send(embed=embed)
+    except:
+        pass
+
+async def send_incomplete_quota_dm(member, weekly, q, r, type=None):
+    try:
+        embed = discord.Embed(title="Incomplete Quota", colour=0xffffff)
+        if type is not None and type == "reviews":
+            embed.description = f"Required reviews: **{q}**\nCompleted reviews: **{weekly}**\nRatio: **{r:.2f}**"
+        if type is not None and type == "reports":
+            embed.description = f"Required reports: **{q}**\nCompleted reports: **{weekly}**\nRatio: **{r:.2f}**"
+        if type is None:
+            embed.description = f"Required reports: **{q}**\nCompleted reports: **{weekly}**\nRatio: **{r:.2f}**"
         await member.send(embed=embed)
     except:
         pass
@@ -221,11 +234,14 @@ async def weekly_quota():
             weekly_profile["reviews_quota_list"] = weekly_profile["reviews_quota_list"][-8:]
             if vq != -1 and vr != -1 and vr < 1:
                 sr_not_met_quota.append([staff_id, "reviews", weekly_reviews, vq, vr])
+                await send_incomplete_quota_dm(member, weekly_reviews, vq, vr, "reviews")
             if rq != -1 and rr != -1 and rr < 1:
                 sr_not_met_quota.append([staff_id, "reports", weekly_reports, rq, rr])
+                await send_incomplete_quota_dm(member, weekly_reports, rq, rr, "reports")
         else:
             if rq != -1 and rr != -1 and rr < 1:
                 not_met_quota.append([staff_id, weekly_reports, rq, rr])
+                await send_incomplete_quota_dm(member, weekly_reports, rq, rr)
         staffweeklycol.replace_one({"_id": staff_id}, weekly_profile, upsert=True)
         rratios = [x[2] for x in weekly_profile["reports_quota_list"] if x[2] != -1]
         if is_sr:
@@ -234,7 +250,7 @@ async def weekly_quota():
             vavg = sum(vratios) / len(vratios) if vratios else None
             if (ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 7) or (vavg is not None and vavg < 0.5 and len(weekly_profile.get("reviews_quota_list", [])) > 2):
                 sr_demotion_list.append([staff_id, round(ravg, 3), round(vavg, 3)])
-            if (ravg is not None and ravg < 1 and len(weekly_profile.get("reports_quota_list", [])) > 2) or (vavg is not None and vavg < 1 and len(weekly_profile.get("reviews_quota_list", [])) > 2):
+            if (ravg is not None and ravg < 0.8 and len(weekly_profile.get("reports_quota_list", [])) > 2) or (vavg is not None and vavg < 0.8 and len(weekly_profile.get("reviews_quota_list", [])) > 2):
                 member = guild.get_member(int(staff_id))
                 if member:
                     await send_low_performance_dm(member, vavg, ravg)
@@ -243,7 +259,7 @@ async def weekly_quota():
                 ravg = sum(rratios) / len(rratios)
                 if ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 7:
                     demotion_list.append([staff_id, round(ravg, 3)])
-                if ravg is not None and ravg < 1 and len(weekly_profile.get("reports_quota_list", [])) > 2:
+                if ravg is not None and ravg < 0.8 and len(weekly_profile.get("reports_quota_list", [])) > 2:
                     member = guild.get_member(int(staff_id))
                     if member:
                         await send_low_performance_dm(member, ravg)
