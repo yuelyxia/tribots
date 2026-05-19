@@ -742,7 +742,9 @@ async def unclaim(ctx, mode: str = None, member: discord.Member = None):
             await ctx.reply(embed=embed)
 
 @bot.command(name="claims")
-async def claims(ctx):
+async def claims(ctx, *args):
+    if args:
+        return
     server_info = servers.find_one_and_update(
         {"_id": str(ctx.guild.id)},
         {"$setOnInsert": {"_id": str(ctx.guild.id)}},
@@ -760,7 +762,9 @@ async def claims(ctx):
         await ctx.reply(embed=embed)
 
 @bot.command(name="close")
-async def close(ctx):
+async def close(ctx, *args):
+    if args:
+        return
     server_info = servers.find_one_and_update(
         {"_id": str(ctx.guild.id)},
         {"$setOnInsert": {"_id": str(ctx.guild.id)}},
@@ -1997,6 +2001,8 @@ async def whitelist(interaction: discord.Interaction, server: str):
 @bot.tree.command(name="break", description="Toggle staff/mm/pilot break.")
 async def break_command(interaction: discord.Interaction, category: Literal["staff", "mm", "pilot"]):
     await interaction.response.defer()
+    if interaction.guild.id == TRI_Archive:
+        return await interaction.followup.send("This command cannot be used in this server.")
     server_info = servers.find_one_and_update(
         {"_id": str(interaction.guild.id)},
         {"$setOnInsert": {"_id": str(interaction.guild.id)}},
