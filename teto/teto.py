@@ -4218,7 +4218,7 @@ class UserVoteView(discord.ui.View):
 
     @discord.ui.button(label="Publish", style=discord.ButtonStyle.grey, custom_id="uservote:publish")
     async def publish_button(self, interaction, button):
-        await interaction.response.defer()
+        await interaction.response.defer(thinking=True)
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
             requested_by = session["requested_by"]
@@ -4359,7 +4359,7 @@ class UserVoteView(discord.ui.View):
 
                         query_filter = {"_id": str(user.id)}
                         update_operation = {'$set': {"r_profile_list": r_profile_list}}
-                        serverscol.update_one(query_filter, update_operation)
+                        userscol.update_one(query_filter, update_operation)
                         update_operation = {'$set': {str(no_of_cases + 1): add_case_list}}
                         userscol.update_one(query_filter, update_operation)
 
@@ -4377,7 +4377,7 @@ class UserVoteView(discord.ui.View):
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
                 else:  # if new reported user
-                    add_case_list[6] = f"{interaction.user.mention}"
+                    add_case_list[6] = interaction.user.mention
                     inprogresscol.update_one(
                         {"_id": interaction.message.id},
                         {"$set": {"add_case_list": add_case_list}},
@@ -6980,7 +6980,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         if sorted_tags:
             case_title = sorted_tags[0]
             r_profile_list[1] = selected_string(sorted_tags[1:])
-            add_case_list[1] = ", ".join(sorted_tags)
+            add_case_list[2] = ", ".join(sorted_tags)
             edited_fields.append(f"tags　–　{', '.join(sorted_tags)}")
             all_tags = []
             existing_cases = []
@@ -7012,7 +7012,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             if key in games_map and games_map[key] not in filtered_games:
                 filtered_games.append(games_map[key])
         games_string = ", ".join(filtered_games) if filtered_games else "N/A"
-        add_case_list[2] = games_string
+        add_case_list[1] = games_string
         edited_fields.append(f"games　–　{games_string}")
     if reason is not None:
         if is_user_report:
