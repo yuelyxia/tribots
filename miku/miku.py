@@ -203,7 +203,10 @@ async def weekly_quota():
         weekly_reviews = int(weekly_profile.get("weekly_reviews", 0))
         weekly_reports = int(weekly_profile.get("weekly_reports", 0))
         is_sr = any(role.id == sr_role for role in member.roles)
-        rq = config["reports_quota"]
+        if is_sr:
+            rq = config["sr_reports_quota"]
+        else:
+            rq = config["reports_quota"]
         rq = apply_break(rq, member)
         rr = ratio(weekly_reports, rq)
         weekly_profile.setdefault("reports_quota_list", [])
@@ -1276,4 +1279,3 @@ async def sync(ctx: commands.Context):
 
 
 bot.run(TOKEN)
-
