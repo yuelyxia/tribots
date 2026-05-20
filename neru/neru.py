@@ -2,6 +2,9 @@
 
 from dotenv import load_dotenv
 import os
+
+from pymongo.errors import DuplicateKeyError
+
 load_dotenv()
 
 import pymongo
@@ -121,7 +124,7 @@ async def on_message(message: discord.Message):
                                 alt_info["alts"] += old_alts2
                                 alt_info["alts"].append(alt2_id)
                                 alt_info["proofs"] += old_proofs2
-                                alt_info["proof"].append(proof)
+                                alt_info["proofs"].append(proof)
                                 altscol.replace_one(alt_query, alt_info)
                             for alt in old_alts2:
                                 alt_query = {"_id": alt}
@@ -329,7 +332,6 @@ async def on_message(message: discord.Message):
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
 
-
     await bot.process_commands(message)
 
 @bot.command(name='a', help='Checks a user for logged alts.')
@@ -471,11 +473,11 @@ bot.tree.add_command(imports)
 
 @imports.command(name="recent", description="Import Double Counter alt intrusions from recent 200 messages.")
 async def import_recent(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
     neru_logs_channel = bot.get_channel(NERU_LOGS)
     channel = interaction.channel
     if channel:
         msg = await channel.send("Checking recent 200 messages for Double Counter alt intrusions...")
-        await interaction.response.defer(ephemeral=True)
         count=0
         async for message in channel.history(limit=200):
             if message.author.id == 703886990948565003:
@@ -516,10 +518,11 @@ async def import_recent(interaction: discord.Interaction):
                         alt2_info = altscol.find_one(alt2_query)
                         if alt1_info:  # alt 1 logged
                             if alt2_info:  # alt 2 also logged
-                                if alt1_id in alt2_info["alts"] and alt2_id in alt1_info["alts"]:  # check if already exists
+                                if alt1_id in alt2_info["alts"] and alt2_id in alt1_info[
+                                    "alts"]:  # check if already exists
                                     pass
                                 else:
-                                    count+=1
+                                    count += 1
                                     old_alts1 = alt1_info["alts"].copy()
                                     old_alts2 = alt2_info["alts"].copy()
                                     old_proofs1 = alt1_info["proofs"].copy()
@@ -560,10 +563,12 @@ async def import_recent(interaction: discord.Interaction):
                                     user1_profile = userscol.find_one(user1_query)
                                     user2_query = {"_id": alt2_id}
                                     user2_profile = userscol.find_one(user2_query)
-                                    if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                                    if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                            user2_profile) > 2:
                                         await neru_logs_channel.send(
                                             f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                    elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                                    elif user1_profile and len(
+                                            user1_profile) > 2:  # user 1 reported, user 2 not reported
                                         r_profile_list = user1_profile["r_profile_list"]
                                         user1_alts = r_profile_list[0].strip("`").split()
                                         if alt2_id not in user1_alts: user1_alts.append(alt2_id)
@@ -571,10 +576,14 @@ async def import_recent(interaction: discord.Interaction):
                                         user1_profile["r_profile_list"] = r_profile_list
                                         userscol.replace_one(user1_query, user1_profile)
                                         new_user = {"_id": alt2_id, "main": alt1_id}
-                                        userscol.insert_one(new_user)
+                                        try:
+                                            userscol.insert_one(new_user)
+                                        except DuplicateKeyError:
+                                            continue
                                         await neru_logs_channel.send(
                                             f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                    elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                                    elif user2_profile and len(
+                                            user2_profile) > 2:  # user 2 reported, user 1 not reported
                                         r_profile_list = user2_profile["r_profile_list"]
                                         user2_alts = r_profile_list[0].strip("`").split()
                                         if alt1_id not in user2_alts: user2_alts.append(alt1_id)
@@ -582,7 +591,10 @@ async def import_recent(interaction: discord.Interaction):
                                         user2_profile["r_profile_list"] = r_profile_list
                                         userscol.replace_one(user2_query, user2_profile)
                                         new_user = {"_id": alt1_id, "main": alt2_id}
-                                        userscol.insert_one(new_user)
+                                        try:
+                                            userscol.insert_one(new_user)
+                                        except DuplicateKeyError:
+                                            continue
                                         await neru_logs_channel.send(
                                             f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
                                     else:
@@ -613,10 +625,11 @@ async def import_recent(interaction: discord.Interaction):
                                 user1_profile = userscol.find_one(user1_query)
                                 user2_query = {"_id": alt2_id}
                                 user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                        user2_profile) > 2:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
                                     r_profile_list = user1_profile["r_profile_list"]
                                     user1_alts = r_profile_list[0].strip("`").split()
                                     if alt2_id not in user1_alts: user1_alts.append(alt2_id)
@@ -624,10 +637,13 @@ async def import_recent(interaction: discord.Interaction):
                                     user1_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user1_query, user1_profile)
                                     new_user = {"_id": alt2_id, "main": alt1_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                                     r_profile_list = user2_profile["r_profile_list"]
                                     user2_alts = r_profile_list[0].strip("`").split()
                                     if alt1_id not in user2_alts: user2_alts.append(alt1_id)
@@ -635,15 +651,18 @@ async def import_recent(interaction: discord.Interaction):
                                     user2_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user2_query, user2_profile)
                                     new_user = {"_id": alt1_id, "main": alt2_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
                                 else:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
                         else:  # alt 1 not logged
-                            count+=1
                             if alt2_info:  # but alt 2 logged
+                                count += 1
                                 old_alts2 = alt2_info["alts"].copy()
                                 old_proofs2 = alt2_info["proofs"].copy()
                                 alt1_info = {"_id": alt1_id, "alts": old_alts2, "proofs": []}
@@ -667,10 +686,11 @@ async def import_recent(interaction: discord.Interaction):
                                 user1_profile = userscol.find_one(user1_query)
                                 user2_query = {"_id": alt2_id}
                                 user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                        user2_profile) > 2:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
                                     r_profile_list = user1_profile["r_profile_list"]
                                     user1_alts = r_profile_list[0].strip("`").split()
                                     if alt2_id not in user1_alts: user1_alts.append(alt2_id)
@@ -678,10 +698,13 @@ async def import_recent(interaction: discord.Interaction):
                                     user1_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user1_query, user1_profile)
                                     new_user = {"_id": alt2_id, "main": alt1_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                                     r_profile_list = user2_profile["r_profile_list"]
                                     user2_alts = r_profile_list[0].strip("`").split()
                                     if alt1_id not in user2_alts: user2_alts.append(alt1_id)
@@ -689,13 +712,17 @@ async def import_recent(interaction: discord.Interaction):
                                     user2_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user2_query, user2_profile)
                                     new_user = {"_id": alt1_id, "main": alt2_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
                                 else:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
                             else:  # both alts not logged
+                                count += 1
                                 alt1_info = {
                                     "_id": alt1_id,
                                     "alts": [alt2_id],
@@ -714,10 +741,11 @@ async def import_recent(interaction: discord.Interaction):
                                 user1_profile = userscol.find_one(user1_query)
                                 user2_query = {"_id": alt2_id}
                                 user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                        user2_profile) > 2:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
                                     r_profile_list = user1_profile["r_profile_list"]
                                     user1_alts = r_profile_list[0].strip("`").split()
                                     if alt2_id not in user1_alts: user1_alts.append(alt2_id)
@@ -725,10 +753,13 @@ async def import_recent(interaction: discord.Interaction):
                                     user1_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user1_query, user1_profile)
                                     new_user = {"_id": alt2_id, "main": alt1_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                                     r_profile_list = user2_profile["r_profile_list"]
                                     user2_alts = r_profile_list[0].strip("`").split()
                                     if alt1_id not in user2_alts: user2_alts.append(alt1_id)
@@ -736,7 +767,10 @@ async def import_recent(interaction: discord.Interaction):
                                     user2_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user2_query, user2_profile)
                                     new_user = {"_id": alt1_id, "main": alt2_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
                                 else:
@@ -750,13 +784,11 @@ async def import_recent(interaction: discord.Interaction):
 
 @imports.command(name="all", description="Import Double Counter alt intrusions from all messages in this channel.")
 async def import_all(interaction: discord.Interaction):
-    if interaction.user.id != 1303291812282372137:
-        return
+    await interaction.response.defer(ephemeral=True)
     neru_logs_channel = bot.get_channel(NERU_LOGS)
     channel = interaction.channel
     if channel:
         msg = await channel.send("Checking all messages for Double Counter alt intrusions...")
-        await interaction.response.defer(ephemeral=True)
         count=0
         async for message in channel.history(limit=None):
             if message.author.id == 703886990948565003:
@@ -765,7 +797,6 @@ async def import_all(interaction: discord.Interaction):
                 match2 = False
                 if message.embeds:
                     embed = message.embeds[0]
-
                     for field in embed.fields:
                         if field.name.lower() == "alt account":
                             match = re.search(r"\((\d+)\)", field.value)
@@ -797,10 +828,11 @@ async def import_all(interaction: discord.Interaction):
                         alt2_info = altscol.find_one(alt2_query)
                         if alt1_info:  # alt 1 logged
                             if alt2_info:  # alt 2 also logged
-                                if alt1_id in alt2_info["alts"] and alt2_id in alt1_info["alts"]:  # check if already exists
+                                if alt1_id in alt2_info["alts"] and alt2_id in alt1_info[
+                                    "alts"]:  # check if already exists
                                     pass
                                 else:
-                                    count+=1
+                                    count += 1
                                     old_alts1 = alt1_info["alts"].copy()
                                     old_alts2 = alt2_info["alts"].copy()
                                     old_proofs1 = alt1_info["proofs"].copy()
@@ -841,10 +873,12 @@ async def import_all(interaction: discord.Interaction):
                                     user1_profile = userscol.find_one(user1_query)
                                     user2_query = {"_id": alt2_id}
                                     user2_profile = userscol.find_one(user2_query)
-                                    if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                                    if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                            user2_profile) > 2:
                                         await neru_logs_channel.send(
                                             f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                    elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                                    elif user1_profile and len(
+                                            user1_profile) > 2:  # user 1 reported, user 2 not reported
                                         r_profile_list = user1_profile["r_profile_list"]
                                         user1_alts = r_profile_list[0].strip("`").split()
                                         if alt2_id not in user1_alts: user1_alts.append(alt2_id)
@@ -852,10 +886,14 @@ async def import_all(interaction: discord.Interaction):
                                         user1_profile["r_profile_list"] = r_profile_list
                                         userscol.replace_one(user1_query, user1_profile)
                                         new_user = {"_id": alt2_id, "main": alt1_id}
-                                        userscol.insert_one(new_user)
+                                        try:
+                                            userscol.insert_one(new_user)
+                                        except DuplicateKeyError:
+                                            continue
                                         await neru_logs_channel.send(
                                             f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                    elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                                    elif user2_profile and len(
+                                            user2_profile) > 2:  # user 2 reported, user 1 not reported
                                         r_profile_list = user2_profile["r_profile_list"]
                                         user2_alts = r_profile_list[0].strip("`").split()
                                         if alt1_id not in user2_alts: user2_alts.append(alt1_id)
@@ -863,7 +901,10 @@ async def import_all(interaction: discord.Interaction):
                                         user2_profile["r_profile_list"] = r_profile_list
                                         userscol.replace_one(user2_query, user2_profile)
                                         new_user = {"_id": alt1_id, "main": alt2_id}
-                                        userscol.insert_one(new_user)
+                                        try:
+                                            userscol.insert_one(new_user)
+                                        except DuplicateKeyError:
+                                            continue
                                         await neru_logs_channel.send(
                                             f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
                                     else:
@@ -894,10 +935,11 @@ async def import_all(interaction: discord.Interaction):
                                 user1_profile = userscol.find_one(user1_query)
                                 user2_query = {"_id": alt2_id}
                                 user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                        user2_profile) > 2:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
                                     r_profile_list = user1_profile["r_profile_list"]
                                     user1_alts = r_profile_list[0].strip("`").split()
                                     if alt2_id not in user1_alts: user1_alts.append(alt2_id)
@@ -905,10 +947,13 @@ async def import_all(interaction: discord.Interaction):
                                     user1_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user1_query, user1_profile)
                                     new_user = {"_id": alt2_id, "main": alt1_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                                     r_profile_list = user2_profile["r_profile_list"]
                                     user2_alts = r_profile_list[0].strip("`").split()
                                     if alt1_id not in user2_alts: user2_alts.append(alt1_id)
@@ -916,15 +961,18 @@ async def import_all(interaction: discord.Interaction):
                                     user2_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user2_query, user2_profile)
                                     new_user = {"_id": alt1_id, "main": alt2_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
                                 else:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
                         else:  # alt 1 not logged
-                            count+=1
                             if alt2_info:  # but alt 2 logged
+                                count += 1
                                 old_alts2 = alt2_info["alts"].copy()
                                 old_proofs2 = alt2_info["proofs"].copy()
                                 alt1_info = {"_id": alt1_id, "alts": old_alts2, "proofs": []}
@@ -948,10 +996,11 @@ async def import_all(interaction: discord.Interaction):
                                 user1_profile = userscol.find_one(user1_query)
                                 user2_query = {"_id": alt2_id}
                                 user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                        user2_profile) > 2:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
                                     r_profile_list = user1_profile["r_profile_list"]
                                     user1_alts = r_profile_list[0].strip("`").split()
                                     if alt2_id not in user1_alts: user1_alts.append(alt2_id)
@@ -959,10 +1008,13 @@ async def import_all(interaction: discord.Interaction):
                                     user1_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user1_query, user1_profile)
                                     new_user = {"_id": alt2_id, "main": alt1_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                                     r_profile_list = user2_profile["r_profile_list"]
                                     user2_alts = r_profile_list[0].strip("`").split()
                                     if alt1_id not in user2_alts: user2_alts.append(alt1_id)
@@ -970,13 +1022,17 @@ async def import_all(interaction: discord.Interaction):
                                     user2_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user2_query, user2_profile)
                                     new_user = {"_id": alt1_id, "main": alt2_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
                                 else:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
                             else:  # both alts not logged
+                                count += 1
                                 alt1_info = {
                                     "_id": alt1_id,
                                     "alts": [alt2_id],
@@ -995,10 +1051,11 @@ async def import_all(interaction: discord.Interaction):
                                 user1_profile = userscol.find_one(user1_query)
                                 user2_query = {"_id": alt2_id}
                                 user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                        user2_profile) > 2:
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
                                     r_profile_list = user1_profile["r_profile_list"]
                                     user1_alts = r_profile_list[0].strip("`").split()
                                     if alt2_id not in user1_alts: user1_alts.append(alt2_id)
@@ -1006,10 +1063,13 @@ async def import_all(interaction: discord.Interaction):
                                     user1_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user1_query, user1_profile)
                                     new_user = {"_id": alt2_id, "main": alt1_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                                     r_profile_list = user2_profile["r_profile_list"]
                                     user2_alts = r_profile_list[0].strip("`").split()
                                     if alt1_id not in user2_alts: user2_alts.append(alt1_id)
@@ -1017,7 +1077,10 @@ async def import_all(interaction: discord.Interaction):
                                     user2_profile["r_profile_list"] = r_profile_list
                                     userscol.replace_one(user2_query, user2_profile)
                                     new_user = {"_id": alt1_id, "main": alt2_id}
-                                    userscol.insert_one(new_user)
+                                    try:
+                                        userscol.insert_one(new_user)
+                                    except DuplicateKeyError:
+                                        continue
                                     await neru_logs_channel.send(
                                         f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
                                 else:
