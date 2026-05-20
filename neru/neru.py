@@ -72,7 +72,7 @@ async def on_ready():
 async def on_message(message: discord.Message):
     neru_logs_channel = bot.get_channel(NERU_LOGS)
     if message.author.id == 703886990948565003:
-        pattern1 = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@(\d{17,20})>"
+        pattern1 = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@\d{17,20}>\s*\((\d{17,20})\)"
         match1 = re.search(pattern1, message.content)
         match2 = False
         if message.embeds:
@@ -118,9 +118,6 @@ async def on_message(message: discord.Message):
                             for alt in old_alts1:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
-                                if not alt_info:
-                                    print(f"[WARNING] Missing alt: {alt}")
-                                    continue
                                 alt_info["alts"] += old_alts2
                                 alt_info["alts"].append(alt2_id)
                                 alt_info["proofs"] += old_proofs2
@@ -129,9 +126,6 @@ async def on_message(message: discord.Message):
                             for alt in old_alts2:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
-                                if not alt_info:
-                                    print(f"[WARNING] Missing alt: {alt}")
-                                    continue
                                 alt_info["alts"] += old_alts1
                                 alt_info["alts"].append(alt1_id)
                                 alt_info["proofs"] += old_proofs1
@@ -189,9 +183,6 @@ async def on_message(message: discord.Message):
                         for alt in old_alts1:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
-                            if not alt_info:
-                                print(f"[WARNING] Missing alt: {alt}")
-                                continue
                             alt_info["alts"].append(alt2_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -242,9 +233,6 @@ async def on_message(message: discord.Message):
                         for alt in old_alts2:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
-                            if not alt_info:
-                                print(f"[WARNING] Missing alt: {alt}")
-                                continue
                             alt_info["alts"].append(alt1_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -394,7 +382,6 @@ class RelatedIDsView(discord.ui.View):
         string = user_id + " " + " ".join(alts)
         await interaction.response.send_message(f"`{string}`", ephemeral=True)
 
-
 imports = app_commands.Group(name="import", description="Import Double Counter alt intrusions.")
 bot.tree.add_command(imports)
 
@@ -404,7 +391,7 @@ async def import_recent(interaction: discord.Interaction):
     neru_logs_channel = bot.get_channel(NERU_LOGS)
     channel = interaction.channel
     if channel:
-        msg = await channel.send("Checking recent 200 messages for Double Counter alt intrusions...")
+        msg = await channel.send("Checking recent 200 messages in this channel for Double Counter alt intrusions...")
         count=0
         async for message in channel.history(limit=200):
             alt1_id = None
@@ -422,7 +409,7 @@ async def import_recent(interaction: discord.Interaction):
                             m = re.search(r"\((\d{17,20})\)", field.value)
                             if m:
                                 alt2_id = m.group(1)
-                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@(\d{17,20})>"
+                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@\d{17,20}>\s*\((\d{17,20})\)"
                 match = re.search(pattern, message.content)
                 if match:
                     alt1_id, alt2_id = match.group(1), match.group(2)
@@ -449,7 +436,7 @@ async def import_recent(interaction: discord.Interaction):
                     if alt2_info:  # alt 2 also logged
                         if alt1_id in alt2_info["alts"] and alt2_id in alt1_info[
                             "alts"]:  # check if already exists
-                            pass
+                            continue
                         else:
                             count += 1
                             old_alts1 = alt1_info["alts"].copy()
@@ -459,9 +446,6 @@ async def import_recent(interaction: discord.Interaction):
                             for alt in old_alts1:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
-                                if not alt_info:
-                                    print(f"[WARNING] Missing alt: {alt}")
-                                    continue
                                 alt_info["alts"] += old_alts2
                                 alt_info["alts"].append(alt2_id)
                                 alt_info["proofs"] += old_proofs2
@@ -470,9 +454,6 @@ async def import_recent(interaction: discord.Interaction):
                             for alt in old_alts2:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
-                                if not alt_info:
-                                    print(f"[WARNING] Missing alt: {alt}")
-                                    continue
                                 alt_info["alts"] += old_alts1
                                 alt_info["alts"].append(alt1_id)
                                 alt_info["proofs"] += old_proofs1
@@ -540,9 +521,6 @@ async def import_recent(interaction: discord.Interaction):
                         for alt in old_alts1:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
-                            if not alt_info:
-                                print(f"[WARNING] Missing alt: {alt}")
-                                continue
                             alt_info["alts"].append(alt2_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -601,9 +579,6 @@ async def import_recent(interaction: discord.Interaction):
                         for alt in old_alts2:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
-                            if not alt_info:
-                                print(f"[WARNING] Missing alt: {alt}")
-                                continue
                             alt_info["alts"].append(alt1_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -717,8 +692,8 @@ async def import_all(interaction: discord.Interaction):
     neru_logs_channel = bot.get_channel(NERU_LOGS)
     channel = interaction.channel
     if channel:
-        msg = await channel.send("Checking all messages for Double Counter alt intrusions...")
-        count=0
+        msg = await channel.send("Checking all messages in this channel for Double Counter alt intrusions...")
+        count = 0
         async for message in channel.history(limit=None):
             alt1_id = None
             alt2_id = None
@@ -735,7 +710,7 @@ async def import_all(interaction: discord.Interaction):
                             m = re.search(r"\((\d{17,20})\)", field.value)
                             if m:
                                 alt2_id = m.group(1)
-                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@(\d{17,20})>"
+                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@\d{17,20}>\s*\((\d{17,20})\)"
                 match = re.search(pattern, message.content)
                 if match:
                     alt1_id, alt2_id = match.group(1), match.group(2)
@@ -762,7 +737,7 @@ async def import_all(interaction: discord.Interaction):
                     if alt2_info:  # alt 2 also logged
                         if alt1_id in alt2_info["alts"] and alt2_id in alt1_info[
                             "alts"]:  # check if already exists
-                            pass
+                            continue
                         else:
                             count += 1
                             old_alts1 = alt1_info["alts"].copy()
@@ -772,9 +747,6 @@ async def import_all(interaction: discord.Interaction):
                             for alt in old_alts1:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
-                                if not alt_info:
-                                    print(f"[WARNING] Missing alt: {alt}")
-                                    continue
                                 alt_info["alts"] += old_alts2
                                 alt_info["alts"].append(alt2_id)
                                 alt_info["proofs"] += old_proofs2
@@ -783,9 +755,6 @@ async def import_all(interaction: discord.Interaction):
                             for alt in old_alts2:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
-                                if not alt_info:
-                                    print(f"[WARNING] Missing alt: {alt}")
-                                    continue
                                 alt_info["alts"] += old_alts1
                                 alt_info["alts"].append(alt1_id)
                                 alt_info["proofs"] += old_proofs1
@@ -853,9 +822,6 @@ async def import_all(interaction: discord.Interaction):
                         for alt in old_alts1:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
-                            if not alt_info:
-                                print(f"[WARNING] Missing alt: {alt}")
-                                continue
                             alt_info["alts"].append(alt2_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -914,9 +880,6 @@ async def import_all(interaction: discord.Interaction):
                         for alt in old_alts2:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
-                            if not alt_info:
-                                print(f"[WARNING] Missing alt: {alt}")
-                                continue
                             alt_info["alts"].append(alt1_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -1074,9 +1037,6 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                         for alt in old_alts1:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
-                            if not alt_info:
-                                print(f"[WARNING] Missing alt: {alt}")
-                                continue
                             alt_info["alts"] += old_alts2
                             alt_info["alts"].append(alt2_id)
                             alt_info["proofs"] += old_proofs2
@@ -1085,9 +1045,6 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                         for alt in old_alts2:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
-                            if not alt_info:
-                                print(f"[WARNING] Missing alt: {alt}")
-                                continue
                             alt_info["alts"] += old_alts1
                             alt_info["alts"].append(alt1_id)
                             alt_info["proofs"] += old_proofs1
@@ -1165,9 +1122,6 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                     for alt in old_alts2:
                         alt_query = {"_id": alt}
                         alt_info = altscol.find_one(alt_query)
-                        if not alt_info:
-                            print(f"[WARNING] Missing alt: {alt}")
-                            continue
                         alt_info["alts"].append(alt1_id)
                         alt_info["proofs"].append(proof)
                         altscol.replace_one(alt_query, alt_info)
