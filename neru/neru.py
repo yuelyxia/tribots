@@ -467,6 +467,7 @@ async def cleanup(interaction: discord.Interaction):
     )"""
 
 imports = app_commands.Group(name="import", description="Import Double Counter alt intrusions.")
+bot.tree.add_command(imports)
 
 @imports.command(name="recent", description="Import Double Counter alt intrusions from recent 200 messages.")
 async def import_recent(interaction: discord.Interaction):
