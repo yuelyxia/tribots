@@ -338,57 +338,37 @@ async def on_message(message: discord.Message):
 async def a(ctx, *, to_check: str = None):
     if to_check is None:
         user = ctx.author
-        user_id = str(user.id)
-        alts_query = {"_id": user_id}
-        alts_info = altscol.find_one(alts_query)
-        if alts_info:
-            profile = discord.Embed(colour=0xffffff)
-            profile.description = f"Alts for {user.name} `{user.id}`\n"
-            for alt, proof in zip(alts_info["alts"], alts_info["proofs"]):
-                if proof[-5:] == " ┈ dc":
-                    jump_url = proof[:-5]
-                    parts = jump_url.split('/')
-                    guild_id = int(parts[-3])
-                    guild = await bot.fetch_guild(guild_id)
-                    if guild:
-                        server_name = guild.name
-                        formatted_proof = proof + f" ┈ {server_name}"
-                        profile.description += f"\n`{alt}` ┈ {formatted_proof}"
-                else:
-                    profile.description += f"\n`{alt}` ┈ {proof}"
-            await ctx.reply(embed=profile, view=RelatedIDsView(user_id, alts_info["alts"]))
-        else:
-            profile = default_no_alts(user)
-            await ctx.reply(embed=profile)
-
     else:
         try:
-            user = await bot.fetch_user(int(to_check.strip('<@>')))
-        except discord.NotFound:
-            await ctx.send("Please provide a valid user ID.")
-        else:
-            user_id = str(user.id)
-            alts_query = {"_id": user_id}
-            alts_info = altscol.find_one(alts_query)
-            if alts_info:
-                profile = discord.Embed(colour=0xffffff)
-                profile.description = f"Alts for {user.name} `{user.id}`\n"
-                for alt, proof in zip(alts_info["alts"], alts_info["proofs"]):
-                    if proof[-5:] == " ┈ dc":
-                        jump_url = proof[:-5]
-                        parts = jump_url.split('/')
-                        guild_id = int(parts[-3])
-                        guild = await bot.fetch_guild(guild_id)
-                        if guild:
-                            server_name = guild.name
-                            formatted_proof = proof + f" ┈ {server_name}"
-                            profile.description += f"\n`{alt}` ┈ {formatted_proof}"
-                    else:
-                        profile.description += f"\n`{alt}` ┈ {proof}"
-                await ctx.reply(embed=profile, view=RelatedIDsView(user_id, alts_info["alts"]))
+            user_id = int(to_check.strip("<@!>"))
+            user = await bot.fetch_user(user_id)
+        except:
+            return await ctx.send("Please provide a valid user ID.")
+    alts_info = altscol.find_one({"_id": str(user.id)})
+    if not alts_info or not alts_info.get("alts"):
+        return await ctx.reply(embed=default_no_alts(user))
+    pairs = list(zip(alts_info["alts"], alts_info["proofs"]))
+    chunk_size = 20
+    embeds = []
+    title = f"Alts for {user.name} `{user.id}`"
+    for i in range(0, len(pairs), chunk_size):
+        embed = discord.Embed(colour=0xffffff)
+        embed.description = title + "\n"
+        for alt, proof in pairs[i:i+chunk_size]:
+            if proof.endswith(" ┈ dc"):
+                jump_url = proof[:-5]
+                parts = jump_url.split('/')
+                try:
+                    guild_id = int(parts[-3])
+                    guild = bot.get_guild(guild_id)
+                    server_name = guild.name if guild else "Unknown"
+                except:
+                    server_name = "Unknown"
+                embed.description += f"\n`{alt}` ┈ {proof} ┈ {server_name}"
             else:
-                profile = default_no_alts(user)
-                await ctx.reply(embed=profile)
+                embed.description += f"\n`{alt}` ┈ {proof}"
+        embeds.append(embed)
+    await ctx.reply(embeds=embeds, view=RelatedIDsView(str(user.id), alts_info["alts"]))
 
 class RelatedIDsView(discord.ui.View):
     def __init__(self, user_id, alts):
