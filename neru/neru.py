@@ -407,302 +407,304 @@ async def import_recent(interaction: discord.Interaction):
         msg = await channel.send("Checking recent 200 messages for Double Counter alt intrusions...")
         count=0
         async for message in channel.history(limit=200):
+            alt1_id = None
+            alt2_id = None
             if message.author.id == 703886990948565003:
-                pattern1 = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@(\d{17,20})>"
-                match1 = re.search(pattern1, message.content)
-                match2 = False
                 if message.embeds:
                     embed = message.embeds[0]
-
                     for field in embed.fields:
-                        if field.name.lower() == "alt account":
-                            match = re.search(r"\((\d+)\)", field.value)
-                            if match:
-                                match2 = True
-                                alt1_id = match.group(1)
-                        elif field.name.lower() == "main account":
-                            match = re.search(r"\((\d+)\)", field.value)
-                            if match:
-                                alt2_id = match.group(1)
-                if match1 or match2:
-                    if match1:
-                        alt1_id = match1.group(1)
-                        alt2_id = match1.group(2)
-                    if alt1_id != alt2_id:
-                        proof = f"{message.jump_url} ┈ dc"
-                        try:
-                            parts = message.jump_url.split('/')
-                            guild_id = int(parts[-3])
-                            guild = await bot.fetch_guild(guild_id)
-                            if guild:
-                                server_name = guild.name
-                                formatted_proof = proof + f" ┈ {server_name}"
-                        except Exception:
+                        name = field.name.lower()
+                        if name == "alt account":
+                            m = re.search(r"\((\d{17,20})\)", field.value)
+                            if m:
+                                alt1_id = m.group(1)
+                        elif name == "main account":
+                            m = re.search(r"\((\d{17,20})\)", field.value)
+                            if m:
+                                alt2_id = m.group(1)
+                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@(\d{17,20})>"
+                match = re.search(pattern, message.content)
+                if match:
+                    alt1_id, alt2_id = match.group(1), match.group(2)
+                if not alt1_id or not alt2_id:
+                    continue
+                if alt1_id == alt2_id:
+                    continue
+                proof = f"{message.jump_url} ┈ dc"
+                formatted_proof = proof
+                try:
+                    parts = message.jump_url.split('/')
+                    guild_id = int(parts[-3])
+                    guild = await bot.fetch_guild(guild_id)
+                    if guild:
+                        server_name = guild.name
+                        formatted_proof = proof + f" ┈ {server_name}"
+                except Exception:
+                    pass
+                alt1_query = {"_id": alt1_id}
+                alt1_info = altscol.find_one(alt1_query)
+                alt2_query = {"_id": alt2_id}
+                alt2_info = altscol.find_one(alt2_query)
+                if alt1_info:  # alt 1 logged
+                    if alt2_info:  # alt 2 also logged
+                        if alt1_id in alt2_info["alts"] and alt2_id in alt1_info[
+                            "alts"]:  # check if already exists
                             pass
-                        alt1_query = {"_id": alt1_id}
-                        alt1_info = altscol.find_one(alt1_query)
-                        alt2_query = {"_id": alt2_id}
-                        alt2_info = altscol.find_one(alt2_query)
-                        if alt1_info:  # alt 1 logged
-                            if alt2_info:  # alt 2 also logged
-                                if alt1_id in alt2_info["alts"] and alt2_id in alt1_info[
-                                    "alts"]:  # check if already exists
-                                    pass
-                                else:
-                                    count += 1
-                                    old_alts1 = alt1_info["alts"].copy()
-                                    old_alts2 = alt2_info["alts"].copy()
-                                    old_proofs1 = alt1_info["proofs"].copy()
-                                    old_proofs2 = alt2_info["proofs"].copy()
-                                    for alt in old_alts1:
-                                        alt_query = {"_id": alt}
-                                        alt_info = altscol.find_one(alt_query)
-                                        if not alt_info:
-                                            print(f"[WARNING] Missing alt: {alt}")
-                                            continue
-                                        alt_info["alts"] += old_alts2
-                                        alt_info["alts"].append(alt2_id)
-                                        alt_info["proofs"] += old_proofs2
-                                        alt_info["proofs"].append(proof)
-                                        altscol.replace_one(alt_query, alt_info)
-                                    for alt in old_alts2:
-                                        alt_query = {"_id": alt}
-                                        alt_info = altscol.find_one(alt_query)
-                                        if not alt_info:
-                                            print(f"[WARNING] Missing alt: {alt}")
-                                            continue
-                                        alt_info["alts"] += old_alts1
-                                        alt_info["alts"].append(alt1_id)
-                                        alt_info["proofs"] += old_proofs1
-                                        alt_info["proofs"].append(proof)
-                                        altscol.replace_one(alt_query, alt_info)
-                                    alt1_info["alts"] += old_alts2
-                                    alt1_info["alts"].append(alt2_id)
-                                    alt1_info["proofs"] += old_proofs2
-                                    alt1_info["proofs"].append(proof)
-                                    alt2_info["alts"] += old_alts1
-                                    alt2_info["alts"].append(alt1_id)
-                                    alt2_info["proofs"] += old_proofs1
-                                    alt2_info["proofs"].append(proof)
-                                    altscol.replace_one(alt1_query, alt1_info)
-                                    altscol.replace_one(alt2_query, alt2_info)
-                                    user1_query = {"_id": alt1_id}
-                                    user1_profile = userscol.find_one(user1_query)
-                                    user2_query = {"_id": alt2_id}
-                                    user2_profile = userscol.find_one(user2_query)
-                                    if user1_profile and user2_profile and len(user1_profile) > 2 and len(
-                                            user2_profile) > 2:
-                                        await neru_logs_channel.send(
-                                            f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                    elif user1_profile and len(
-                                            user1_profile) > 2:  # user 1 reported, user 2 not reported
-                                        r_profile_list = user1_profile["r_profile_list"]
-                                        user1_alts = r_profile_list[0].strip("`").split()
-                                        if alt2_id not in user1_alts: user1_alts.append(alt2_id)
-                                        r_profile_list[0] = alts_string(user1_alts)
-                                        user1_profile["r_profile_list"] = r_profile_list
-                                        userscol.replace_one(user1_query, user1_profile)
-                                        new_user = {"_id": alt2_id, "main": alt1_id}
-                                        try:
-                                            userscol.insert_one(new_user)
-                                        except DuplicateKeyError:
-                                            continue
-                                        await neru_logs_channel.send(
-                                            f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                    elif user2_profile and len(
-                                            user2_profile) > 2:  # user 2 reported, user 1 not reported
-                                        r_profile_list = user2_profile["r_profile_list"]
-                                        user2_alts = r_profile_list[0].strip("`").split()
-                                        if alt1_id not in user2_alts: user2_alts.append(alt1_id)
-                                        r_profile_list[0] = alts_string(user2_alts)
-                                        user2_profile["r_profile_list"] = r_profile_list
-                                        userscol.replace_one(user2_query, user2_profile)
-                                        new_user = {"_id": alt1_id, "main": alt2_id}
-                                        try:
-                                            userscol.insert_one(new_user)
-                                        except DuplicateKeyError:
-                                            continue
-                                        await neru_logs_channel.send(
-                                            f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
-                                    else:
-                                        await neru_logs_channel.send(
-                                            f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
-                            else:  # alt 2 not logged
-                                count += 1
-                                old_alts1 = alt1_info["alts"].copy()
-                                old_proofs1 = alt1_info["proofs"].copy()
-                                alt2_info = {"_id": alt2_id, "alts": old_alts1, "proofs": []}
-                                alt2_info["alts"].append(alt1_id)
-                                alt2_info["proofs"] = old_proofs1
-                                alt2_info["proofs"].append(proof)
-                                for alt in old_alts1:
-                                    alt_query = {"_id": alt}
-                                    alt_info = altscol.find_one(alt_query)
-                                    if not alt_info:
-                                        print(f"[WARNING] Missing alt: {alt}")
-                                        continue
-                                    alt_info["alts"].append(alt2_id)
-                                    alt_info["proofs"].append(proof)
-                                    altscol.replace_one(alt_query, alt_info)
-                                alt1_info["alts"].append(alt2_id)
-                                alt1_info["proofs"].append(proof)
-                                altscol.replace_one(alt1_query, alt1_info)
-                                altscol.insert_one(alt2_info)
-                                user1_query = {"_id": alt1_id}
-                                user1_profile = userscol.find_one(user1_query)
-                                user2_query = {"_id": alt2_id}
-                                user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
-                                        user2_profile) > 2:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
-                                    r_profile_list = user1_profile["r_profile_list"]
-                                    user1_alts = r_profile_list[0].strip("`").split()
-                                    if alt2_id not in user1_alts: user1_alts.append(alt2_id)
-                                    r_profile_list[0] = alts_string(user1_alts)
-                                    user1_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user1_query, user1_profile)
-                                    new_user = {"_id": alt2_id, "main": alt1_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
-                                    r_profile_list = user2_profile["r_profile_list"]
-                                    user2_alts = r_profile_list[0].strip("`").split()
-                                    if alt1_id not in user2_alts: user2_alts.append(alt1_id)
-                                    r_profile_list[0] = alts_string(user2_alts)
-                                    user2_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user2_query, user2_profile)
-                                    new_user = {"_id": alt1_id, "main": alt2_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
-                                else:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
-                        else:  # alt 1 not logged
-                            if alt2_info:  # but alt 2 logged
-                                count += 1
-                                old_alts2 = alt2_info["alts"].copy()
-                                old_proofs2 = alt2_info["proofs"].copy()
-                                alt1_info = {"_id": alt1_id, "alts": old_alts2, "proofs": []}
-                                alt1_info["alts"].append(alt2_id)
-                                alt1_info["proofs"] = old_proofs2
-                                alt1_info["proofs"].append(proof)
-                                for alt in old_alts2:
-                                    alt_query = {"_id": alt}
-                                    alt_info = altscol.find_one(alt_query)
-                                    if not alt_info:
-                                        print(f"[WARNING] Missing alt: {alt}")
-                                        continue
-                                    alt_info["alts"].append(alt1_id)
-                                    alt_info["proofs"].append(proof)
-                                    altscol.replace_one(alt_query, alt_info)
-                                alt2_info["alts"].append(alt1_id)
-                                alt2_info["proofs"].append(proof)
-                                altscol.replace_one(alt2_query, alt2_info)
-                                altscol.insert_one(alt1_info)
-                                user1_query = {"_id": alt1_id}
-                                user1_profile = userscol.find_one(user1_query)
-                                user2_query = {"_id": alt2_id}
-                                user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
-                                        user2_profile) > 2:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
-                                    r_profile_list = user1_profile["r_profile_list"]
-                                    user1_alts = r_profile_list[0].strip("`").split()
-                                    if alt2_id not in user1_alts: user1_alts.append(alt2_id)
-                                    r_profile_list[0] = alts_string(user1_alts)
-                                    user1_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user1_query, user1_profile)
-                                    new_user = {"_id": alt2_id, "main": alt1_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
-                                    r_profile_list = user2_profile["r_profile_list"]
-                                    user2_alts = r_profile_list[0].strip("`").split()
-                                    if alt1_id not in user2_alts: user2_alts.append(alt1_id)
-                                    r_profile_list[0] = alts_string(user2_alts)
-                                    user2_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user2_query, user2_profile)
-                                    new_user = {"_id": alt1_id, "main": alt2_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
-                                else:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
-                            else:  # both alts not logged
-                                count += 1
-                                alt1_info = {
-                                    "_id": alt1_id,
-                                    "alts": [alt2_id],
-                                    "proofs": [proof]
-                                }
-                                alt2_info = {
-                                    "_id": alt2_id,
-                                    "alts": [alt1_id],
-                                    "proofs": [proof]
-                                }
-                                #
-                                altscol.insert_one(alt1_info)
-                                altscol.insert_one(alt2_info)
-                                #
-                                user1_query = {"_id": alt1_id}
-                                user1_profile = userscol.find_one(user1_query)
-                                user2_query = {"_id": alt2_id}
-                                user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
-                                        user2_profile) > 2:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
-                                    r_profile_list = user1_profile["r_profile_list"]
-                                    user1_alts = r_profile_list[0].strip("`").split()
-                                    if alt2_id not in user1_alts: user1_alts.append(alt2_id)
-                                    r_profile_list[0] = alts_string(user1_alts)
-                                    user1_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user1_query, user1_profile)
-                                    new_user = {"_id": alt2_id, "main": alt1_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
-                                    r_profile_list = user2_profile["r_profile_list"]
-                                    user2_alts = r_profile_list[0].strip("`").split()
-                                    if alt1_id not in user2_alts: user2_alts.append(alt1_id)
-                                    r_profile_list[0] = alts_string(user2_alts)
-                                    user2_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user2_query, user2_profile)
-                                    new_user = {"_id": alt1_id, "main": alt2_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
-                                else:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
+                        else:
+                            count += 1
+                            old_alts1 = alt1_info["alts"].copy()
+                            old_alts2 = alt2_info["alts"].copy()
+                            old_proofs1 = alt1_info["proofs"].copy()
+                            old_proofs2 = alt2_info["proofs"].copy()
+                            for alt in old_alts1:
+                                alt_query = {"_id": alt}
+                                alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    print(f"[WARNING] Missing alt: {alt}")
+                                    continue
+                                alt_info["alts"] += old_alts2
+                                alt_info["alts"].append(alt2_id)
+                                alt_info["proofs"] += old_proofs2
+                                alt_info["proofs"].append(proof)
+                                altscol.replace_one(alt_query, alt_info)
+                            for alt in old_alts2:
+                                alt_query = {"_id": alt}
+                                alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    print(f"[WARNING] Missing alt: {alt}")
+                                    continue
+                                alt_info["alts"] += old_alts1
+                                alt_info["alts"].append(alt1_id)
+                                alt_info["proofs"] += old_proofs1
+                                alt_info["proofs"].append(proof)
+                                altscol.replace_one(alt_query, alt_info)
+                            alt1_info["alts"] += old_alts2
+                            alt1_info["alts"].append(alt2_id)
+                            alt1_info["proofs"] += old_proofs2
+                            alt1_info["proofs"].append(proof)
+                            alt2_info["alts"] += old_alts1
+                            alt2_info["alts"].append(alt1_id)
+                            alt2_info["proofs"] += old_proofs1
+                            alt2_info["proofs"].append(proof)
+                            altscol.replace_one(alt1_query, alt1_info)
+                            altscol.replace_one(alt2_query, alt2_info)
+                            user1_query = {"_id": alt1_id}
+                            user1_profile = userscol.find_one(user1_query)
+                            user2_query = {"_id": alt2_id}
+                            user2_profile = userscol.find_one(user2_query)
+                            if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                    user2_profile) > 2:
+                                await neru_logs_channel.send(
+                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
+                            elif user1_profile and len(
+                                    user1_profile) > 2:  # user 1 reported, user 2 not reported
+                                r_profile_list = user1_profile["r_profile_list"]
+                                user1_alts = r_profile_list[0].strip("`").split()
+                                if alt2_id not in user1_alts: user1_alts.append(alt2_id)
+                                r_profile_list[0] = alts_string(user1_alts)
+                                user1_profile["r_profile_list"] = r_profile_list
+                                userscol.replace_one(user1_query, user1_profile)
+                                new_user = {"_id": alt2_id, "main": alt1_id}
+                                try:
+                                    userscol.insert_one(new_user)
+                                except DuplicateKeyError:
+                                    continue
+                                await neru_logs_channel.send(
+                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                            elif user2_profile and len(
+                                    user2_profile) > 2:  # user 2 reported, user 1 not reported
+                                r_profile_list = user2_profile["r_profile_list"]
+                                user2_alts = r_profile_list[0].strip("`").split()
+                                if alt1_id not in user2_alts: user2_alts.append(alt1_id)
+                                r_profile_list[0] = alts_string(user2_alts)
+                                user2_profile["r_profile_list"] = r_profile_list
+                                userscol.replace_one(user2_query, user2_profile)
+                                new_user = {"_id": alt1_id, "main": alt2_id}
+                                try:
+                                    userscol.insert_one(new_user)
+                                except DuplicateKeyError:
+                                    continue
+                                await neru_logs_channel.send(
+                                    f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                            else:
+                                await neru_logs_channel.send(
+                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
+                    else:  # alt 2 not logged
+                        count += 1
+                        old_alts1 = alt1_info["alts"].copy()
+                        old_proofs1 = alt1_info["proofs"].copy()
+                        alt2_info = {"_id": alt2_id, "alts": old_alts1, "proofs": []}
+                        alt2_info["alts"].append(alt1_id)
+                        alt2_info["proofs"] = old_proofs1
+                        alt2_info["proofs"].append(proof)
+                        for alt in old_alts1:
+                            alt_query = {"_id": alt}
+                            alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                print(f"[WARNING] Missing alt: {alt}")
+                                continue
+                            alt_info["alts"].append(alt2_id)
+                            alt_info["proofs"].append(proof)
+                            altscol.replace_one(alt_query, alt_info)
+                        alt1_info["alts"].append(alt2_id)
+                        alt1_info["proofs"].append(proof)
+                        altscol.replace_one(alt1_query, alt1_info)
+                        altscol.insert_one(alt2_info)
+                        user1_query = {"_id": alt1_id}
+                        user1_profile = userscol.find_one(user1_query)
+                        user2_query = {"_id": alt2_id}
+                        user2_profile = userscol.find_one(user2_query)
+                        if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                user2_profile) > 2:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
+                        elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
+                            r_profile_list = user1_profile["r_profile_list"]
+                            user1_alts = r_profile_list[0].strip("`").split()
+                            if alt2_id not in user1_alts: user1_alts.append(alt2_id)
+                            r_profile_list[0] = alts_string(user1_alts)
+                            user1_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user1_query, user1_profile)
+                            new_user = {"_id": alt2_id, "main": alt1_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                        elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
+                            r_profile_list = user2_profile["r_profile_list"]
+                            user2_alts = r_profile_list[0].strip("`").split()
+                            if alt1_id not in user2_alts: user2_alts.append(alt1_id)
+                            r_profile_list[0] = alts_string(user2_alts)
+                            user2_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user2_query, user2_profile)
+                            new_user = {"_id": alt1_id, "main": alt2_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                        else:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
+                else:  # alt 1 not logged
+                    if alt2_info:  # but alt 2 logged
+                        count += 1
+                        old_alts2 = alt2_info["alts"].copy()
+                        old_proofs2 = alt2_info["proofs"].copy()
+                        alt1_info = {"_id": alt1_id, "alts": old_alts2, "proofs": []}
+                        alt1_info["alts"].append(alt2_id)
+                        alt1_info["proofs"] = old_proofs2
+                        alt1_info["proofs"].append(proof)
+                        for alt in old_alts2:
+                            alt_query = {"_id": alt}
+                            alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                print(f"[WARNING] Missing alt: {alt}")
+                                continue
+                            alt_info["alts"].append(alt1_id)
+                            alt_info["proofs"].append(proof)
+                            altscol.replace_one(alt_query, alt_info)
+                        alt2_info["alts"].append(alt1_id)
+                        alt2_info["proofs"].append(proof)
+                        altscol.replace_one(alt2_query, alt2_info)
+                        altscol.insert_one(alt1_info)
+                        user1_query = {"_id": alt1_id}
+                        user1_profile = userscol.find_one(user1_query)
+                        user2_query = {"_id": alt2_id}
+                        user2_profile = userscol.find_one(user2_query)
+                        if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                user2_profile) > 2:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
+                        elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
+                            r_profile_list = user1_profile["r_profile_list"]
+                            user1_alts = r_profile_list[0].strip("`").split()
+                            if alt2_id not in user1_alts: user1_alts.append(alt2_id)
+                            r_profile_list[0] = alts_string(user1_alts)
+                            user1_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user1_query, user1_profile)
+                            new_user = {"_id": alt2_id, "main": alt1_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                        elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
+                            r_profile_list = user2_profile["r_profile_list"]
+                            user2_alts = r_profile_list[0].strip("`").split()
+                            if alt1_id not in user2_alts: user2_alts.append(alt1_id)
+                            r_profile_list[0] = alts_string(user2_alts)
+                            user2_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user2_query, user2_profile)
+                            new_user = {"_id": alt1_id, "main": alt2_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                        else:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
+                    else:  # both alts not logged
+                        count += 1
+                        alt1_info = {
+                            "_id": alt1_id,
+                            "alts": [alt2_id],
+                            "proofs": [proof]
+                        }
+                        alt2_info = {
+                            "_id": alt2_id,
+                            "alts": [alt1_id],
+                            "proofs": [proof]
+                        }
+                        #
+                        altscol.insert_one(alt1_info)
+                        altscol.insert_one(alt2_info)
+                        #
+                        user1_query = {"_id": alt1_id}
+                        user1_profile = userscol.find_one(user1_query)
+                        user2_query = {"_id": alt2_id}
+                        user2_profile = userscol.find_one(user2_query)
+                        if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                user2_profile) > 2:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
+                        elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
+                            r_profile_list = user1_profile["r_profile_list"]
+                            user1_alts = r_profile_list[0].strip("`").split()
+                            if alt2_id not in user1_alts: user1_alts.append(alt2_id)
+                            r_profile_list[0] = alts_string(user1_alts)
+                            user1_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user1_query, user1_profile)
+                            new_user = {"_id": alt2_id, "main": alt1_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                        elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
+                            r_profile_list = user2_profile["r_profile_list"]
+                            user2_alts = r_profile_list[0].strip("`").split()
+                            if alt1_id not in user2_alts: user2_alts.append(alt1_id)
+                            r_profile_list[0] = alts_string(user2_alts)
+                            user2_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user2_query, user2_profile)
+                            new_user = {"_id": alt1_id, "main": alt2_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                        else:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
         if count == 0:
             await interaction.followup.send("No new alt intrusions imported.", ephemeral=True)
         else:
@@ -718,301 +720,304 @@ async def import_all(interaction: discord.Interaction):
         msg = await channel.send("Checking all messages for Double Counter alt intrusions...")
         count=0
         async for message in channel.history(limit=None):
+            alt1_id = None
+            alt2_id = None
             if message.author.id == 703886990948565003:
-                pattern1 = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@(\d{17,20})>"
-                match1 = re.search(pattern1, message.content)
-                match2 = False
                 if message.embeds:
                     embed = message.embeds[0]
                     for field in embed.fields:
-                        if field.name.lower() == "alt account":
-                            match = re.search(r"\((\d+)\)", field.value)
-                            if match:
-                                match2 = True
-                                alt1_id = match.group(1)
-                        elif field.name.lower() == "main account":
-                            match = re.search(r"\((\d+)\)", field.value)
-                            if match:
-                                alt2_id = match.group(1)
-                if match1 or match2:
-                    if match1:
-                        alt1_id = match1.group(1)
-                        alt2_id = match1.group(2)
-                    if alt1_id != alt2_id:
-                        proof = f"{message.jump_url} ┈ dc"
-                        try:
-                            parts = message.jump_url.split('/')
-                            guild_id = int(parts[-3])
-                            guild = await bot.fetch_guild(guild_id)
-                            if guild:
-                                server_name = guild.name
-                                formatted_proof = proof + f" ┈ {server_name}"
-                        except Exception:
+                        name = field.name.lower()
+                        if name == "alt account":
+                            m = re.search(r"\((\d{17,20})\)", field.value)
+                            if m:
+                                alt1_id = m.group(1)
+                        elif name == "main account":
+                            m = re.search(r"\((\d{17,20})\)", field.value)
+                            if m:
+                                alt2_id = m.group(1)
+                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@(\d{17,20})>"
+                match = re.search(pattern, message.content)
+                if match:
+                    alt1_id, alt2_id = match.group(1), match.group(2)
+                if not alt1_id or not alt2_id:
+                    continue
+                if alt1_id == alt2_id:
+                    continue
+                proof = f"{message.jump_url} ┈ dc"
+                formatted_proof = proof
+                try:
+                    parts = message.jump_url.split('/')
+                    guild_id = int(parts[-3])
+                    guild = await bot.fetch_guild(guild_id)
+                    if guild:
+                        server_name = guild.name
+                        formatted_proof = proof + f" ┈ {server_name}"
+                except Exception:
+                    pass
+                alt1_query = {"_id": alt1_id}
+                alt1_info = altscol.find_one(alt1_query)
+                alt2_query = {"_id": alt2_id}
+                alt2_info = altscol.find_one(alt2_query)
+                if alt1_info:  # alt 1 logged
+                    if alt2_info:  # alt 2 also logged
+                        if alt1_id in alt2_info["alts"] and alt2_id in alt1_info[
+                            "alts"]:  # check if already exists
                             pass
-                        alt1_query = {"_id": alt1_id}
-                        alt1_info = altscol.find_one(alt1_query)
-                        alt2_query = {"_id": alt2_id}
-                        alt2_info = altscol.find_one(alt2_query)
-                        if alt1_info:  # alt 1 logged
-                            if alt2_info:  # alt 2 also logged
-                                if alt1_id in alt2_info["alts"] and alt2_id in alt1_info[
-                                    "alts"]:  # check if already exists
-                                    pass
-                                else:
-                                    count += 1
-                                    old_alts1 = alt1_info["alts"].copy()
-                                    old_alts2 = alt2_info["alts"].copy()
-                                    old_proofs1 = alt1_info["proofs"].copy()
-                                    old_proofs2 = alt2_info["proofs"].copy()
-                                    for alt in old_alts1:
-                                        alt_query = {"_id": alt}
-                                        alt_info = altscol.find_one(alt_query)
-                                        if not alt_info:
-                                            print(f"[WARNING] Missing alt: {alt}")
-                                            continue
-                                        alt_info["alts"] += old_alts2
-                                        alt_info["alts"].append(alt2_id)
-                                        alt_info["proofs"] += old_proofs2
-                                        alt_info["proofs"].append(proof)
-                                        altscol.replace_one(alt_query, alt_info)
-                                    for alt in old_alts2:
-                                        alt_query = {"_id": alt}
-                                        alt_info = altscol.find_one(alt_query)
-                                        if not alt_info:
-                                            print(f"[WARNING] Missing alt: {alt}")
-                                            continue
-                                        alt_info["alts"] += old_alts1
-                                        alt_info["alts"].append(alt1_id)
-                                        alt_info["proofs"] += old_proofs1
-                                        alt_info["proofs"].append(proof)
-                                        altscol.replace_one(alt_query, alt_info)
-                                    alt1_info["alts"] += old_alts2
-                                    alt1_info["alts"].append(alt2_id)
-                                    alt1_info["proofs"] += old_proofs2
-                                    alt1_info["proofs"].append(proof)
-                                    alt2_info["alts"] += old_alts1
-                                    alt2_info["alts"].append(alt1_id)
-                                    alt2_info["proofs"] += old_proofs1
-                                    alt2_info["proofs"].append(proof)
-                                    altscol.replace_one(alt1_query, alt1_info)
-                                    altscol.replace_one(alt2_query, alt2_info)
-                                    user1_query = {"_id": alt1_id}
-                                    user1_profile = userscol.find_one(user1_query)
-                                    user2_query = {"_id": alt2_id}
-                                    user2_profile = userscol.find_one(user2_query)
-                                    if user1_profile and user2_profile and len(user1_profile) > 2 and len(
-                                            user2_profile) > 2:
-                                        await neru_logs_channel.send(
-                                            f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                    elif user1_profile and len(
-                                            user1_profile) > 2:  # user 1 reported, user 2 not reported
-                                        r_profile_list = user1_profile["r_profile_list"]
-                                        user1_alts = r_profile_list[0].strip("`").split()
-                                        if alt2_id not in user1_alts: user1_alts.append(alt2_id)
-                                        r_profile_list[0] = alts_string(user1_alts)
-                                        user1_profile["r_profile_list"] = r_profile_list
-                                        userscol.replace_one(user1_query, user1_profile)
-                                        new_user = {"_id": alt2_id, "main": alt1_id}
-                                        try:
-                                            userscol.insert_one(new_user)
-                                        except DuplicateKeyError:
-                                            continue
-                                        await neru_logs_channel.send(
-                                            f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                    elif user2_profile and len(
-                                            user2_profile) > 2:  # user 2 reported, user 1 not reported
-                                        r_profile_list = user2_profile["r_profile_list"]
-                                        user2_alts = r_profile_list[0].strip("`").split()
-                                        if alt1_id not in user2_alts: user2_alts.append(alt1_id)
-                                        r_profile_list[0] = alts_string(user2_alts)
-                                        user2_profile["r_profile_list"] = r_profile_list
-                                        userscol.replace_one(user2_query, user2_profile)
-                                        new_user = {"_id": alt1_id, "main": alt2_id}
-                                        try:
-                                            userscol.insert_one(new_user)
-                                        except DuplicateKeyError:
-                                            continue
-                                        await neru_logs_channel.send(
-                                            f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
-                                    else:
-                                        await neru_logs_channel.send(
-                                            f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
-                            else:  # alt 2 not logged
-                                count += 1
-                                old_alts1 = alt1_info["alts"].copy()
-                                old_proofs1 = alt1_info["proofs"].copy()
-                                alt2_info = {"_id": alt2_id, "alts": old_alts1, "proofs": []}
-                                alt2_info["alts"].append(alt1_id)
-                                alt2_info["proofs"] = old_proofs1
-                                alt2_info["proofs"].append(proof)
-                                for alt in old_alts1:
-                                    alt_query = {"_id": alt}
-                                    alt_info = altscol.find_one(alt_query)
-                                    if not alt_info:
-                                        print(f"[WARNING] Missing alt: {alt}")
-                                        continue
-                                    alt_info["alts"].append(alt2_id)
-                                    alt_info["proofs"].append(proof)
-                                    altscol.replace_one(alt_query, alt_info)
-                                alt1_info["alts"].append(alt2_id)
-                                alt1_info["proofs"].append(proof)
-                                altscol.replace_one(alt1_query, alt1_info)
-                                altscol.insert_one(alt2_info)
-                                user1_query = {"_id": alt1_id}
-                                user1_profile = userscol.find_one(user1_query)
-                                user2_query = {"_id": alt2_id}
-                                user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
-                                        user2_profile) > 2:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
-                                    r_profile_list = user1_profile["r_profile_list"]
-                                    user1_alts = r_profile_list[0].strip("`").split()
-                                    if alt2_id not in user1_alts: user1_alts.append(alt2_id)
-                                    r_profile_list[0] = alts_string(user1_alts)
-                                    user1_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user1_query, user1_profile)
-                                    new_user = {"_id": alt2_id, "main": alt1_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
-                                    r_profile_list = user2_profile["r_profile_list"]
-                                    user2_alts = r_profile_list[0].strip("`").split()
-                                    if alt1_id not in user2_alts: user2_alts.append(alt1_id)
-                                    r_profile_list[0] = alts_string(user2_alts)
-                                    user2_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user2_query, user2_profile)
-                                    new_user = {"_id": alt1_id, "main": alt2_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
-                                else:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
-                        else:  # alt 1 not logged
-                            if alt2_info:  # but alt 2 logged
-                                count += 1
-                                old_alts2 = alt2_info["alts"].copy()
-                                old_proofs2 = alt2_info["proofs"].copy()
-                                alt1_info = {"_id": alt1_id, "alts": old_alts2, "proofs": []}
-                                alt1_info["alts"].append(alt2_id)
-                                alt1_info["proofs"] = old_proofs2
-                                alt1_info["proofs"].append(proof)
-                                for alt in old_alts2:
-                                    alt_query = {"_id": alt}
-                                    alt_info = altscol.find_one(alt_query)
-                                    if not alt_info:
-                                        print(f"[WARNING] Missing alt: {alt}")
-                                        continue
-                                    alt_info["alts"].append(alt1_id)
-                                    alt_info["proofs"].append(proof)
-                                    altscol.replace_one(alt_query, alt_info)
-                                alt2_info["alts"].append(alt1_id)
-                                alt2_info["proofs"].append(proof)
-                                altscol.replace_one(alt2_query, alt2_info)
-                                altscol.insert_one(alt1_info)
-                                user1_query = {"_id": alt1_id}
-                                user1_profile = userscol.find_one(user1_query)
-                                user2_query = {"_id": alt2_id}
-                                user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
-                                        user2_profile) > 2:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
-                                    r_profile_list = user1_profile["r_profile_list"]
-                                    user1_alts = r_profile_list[0].strip("`").split()
-                                    if alt2_id not in user1_alts: user1_alts.append(alt2_id)
-                                    r_profile_list[0] = alts_string(user1_alts)
-                                    user1_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user1_query, user1_profile)
-                                    new_user = {"_id": alt2_id, "main": alt1_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
-                                    r_profile_list = user2_profile["r_profile_list"]
-                                    user2_alts = r_profile_list[0].strip("`").split()
-                                    if alt1_id not in user2_alts: user2_alts.append(alt1_id)
-                                    r_profile_list[0] = alts_string(user2_alts)
-                                    user2_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user2_query, user2_profile)
-                                    new_user = {"_id": alt1_id, "main": alt2_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
-                                else:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
-                            else:  # both alts not logged
-                                count += 1
-                                alt1_info = {
-                                    "_id": alt1_id,
-                                    "alts": [alt2_id],
-                                    "proofs": [proof]
-                                }
-                                alt2_info = {
-                                    "_id": alt2_id,
-                                    "alts": [alt1_id],
-                                    "proofs": [proof]
-                                }
-                                #
-                                altscol.insert_one(alt1_info)
-                                altscol.insert_one(alt2_info)
-                                #
-                                user1_query = {"_id": alt1_id}
-                                user1_profile = userscol.find_one(user1_query)
-                                user2_query = {"_id": alt2_id}
-                                user2_profile = userscol.find_one(user2_query)
-                                if user1_profile and user2_profile and len(user1_profile) > 2 and len(
-                                        user2_profile) > 2:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
-                                elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
-                                    r_profile_list = user1_profile["r_profile_list"]
-                                    user1_alts = r_profile_list[0].strip("`").split()
-                                    if alt2_id not in user1_alts: user1_alts.append(alt2_id)
-                                    r_profile_list[0] = alts_string(user1_alts)
-                                    user1_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user1_query, user1_profile)
-                                    new_user = {"_id": alt2_id, "main": alt1_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
-                                elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
-                                    r_profile_list = user2_profile["r_profile_list"]
-                                    user2_alts = r_profile_list[0].strip("`").split()
-                                    if alt1_id not in user2_alts: user2_alts.append(alt1_id)
-                                    r_profile_list[0] = alts_string(user2_alts)
-                                    user2_profile["r_profile_list"] = r_profile_list
-                                    userscol.replace_one(user2_query, user2_profile)
-                                    new_user = {"_id": alt1_id, "main": alt2_id}
-                                    try:
-                                        userscol.insert_one(new_user)
-                                    except DuplicateKeyError:
-                                        continue
-                                    await neru_logs_channel.send(
-                                        f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
-                                else:
-                                    await neru_logs_channel.send(
-                                        f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
+                        else:
+                            count += 1
+                            old_alts1 = alt1_info["alts"].copy()
+                            old_alts2 = alt2_info["alts"].copy()
+                            old_proofs1 = alt1_info["proofs"].copy()
+                            old_proofs2 = alt2_info["proofs"].copy()
+                            for alt in old_alts1:
+                                alt_query = {"_id": alt}
+                                alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    print(f"[WARNING] Missing alt: {alt}")
+                                    continue
+                                alt_info["alts"] += old_alts2
+                                alt_info["alts"].append(alt2_id)
+                                alt_info["proofs"] += old_proofs2
+                                alt_info["proofs"].append(proof)
+                                altscol.replace_one(alt_query, alt_info)
+                            for alt in old_alts2:
+                                alt_query = {"_id": alt}
+                                alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    print(f"[WARNING] Missing alt: {alt}")
+                                    continue
+                                alt_info["alts"] += old_alts1
+                                alt_info["alts"].append(alt1_id)
+                                alt_info["proofs"] += old_proofs1
+                                alt_info["proofs"].append(proof)
+                                altscol.replace_one(alt_query, alt_info)
+                            alt1_info["alts"] += old_alts2
+                            alt1_info["alts"].append(alt2_id)
+                            alt1_info["proofs"] += old_proofs2
+                            alt1_info["proofs"].append(proof)
+                            alt2_info["alts"] += old_alts1
+                            alt2_info["alts"].append(alt1_id)
+                            alt2_info["proofs"] += old_proofs1
+                            alt2_info["proofs"].append(proof)
+                            altscol.replace_one(alt1_query, alt1_info)
+                            altscol.replace_one(alt2_query, alt2_info)
+                            user1_query = {"_id": alt1_id}
+                            user1_profile = userscol.find_one(user1_query)
+                            user2_query = {"_id": alt2_id}
+                            user2_profile = userscol.find_one(user2_query)
+                            if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                    user2_profile) > 2:
+                                await neru_logs_channel.send(
+                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
+                            elif user1_profile and len(
+                                    user1_profile) > 2:  # user 1 reported, user 2 not reported
+                                r_profile_list = user1_profile["r_profile_list"]
+                                user1_alts = r_profile_list[0].strip("`").split()
+                                if alt2_id not in user1_alts: user1_alts.append(alt2_id)
+                                r_profile_list[0] = alts_string(user1_alts)
+                                user1_profile["r_profile_list"] = r_profile_list
+                                userscol.replace_one(user1_query, user1_profile)
+                                new_user = {"_id": alt2_id, "main": alt1_id}
+                                try:
+                                    userscol.insert_one(new_user)
+                                except DuplicateKeyError:
+                                    continue
+                                await neru_logs_channel.send(
+                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                            elif user2_profile and len(
+                                    user2_profile) > 2:  # user 2 reported, user 1 not reported
+                                r_profile_list = user2_profile["r_profile_list"]
+                                user2_alts = r_profile_list[0].strip("`").split()
+                                if alt1_id not in user2_alts: user2_alts.append(alt1_id)
+                                r_profile_list[0] = alts_string(user2_alts)
+                                user2_profile["r_profile_list"] = r_profile_list
+                                userscol.replace_one(user2_query, user2_profile)
+                                new_user = {"_id": alt1_id, "main": alt2_id}
+                                try:
+                                    userscol.insert_one(new_user)
+                                except DuplicateKeyError:
+                                    continue
+                                await neru_logs_channel.send(
+                                    f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                            else:
+                                await neru_logs_channel.send(
+                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
+                    else:  # alt 2 not logged
+                        count += 1
+                        old_alts1 = alt1_info["alts"].copy()
+                        old_proofs1 = alt1_info["proofs"].copy()
+                        alt2_info = {"_id": alt2_id, "alts": old_alts1, "proofs": []}
+                        alt2_info["alts"].append(alt1_id)
+                        alt2_info["proofs"] = old_proofs1
+                        alt2_info["proofs"].append(proof)
+                        for alt in old_alts1:
+                            alt_query = {"_id": alt}
+                            alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                print(f"[WARNING] Missing alt: {alt}")
+                                continue
+                            alt_info["alts"].append(alt2_id)
+                            alt_info["proofs"].append(proof)
+                            altscol.replace_one(alt_query, alt_info)
+                        alt1_info["alts"].append(alt2_id)
+                        alt1_info["proofs"].append(proof)
+                        altscol.replace_one(alt1_query, alt1_info)
+                        altscol.insert_one(alt2_info)
+                        user1_query = {"_id": alt1_id}
+                        user1_profile = userscol.find_one(user1_query)
+                        user2_query = {"_id": alt2_id}
+                        user2_profile = userscol.find_one(user2_query)
+                        if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                user2_profile) > 2:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
+                        elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
+                            r_profile_list = user1_profile["r_profile_list"]
+                            user1_alts = r_profile_list[0].strip("`").split()
+                            if alt2_id not in user1_alts: user1_alts.append(alt2_id)
+                            r_profile_list[0] = alts_string(user1_alts)
+                            user1_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user1_query, user1_profile)
+                            new_user = {"_id": alt2_id, "main": alt1_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                        elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
+                            r_profile_list = user2_profile["r_profile_list"]
+                            user2_alts = r_profile_list[0].strip("`").split()
+                            if alt1_id not in user2_alts: user2_alts.append(alt1_id)
+                            r_profile_list[0] = alts_string(user2_alts)
+                            user2_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user2_query, user2_profile)
+                            new_user = {"_id": alt1_id, "main": alt2_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                        else:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
+                else:  # alt 1 not logged
+                    if alt2_info:  # but alt 2 logged
+                        count += 1
+                        old_alts2 = alt2_info["alts"].copy()
+                        old_proofs2 = alt2_info["proofs"].copy()
+                        alt1_info = {"_id": alt1_id, "alts": old_alts2, "proofs": []}
+                        alt1_info["alts"].append(alt2_id)
+                        alt1_info["proofs"] = old_proofs2
+                        alt1_info["proofs"].append(proof)
+                        for alt in old_alts2:
+                            alt_query = {"_id": alt}
+                            alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                print(f"[WARNING] Missing alt: {alt}")
+                                continue
+                            alt_info["alts"].append(alt1_id)
+                            alt_info["proofs"].append(proof)
+                            altscol.replace_one(alt_query, alt_info)
+                        alt2_info["alts"].append(alt1_id)
+                        alt2_info["proofs"].append(proof)
+                        altscol.replace_one(alt2_query, alt2_info)
+                        altscol.insert_one(alt1_info)
+                        user1_query = {"_id": alt1_id}
+                        user1_profile = userscol.find_one(user1_query)
+                        user2_query = {"_id": alt2_id}
+                        user2_profile = userscol.find_one(user2_query)
+                        if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                user2_profile) > 2:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
+                        elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
+                            r_profile_list = user1_profile["r_profile_list"]
+                            user1_alts = r_profile_list[0].strip("`").split()
+                            if alt2_id not in user1_alts: user1_alts.append(alt2_id)
+                            r_profile_list[0] = alts_string(user1_alts)
+                            user1_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user1_query, user1_profile)
+                            new_user = {"_id": alt2_id, "main": alt1_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                        elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
+                            r_profile_list = user2_profile["r_profile_list"]
+                            user2_alts = r_profile_list[0].strip("`").split()
+                            if alt1_id not in user2_alts: user2_alts.append(alt1_id)
+                            r_profile_list[0] = alts_string(user2_alts)
+                            user2_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user2_query, user2_profile)
+                            new_user = {"_id": alt1_id, "main": alt2_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                        else:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
+                    else:  # both alts not logged
+                        count += 1
+                        alt1_info = {
+                            "_id": alt1_id,
+                            "alts": [alt2_id],
+                            "proofs": [proof]
+                        }
+                        alt2_info = {
+                            "_id": alt2_id,
+                            "alts": [alt1_id],
+                            "proofs": [proof]
+                        }
+                        #
+                        altscol.insert_one(alt1_info)
+                        altscol.insert_one(alt2_info)
+                        #
+                        user1_query = {"_id": alt1_id}
+                        user1_profile = userscol.find_one(user1_query)
+                        user2_query = {"_id": alt2_id}
+                        user2_profile = userscol.find_one(user2_query)
+                        if user1_profile and user2_profile and len(user1_profile) > 2 and len(
+                                user2_profile) > 2:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n<@&{sr_role}> Separate reports detected, use /merge to merge them.")
+                        elif user1_profile and len(user1_profile) > 2:  # user 1 reported, user 2 not reported
+                            r_profile_list = user1_profile["r_profile_list"]
+                            user1_alts = r_profile_list[0].strip("`").split()
+                            if alt2_id not in user1_alts: user1_alts.append(alt2_id)
+                            r_profile_list[0] = alts_string(user1_alts)
+                            user1_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user1_query, user1_profile)
+                            new_user = {"_id": alt2_id, "main": alt1_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                        elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
+                            r_profile_list = user2_profile["r_profile_list"]
+                            user2_alts = r_profile_list[0].strip("`").split()
+                            if alt1_id not in user2_alts: user2_alts.append(alt1_id)
+                            r_profile_list[0] = alts_string(user2_alts)
+                            user2_profile["r_profile_list"] = r_profile_list
+                            userscol.replace_one(user2_query, user2_profile)
+                            new_user = {"_id": alt1_id, "main": alt2_id}
+                            try:
+                                userscol.insert_one(new_user)
+                            except DuplicateKeyError:
+                                continue
+                            await neru_logs_channel.send(
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                        else:
+                            await neru_logs_channel.send(
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
         if count == 0:
             await interaction.followup.send("No new alt intrusions imported.", ephemeral=True)
         else:
