@@ -7129,20 +7129,15 @@ async def ar(ctx):
     if isinstance(ctx.channel, discord.Thread):
         thread = ctx.channel
         active_reports = []
-        try:
-            async for message in thread.history(oldest_first=True, limit=None):
-                if message.content.startswith(f"Adding report on") or \
-                        message.content.startswith(f"Editing alts for") or \
-                        message.content.startswith(f"Editing owner for") or \
-                        message.content.startswith(f"Appealing for") or \
-                        message.content.startswith(f"Initializing report on") \
-                        and message.author.id == bot.user.id:
-                    active_reports.append(message.jump_url)
-        except Exception:
-            pass
+        db_reports = list(inprogresscol.find({"channel_id": thread.id, "vote_channel_id": {"$exists": False}}))
+        for r in db_reports:
+            message_id = r.get("_id")
+            if message_id:
+                active_reports.append(f"https://discord.com/channels/{ctx.guild.id}/{thread.id}/{message_id}")
         if active_reports:
             embed = discord.Embed(description="\n\n".join(active_reports))
-        else: embed = discord.Embed(description="No active reports.")
+        else:
+            embed = discord.Embed(description="No active reports.")
         await ctx.reply(f"{len(active_reports)} active reports in this thread.", embed=embed)
     else:
         await ctx.reply("This command can only be used in a thread.")
@@ -7153,17 +7148,20 @@ async def vr(ctx):
     if isinstance(ctx.channel, discord.Thread):
         thread = ctx.channel
         voting_reports = []
-        try:
-            async for message in thread.history(oldest_first=True, limit=None):
-                if "has been submitted for voting." in message.content and message.embeds and message.author.id == bot.user.id:
-                    voting_reports.append(message.jump_url)
-        except Exception: pass
+        db_reports = list(inprogresscol.find({"channel_id": thread.id, "vote_channel_id": {"$exists": True}}))
+        for r in db_reports:
+            vote_channel_id = r.get("vote_channel_id")
+            message_id = r.get("_id")
+            if vote_channel_id and message_id:
+                voting_reports.append(f"https://discord.com/channels/{ctx.guild.id}/{vote_channel_id}/{message_id}")
         if voting_reports:
-            embed = discord.Embed(description=f"{"\n\n".join(voting_reports)}")
-        else: embed = discord.Embed(description="No reports in voting.")
+            embed = discord.Embed(description="\n\n".join(voting_reports))
+        else:
+            embed = discord.Embed(description="No reports in voting.")
         await ctx.reply(f"{len(voting_reports)} reports in voting in this thread.", embed=embed)
     else:
         await ctx.reply("This command can only be used in a thread.")
+
 
 @bot.command(name="pr", help="Sends a list of all published reports in the thread.")
 @commands.has_any_role(staff_role)
@@ -7267,33 +7265,23 @@ async def report(
         await interaction.followup.send(
             f"`{user_id}` is trusted. Ask adm+ to dismiss them before using ,c to report.", ephemeral=True)
         return
-    ongoing_report = []
-    tickets_channel = bot.get_channel(TICKETS_CHANNEL)
-    active_threads = tickets_channel.threads
-    for thread in active_threads:
-        try:
-            async for message in thread.history():
-                if message.content.startswith(f"Adding report on `{user.id}`") or \
-                        message.content.startswith(f"Editing alts for `{user.id}`") or \
-                        message.content.startswith(f"Appealing for `{user.id}`") or \
-                        message.content.startswith(f"Initializing report on `{user.id}`") \
-                        and message.author.id == bot.user.id:
-                    ongoing_report.append(message.jump_url)
-        except Exception:
-            pass
-    if ongoing_report:
-        await interaction.followup.send(
-            f"There already exists an ongoing report on `{user.id}`: {ongoing_report[0]}")
-        return
-    ongoing_vote = []
-    vote_channel = bot.get_channel(VOTE_CHANNEL)
-    active_threads = vote_channel.threads
-    for thread in active_threads:
-        if thread.name == f"{user.id}":
-            ongoing_vote.append(thread.jump_url)
-    if ongoing_vote:
-        await interaction.followup.send(
-            f"There already exists an ongoing vote on `{user.id}`: {ongoing_vote[0]}")
+    existing_entry = inprogresscol.find_one({"user_id": user.id})
+    if existing_entry:
+        # ongoing vote
+        if "vote_channel_id" in existing_entry:
+            vote_channel_id = existing_entry["vote_channel_id"]
+            vote_message_id = existing_entry["_id"]
+            vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+            await interaction.followup.send(
+                f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
+        # ongoing report
+        else:
+            channel_id = existing_entry["channel_id"]
+            message_id = existing_entry["_id"]
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            await interaction.followup.send(
+                f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
         return
     async def upload_attachment(att):
         if not att:
@@ -7742,7 +7730,6 @@ async def trusted_add(interaction: discord.Interaction, server: str):
     except Exception as e:
         await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
     else:
-        guild = invite.guild
         guild_id = invite.guild.id
         server_query = {"_id": str(guild_id)}
         trustedserver_profile = trustedserverscol.find_one(server_query)
@@ -7770,7 +7757,6 @@ async def trusted_remove(interaction: discord.Interaction, server: str):
         except Exception as e:
             await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
         else:
-            guild = invite.guild
             guild_id = invite.guild.id
             server_query = {"_id": str(guild_id)}
             trustedserver_profile = trustedserverscol.find_one(server_query)
