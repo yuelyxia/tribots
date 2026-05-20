@@ -340,35 +340,45 @@ async def a(ctx, *, to_check: str = None):
         user = ctx.author
     else:
         try:
-            user_id = int(to_check.strip("<@!>"))
-            user = await bot.fetch_user(user_id)
+            user = await bot.fetch_user(int(to_check.strip('<@!>')))
         except:
-            return await ctx.send("Please provide a valid user ID.")
-    alts_info = altscol.find_one({"_id": str(user.id)})
-    if not alts_info or not alts_info.get("alts"):
-        return await ctx.reply(embed=default_no_alts(user))
-    pairs = list(zip(alts_info["alts"], alts_info["proofs"]))
-    chunk_size = 20
+            await ctx.send("Please provide a valid user ID.")
+            return
+    user_id = str(user.id)
+    alts_info = altscol.find_one({"_id": user_id})
+    if not alts_info:
+        await ctx.reply(embed=default_no_alts(user))
+        return
+    alts = alts_info.get("alts", [])
+    proofs = alts_info.get("proofs", [])
+    lines = []
+    for i, alt in enumerate(alts):
+        proof = proofs[i] if i < len(proofs) else "No proof"
+        if isinstance(proof, str) and proof.endswith(" ┈ dc"):
+            jump_url = proof[:-5]
+            parts = jump_url.split("/")
+        lines.append(f"`{alt}` ┈ {proof}")
     embeds = []
-    title = f"Alts for {user.name} `{user.id}`"
-    for i in range(0, len(pairs), chunk_size):
+    LIMIT = 3900
+    header = f"Alts for {user.name} `{user.id}`\n"
+    chunk = []
+    for line in lines:
+        test_chunk = "\n".join(chunk + [line])
+        if len(header) + len(test_chunk) > LIMIT:
+            embed = discord.Embed(colour=0xffffff)
+            embed.description = header + "\n".join(chunk)
+            embeds.append(embed)
+            chunk = [line]
+        else:
+            chunk.append(line)
+    if chunk:
         embed = discord.Embed(colour=0xffffff)
-        embed.description = title + "\n"
-        for alt, proof in pairs[i:i+chunk_size]:
-            if proof.endswith(" ┈ dc"):
-                jump_url = proof[:-5]
-                parts = jump_url.split('/')
-                try:
-                    guild_id = int(parts[-3])
-                    guild = bot.get_guild(guild_id)
-                    server_name = guild.name if guild else "Unknown"
-                except:
-                    server_name = "Unknown"
-                embed.description += f"\n`{alt}` ┈ {proof} ┈ {server_name}"
-            else:
-                embed.description += f"\n`{alt}` ┈ {proof}"
+        embed.description = header + "\n".join(chunk)
         embeds.append(embed)
-    await ctx.reply(embeds=embeds, view=RelatedIDsView(str(user.id), alts_info["alts"]))
+    await ctx.reply(
+        embeds=embeds,
+        view=RelatedIDsView(user_id, alts)
+    )
 
 class RelatedIDsView(discord.ui.View):
     def __init__(self, user_id, alts):
@@ -384,69 +394,6 @@ class RelatedIDsView(discord.ui.View):
         string = user_id + " " + " ".join(alts)
         await interaction.response.send_message(f"`{string}`", ephemeral=True)
 
-
-"""@bot.tree.command(name="cleanup", description="Cleanup alts database.")
-async def cleanup(interaction: discord.Interaction):
-    if interaction.user.id != 1303291812282372137:  # replace with your admin ID
-        await interaction.response.send_message("Unauthorized.", ephemeral=True)
-        return
-    await interaction.response.send_message("Repairing database...", ephemeral=True)
-    def repair_job():
-        id_pattern = re.compile(r"^\d{17,20}$")
-        all_docs = list(altscol.find({}))
-        processed_count = 0
-        for doc in all_docs:
-            user_id = doc["_id"]
-
-            alts = doc.get("alts", [])
-            proofs = doc.get("proofs", [])
-
-            clean_alts = []
-            clean_proofs = proofs.copy()
-
-            # Separate corrupted entries
-            for item in alts:
-                if isinstance(item, str) and id_pattern.match(item):
-                    clean_alts.append(item)
-                else:
-                    clean_proofs.append(item)
-
-            clean_alts = list(set(clean_alts))
-            clean_proofs = list(set(clean_proofs))
-
-            if user_id in clean_alts:
-                clean_alts.remove(user_id)
-
-            new_doc = {
-                "_id": user_id,
-                "alts": clean_alts,
-                "proofs": clean_proofs
-            }
-
-            altscol.replace_one({"_id": user_id}, new_doc)
-            processed_count += 1
-
-        all_docs = list(altscol.find({}))
-
-        for doc in all_docs:
-            user_id = doc["_id"]
-            for alt in doc["alts"]:
-                alt_doc = altscol.find_one({"_id": alt})
-                if not alt_doc:
-                    # create missing node
-                    alt_doc = {"_id": alt, "alts": [], "proofs": []}
-
-                if user_id not in alt_doc["alts"]:
-                    alt_doc["alts"].append(user_id)
-
-                altscol.replace_one({"_id": alt}, alt_doc, upsert=True)
-
-    processed_count = await asyncio.to_thread(repair_job)
-
-    await interaction.followup.send(
-        f"Cleanup complete. Processed {processed_count} documents.",
-        ephemeral=True
-    )"""
 
 imports = app_commands.Group(name="import", description="Import Double Counter alt intrusions.")
 bot.tree.add_command(imports)
