@@ -487,7 +487,7 @@ async def mc(ctx, *, to_check: str = None):
         users = to_check.split()
         if len(users) > 200:
             return await ctx.reply("Exceeded 200 users.")
-        estimated_seconds = round(len(users) * 0.35, 1)
+        estimated_seconds = round(len(users) * 0.5, 1)
         status_message = await ctx.reply(f"Checking **{len(users)}** users.\nEstimated time: **~{estimated_seconds}s**")
         valid_users = []
         invalid_users = []
