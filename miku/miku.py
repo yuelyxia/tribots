@@ -1300,7 +1300,8 @@ async def tickets_remove(interaction: discord.Interaction, target: str):
                 continue
     await interaction.followup.send(f"Successfully removed {target_display} from **{len(threads)}** thread(s).", ephemeral=True)
 
-@bot.command(name="md", help="Deletes messages until (including) the given message.")
+@bot.command(name="md", help="Deletes messages from oldest until (including) the given message.")
+@commands.has_permissions(administrator=True)
 async def mass_delete(ctx, message_id: int):
     try:
         target_message = await ctx.channel.fetch_message(message_id)
