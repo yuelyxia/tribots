@@ -1300,19 +1300,6 @@ async def tickets_remove(interaction: discord.Interaction, target: str):
                 continue
     await interaction.followup.send(f"Successfully removed {target_display} from **{len(threads)}** thread(s).", ephemeral=True)
 
-@bot.command(name="md", help="Deletes messages from oldest until (including) the given message.")
-@commands.has_permissions(administrator=True)
-async def mass_delete(ctx, message_id: int):
-    try:
-        target_message = await ctx.channel.fetch_message(message_id)
-    except discord.NotFound:
-        return await ctx.reply("Message not found in this channel.")
-    async for msg in ctx.channel.history(limit=None, oldest_first=True):
-        await msg.delete()
-        if msg.id == message_id:
-            break
-    await ctx.reply("Done.")
-
 
 @bot.command()
 async def sync(ctx: commands.Context):
