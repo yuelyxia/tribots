@@ -322,7 +322,69 @@ async def on_message(message: discord.Message):
 
     await bot.process_commands(message)
 
-@bot.command(name='a', help='Checks a user for logged alts.')
+@bot.command(name="ma", help="Checks a list of users (max 100) for logged alts, leave a space between users.")
+async def ma(ctx, *, to_check: str = None):
+    if to_check != None:
+        users = to_check.split()
+        if len(users) > 100:
+            return await ctx.reply("Exceeded 100 users.")
+        estimated_seconds = round(len(users) * 0.35, 1)
+        status_message = await ctx.reply(f"Checking **{len(users)}** users.\nEstimated time: **~{estimated_seconds}s**")
+        valid_users = []
+        invalid_users = []
+        for raw_user in users:
+            try:
+                user_id = int(re.sub(r"\D", "", raw_user))
+                fetched_user = await bot.fetch_user(user_id)
+            except:
+                invalid_users.append(raw_user)
+            else:
+                if fetched_user not in valid_users:
+                    valid_users.append(fetched_user)
+        if not valid_users:
+            await status_message.delete()
+            return await ctx.reply("No valid user IDs provided.")
+        lines = []
+        embeds = []
+        for user in valid_users:
+            user_id = str(user.id)
+            alts_info = altscol.find_one({"_id": user_id})
+            if not alts_info:
+                lines.append(f"{user.mention} `{user.id}` ┈ No alts")
+                continue
+            else:
+                alts_count = len(alts_info.get("alts", []))
+                if alts_count > 0:
+                    lines.append(f"**{user.mention} `{user.id}` ┈ {alts_count} alt(s)**")
+                    continue
+        line_groups = [lines[i:i + 25] for i in range(0, len(lines), 25)][:10]
+        for group in line_groups:
+            embed = discord.Embed(description="\n".join(group))
+            embeds.append(embed)
+        if invalid_users:
+            invalid_users_grouped = [invalid_users[i:i + 25] for i in range(0, len(invalid_users), 25)]
+            if len(invalid_users) <= 50:
+                for group in invalid_users_grouped:
+                    description = ""
+                    for user in group:
+                        description += f"\n`{user}` is invalid.\n"
+                    invalid_embed = discord.Embed(description=description)
+                    embeds.append(invalid_embed)
+            elif len(invalid_users) > 50:
+                description = ""
+                for user in invalid_users_grouped[0]:
+                    description += f"\n`{user}` is invalid.\n"
+                invalid_embed = discord.Embed(description=description)
+                embeds.append(invalid_embed)
+                for user in invalid_users_grouped[1]:
+                    description += f"\n`{user}` is invalid.\n"
+                description += f"\nThere are more than 50 invalid users.\n"
+                invalid_embed = discord.Embed(description=description)
+                embeds.append(invalid_embed)
+        await ctx.reply(embeds=embeds)
+        await status_message.edit(content="Finished checking users.")
+
+@bot.command(name="a", help="Checks a user for logged alts.")
 async def a(ctx, *, to_check: str = None):
     if to_check is None:
         user = ctx.author
@@ -339,18 +401,45 @@ async def a(ctx, *, to_check: str = None):
         return
     alts = alts_info.get("alts", [])
     proofs = alts_info.get("proofs", [])
-    lines = []
+    lines_with_server = []
+    lines_without_server = []
     for i, alt in enumerate(alts):
-        proof = proofs[i] if i < len(proofs) else "No proof"
-        if isinstance(proof, str) and proof.endswith(" ┈ dc"):
-            jump_url = proof[:-5]
+        base_proof = proofs[i] if i < len(proofs) else "No proof"
+        proof_with_server = base_proof
+        if isinstance(base_proof, str) and base_proof.endswith(" ┈ dc"):
+            jump_url = base_proof[:-5]
             parts = jump_url.split("/")
-        lines.append(f"`{alt}` ┈ {proof}")
-    embeds = []
+            try:
+                guild_id = int(parts[-3])
+                guild = bot.get_guild(guild_id) or await bot.fetch_guild(guild_id)
+                if guild:
+                    proof_with_server = base_proof + f" ┈ {guild.name}"
+            except Exception:
+                pass
+        lines_without_server.append(f"`{alt}` ┈ {base_proof}")
+        lines_with_server.append(f"`{alt}` ┈ {proof_with_server}")
     LIMIT = 3900
+    GLOBAL_LIMIT = 5800
     header = f"Alts for {user.name} `{user.id}`\n"
+    def calculate_total_chars(lines_list):
+        total_embed_chars = 0
+        current_chunk = []
+        for line in lines_list:
+            if len(header) + len("\n".join(current_chunk + [line])) > LIMIT:
+                total_embed_chars += len(header) + len("\n".join(current_chunk))
+                current_chunk = [line]
+            else:
+                current_chunk.append(line)
+        if current_chunk:
+            total_embed_chars += len(header) + len("\n".join(current_chunk))
+        return total_embed_chars
+    if calculate_total_chars(lines_with_server) <= GLOBAL_LIMIT:
+        chosen_lines = lines_with_server
+    else:
+        chosen_lines = lines_without_server
+    embeds = []
     chunk = []
-    for line in lines:
+    for line in chosen_lines:
         test_chunk = "\n".join(chunk + [line])
         if len(header) + len(test_chunk) > LIMIT:
             embed = discord.Embed(colour=0xffffff)
@@ -363,10 +452,7 @@ async def a(ctx, *, to_check: str = None):
         embed = discord.Embed(colour=0xffffff)
         embed.description = header + "\n".join(chunk)
         embeds.append(embed)
-    await ctx.reply(
-        embeds=embeds,
-        view=RelatedIDsView(user_id, alts)
-    )
+    await ctx.reply(embeds=embeds, view=RelatedIDsView(user_id, alts))
 
 class RelatedIDsView(discord.ui.View):
     def __init__(self, user_id, alts):
