@@ -999,7 +999,7 @@ anon = app_commands.Group(name="anon", description="Do something anonymously.")
 bot.tree.add_command(anon)
 
 @anon.command(name="say", description="MIKU will speak on your behalf.")
-@app_commands.checks.cooldown(2, 5)
+@app_commands.checks.cooldown(1, 5)
 @app_commands.describe(message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
 @app_commands.checks.has_any_role(staff_role, tethys_adm_role)
 async def anon_say(interaction: discord.Interaction, message: str, image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
@@ -1039,7 +1039,7 @@ async def anon_error(interaction: discord.Interaction, error):
         if interaction.response.is_done():
             await interaction.followup.send(f"This command is on cooldown. Retry in {remaining} seconds.", ephemeral=True)
         else:
-            await interaction.followup.send(f"This command is on cooldown. Retry in {remaining} seconds.", ephemeral=True)
+            await interaction.response.send_message(f"This command is on cooldown. Retry in {remaining} seconds.", ephemeral=True)
         return
     raise error
 
