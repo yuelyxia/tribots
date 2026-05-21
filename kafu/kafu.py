@@ -1523,7 +1523,7 @@ mass = app_commands.Group(name="mass", description="Mass do something.")
 bot.tree.add_command(mass)
 
 @mass.command(name="delete", description="Delete messages between two message IDs.")
-@app_commands.checks.has_permissions(manage_messages=True)
+@app_commands.checks.has_permissions(administrator=True)
 @app_commands.describe(start='start message ID or "oldest"', end="end message ID")
 async def mass_delete(interaction: discord.Interaction, start: str, end: str):
     await interaction.response.defer(ephemeral=True)
