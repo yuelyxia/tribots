@@ -1036,7 +1036,11 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
 async def anon_error(interaction: discord.Interaction, error):
     if isinstance(error, app_commands.CommandOnCooldown):
         remaining = round(error.retry_after)
-        return await interaction.followup.send(f"This command is on cooldown. Retry in {remaining} seconds.", ephemeral=True)
+        if interaction.response.is_done():
+            await interaction.followup.send(f"This command is on cooldown. Retry in {remaining} seconds.", ephemeral=True)
+        else:
+            await interaction.followup.send(f"This command is on cooldown. Retry in {remaining} seconds.", ephemeral=True)
+        return
     raise error
 
 @anon.command(name="edit", description="Edit MIKU's message.")
