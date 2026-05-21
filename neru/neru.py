@@ -381,8 +381,7 @@ async def ma(ctx, *, to_check: str = None):
                 description += f"\nThere are more than 50 invalid users.\n"
                 invalid_embed = discord.Embed(description=description)
                 embeds.append(invalid_embed)
-        await ctx.reply(embeds=embeds)
-        await status_message.edit(content="Finished checking users.")
+        await status_message.edit(content=None, embeds=embeds)
 
 @bot.command(name="a", help="Checks a user for logged alts.")
 async def a(ctx, *, to_check: str = None):
