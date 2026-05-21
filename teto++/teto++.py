@@ -56,7 +56,6 @@ def default_user_profile(user):
     profile.description += "\n**Account Created:** " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     profile.set_footer(text="✦　This user is unreported.")
     return profile
-
 def default_server_profile(guild):
     profile = discord.Embed()
     if guild.icon:
@@ -92,8 +91,6 @@ def reported_user_profile(user, user_profile):
     add_case.set_footer(text=f"Page {len(cases)} of {no_of_cases}")
     embeds = [r_profile, add_case]
     return embeds
-
-
 def reported_server_profile(guild, server_profile):
     r_profile_list = server_profile["r_profile_list"]
     no_of_cases = len(server_profile) - 2
@@ -120,7 +117,6 @@ def reported_server_profile(guild, server_profile):
     embeds = [r_profile, add_case]
     return embeds
 
-
 def sort_user_tags(tags):
     sorted_tags = []
     for i in range(0, len(tags)):
@@ -138,7 +134,6 @@ def sort_user_tags(tags):
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     return sorted_tags
-
 def sort_server_tags(tags):
     sorted_tags = []
     for tag_to_find in red_server_tags:
@@ -147,13 +142,9 @@ def sort_server_tags(tags):
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     return sorted_tags
-
-
 def selected_string(selected_list):
     string = ", ".join(selected_list)
     return string
-
-
 def alts_string(alts_list):
     string = ""
     for alt in alts_list:
@@ -161,8 +152,6 @@ def alts_string(alts_list):
     string = string[:-1]
     string = "`" + string + "`"
     return string
-
-
 def image_links_to_embeds(image_links):
     image_embeds = []
     for url in image_links:
@@ -171,7 +160,6 @@ def image_links_to_embeds(image_links):
         image_embeds.append(embed)
     return image_embeds
     # returns a list
-
 
 def format_trusteduser_profile(user, trusteduser_profile):
     if trusteduser_profile["current_staff"] == 1:
@@ -298,26 +286,6 @@ async def update_reports_count():
 @bot.event
 async def on_ready():
     update_reports_count.start()
-
-"""
-@bot.event
-async def on_message(message):
-    if message.channel.id == USER_REPORTS_CHANNEL and message.author.id == 1450073025818136598:
-        if message.embeds:
-            embed = message.embeds[0]
-            text_to_search = embed.description or ""
-            match = re.search(r'`(.+?)`', text_to_search)
-            if match:
-                user_id = int(match.group(1))
-                for guild in bot.guilds:
-                    try:
-                        await guild.fetch_member(user_id)
-                    except Exception: pass
-                    else:
-
-
-    await bot.process_commands(message)
-"""
 
 
 # check
@@ -857,7 +825,6 @@ async def check_all(interaction: discord.Interaction):
         await interaction.followup.send("No users with bannable report(s) were found!")
 
 
-
 @bot.command()
 async def sync(ctx: commands.Context):
     await bot.tree.sync()
@@ -868,11 +835,6 @@ async def sync(ctx: commands.Context):
             name=f"{reports_count} reports."
         )
     )
-
-
-
-
-
 
 
 bot.run(TOKEN)
