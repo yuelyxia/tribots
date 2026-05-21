@@ -575,8 +575,7 @@ async def mc(ctx, *, to_check: str = None):
                     description += f"\nThere are more than 50 invalid users.\n"
                     invalid_embed = discord.Embed(description=description)
                     embeds.append(invalid_embed)
-            await ctx.reply(embeds=embeds)
-            await status_message.edit(content="Finished checking users.")
+            await status_message.edit(content=None, embeds=embeds)
         else:
             await ctx.reply("No valid users provided.")
 
