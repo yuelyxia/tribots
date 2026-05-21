@@ -431,14 +431,14 @@ async def c(ctx, *, to_check: str = None):
                     profile = default_user_profile(user)
                     await ctx.reply(embed=profile, view=MemberView())
 
-@bot.command(name='mc', help='Checks a list of users (max 200), leave a space between users.')
+@bot.command(name="mc", help="Checks a list of users (max 100), leave a space between users.")
 async def mc(ctx, *, to_check: str = None):
     if ctx.guild.id == TRI_Archive:
         return
     if to_check != None:
         users = to_check.split()
-        if len(users) > 200:
-            return await ctx.reply("Exceeded 200 users.")
+        if len(users) > 100:
+            return await ctx.reply("Exceeded 100 users.")
         estimated_seconds = round(len(users) * 0.35, 1)
         status_message = await ctx.reply(f"Checking **{len(users)}** users.\nEstimated time: **~{estimated_seconds}s**")
         valid_users = []
