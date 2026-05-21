@@ -447,6 +447,52 @@ def get_staff_rank(member):
         return "Trial Reporter"
     return "Staff"
 
+@bot.command(name="q")
+async def quota(ctx, user_id: str = None):
+    target_id = user_id or str(ctx.author.id)
+    member = ctx.guild.get_member(int(target_id))
+    if not member:
+        return await ctx.send("Invalid user or user not in this server.")
+    weekly_profile = staffweeklycol.find_one({"_id": target_id})
+    if not weekly_profile:
+        return await ctx.send("No quota history found for this user.")
+    t_r = get(ctx.guild.roles, id=t_role)
+    in_training = set(t_r.members)
+    if member in in_training:
+        return await ctx.send("This staff is still in training.")
+    embeds = []
+    rank = get_staff_rank(member)
+    profile = discord.Embed(colour=0xffffff)
+    profile.set_thumbnail(url=f"{member.display_avatar}")
+    profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
+    embeds.append(profile)
+    embed = discord.Embed(title="quota progress", colour=0xffffff, description="")
+    is_sr = any(role.id == sr_role for role in member.roles)
+    if is_sr:
+        current_reviews = weekly_profile.get("weekly_reviews", 0)
+        current_reviews_quota = (
+            get_quota_config().get("sr_reviews_quota", 0)
+        )
+        current_reviews_ratio = (
+            round(min(current_reviews / current_reviews_quota, 1), 2)
+            if current_reviews_quota > 0 else 0
+        )
+        quota_display = "FULL BREAK" if current_reviews_quota == -1 else str(current_reviews_quota)
+        ratio_display = "N/A" if current_reviews_ratio == -1 else f"{current_reviews_ratio:.2f}"
+        embed.description += f"\nreviews　–　**{current_reviews}** / {quota_display}　–　`{ratio_display}`"
+        if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
+    current_reports = weekly_profile.get("weekly_reports", 0)
+    if is_sr:
+        current_reports_quota = get_quota_config().get("sr_reports_quota", 0)
+    else:
+        current_reports_quota = get_quota_config().get("reports_quota", 0)
+    current_reports_ratio = round(min(current_reports / current_reports_quota, 1), 2) if current_reports_quota > 0 else 0
+    quota_display = "FULL BREAK" if current_reports_quota == -1 else str(current_reports_quota)
+    ratio_display = "N/A" if current_reports_ratio == -1 else f"{current_reports_ratio:.2f}"
+    embed.description += f"\nreports　–　**{current_reports}** / {quota_display}　–　`{ratio_display}`"
+    if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
+    await ctx.reply(embeds=[profile, embed])
+
 @bot.command(name="qh")
 async def quota_history(ctx, user_id: str = None):
     target_id = user_id or str(ctx.author.id)
@@ -477,7 +523,7 @@ async def quota_history(ctx, user_id: str = None):
             ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
             desc += (
                 f"\nWeek {i}　–　**{done}** / {quota_display}　–　`{ratio_display}`")
-        reviews_embed.description = (f"Staff: {member.mention}\n" + desc)
+        reviews_embed.description = desc
         current_reviews = weekly_profile.get("weekly_reviews", 0)
         current_reviews_quota = (
             get_quota_config().get("sr_reviews_quota", 0)
@@ -513,7 +559,7 @@ async def quota_history(ctx, user_id: str = None):
         ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
         desc += (
             f"\nWeek {i}　–　**{done}** / {quota_display}　–　`{ratio_display}`")
-    reports_embed.description = (f"Staff: {member.mention}\n" + desc)
+    reports_embed.description = desc
     current_reports = weekly_profile.get("weekly_reports", 0)
     if is_sr:
         current_reports_quota = (
@@ -554,8 +600,9 @@ async def help(ctx):
 -# *Prefix:* `,`
 ### checks
 `c`　┈　Checks a user or server.
-`mc`　┈　Checks a list of users (max 200), leave a space between users.
+`mc`　┈　Checks a list of users (max 100), leave a space between users.
 `a`　┈　Checks a user for logged alts.
+`ma`　┈　Checks a list of users (max 100) for logged alts, leave a space between users.
 ### utils
 `ar`　┈　Sends jump urls to all active reports in the thread.
 `vr`　┈　Sends a list of all reports in voting in the thread.
@@ -569,6 +616,9 @@ async def help(ctx):
 `tp`　┈　Pings ticket ping.
 `ban`　┈　Pings ban perms.
 `cl`　┈　Sends closing guide.
+### quota
+`q`　┈　Sends quota progress for this week.
+`qh`　┈　Sends quota history for the past 8 weeks.
 ### leaderboard
 `lb`　┈　Sends the current week's reports leaderboard.
 `lbr`　┈　Sends the current week's reviews leaderboard.
