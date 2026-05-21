@@ -733,8 +733,9 @@ async def ban(ctx):
 @commands.cooldown(2, 600, commands.BucketType.channel)
 @commands.has_any_role(staff_role, tethys_staff_role)
 async def rn(ctx, *, new_name: str):
-    """Renames the current thread to the new name provided."""
     if isinstance(ctx.channel, discord.Thread):
+        if ctx.channel.parent_id != TICKET_CHANNEL:
+            return
         try:
             await ctx.channel.edit(name=new_name)
         except Exception as e:
@@ -998,6 +999,7 @@ anon = app_commands.Group(name="anon", description="Do something anonymously.")
 bot.tree.add_command(anon)
 
 @anon.command(name="say", description="MIKU will speak on your behalf.")
+@app_commands.checks.cooldown(2, 5)
 @app_commands.describe(message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
 @app_commands.checks.has_any_role(staff_role, tethys_adm_role)
 async def anon_say(interaction: discord.Interaction, message: str, image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
@@ -1025,11 +1027,20 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
                 await interaction.channel.send(content=message, files=files_to_send, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
             else:
                 await interaction.channel.send(message, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
+        print(f"{interaction.user.name}: {message}")
         await interaction.followup.send("Your message has been sent.", ephemeral=True)
     except Exception:
         await interaction.followup.send(f"Unable to send message.", ephemeral=True)
 
+@anon.error
+async def anon_error(interaction: discord.Interaction, error):
+    if isinstance(error, app_commands.CommandOnCooldown):
+        remaining = round(error.retry_after)
+        return await interaction.followup.send(f"This command is on cooldown. Retry in {remaining} seconds.", ephemeral=True)
+    raise error
+
 @anon.command(name="edit", description="Edit MIKU's message.")
+@app_commands.checks.cooldown(2, 5)
 @app_commands.describe(message_id="The message to edit", message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
 @app_commands.checks.has_permissions(administrator=True)
 async def anon_edit(interaction: discord.Interaction, message_id: str, message: str, image1: Optional[discord.Attachment] = None, image2: Optional[discord.Attachment] = None, image3: Optional[discord.Attachment] = None, image4: Optional[discord.Attachment] = None, image5: Optional[discord.Attachment] = None, image6: Optional[discord.Attachment] = None, image7: Optional[discord.Attachment] = None, image8: Optional[discord.Attachment] = None, image9: Optional[discord.Attachment] = None, image10: Optional[discord.Attachment] = None):
