@@ -1519,6 +1519,45 @@ async def role_massadd(interaction: discord.Interaction, role: discord.Role, use
             failed_ids.append(uid)
     await interaction.followup.send(f"Added {role.mention} to **{success}** users. Failed: `{"` `".join(failed_ids)}`" if failed_ids else f"Added {role.mention} to **{success}** users.")
 
+mass = app_commands.Group(name="mass", description="Mass do something.")
+bot.tree.add_command(mass)
+
+@mass.command(name="delete", description="Delete messages between two message IDs.")
+@app_commands.checks.has_permissions(manage_messages=True)
+@app_commands.describe(start='start message ID or "oldest"', end="end message ID")
+async def mass_delete(interaction: discord.Interaction, start: str, end: str):
+    await interaction.response.defer(ephemeral=True)
+    channel = interaction.channel
+    try:
+        end_msg = await channel.fetch_message(int(end))
+    except discord.NotFound:
+        return await interaction.followup.send("End message not found.", ephemeral=True)
+    start_msg = None
+    if start.lower() == "oldest":
+        after = discord.utils.MISSING
+    else:
+        try:
+            start_msg = await channel.fetch_message(int(start))
+        except discord.NotFound:
+            return await interaction.followup.send("Start message not found.", ephemeral=True)
+        except ValueError:
+            return await interaction.followup.send("Invalid start message ID.", ephemeral=True)
+        after = start_msg
+    if start_msg:
+        if start_msg.created_at > end_msg.created_at:
+            return await interaction.followup.send("Invalid range: start must be earlier than end.", ephemeral=True)
+    progress = await interaction.followup.send("Starting deletion... 0 messages deleted.", wait=True)
+    count = 0
+    async for msg in channel.history(limit=None, oldest_first=True, after=after, before=end_msg):
+        try:
+            await msg.delete()
+            count += 1
+            if count % 5 == 0:
+                await progress.edit(content=f"Deleting... **{count}** messages deleted.")
+        except discord.HTTPException:
+            pass
+    await progress.edit(content=f"Done. Deleted **{count}** messages.")
+
 @bot.tree.command(name="ban", description="Bans a user.")
 @app_commands.describe(user="User to ban", reason="Reason for ban")
 async def ban(interaction: discord.Interaction, user: str, reason: Optional[str], image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
