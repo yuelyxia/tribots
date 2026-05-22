@@ -6987,36 +6987,33 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         sorted_tags = sort_user_tags(tag_list) if is_user_report else sort_server_tags(tag_list)
         if sorted_tags:
             case_title = sorted_tags[0]
-            r_profile_list[1] = selected_string(sorted_tags[1:])
             if is_user_report:
                 add_case_list[2] = ", ".join(sorted_tags)
             else:
                 add_case_list[1] = ", ".join(sorted_tags)
             edited_fields.append(f"tags　–　{', '.join(sorted_tags)}")
-            all_tags = []
-            existing_cases = []
             if is_user_report:
-                user_profile = userscol.find_one({"_id": id})
+                profile = userscol.find_one({"_id": str(id)})
             else:
-                user_profile = serverscol.find_one({"_id": id})
-            if user_profile:
-                for k, v in user_profile.items():
-                    if k.isdigit():
-                        existing_cases.append(v)
-            existing_cases.append(add_case_list)
-            for case in existing_cases:
-                try:
-                    case_tags = case[1].split(", ")
-                    for t in case_tags:
-                        all_tags.append(t)
-                except:
-                    pass
-            all_tags = list(dict.fromkeys(all_tags))
-            all_sorted = sort_user_tags(all_tags) if is_user_report else sort_server_tags(all_tags)
-            if all_sorted:
-                title = all_sorted[0]
-                all_other_tags = selected_string(all_sorted[1:])
-                r_profile_list[1] = all_other_tags
+                profile = serverscol.find_one({"_id": str(id)})
+            no_of_cases = len(profile) - 2
+            cases = []
+            for i in range(1, no_of_cases + 1):
+                cases.append(profile[str(i)])
+            tags_strings = []
+            all_tags_list = []
+            for case in cases:
+                tags_strings.append(case[2]) if is_user_report else tags_strings.append(case[1])
+            for tags_string in tags_strings:
+                tags_list = tags_string.split(", ")
+                for tag in tags_list:
+                    all_tags_list.append(tag)
+            all_tags_list += tag_list
+            all_tags_list = sort_user_tags(all_tags_list) if is_user_report else sort_server_tags(all_tags_list)
+            all_tags_list = list(dict.fromkeys(all_tags_list))
+            title = all_tags_list[0]
+            all_other_tags = selected_string(all_tags_list[1:])
+            r_profile_list[1] = all_other_tags
     if games is not None and is_user_report:
         games_map = {g.lower(): g for g in games_list}
         filtered_games = []
