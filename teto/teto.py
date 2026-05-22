@@ -509,10 +509,11 @@ async def mc(ctx, *, to_check: str = None):
                     user_id = user.id
                     user_query = {"_id": str(user_id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
-                    if trusteduser_profile:
-                        if not(trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and \
-                            trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and trusteduser_profile["trader"] == 0):
-                            description += f"\n{user.mention} `{user.id}` is trusted.\n"
+                    if trusteduser_profile and not (
+                            trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
+                            trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and
+                            trusteduser_profile["trader"] == 0):
+                        description += f"\n{user.mention} `{user.id}` is trusted.\n"
                     else:
                         user_profile = userscol.find_one(user_query)
                         if user_profile:
@@ -590,10 +591,10 @@ async def c(ctx, *, to_check: str = None):
         user_id = user.id
         user_query = {"_id": str(user_id)}
         trusteduser_profile = trusteduserscol.find_one(user_query)
-        if trusteduser_profile:
-            if trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and \
-                trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and trusteduser_profile["trader"] == 0:
-                return
+        if trusteduser_profile and not (
+                trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
+                trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and
+                trusteduser_profile["trader"] == 0):
             trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
             await ctx.reply("User is trusted.", embed=trusted_embed)
         #
@@ -742,10 +743,10 @@ async def c(ctx, *, to_check: str = None):
             user_id = user.id
             user_query = {"_id": str(user_id)}
             trusteduser_profile = trusteduserscol.find_one(user_query)
-            if trusteduser_profile:
-                if trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and \
-                    trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and trusteduser_profile["trader"] == 0:
-                    return
+            if trusteduser_profile and not (
+                    trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
+                    trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and
+                    trusteduser_profile["trader"] == 0):
                 trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
                 await ctx.reply("User is trusted.", embed=trusted_embed)
             else:
