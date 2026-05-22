@@ -2393,7 +2393,6 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
             await interaction.followup.send(f"You cannot dismiss yourself.", ephemeral=True)
             return
         member = interaction.guild.get_member(int(user_id))
-        if not member: return
         if category in ["staff", "mm", "pilot"]:
             def parse_roles(raw):
                 if not raw:
@@ -2440,10 +2439,11 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
                 roles = pilot_roles
                 await interaction.followup.send(f"`{str(user_id)}` has been dismissed from pilots.")
             # remove roles
-            for role_id in roles:
-                role = interaction.guild.get_role(int(role_id))
-                if role:
-                    await member.remove_roles(role)
+            if member:
+                for role_id in roles:
+                    role = interaction.guild.get_role(int(role_id))
+                    if role:
+                        await member.remove_roles(role)
             still_mm = str(user_id) in server_info.get("mms", {})
             still_pilot = str(user_id) in server_info.get("pilots", {})
             if not still_mm and not still_pilot:
