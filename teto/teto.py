@@ -6988,7 +6988,10 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         if sorted_tags:
             case_title = sorted_tags[0]
             r_profile_list[1] = selected_string(sorted_tags[1:])
-            add_case_list[2] = ", ".join(sorted_tags)
+            if is_user_report:
+                add_case_list[2] = ", ".join(sorted_tags)
+            else:
+                add_case_list[1] = ", ".join(sorted_tags)
             edited_fields.append(f"tags　–　{', '.join(sorted_tags)}")
             all_tags = []
             existing_cases = []
@@ -7012,6 +7015,8 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             all_sorted = sort_user_tags(all_tags) if is_user_report else sort_server_tags(all_tags)
             if all_sorted:
                 title = all_sorted[0]
+                all_other_tags = selected_string(all_sorted[1:])
+                r_profile_list[1] = all_other_tags
     if games is not None and is_user_report:
         games_map = {g.lower(): g for g in games_list}
         filtered_games = []
