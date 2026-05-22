@@ -290,12 +290,12 @@ async def weekly_quota():
     embeds = []
     for role_id, (title, staff_list) in reviews_role_categories.items():
         embed = discord.Embed(colour=0xffffff)
-        embed.description = f"✦　　┈　　{title}"
+        embed.description = f"**✦　　┈　　{title}**\n"
         staff_list.sort(key=lambda x: x[2], reverse=True)
-        for member, reviews, weekly_reviews in staff_list:
+        for i, (member, reviews, weekly_reviews) in enumerate(staff_list, start=1):
             total_reviews += weekly_reviews
             embed.description += (
-                f"\n-# <:reply:1459162938303578213>　"
+                f"\n-# {i}ㆍ　"
                 f"{member.mention}　–　"
                 f"**{reviews}** all ㆍ **{weekly_reviews}** week")
         embeds.append(embed)
@@ -305,13 +305,13 @@ async def weekly_quota():
     embeds = []
     for role_id, (title, staff_list) in reports_role_categories.items():
         embed = discord.Embed(colour=0xffffff)
-        embed.description = f"✦　　┈　　{title}"
+        embed.description = f"**✦　　┈　　{title}**\n"
         # optional sorting
         staff_list.sort(key=lambda x: x[2], reverse=True)
-        for member, reports, weekly_reports in staff_list:
+        for i, (member, reports, weekly_reports) in enumerate(staff_list, start=1):
             total_reports += weekly_reports
             embed.description += (
-                f"\n-# <:reply:1459162938303578213>　"
+                f"\n-# {i}ㆍ　"
                 f"{member.mention}　–　"
                 f"**{reports}** all ㆍ **{weekly_reports}** week")
         embeds.append(embed)
@@ -335,7 +335,7 @@ async def weekly_quota():
             member = guild.get_member(int(user))
             mention = member.mention if member else f"`{user}`"
             desc += (
-                f"\n-# <:reply:1459162938303578213>　{mention}　–　{qtype}: "
+                f"\n-# ㆍ　{mention}　–　{qtype}: "
                 f"**{done}** / {quota}　({ratio:.2f})"
             )
         sr_nmq_embed.description = desc[:4000]
@@ -351,7 +351,7 @@ async def weekly_quota():
             member = guild.get_member(int(user))
             mention = member.mention if member else f"`{user}`"
             desc += (
-                f"\n-# <:reply:1459162938303578213>　{mention}　–　**{done}** / {quota}　"
+                f"\n-# ㆍ　{mention}　–　**{done}** / {quota}　"
                 f"({ratio:.2f})"
             )
         nmq_embed.description = desc[:4000]
@@ -367,7 +367,7 @@ async def weekly_quota():
         for staff_id, ravg, vavg in sr_demotion_list:
             member = guild.get_member(int(staff_id))
             mention = member.mention if member else f"`{staff_id}`"
-            desc += f"\n-# <:reply:1459162938303578213>　{mention}　–　reports: `{ravg:.2f}`　ㆍ　reviews: `{vavg:.2f}`"
+            desc += f"\n-# ㆍ　{mention}　–　reports: `{ravg:.2f}`　ㆍ　reviews: `{vavg:.2f}`"
         sr_demotion_embed.description = desc
         if desc:
             await quota_channel.send(embed=sr_demotion_embed)
@@ -380,7 +380,7 @@ async def weekly_quota():
         for staff_id, avg in demotion_list:
             member = guild.get_member(int(staff_id))
             mention = member.mention if member else f"`{staff_id}`"
-            desc += f"\n-# <:reply:1459162938303578213>　{mention}　–　reports: `{avg:.2f}`"
+            desc += f"\n-# ㆍ　{mention}　–　reports: `{avg:.2f}`"
         demotion_embed.description = desc
         if desc:
             await quota_channel.send(embed=demotion_embed)
@@ -842,12 +842,12 @@ async def lb(ctx, *args):
     embeds = []
     for role_id, (title, staff_list) in role_categories.items():
         embed = discord.Embed(colour=0xffffff)
-        embed.description = f"✦　　┈　　{title}"
+        embed.description = f"**✦　　┈　　{title}**\n"
         # optional sorting
         staff_list.sort(key=lambda x: x[2], reverse=True)
-        for member, reports, weekly_reports in staff_list:
+        for i, (member, reports, weekly_reports) in enumerate(staff_list, start=1):
             embed.description += (
-                f"\n-# <:reply:1459162938303578213>　"
+                f"\n-# {i}ㆍ　"
                 f"{member.mention}　–　"
                 f"**{reports}** all ㆍ **{weekly_reports}** week")
         embeds.append(embed)
@@ -876,13 +876,13 @@ async def lbr(ctx):
         weekly_reviews = weekly_profile.get("weekly_reviews", 0)
         role_categories[matched_role][1].append((member, reviews, weekly_reviews))
     embeds = []
-    for role_id, (title, staff_list) in role_categories.items():
+    for i, (role_id, (title, staff_list)) in enumerate(role_categories.items(), start=1):
         embed = discord.Embed(colour=0xffffff)
-        embed.description = f"✦　　┈　　{title}"
+        embed.description = f"**✦　　┈　　{title}**\n"
         staff_list.sort(key=lambda x: x[2], reverse=True)
         for member, reviews, weekly_reviews in staff_list:
             embed.description += (
-                f"\n-# <:reply:1459162938303578213>　"
+                f"\n-# {i}ㆍ　"
                 f"{member.mention}　–　"
                 f"**{reviews}** all ㆍ **{weekly_reviews}** week")
         embeds.append(embed)
