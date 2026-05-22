@@ -49,8 +49,8 @@ def alts_string(alts_list):
     return string
 def default_no_alts(user):
     profile = discord.Embed(colour=0xffffff)
-    profile.description = f"{user.name} `{user.id}`\n"
-    profile.description += f"\nNo alts logged for this user."
+    profile.description = f"{user.name}\n`{user.id}`\n{user.mention}\n\n"
+    profile.description += f"<:whitecross:1462774085737119828>　No alts logged for this user."
     return profile
 
 @tasks.loop(hours=1.0)
@@ -412,14 +412,14 @@ async def a(ctx, *, to_check: str = None):
                 guild_id = int(parts[-3])
                 guild = bot.get_guild(guild_id) or await bot.fetch_guild(guild_id)
                 if guild:
-                    proof_with_server = base_proof + f" ┈ {guild.name}"
+                    proof_with_server = f"[{guild.name}]({jump_url}) ┈ dc"
             except Exception:
                 pass
-        lines_without_server.append(f"`{alt}` ┈ {base_proof}")
-        lines_with_server.append(f"`{alt}` ┈ {proof_with_server}")
+        lines_without_server.append(f"ㆍ　`{alt}` ┈ {base_proof}")
+        lines_with_server.append(f"ㆍ　`{alt}` ┈ {proof_with_server}")
     LIMIT = 3900
     GLOBAL_LIMIT = 5800
-    header = f"Alts for {user.name} `{user.id}`\n"
+    header = f"{user.name}\n`{user.id}`\n{user.mention}\n\n<a:whitealert:1496542298908000257>　**Alt(s)**\n"
     def calculate_total_chars(lines_list):
         total_embed_chars = 0
         current_chunk = []
