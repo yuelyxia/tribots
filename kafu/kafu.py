@@ -408,18 +408,17 @@ async def on_message(message: discord.Message):
                     else:
                         await message.add_reaction("<:whitecross:1462774085737119828>")
 
-    if guild_id not in voice_clients:
-        return
-    if active_text_channel.get(guild_id) != message.channel.id:
-        return
-    vc = voice_clients.get(guild_id)
-    if not vc:
-        return
-    text = replace_mentions(message).strip()
-    if not text:
-        return
-    accent = get_accent(message.author.id)
-    await tts_queues[guild_id].put((f"{message.author.display_name} says {text}",accent))
+    if guild_id in voice_clients:
+        if active_text_channel.get(guild_id) == message.channel.id:
+            vc = voice_clients.get(guild_id)
+            if vc:
+                text = replace_mentions(message).strip()
+                if text:
+                    accent = get_accent(message.author.id)
+                    await tts_queues[guild_id].put((
+                        f"{message.author.display_name} says {text}",
+                        accent
+                    ))
 
     await bot.process_commands(message)
 
