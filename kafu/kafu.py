@@ -15,8 +15,11 @@ from collections import defaultdict
 
 from zoneinfo import available_timezones, ZoneInfo
 
+from gtts import gTTS
+
 import datetime
 import time
+import asyncio
 
 import discord
 from discord import app_commands
@@ -35,6 +38,7 @@ tickets = kafu["tickets"]
 servers = kafu["servers"]
 timezones = kafu["timezones"]
 vouch_servers = kafu["vouch_servers"]
+voices = kafu["voices"]
 
 TRI_Archive = 1371673839695826974
 Tethys = 1434471275723493388
@@ -46,7 +50,11 @@ USERGUIDE = "https://docs.google.com/document/d/1Af_bHhXTjpJ9GkIPihmSQYibDVMYTFn
 yuelyxia = 1303291812282372137
 
 intents = discord.Intents.all()
+intents.voice_states = True
 bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
+
+voice_clients = {}
+active_text_channel = {}
 
 @bot.event
 async def on_ready():
@@ -59,6 +67,7 @@ async def on_ready():
     bot.add_view(MMRisksView())
     quota_check.start()
     customrole_expiry_loop.start()
+    await bot.tree.sync()
 
 TIMEZONES = sorted(available_timezones())
 
@@ -86,6 +95,133 @@ def parse_duration(s: str):
 async def help(interaction: discord.Interaction):
     if not interaction.guild.id == TRI_Archive:
         await interaction.response.send_message(f"KAFU user guide [here]({USERGUIDE})")
+
+# voice
+
+async def play_tts(vc: discord.VoiceClient, text: str, lang: str = "en"):
+    filename = "tts.mp3"
+    tts = gTTS(text=text, lang=lang)
+    tts.save(filename)
+    while vc.is_playing():
+        await asyncio.sleep(1)
+    source = discord.FFmpegPCMAudio(filename)
+    vc.play(source)
+    while vc.is_playing():
+        await asyncio.sleep(1)
+    try:
+        os.remove(filename)
+    except:
+        pass
+
+ACCENTS = [
+    ("English", "en"),
+    ("Spanish", "es"),
+    ("French", "fr"),
+    ("German", "de"),
+    ("Italian", "it"),
+    ("Portuguese", "pt"),
+    ("Dutch", "nl"),
+    ("Polish", "pl"),
+    ("Russian", "ru"),
+    ("Swedish", "sv"),
+    ("Danish", "da"),
+    ("Norwegian", "no"),
+    ("Finnish", "fi"),
+    ("Greek", "el"),
+    ("Turkish", "tr"),
+    ("Czech", "cs"),
+    ("Slovak", "sk"),
+    ("Romanian", "ro"),
+    ("Hungarian", "hu"),
+    ("Ukrainian", "uk"),
+
+    ("Japanese", "ja"),
+    ("Korean", "ko"),
+    ("Chinese", "zh"),
+    ("Hindi", "hi"),
+    ("Thai", "th"),
+    ("Vietnamese", "vi"),
+    ("Indonesian", "id"),
+    ("Malay", "ms"),
+    ("Bengali", "bn"),
+    ("Tamil", "ta"),
+    ("Telugu", "te"),
+    ("Malayalam", "ml"),
+    ("Marathi", "mr"),
+    ("Urdu", "ur"),
+
+    ("Arabic", "ar"),
+    ("Persian", "fa"),
+    ("Hebrew", "he"),
+    ("Swahili", "sw"),
+    ("Afrikaans", "af"),
+
+    ("Catalan", "ca"),
+    ("Croatian", "hr"),
+    ("Slovenian", "sl"),
+    ("Lithuanian", "lt"),
+    ("Latvian", "lv"),
+    ("Estonian", "et"),
+    ("Filipino", "tl"),
+]
+
+def set_accent(user_id: int, accent: str):
+    voices.update_one(
+        {"_id": str(user_id)},
+        {"$set": {"accent": accent}},
+        upsert=True
+    )
+def get_accent(user_id: int):
+    data = voices.find_one({"_id": str(user_id)})
+    if data:
+        return data.get("accent", "en")
+    return "en"
+async def accent_autocomplete(interaction: discord.Interaction, current: str):
+    current = current.lower()
+    results = []
+    for label, value in ACCENTS:
+        if current in label.lower() or current in value.lower():
+            results.append(
+                app_commands.Choice(name=label, value=value)
+            )
+    return results[:25]
+def replace_mentions(message: discord.Message):
+    text = message.content
+    for user in message.mentions:
+        text = re.sub(rf"<@!?{user.id}>", user.display_name, text)
+    return text
+
+@bot.tree.command(name="accent", description="Set your TTS accent.")
+@app_commands.autocomplete(lang=accent_autocomplete)
+async def accent(interaction: discord.Interaction, lang: str):
+    set_accent(interaction.user.id, lang)
+    label = next((l for l, v in ACCENTS if v == lang), lang)
+    await interaction.response.send_message(
+        f"Accent set to **{label}** (`{lang}`)",
+        ephemeral=True
+    )
+
+@bot.tree.command(name="join", description="KAFU joins the voice channel.")
+async def join(interaction: discord.Interaction):
+    if not interaction.user.voice:
+        return await interaction.response.send_message("You're not in a voice channel.", ephemeral=True)
+    channel = interaction.user.voice.channel
+    vc = await channel.connect()
+    guild_id = interaction.guild.id
+    voice_clients[guild_id] = vc
+    active_text_channel[guild_id] = interaction.channel.id
+    await interaction.response.send_message(f"Joined {channel} and linked to this text channel.")
+
+@bot.tree.command(name="leave", description="KAFU leaves the voice channel.")
+async def leave(interaction: discord.Interaction):
+    guild_id = interaction.guild.id
+    vc = voice_clients.get(guild_id)
+    if vc:
+        await vc.disconnect()
+        voice_clients.pop(guild_id, None)
+    active_text_channel.pop(guild_id, None)
+    await interaction.response.send_message("Disconnected.")
+
 
 # loop tasks
 
@@ -195,8 +331,6 @@ async def quota_check():
 
 @bot.event
 async def on_message(message: discord.Message):
-    if message.author.bot:
-        return
     if message.guild is None:
         return
     guild_id = message.guild.id
@@ -231,6 +365,19 @@ async def on_message(message: discord.Message):
                         await message.add_reaction("<:whitetick:1462774288020013161>")
                     else:
                         await message.add_reaction("<:whitecross:1462774085737119828>")
+
+    if guild_id not in voice_clients:
+        return
+    if active_text_channel.get(guild_id) != message.channel.id:
+        return
+    vc = voice_clients.get(guild_id)
+    if not vc:
+        return
+    text = replace_mentions(message).strip()
+    if not text:
+        return
+    accent = get_accent(message.author.id)
+    await play_tts(vc, f"{message.author.display_name} says {text}", lang=accent)
 
     await bot.process_commands(message)
 
