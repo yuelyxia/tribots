@@ -3,3 +3,7 @@ aiohttp
 asyncio
 datetime
 discord
+discord.py[voice]
+gtts
+PyNaCl
+ffmpeg-python
