@@ -188,7 +188,19 @@ async def accent_autocomplete(interaction: discord.Interaction, current: str):
 def replace_mentions(message: discord.Message):
     text = message.content
     for user in message.mentions:
-        text = re.sub(rf"<@!?{user.id}>", user.display_name, text)
+        text = re.sub(
+            rf"<@!?{user.id}>",
+            user.display_name,
+            text
+        )
+    for role in message.role_mentions:
+        text = re.sub(
+            rf"<@&{role.id}>",
+            role.name,
+            text
+        )
+    text = text.replace("@everyone", "everyone")
+    text = text.replace("@here", "here")
     return text
 
 @bot.tree.command(name="accent", description="Set your TTS accent.")
