@@ -199,6 +199,10 @@ def replace_mentions(message: discord.Message):
             role.name,
             text
         )
+    def emoji_replacer(match):
+        emoji_name = match.group(1)
+        return emoji_name.replace("_", " ")
+    text = re.sub(r"<a?:([a-zA-Z0-9_]+):\d+>", emoji_replacer, text)
     text = text.replace("@everyone", "everyone")
     text = text.replace("@here", "here")
     return text
