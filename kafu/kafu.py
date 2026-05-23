@@ -212,6 +212,11 @@ def replace_mentions(message: discord.Message):
             role.name,
             text
         )
+    for channel in message.channel_mentions:
+        text = text.replace(
+            f"<#{channel.id}>",
+            channel.name
+        )
     def emoji_replacer(match):
         emoji_name = match.group(1)
         return emoji_name.replace("_", " ")
