@@ -240,13 +240,20 @@ async def join(interaction: discord.Interaction):
     if not interaction.user.voice:
         return await interaction.response.send_message("You're not in a voice channel.", ephemeral=True)
     channel = interaction.user.voice.channel
-    vc = await channel.connect()
     guild_id = interaction.guild.id
+    existing_vc = voice_clients.get(guild_id)
+    if existing_vc and existing_vc.is_connected():
+        active_text_channel[guild_id] = channel.id
+        if existing_vc.channel.id == channel.id:
+            return await interaction.response.send_message(f"Already connected to {channel.mention}.", ephemeral=True)
+        await existing_vc.move_to(channel)
+        return await interaction.response.send_message(f"Moved to {channel.mention}.")
+    vc = await channel.connect()
     voice_clients[guild_id] = vc
     active_text_channel[guild_id] = channel.id
     if guild_id not in tts_workers:
         tts_workers[guild_id] = asyncio.create_task(tts_worker(guild_id))
-    await interaction.response.send_message(f"Joined {channel} and linked to its text channel.")
+    await interaction.response.send_message(f"Joined {channel.mention} and linked to its text channel.")
 
 async def cleanup_guild(guild_id: int):
     vc = voice_clients.pop(guild_id, None)
