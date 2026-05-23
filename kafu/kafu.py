@@ -221,12 +221,12 @@ def replace_mentions(message: discord.Message):
     return text
 
 @bot.tree.command(name="accent", description="Set your TTS accent.")
-@app_commands.autocomplete(lang=accent_autocomplete)
-async def accent(interaction: discord.Interaction, lang: str):
-    set_accent(interaction.user.id, lang)
-    label = next((l for l, v in ACCENTS if v == lang), lang)
+@app_commands.autocomplete(accent=accent_autocomplete)
+async def accent(interaction: discord.Interaction, accent: str):
+    set_accent(interaction.user.id, accent)
+    label = next((l for l, v in ACCENTS if v == accent), accent)
     await interaction.response.send_message(
-        f"Accent set to **{label}** (`{lang}`)",
+        f"Accent set to **{label}** (`{accent}`)",
         ephemeral=True
     )
 
@@ -238,10 +238,10 @@ async def join(interaction: discord.Interaction):
     vc = await channel.connect()
     guild_id = interaction.guild.id
     voice_clients[guild_id] = vc
-    active_text_channel[guild_id] = interaction.channel.id
+    active_text_channel[guild_id] = channel.id
     if guild_id not in tts_workers:
         tts_workers[guild_id] = asyncio.create_task(tts_worker(guild_id))
-    await interaction.response.send_message(f"Joined {channel} and linked to this text channel.")
+    await interaction.response.send_message(f"Joined {channel} and linked to its text channel.")
 
 async def cleanup_guild(guild_id: int):
     vc = voice_clients.pop(guild_id, None)
