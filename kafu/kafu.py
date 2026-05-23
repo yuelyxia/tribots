@@ -28,6 +28,8 @@ from discord.utils import get
 
 from typing import Optional, Literal
 
+import uuid
+
 TOKEN = os.getenv("TOKEN")
 CLIENT = os.getenv("CLIENT")
 
@@ -55,6 +57,19 @@ bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
 
 voice_clients = {}
 active_text_channel = {}
+tts_queues = defaultdict(asyncio.Queue)
+tts_workers = {}
+
+async def tts_worker(guild_id: int):
+    vc = voice_clients.get(guild_id)
+    while guild_id in voice_clients:
+        try:
+            text, lang = await tts_queues[guild_id].get()
+            if not vc or not vc.is_connected():
+                break
+            await play_tts(vc, text, lang)
+        except Exception as e:
+            print(f"TTS error: {e}")
 
 @bot.event
 async def on_ready():
@@ -99,15 +114,13 @@ async def help(interaction: discord.Interaction):
 # voice
 
 async def play_tts(vc: discord.VoiceClient, text: str, lang: str = "en"):
-    filename = "tts.mp3"
+    filename = f"tts_{uuid.uuid4().hex}.mp3"
     tts = gTTS(text=text, lang=lang)
     tts.save(filename)
-    while vc.is_playing():
-        await asyncio.sleep(1)
     source = discord.FFmpegPCMAudio(filename)
     vc.play(source)
     while vc.is_playing():
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
     try:
         os.remove(filename)
     except:
@@ -226,16 +239,29 @@ async def join(interaction: discord.Interaction):
     guild_id = interaction.guild.id
     voice_clients[guild_id] = vc
     active_text_channel[guild_id] = interaction.channel.id
+    if guild_id not in tts_workers:
+        tts_workers[guild_id] = asyncio.create_task(tts_worker(guild_id))
     await interaction.response.send_message(f"Joined {channel} and linked to this text channel.")
+
+async def cleanup_guild(guild_id: int):
+    vc = voice_clients.pop(guild_id, None)
+    if vc:
+        await vc.disconnect()
+    active_text_channel.pop(guild_id, None)
+    worker = tts_workers.pop(guild_id, None)
+    if worker:
+        worker.cancel()
+        try:
+            await worker
+        except asyncio.CancelledError:
+            pass
+    if guild_id in tts_queues:
+        tts_queues[guild_id] = asyncio.Queue()
 
 @bot.tree.command(name="leave", description="KAFU leaves the voice channel.")
 async def leave(interaction: discord.Interaction):
     guild_id = interaction.guild.id
-    vc = voice_clients.get(guild_id)
-    if vc:
-        await vc.disconnect()
-        voice_clients.pop(guild_id, None)
-    active_text_channel.pop(guild_id, None)
+    await cleanup_guild(guild_id)
     await interaction.response.send_message("Disconnected.")
 
 
@@ -393,7 +419,7 @@ async def on_message(message: discord.Message):
     if not text:
         return
     accent = get_accent(message.author.id)
-    await play_tts(vc, f"{message.author.display_name} says {text}", lang=accent)
+    await tts_queues[guild_id].put((f"{message.author.display_name} says {text}",accent))
 
     await bot.process_commands(message)
 
