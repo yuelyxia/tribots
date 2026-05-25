@@ -839,10 +839,9 @@ async def lb(ctx, *args):
         reports = staff_profile.get("reports", 0)
         weekly_reports = weekly_profile.get("weekly_reports", 0)
         role_categories[matched_role][1].append((member, reports, weekly_reports))
-    embeds = []
+    embed = discord.Embed(colour=0xffffff, description="")
     for role_id, (title, staff_list) in role_categories.items():
-        embed = discord.Embed(colour=0xffffff)
-        embed.description = f"**✦　　┈　　{title}**\n"
+        embed.description += f"\n**✦　　┈　　{title}**\n"
         # optional sorting
         staff_list.sort(key=lambda x: x[2], reverse=True)
         for i, (member, reports, weekly_reports) in enumerate(staff_list, start=1):
@@ -850,8 +849,7 @@ async def lb(ctx, *args):
                 f"\n-# {i}ㆍ　"
                 f"{member.mention}　–　"
                 f"**{reports}** all ㆍ **{weekly_reports}** week")
-        embeds.append(embed)
-    await ctx.reply("## _ _　　　reports leaderboard", embeds=embeds)
+    await ctx.reply("## _ _　　　reports leaderboard", embed=embed)
 
 @bot.command(name="lbr", help="Sends the current week's reviews leaderboard.")
 @commands.has_any_role(staff_role)
@@ -875,18 +873,16 @@ async def lbr(ctx):
         reviews = staff_profile.get("reviews", 0)
         weekly_reviews = weekly_profile.get("weekly_reviews", 0)
         role_categories[matched_role][1].append((member, reviews, weekly_reviews))
-    embeds = []
-    for i, (role_id, (title, staff_list)) in enumerate(role_categories.items(), start=1):
-        embed = discord.Embed(colour=0xffffff)
-        embed.description = f"**✦　　┈　　{title}**\n"
+    embed = discord.Embed(colour=0xffffff, description="")
+    for role_id, (title, staff_list) in role_categories.items():
+        embed.description += f"\n**✦　　┈　　{title}**\n"
         staff_list.sort(key=lambda x: x[2], reverse=True)
-        for member, reviews, weekly_reviews in staff_list:
+        for i, (member, reviews, weekly_reviews) in enumerate(staff_list, start=1):
             embed.description += (
                 f"\n-# {i}ㆍ　"
                 f"{member.mention}　–　"
                 f"**{reviews}** all ㆍ **{weekly_reviews}** week")
-        embeds.append(embed)
-    await ctx.reply("## _ _　　　reviews leaderboard", embeds=embeds)
+    await ctx.reply("## _ _　　　reviews leaderboard", embed=embed)
 
 class StaffRulesView(discord.ui.View):
     def __init__(self):
