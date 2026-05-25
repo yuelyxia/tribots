@@ -1080,6 +1080,8 @@ bot.tree.add_command(alts)
 @app_commands.checks.has_role(adm_role)
 async def alts_add(interaction: discord.Interaction, user1: str, user2: str, image: discord.Attachment):
     await interaction.response.defer()
+    if interaction.channel.id != NERU_LOGS:
+        return await interaction.followup.send("This command can only be used in the NERU logs channel.", ephemeral=True)
     if user1 == user2:
         return await interaction.followup.send(
             "You cannot add the user as alt of themselves.",
@@ -1266,6 +1268,8 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
 @app_commands.checks.has_role(adm_role)
 async def alts_remove(interaction: discord.Interaction, user1: str, user2: str):
     await interaction.response.defer()
+    if interaction.channel.id != NERU_LOGS:
+        return await interaction.followup.send("This command can only be used in the NERU logs channel.", ephemeral=True)
     def parse_id(u: str):
         return u.strip("<@!>")
     alt1_id = parse_id(user1)
