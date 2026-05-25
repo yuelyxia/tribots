@@ -61,21 +61,27 @@ tts_queues = defaultdict(asyncio.Queue)
 tts_workers = {}
 
 async def tts_worker(guild_id: int):
-    while guild_id in voice_clients:
-        try:
+    try:
+        while True:
             vc = voice_clients.get(guild_id)
             if not vc or not vc.is_connected():
-                break
+                await asyncio.sleep(1)
+                continue
             try:
-                text, lang = await asyncio.wait_for(tts_queues[guild_id].get(), timeout=30)
+                text, lang = await asyncio.wait_for(
+                    tts_queues[guild_id].get(),
+                    timeout=15
+                )
             except asyncio.TimeoutError:
                 continue
             try:
                 await play_tts(vc, text, lang)
             except Exception as e:
                 print(f"TTS playback error: {e}")
-        except Exception as e:
-            print(f"TTS error: {e}")
+    except asyncio.CancelledError:
+        return
+    except Exception as e:
+        print(f"TTS worker fatal error: {e}")
 
 @bot.event
 async def on_ready():
@@ -258,7 +264,8 @@ async def join(interaction: discord.Interaction):
     vc = await channel.connect()
     voice_clients[guild_id] = vc
     active_text_channel[guild_id] = channel.id
-    if guild_id not in tts_workers:
+    tts_queues[guild_id] = asyncio.Queue()
+    if guild_id not in tts_workers or tts_workers[guild_id].done():
         tts_workers[guild_id] = asyncio.create_task(tts_worker(guild_id))
     await interaction.response.send_message(f"Joined {channel.mention} and linked to its text channel.")
 
