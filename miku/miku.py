@@ -1001,6 +1001,17 @@ class StaffGuideView(discord.ui.View):
 staff = app_commands.Group(name="staff", description="Staff.")
 bot.tree.add_command(staff)
 
+@staff.command(name="accepted", description="Assigns trainee roles to accepted staff.")
+@app_commands.checks.has_role(adm_role)
+@app_commands.describe(user="User to assign roles.")
+async def staff_accepted(interaction: discord.Interaction, user: discord.Member):
+    try:
+        await user.add_roles(interaction.guild.get_role(int(t_role)), interaction.guild.get_role(int(staff_role)))
+    except:
+        return await interaction.response.send_message("Unable to assign trainee roles to the user.")
+    else:
+        await interaction.response.send_message("Successfully assigned trainee roles to the user.")
+
 @staff.command(name="rules", description="Sends staff rules.")
 @app_commands.checks.has_role(adm_role)
 async def staff_rules(interaction: discord.Interaction):
