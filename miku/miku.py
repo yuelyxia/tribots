@@ -450,7 +450,7 @@ def get_staff_rank(member):
 @bot.command(name="q")
 async def quota(ctx, user_id: str = None):
     target_id = user_id or str(ctx.author.id)
-    member = ctx.guild.get_member(int(target_id))
+    member = ctx.guild.get_member(int(target_id.strip("<@>")))
     if not member:
         return await ctx.send("Invalid user or user not in this server.")
     weekly_profile = staffweeklycol.find_one({"_id": target_id})
@@ -496,7 +496,7 @@ async def quota(ctx, user_id: str = None):
 @bot.command(name="qh")
 async def quota_history(ctx, user_id: str = None):
     target_id = user_id or str(ctx.author.id)
-    member = ctx.guild.get_member(int(target_id))
+    member = ctx.guild.get_member(int(target_id.strip("<@>")))
     if not member:
         return await ctx.send("Invalid user or user not in this server.")
     weekly_profile = staffweeklycol.find_one({"_id": target_id})
