@@ -784,7 +784,7 @@ async def ban(ctx):
 @commands.has_any_role(staff_role, tethys_staff_role)
 async def rn(ctx, *, new_name: str):
     if isinstance(ctx.channel, discord.Thread):
-        if ctx.channel.parent_id != TICKET_CHANNEL:
+        if ctx.channel.parent_id != TICKET_CHANNEL and ctx.channel.parent_id != TRAINING_CHANNEL:
             return
         try:
             await ctx.channel.edit(name=new_name)
