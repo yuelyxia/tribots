@@ -841,7 +841,7 @@ async def lb(ctx, *args):
         role_categories[matched_role][1].append((member, reports, weekly_reports))
     embed = discord.Embed(colour=0xffffff, description="")
     for role_id, (title, staff_list) in role_categories.items():
-        embed.description += f"\n**✦　　┈　　{title}**\n"
+        embed.description += f"\n\n**✦　　┈　　{title}**\n"
         # optional sorting
         staff_list.sort(key=lambda x: x[2], reverse=True)
         for i, (member, reports, weekly_reports) in enumerate(staff_list, start=1):
@@ -875,7 +875,7 @@ async def lbr(ctx):
         role_categories[matched_role][1].append((member, reviews, weekly_reviews))
     embed = discord.Embed(colour=0xffffff, description="")
     for role_id, (title, staff_list) in role_categories.items():
-        embed.description += f"\n**✦　　┈　　{title}**\n"
+        embed.description += f"\n\n**✦　　┈　　{title}**\n"
         staff_list.sort(key=lambda x: x[2], reverse=True)
         for i, (member, reviews, weekly_reviews) in enumerate(staff_list, start=1):
             embed.description += (
