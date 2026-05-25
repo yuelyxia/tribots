@@ -229,6 +229,7 @@ def replace_mentions(message: discord.Message):
     text = re.sub(r"<a?:([a-zA-Z0-9_]+):\d+>", emoji_replacer, text)
     text = text.replace("@everyone", "everyone")
     text = text.replace("@here", "here")
+    text = re.sub(r"https?://\S+|www\.\S+", "link", text)
     return text
 
 @bot.tree.command(name="accent", description="Set your TTS accent.")
