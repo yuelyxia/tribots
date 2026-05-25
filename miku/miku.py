@@ -1296,15 +1296,15 @@ async def tickets_add(interaction: discord.Interaction, target: str):
         return await interaction.response.send_message("No active threads found.", ephemeral=True)
     role = None
     target_display = ""
-    if target.isdigit():
-        role = discord.utils.get(guild.roles, id=int(target))
+    if target.strip("<@>").isdigit():
+        role = discord.utils.get(guild.roles, id=int(target.strip("<@>")))
     if not role:
         role = discord.utils.get(guild.roles, name=target)
     if role:
         member_list = role.members
         target_display = role.mention
     else:
-        member = guild.get_member(int(target)) if target.isdigit() else None
+        member = guild.get_member(int(target.strip("<@>"))) if target.strip("<@>").isdigit() else None
         if member:
             target_display = member.mention
             member_list = [member]
@@ -1336,15 +1336,15 @@ async def tickets_remove(interaction: discord.Interaction, target: str):
     # resolve target
     role = None
     target_display = ""
-    if target.isdigit():
-        role = discord.utils.get(guild.roles, id=int(target))
+    if target.strip("<@>").isdigit():
+        role = discord.utils.get(guild.roles, id=int(target.strip("<@>")))
     if not role:
         role = discord.utils.get(guild.roles, name=target)
     if role:
         members = role.members
         target_display = role.mention
     else:
-        member = guild.get_member(int(target)) if target.isdigit() else None
+        member = guild.get_member(int(target.strip("<@>"))) if target.strip("<@>").isdigit() else None
         if member:
             target_display = member.mention
             members = [member]
