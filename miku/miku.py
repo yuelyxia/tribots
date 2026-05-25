@@ -1007,6 +1007,7 @@ bot.tree.add_command(staff)
 async def staff_accepted(interaction: discord.Interaction, user: discord.Member):
     try:
         await user.add_roles(interaction.guild.get_role(int(t_role)), interaction.guild.get_role(int(staff_role)))
+        await user.edit(nick=f"tㆍ{user.display_name}")
     except:
         return await interaction.response.send_message("Unable to assign trainee roles to the user.")
     else:
