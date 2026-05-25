@@ -61,13 +61,19 @@ tts_queues = defaultdict(asyncio.Queue)
 tts_workers = {}
 
 async def tts_worker(guild_id: int):
-    vc = voice_clients.get(guild_id)
     while guild_id in voice_clients:
         try:
-            text, lang = await tts_queues[guild_id].get()
+            vc = voice_clients.get(guild_id)
             if not vc or not vc.is_connected():
                 break
-            await play_tts(vc, text, lang)
+            try:
+                text, lang = await asyncio.wait_for(tts_queues[guild_id].get(), timeout=30)
+            except asyncio.TimeoutError:
+                continue
+            try:
+                await play_tts(vc, text, lang)
+            except Exception as e:
+                print(f"TTS playback error: {e}")
         except Exception as e:
             print(f"TTS error: {e}")
 
