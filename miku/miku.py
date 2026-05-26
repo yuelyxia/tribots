@@ -823,22 +823,31 @@ async def lb(ctx, *args):
         rep_role: ("reporters", []),
         tr_role: ("trial reporters", [])
     }
-    # only iterate current server members
+    staff_ids = []
+    member_map = {}
     for member in ctx.guild.members:
         matched_role = None
         for role_id in role_categories:
-            if get(member.roles, id=role_id):
+            if any(r.id == role_id for r in member.roles):
                 matched_role = role_id
                 break
         if not matched_role:
             continue
-        staff_id = str(member.id)
-        # fetch only needed db entries
-        staff_profile = trusteduserscol.find_one({"_id": staff_id}) or {}
-        weekly_profile = staffweeklycol.find_one({"_id": staff_id}) or {}
+        staff_ids.append(str(member.id))
+        member_map[member.id] = (member, matched_role)
+    profiles = trusteduserscol.find({"_id": {"$in": staff_ids}})
+    weekly_profiles = staffweeklycol.find({"_id": {"$in": staff_ids}})
+    profile_map = {p["_id"]: p for p in profiles}
+    weekly_map = {p["_id"]: p for p in weekly_profiles}
+    for staff_id in staff_ids:
+        member, matched_role = member_map[int(staff_id)]
+        staff_profile = profile_map.get(staff_id, {})
+        weekly_profile = weekly_map.get(staff_id, {})
         reports = staff_profile.get("reports", 0)
         weekly_reports = weekly_profile.get("weekly_reports", 0)
-        role_categories[matched_role][1].append((member, reports, weekly_reports))
+        role_categories[matched_role][1].append(
+            (member, reports, weekly_reports)
+        )
     embed = discord.Embed(colour=0xffffff, description="")
     for role_id, (title, staff_list) in role_categories.items():
         embed.description += f"\n\n**✦　　┈　　{title}**"
@@ -859,20 +868,31 @@ async def lbr(ctx):
         adm_role: ("admins", []),
         sr_role: ("senior reporters", [])
     }
+    staff_ids = []
+    member_map = {}
     for member in ctx.guild.members:
         matched_role = None
-        for rid in role_categories:
-            if get(member.roles, id=rid):
-                matched_role = rid
+        for role_id in role_categories:
+            if any(r.id == role_id for r in member.roles):
+                matched_role = role_id
                 break
         if not matched_role:
             continue
-        staff_id = str(member.id)
-        staff_profile = trusteduserscol.find_one({"_id": staff_id}) or {}
-        weekly_profile = staffweeklycol.find_one({"_id": staff_id}) or {}
+        staff_ids.append(str(member.id))
+        member_map[member.id] = (member, matched_role)
+    profiles = trusteduserscol.find({"_id": {"$in": staff_ids}})
+    weekly_profiles = staffweeklycol.find({"_id": {"$in": staff_ids}})
+    profile_map = {p["_id"]: p for p in profiles}
+    weekly_map = {p["_id"]: p for p in weekly_profiles}
+    for staff_id in staff_ids:
+        member, matched_role = member_map[int(staff_id)]
+        staff_profile = profile_map.get(staff_id, {})
+        weekly_profile = weekly_map.get(staff_id, {})
         reviews = staff_profile.get("reviews", 0)
         weekly_reviews = weekly_profile.get("weekly_reviews", 0)
-        role_categories[matched_role][1].append((member, reviews, weekly_reviews))
+        role_categories[matched_role][1].append(
+            (member, reviews, weekly_reviews)
+        )
     embed = discord.Embed(colour=0xffffff, description="")
     for role_id, (title, staff_list) in role_categories.items():
         embed.description += f"\n\n**✦　　┈　　{title}**"
