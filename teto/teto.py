@@ -3901,7 +3901,7 @@ class UserVoteView(discord.ui.View):
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await user_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
                         await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            "embed": r_profile, "view": None}))
+                            "embeds": [r_profile], "view": None}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -4055,7 +4055,7 @@ class UserVoteView(discord.ui.View):
             #
             if not add_case_list:  # only alts edited
                 await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    "embed": r_profile, "view": UserVoteView()}))
+                    "embeds": [r_profile], "view": UserVoteView()}))
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -4111,7 +4111,7 @@ class UserVoteView(discord.ui.View):
                         title = all_tags_list[0]
                         r_profile = format_user_r_profile(user, r_profile_list, title)
                         await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            "embed": r_profile, "view": None}))
+                            "embeds": [r_profile], "view": None}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -4183,7 +4183,7 @@ class UserVoteView(discord.ui.View):
                 return
             if not add_case_list:  # only alts edited
                 await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    "embed": r_profile, "view": UserVoteView()}))
+                    "embeds": [r_profile], "view": UserVoteView()}))
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -4294,7 +4294,7 @@ class UserVoteView(discord.ui.View):
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await user_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
                         await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                            "embed": r_profile, "view": None}))
+                            "embeds": [r_profile], "view": None}))
                         thread = await bot.fetch_channel(channel_id)
                         message = await thread.fetch_message(message_id)
                         await old_message_edit_queue.put((message, {
@@ -6557,7 +6557,7 @@ class ServerVoteView(discord.ui.View):
             #
             if add_case_list == []:  # only owner edited
                 await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    "embed": r_profile, "view": ServerVoteView()}))
+                    "embeds": [r_profile], "view": ServerVoteView()}))
 
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
@@ -6684,7 +6684,7 @@ class ServerVoteView(discord.ui.View):
             #
             if not add_case_list:  # only owner edited
                 await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
-                    "embed": r_profile, "view": ServerVoteView()}))
+                    "embeds": [r_profile], "view": ServerVoteView()}))
 
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
