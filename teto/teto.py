@@ -4018,34 +4018,38 @@ class UserVoteView(discord.ui.View):
                     await bot.get_channel(channel_id).send(
                         f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
-                voters = agree_users + disagree_users
-                for voter in voters:
-                    voter_query = {"_id": str(voter)}
-                    voter_profile = trusteduserscol.find_one(voter_query)
-                    if voter_profile:
-                        voter_profile["votes"]+=1
-                        trusteduserscol.replace_one(voter_query, voter_profile)
+                try:
+                    voters = agree_users + disagree_users
+                    for voter in voters:
+                        voter_query = {"_id": str(voter)}
+                        voter_profile = trusteduserscol.find_one(voter_query)
+                        if voter_profile:
+                            voter_profile["votes"]+=1
+                            trusteduserscol.replace_one(voter_query, voter_profile)
 
-                staff_query = {"_id": str(requested_by)}
-                staff_profile = trusteduserscol.find_one(staff_query)
-                staff_weekly_profile = staffweeklycol.find_one(staff_query)
-                if staff_profile:
-                    staff_profile["reports"]+=1
-                    trusteduserscol.replace_one(staff_query, staff_profile)
-                if staff_weekly_profile:
-                    staff_weekly_profile["weekly_reports"]+=1
-                    staffweeklycol.replace_one(staff_query, staff_weekly_profile)
+                    staff_query = {"_id": str(requested_by)}
+                    staff_profile = trusteduserscol.find_one(staff_query)
+                    staff_weekly_profile = staffweeklycol.find_one(staff_query)
+                    if staff_profile:
+                        staff_profile["reports"]+=1
+                        trusteduserscol.replace_one(staff_query, staff_profile)
+                    if staff_weekly_profile:
+                        staff_weekly_profile["weekly_reports"]+=1
+                        staffweeklycol.replace_one(staff_query, staff_weekly_profile)
 
-                sr_query = {"_id": str(accepted_by)}
-                sr_profile = trusteduserscol.find_one(sr_query)
-                sr_weekly_profile = staffweeklycol.find_one(sr_query)
-                if sr_profile:
-                    sr_profile["reviews"]+=1
-                    trusteduserscol.replace_one(sr_query, sr_profile)
-                if sr_weekly_profile:
-                    sr_weekly_profile["weekly_reviews"]+=1
-                    staffweeklycol.replace_one(sr_query, sr_weekly_profile)
-                new_name = f"p-{interaction.channel.name}"
+                    sr_query = {"_id": str(accepted_by)}
+                    sr_profile = trusteduserscol.find_one(sr_query)
+                    sr_weekly_profile = staffweeklycol.find_one(sr_query)
+                    if sr_profile:
+                        sr_profile["reviews"]+=1
+                        trusteduserscol.replace_one(sr_query, sr_profile)
+                    if sr_weekly_profile:
+                        sr_weekly_profile["weekly_reviews"]+=1
+                        staffweeklycol.replace_one(sr_query, sr_weekly_profile)
+                except Exception as e:
+                    print(f"{e}")
+                current_name = interaction.channel.name
+                new_name = current_name if current_name.startswith("p-") else f"p-{current_name}"
                 await asyncio.sleep(2)
                 await interaction.channel.edit(name=new_name, archived=True, locked=True)
             #
@@ -4162,14 +4166,18 @@ class UserVoteView(discord.ui.View):
                     await bot.get_channel(channel_id).send(
                         f"Report on `{user.id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
-                voters = agree_users + disagree_users
-                for voter in voters:
-                    voter_query = {"_id": str(voter)}
-                    voter_profile = trusteduserscol.find_one(voter_query)
-                    if voter_profile:
-                        voter_profile["votes"]+=1
-                        trusteduserscol.replace_one(voter_query, voter_profile)
-                new_name = f"r-{interaction.channel.name}"
+                try:
+                    voters = agree_users + disagree_users
+                    for voter in voters:
+                        voter_query = {"_id": str(voter)}
+                        voter_profile = trusteduserscol.find_one(voter_query)
+                        if voter_profile:
+                            voter_profile["votes"]+=1
+                            trusteduserscol.replace_one(voter_query, voter_profile)
+                except Exception as e:
+                    print(f"{e}")
+                current_name = interaction.channel.name
+                new_name = current_name if current_name.startswith("r-") else f"r-{current_name}"
                 await asyncio.sleep(2)
                 await interaction.channel.edit(name=new_name, archived=True, locked=True)
                 return
@@ -4399,8 +4407,11 @@ class UserVoteView(discord.ui.View):
                     userscol.insert_one(new_user)
                     alts_list = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
                     for alt in alts_list:
-                        new_user = {"_id": str(alt), "main": str(user.id)}
-                        userscol.insert_one(new_user)
+                        userscol.update_one(
+                            {"_id": str(alt)},
+                            {"$set": {"main": str(user.id)}},
+                            upsert=True
+                        )
                     user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
                     await user_reports_channel.send(content=f"<@&{new_user_report_ping}>\nNew report on `{user.id}`",
                                                     embeds=embeds)
@@ -4414,34 +4425,38 @@ class UserVoteView(discord.ui.View):
                     await bot.get_channel(channel_id).send(
                         f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
-                voters = agree_users + disagree_users
-                for voter in voters:
-                    voter_query = {"_id": str(voter)}
-                    voter_profile = trusteduserscol.find_one(voter_query)
-                    if voter_profile:
-                        voter_profile["votes"]+=1
-                        trusteduserscol.replace_one(voter_query, voter_profile)
+                try:
+                    voters = agree_users + disagree_users
+                    for voter in voters:
+                        voter_query = {"_id": str(voter)}
+                        voter_profile = trusteduserscol.find_one(voter_query)
+                        if voter_profile:
+                            voter_profile["votes"]+=1
+                            trusteduserscol.replace_one(voter_query, voter_profile)
 
-                staff_query = {"_id": str(requested_by)}
-                staff_profile = trusteduserscol.find_one(staff_query)
-                staff_weekly_profile = staffweeklycol.find_one(staff_query)
-                if staff_profile:
-                    staff_profile["reports"]+=1
-                    trusteduserscol.replace_one(staff_query, staff_profile)
-                if staff_weekly_profile:
-                    staff_weekly_profile["weekly_reports"]+=1
-                    staffweeklycol.replace_one(staff_query, staff_weekly_profile)
+                    staff_query = {"_id": str(requested_by)}
+                    staff_profile = trusteduserscol.find_one(staff_query)
+                    staff_weekly_profile = staffweeklycol.find_one(staff_query)
+                    if staff_profile:
+                        staff_profile["reports"]+=1
+                        trusteduserscol.replace_one(staff_query, staff_profile)
+                    if staff_weekly_profile:
+                        staff_weekly_profile["weekly_reports"]+=1
+                        staffweeklycol.replace_one(staff_query, staff_weekly_profile)
 
-                sr_query = {"_id": str(accepted_by)}
-                sr_profile = trusteduserscol.find_one(sr_query)
-                sr_weekly_profile = staffweeklycol.find_one(sr_query)
-                if sr_profile:
-                    sr_profile["reviews"]+=1
-                    trusteduserscol.replace_one(sr_query, sr_profile)
-                if sr_weekly_profile:
-                    sr_weekly_profile["weekly_reviews"]+=1
-                    staffweeklycol.replace_one(sr_query, sr_weekly_profile)
-                new_name = f"p-{interaction.channel.name}"
+                    sr_query = {"_id": str(accepted_by)}
+                    sr_profile = trusteduserscol.find_one(sr_query)
+                    sr_weekly_profile = staffweeklycol.find_one(sr_query)
+                    if sr_profile:
+                        sr_profile["reviews"]+=1
+                        trusteduserscol.replace_one(sr_query, sr_profile)
+                    if sr_weekly_profile:
+                        sr_weekly_profile["weekly_reviews"]+=1
+                        staffweeklycol.replace_one(sr_query, sr_weekly_profile)
+                except Exception as e:
+                    print(f"{e}")
+                current_name = interaction.channel.name
+                new_name = current_name if current_name.startswith("p-") else f"p-{current_name}"
                 await asyncio.sleep(2)
                 await interaction.channel.edit(name=new_name, archived=True, locked=True)
             else:
@@ -6503,35 +6518,38 @@ class ServerVoteView(discord.ui.View):
                     await bot.get_channel(channel_id).send(
                         f"Report on `{guild_id}` has been published. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
+                try:
+                    voters = agree_users + disagree_users
+                    for voter in voters:
+                        voter_query = {"_id": str(voter)}
+                        voter_profile = trusteduserscol.find_one(voter_query)
+                        if voter_profile:
+                            voter_profile["votes"]+=1
+                            trusteduserscol.replace_one(voter_query, voter_profile)
 
-                voters = agree_users + disagree_users
-                for voter in voters:
-                    voter_query = {"_id": str(voter.id)}
-                    voter_profile = trusteduserscol.find_one(voter_query)
-                    if voter_profile:
-                        voter_profile["votes"]+=1
-                        trusteduserscol.replace_one(voter_query, voter_profile)
+                    staff_query = {"_id": str(requested_by)}
+                    staff_profile = trusteduserscol.find_one(staff_query)
+                    staff_weekly_profile = staffweeklycol.find_one(staff_query)
+                    if staff_profile:
+                        staff_profile["reports"]+=1
+                        trusteduserscol.replace_one(staff_query, staff_profile)
+                    if staff_weekly_profile:
+                        staff_weekly_profile["weekly_reports"]+=1
+                        staffweeklycol.replace_one(staff_query, staff_weekly_profile)
 
-                staff_query = {"_id": str(requested_by.id)}
-                staff_profile = trusteduserscol.find_one(staff_query)
-                staff_weekly_profile = staffweeklycol.find_one(staff_query)
-                if staff_profile:
-                    staff_profile["reports"]+=1
-                    trusteduserscol.replace_one(staff_query, staff_profile)
-                if staff_weekly_profile:
-                    staff_weekly_profile["weekly_reports"]+=1
-                    staffweeklycol.replace_one(staff_query, staff_weekly_profile)
-
-                sr_query = {"_id": str(accepted_by.id)}
-                sr_profile = trusteduserscol.find_one(sr_query)
-                sr_weekly_profile = staffweeklycol.find_one(sr_query)
-                if sr_profile:
-                    sr_profile["reviews"]+=1
-                    trusteduserscol.replace_one(sr_query, sr_profile)
-                if sr_weekly_profile:
-                    sr_weekly_profile["weekly_reviews"]+=1
-                    staffweeklycol.replace_one(sr_query, sr_weekly_profile)
-                new_name = f"p-{interaction.channel.name}"
+                    sr_query = {"_id": str(accepted_by)}
+                    sr_profile = trusteduserscol.find_one(sr_query)
+                    sr_weekly_profile = staffweeklycol.find_one(sr_query)
+                    if sr_profile:
+                        sr_profile["reviews"]+=1
+                        trusteduserscol.replace_one(sr_query, sr_profile)
+                    if sr_weekly_profile:
+                        sr_weekly_profile["weekly_reviews"]+=1
+                        staffweeklycol.replace_one(sr_query, sr_weekly_profile)
+                except Exception as e:
+                    print(f"{e}")
+                current_name = interaction.channel.name
+                new_name = current_name if current_name.startswith("p-") else f"p-{current_name}"
                 await asyncio.sleep(2)
                 await interaction.channel.edit(name=new_name, archived=True, locked=True)
                 return
@@ -6648,14 +6666,18 @@ class ServerVoteView(discord.ui.View):
                     await bot.get_channel(channel_id).send(
                         f"Report on server `{guild_id}` has been rejected. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
-                voters = agree_users + disagree_users
-                for voter in voters:
-                    voter_query = {"_id": str(voter.id)}
-                    voter_profile = trusteduserscol.find_one(voter_query)
-                    if voter_profile:
-                        voter_profile["votes"]+=1
-                        trusteduserscol.replace_one(voter_query, voter_profile)
-                new_name = f"r-{interaction.channel.name}"
+                try:
+                    voters = agree_users + disagree_users
+                    for voter in voters:
+                        voter_query = {"_id": str(voter)}
+                        voter_profile = trusteduserscol.find_one(voter_query)
+                        if voter_profile:
+                            voter_profile["votes"]+=1
+                            trusteduserscol.replace_one(voter_query, voter_profile)
+                except Exception as e:
+                    print(f"{e}")
+                current_name = interaction.channel.name
+                new_name = current_name if current_name.startswith("r-") else f"r-{current_name}"
                 await asyncio.sleep(2)
                 await interaction.channel.edit(name=new_name, archived=True, locked=True)
                 return
@@ -6885,34 +6907,38 @@ class ServerVoteView(discord.ui.View):
                     await bot.get_channel(channel_id).send(
                         f"Report on `{guild_id}` has been published. <@{requested_by}> <@{accepted_by}><@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
-                voters = agree_users + disagree_users
-                for voter in voters:
-                    voter_query = {"_id": str(voter.id)}
-                    voter_profile = trusteduserscol.find_one(voter_query)
-                    if voter_profile:
-                        voter_profile["votes"]+=1
-                        trusteduserscol.replace_one(voter_query, voter_profile)
+                try:
+                    voters = agree_users + disagree_users
+                    for voter in voters:
+                        voter_query = {"_id": str(voter)}
+                        voter_profile = trusteduserscol.find_one(voter_query)
+                        if voter_profile:
+                            voter_profile["votes"]+=1
+                            trusteduserscol.replace_one(voter_query, voter_profile)
 
-                staff_query = {"_id": str(requested_by.id)}
-                staff_profile = trusteduserscol.find_one(staff_query)
-                staff_weekly_profile = staffweeklycol.find_one(staff_query)
-                if staff_profile:
-                    staff_profile["reports"]+=1
-                    trusteduserscol.replace_one(staff_query, staff_profile)
-                if staff_weekly_profile:
-                    staff_weekly_profile["weekly_reports"]+=1
-                    staffweeklycol.replace_one(staff_query, staff_weekly_profile)
+                    staff_query = {"_id": str(requested_by)}
+                    staff_profile = trusteduserscol.find_one(staff_query)
+                    staff_weekly_profile = staffweeklycol.find_one(staff_query)
+                    if staff_profile:
+                        staff_profile["reports"]+=1
+                        trusteduserscol.replace_one(staff_query, staff_profile)
+                    if staff_weekly_profile:
+                        staff_weekly_profile["weekly_reports"]+=1
+                        staffweeklycol.replace_one(staff_query, staff_weekly_profile)
 
-                sr_query = {"_id": str(accepted_by.id)}
-                sr_profile = trusteduserscol.find_one(sr_query)
-                sr_weekly_profile = staffweeklycol.find_one(sr_query)
-                if sr_profile:
-                    sr_profile["reviews"]+=1
-                    trusteduserscol.replace_one(sr_query, sr_profile)
-                if sr_weekly_profile:
-                    sr_weekly_profile["weekly_reviews"]+=1
-                    staffweeklycol.replace_one(sr_query, sr_weekly_profile)
-                new_name = f"p-{interaction.channel.name}"
+                    sr_query = {"_id": str(accepted_by)}
+                    sr_profile = trusteduserscol.find_one(sr_query)
+                    sr_weekly_profile = staffweeklycol.find_one(sr_query)
+                    if sr_profile:
+                        sr_profile["reviews"]+=1
+                        trusteduserscol.replace_one(sr_query, sr_profile)
+                    if sr_weekly_profile:
+                        sr_weekly_profile["weekly_reviews"]+=1
+                        staffweeklycol.replace_one(sr_query, sr_weekly_profile)
+                except Exception as e:
+                    print(f"{e}")
+                current_name = interaction.channel.name
+                new_name = current_name if current_name.startswith("p-") else f"p-{current_name}"
                 await asyncio.sleep(2)
                 await interaction.channel.edit(name=new_name, archived=True, locked=True)
             else:
