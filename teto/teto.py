@@ -4024,28 +4024,33 @@ class UserVoteView(discord.ui.View):
                         voter_query = {"_id": str(voter)}
                         voter_profile = trusteduserscol.find_one(voter_query)
                         if voter_profile:
-                            voter_profile["votes"]+=1
-                            trusteduserscol.replace_one(voter_query, voter_profile)
+                            trusteduserscol.update_one(
+                                voter_query,
+                                {"$inc": {"votes": 1}}
+                            )
 
                     staff_query = {"_id": str(requested_by)}
-                    staff_profile = trusteduserscol.find_one(staff_query)
-                    staff_weekly_profile = staffweeklycol.find_one(staff_query)
-                    if staff_profile:
-                        staff_profile["reports"]+=1
-                        trusteduserscol.replace_one(staff_query, staff_profile)
-                    if staff_weekly_profile:
-                        staff_weekly_profile["weekly_reports"]+=1
-                        staffweeklycol.replace_one(staff_query, staff_weekly_profile)
-
+                    if trusteduserscol.find_one(staff_query):
+                        trusteduserscol.update_one(
+                            staff_query,
+                            {"$inc": {"reports": 1}}
+                        )
+                    if staffweeklycol.find_one(staff_query):
+                        staffweeklycol.update_one(
+                            staff_query,
+                            {"$inc": {"weekly_reports": 1}}
+                        )
                     sr_query = {"_id": str(accepted_by)}
-                    sr_profile = trusteduserscol.find_one(sr_query)
-                    sr_weekly_profile = staffweeklycol.find_one(sr_query)
-                    if sr_profile:
-                        sr_profile["reviews"]+=1
-                        trusteduserscol.replace_one(sr_query, sr_profile)
-                    if sr_weekly_profile:
-                        sr_weekly_profile["weekly_reviews"]+=1
-                        staffweeklycol.replace_one(sr_query, sr_weekly_profile)
+                    if trusteduserscol.find_one(sr_query):
+                        trusteduserscol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"reviews": 1}}
+                        )
+                    if staffweeklycol.find_one(sr_query):
+                        staffweeklycol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"weekly_reviews": 1}}
+                        )
                 except Exception as e:
                     print(f"{e}")
                 current_name = interaction.channel.name
@@ -4172,8 +4177,10 @@ class UserVoteView(discord.ui.View):
                         voter_query = {"_id": str(voter)}
                         voter_profile = trusteduserscol.find_one(voter_query)
                         if voter_profile:
-                            voter_profile["votes"]+=1
-                            trusteduserscol.replace_one(voter_query, voter_profile)
+                            trusteduserscol.update_one(
+                                voter_query,
+                                {"$inc": {"votes": 1}}
+                            )
                 except Exception as e:
                     print(f"{e}")
                 current_name = interaction.channel.name
@@ -4431,28 +4438,34 @@ class UserVoteView(discord.ui.View):
                         voter_query = {"_id": str(voter)}
                         voter_profile = trusteduserscol.find_one(voter_query)
                         if voter_profile:
-                            voter_profile["votes"]+=1
-                            trusteduserscol.replace_one(voter_query, voter_profile)
+                            trusteduserscol.update_one(
+                                voter_query,
+                                {"$inc": {"votes": 1}}
+                            )
 
                     staff_query = {"_id": str(requested_by)}
-                    staff_profile = trusteduserscol.find_one(staff_query)
-                    staff_weekly_profile = staffweeklycol.find_one(staff_query)
-                    if staff_profile:
-                        staff_profile["reports"]+=1
-                        trusteduserscol.replace_one(staff_query, staff_profile)
-                    if staff_weekly_profile:
-                        staff_weekly_profile["weekly_reports"]+=1
-                        staffweeklycol.replace_one(staff_query, staff_weekly_profile)
+                    if trusteduserscol.find_one(staff_query):
+                        trusteduserscol.update_one(
+                            staff_query,
+                            {"$inc": {"reports": 1}}
+                        )
+                    if staffweeklycol.find_one(staff_query):
+                        staffweeklycol.update_one(
+                            staff_query,
+                            {"$inc": {"weekly_reports": 1}}
+                        )
 
                     sr_query = {"_id": str(accepted_by)}
-                    sr_profile = trusteduserscol.find_one(sr_query)
-                    sr_weekly_profile = staffweeklycol.find_one(sr_query)
-                    if sr_profile:
-                        sr_profile["reviews"]+=1
-                        trusteduserscol.replace_one(sr_query, sr_profile)
-                    if sr_weekly_profile:
-                        sr_weekly_profile["weekly_reviews"]+=1
-                        staffweeklycol.replace_one(sr_query, sr_weekly_profile)
+                    if trusteduserscol.find_one(sr_query):
+                        trusteduserscol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"reviews": 1}}
+                        )
+                    if staffweeklycol.find_one(sr_query):
+                        staffweeklycol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"weekly_reviews": 1}}
+                        )
                 except Exception as e:
                     print(f"{e}")
                 current_name = interaction.channel.name
@@ -6524,28 +6537,33 @@ class ServerVoteView(discord.ui.View):
                         voter_query = {"_id": str(voter)}
                         voter_profile = trusteduserscol.find_one(voter_query)
                         if voter_profile:
-                            voter_profile["votes"]+=1
-                            trusteduserscol.replace_one(voter_query, voter_profile)
+                            trusteduserscol.update_one(
+                                voter_query,
+                                {"$inc": {"votes": 1}}
+                            )
 
                     staff_query = {"_id": str(requested_by)}
-                    staff_profile = trusteduserscol.find_one(staff_query)
-                    staff_weekly_profile = staffweeklycol.find_one(staff_query)
-                    if staff_profile:
-                        staff_profile["reports"]+=1
-                        trusteduserscol.replace_one(staff_query, staff_profile)
-                    if staff_weekly_profile:
-                        staff_weekly_profile["weekly_reports"]+=1
-                        staffweeklycol.replace_one(staff_query, staff_weekly_profile)
-
+                    if trusteduserscol.find_one(staff_query):
+                        trusteduserscol.update_one(
+                            staff_query,
+                            {"$inc": {"reports": 1}}
+                        )
+                    if staffweeklycol.find_one(staff_query):
+                        staffweeklycol.update_one(
+                            staff_query,
+                            {"$inc": {"weekly_reports": 1}}
+                        )
                     sr_query = {"_id": str(accepted_by)}
-                    sr_profile = trusteduserscol.find_one(sr_query)
-                    sr_weekly_profile = staffweeklycol.find_one(sr_query)
-                    if sr_profile:
-                        sr_profile["reviews"]+=1
-                        trusteduserscol.replace_one(sr_query, sr_profile)
-                    if sr_weekly_profile:
-                        sr_weekly_profile["weekly_reviews"]+=1
-                        staffweeklycol.replace_one(sr_query, sr_weekly_profile)
+                    if trusteduserscol.find_one(sr_query):
+                        trusteduserscol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"reviews": 1}}
+                        )
+                    if staffweeklycol.find_one(sr_query):
+                        staffweeklycol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"weekly_reviews": 1}}
+                        )
                 except Exception as e:
                     print(f"{e}")
                 current_name = interaction.channel.name
@@ -6672,8 +6690,10 @@ class ServerVoteView(discord.ui.View):
                         voter_query = {"_id": str(voter)}
                         voter_profile = trusteduserscol.find_one(voter_query)
                         if voter_profile:
-                            voter_profile["votes"]+=1
-                            trusteduserscol.replace_one(voter_query, voter_profile)
+                            trusteduserscol.update_one(
+                                voter_query,
+                                {"$inc": {"votes": 1}}
+                            )
                 except Exception as e:
                     print(f"{e}")
                 current_name = interaction.channel.name
@@ -6913,28 +6933,32 @@ class ServerVoteView(discord.ui.View):
                         voter_query = {"_id": str(voter)}
                         voter_profile = trusteduserscol.find_one(voter_query)
                         if voter_profile:
-                            voter_profile["votes"]+=1
-                            trusteduserscol.replace_one(voter_query, voter_profile)
-
+                            trusteduserscol.update_one(
+                                voter_query,
+                                {"$inc": {"votes": 1}}
+                            )
                     staff_query = {"_id": str(requested_by)}
-                    staff_profile = trusteduserscol.find_one(staff_query)
-                    staff_weekly_profile = staffweeklycol.find_one(staff_query)
-                    if staff_profile:
-                        staff_profile["reports"]+=1
-                        trusteduserscol.replace_one(staff_query, staff_profile)
-                    if staff_weekly_profile:
-                        staff_weekly_profile["weekly_reports"]+=1
-                        staffweeklycol.replace_one(staff_query, staff_weekly_profile)
-
+                    if trusteduserscol.find_one(staff_query):
+                        trusteduserscol.update_one(
+                            staff_query,
+                            {"$inc": {"reports": 1}}
+                        )
+                    if staffweeklycol.find_one(staff_query):
+                        staffweeklycol.update_one(
+                            staff_query,
+                            {"$inc": {"weekly_reports": 1}}
+                        )
                     sr_query = {"_id": str(accepted_by)}
-                    sr_profile = trusteduserscol.find_one(sr_query)
-                    sr_weekly_profile = staffweeklycol.find_one(sr_query)
-                    if sr_profile:
-                        sr_profile["reviews"]+=1
-                        trusteduserscol.replace_one(sr_query, sr_profile)
-                    if sr_weekly_profile:
-                        sr_weekly_profile["weekly_reviews"]+=1
-                        staffweeklycol.replace_one(sr_query, sr_weekly_profile)
+                    if trusteduserscol.find_one(sr_query):
+                        trusteduserscol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"reviews": 1}}
+                        )
+                    if staffweeklycol.find_one(sr_query):
+                        staffweeklycol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"weekly_reviews": 1}}
+                        )
                 except Exception as e:
                     print(f"{e}")
                 current_name = interaction.channel.name
