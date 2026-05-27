@@ -120,8 +120,7 @@ def parse_duration(s: str):
 
 @bot.tree.command(name="help", description="KAFU user guide.")
 async def help(interaction: discord.Interaction):
-    if not interaction.guild.id == TRI_Archive:
-        await interaction.response.send_message(f"KAFU user guide [here]({USERGUIDE})")
+    await interaction.response.send_message(f"KAFU user guide [here]({USERGUIDE})")
 
 # voice
 
