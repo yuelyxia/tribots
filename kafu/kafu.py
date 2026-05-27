@@ -41,6 +41,7 @@ servers = kafu["servers"]
 timezones = kafu["timezones"]
 vouch_servers = kafu["vouch_servers"]
 voices = kafu["voices"]
+votes = kafu["votes"]
 
 TRI_Archive = 1371673839695826974
 Tethys = 1434471275723493388
@@ -94,6 +95,11 @@ async def on_ready():
     bot.add_view(MMRisksView())
     quota_check.start()
     customrole_expiry_loop.start()
+    vote_auto_close_loop.start()
+    vote_cleanup_loop.start()
+    if not hasattr(bot, "queue_started"):
+        bot.loop.create_task(message_update_worker())
+        bot.queue_started = True
     await bot.tree.sync()
 
 TIMEZONES = sorted(available_timezones())
@@ -105,18 +111,19 @@ def get_lock(guild_id):
     return guild_locks[guild_id]
 
 def parse_duration(s: str):
-    match = re.fullmatch(r"(\d+)([smhd])", s.lower())
-    if not match:
+    matches = re.findall(r"(\d+)([smhd])", s.lower())
+    if not matches:
         return None
-    value, unit = match.groups()
-    value = int(value)
     multipliers = {
         "s": 1,
         "m": 60,
         "h": 3600,
         "d": 86400
     }
-    return value * multipliers[unit]
+    total = 0
+    for value, unit in matches:
+        total += int(value) * multipliers[unit]
+    return total
 
 @bot.tree.command(name="help", description="KAFU user guide.")
 async def help(interaction: discord.Interaction):
@@ -1690,6 +1697,210 @@ async def customrole_setexpiry(
             f"custom_roles.{role.id}.type": "booster" if booster else "time"
         }}, upsert=True)
     await interaction.followup.send("Custom role updated.")
+
+edit_queue = defaultdict(asyncio.Queue)
+edit_locks = defaultdict(asyncio.Lock)
+
+def queue_message_update(message_id: int, payload):
+    edit_queue[message_id].put_nowait(payload)
+
+async def message_update_worker():
+    while True:
+        for message_id, queue in list(edit_queue.items()):
+            if queue.empty():
+                continue
+            async with edit_locks[message_id]:
+                try:
+                    payload = await queue.get()
+                    message = payload["message"]
+                    embed = payload["embed"]
+                    await message.edit(embed=embed)
+                    await asyncio.sleep(2.5)
+                except Exception:
+                    continue
+        await asyncio.sleep(0.5)
+
+def build_vote_embed(session):
+    options = session["options"]
+    vote_map = session.get("vote_map", {})
+    counts = [0] * len(options)
+    for user_votes in vote_map.values():
+        for i in user_votes:
+            if i < len(counts):
+                counts[i] += 1
+    desc = ""
+    for i, opt in enumerate(options):
+        desc += f"{i+1}ㆍ　{opt}　–　**{counts[i]}** votes\n"
+    ends = f"<t:{session['ends_at']}:R>"
+    return discord.Embed(
+        title=session["question"],
+        description=f"{desc}\nEnds {ends}",
+        color=0xffffff
+    )
+
+async def handle_vote(interaction, session, option_index):
+    user_id = str(interaction.user.id)
+    vote_map = session.setdefault("vote_map", {})
+    user_choices = set(vote_map.get(user_id, []))
+    multi_select = session.get("multi", False)
+    if option_index in user_choices:
+        user_choices.remove(option_index)
+        message = f"Removed vote from option {option_index + 1}."
+    else:
+        if not multi_select:
+            user_choices = {option_index}
+        else:
+            user_choices.add(option_index)
+        message = f"Voted for option {option_index + 1}."
+    vote_map[user_id] = list(user_choices)
+    votes.update_one(
+        {"_id": interaction.message.id},
+        {"$set": {"vote_map": vote_map}}
+    )
+    await interaction.followup.send(message, ephemeral=True)
+    return vote_map
+
+vote = app_commands.Group(name="vote", description="Vote.")
+bot.tree.add_command(vote)
+
+@vote.command(name="create", description="Create a new vote.")
+async def vote_create(
+    interaction: discord.Interaction,
+    question: app_commands.Range[str, 1, 240],
+    duration: str,
+    multi: bool = False,
+    option1: str = None,
+    option2: str = None,
+    option3: str = None,
+    option4: str = None,
+    option5: str = None,
+    option6: str = None,
+    option7: str = None,
+    option8: str = None,
+    option9: str = None,
+    option10: str = None
+):
+    await interaction.response.defer()
+    options = [o for o in [
+        option1, option2, option3, option4, option5,
+        option6, option7, option8, option9, option10
+    ] if o]
+    if not options:
+        return await interaction.followup.send("No options provided.", ephemeral=True)
+    duration = parse_duration(duration)
+    if not duration:
+        return await interaction.followup.send("Invalid duration.", ephemeral=True)
+    ends_at = int(time.time()) + duration
+    session = {
+        "channel_id": interaction.channel.id,
+        "question": question,
+        "options": options,
+        "multi": multi,
+        "ends_at": ends_at,
+        "vote_map": {}
+    }
+    embed = build_vote_embed(session)
+    msg = await interaction.followup.send(
+        embed=embed,
+        view=VoteView(len(options))
+    )
+    votes.update_one(
+        {"_id": msg.id},
+        {
+            "$set": {
+                "channel_id": interaction.channel.id,
+                "question": question,
+                "options": options,
+                "multi": multi,
+                "ends_at": ends_at,
+                "vote_map": {}
+            }
+        },
+        upsert=True
+    )
+
+class VoteView(discord.ui.View):
+    def __init__(self, option_count: int):
+        super().__init__(timeout=None)
+        for i in range(option_count):
+            self.add_item(VoteButton(i))
+
+class VoteButton(discord.ui.Button):
+    def __init__(self, index: int):
+        super().__init__(
+            label=str(index + 1),
+            style=discord.ButtonStyle.primary,
+            custom_id=f"vote:{index}"
+        )
+        self.index = index
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        session = votes.find_one({"_id": interaction.message.id})
+        if not session:
+            return
+        vote_map = await handle_vote(interaction, session, self.index)
+        session["vote_map"] = vote_map
+        queue_message_update(
+            interaction.message.id,
+            {
+                "message": interaction.message,
+                "embed": build_vote_embed(session)
+            }
+        )
+
+def build_final_results(session):
+    options = session["options"]
+    vote_map = session.get("vote_map", {})
+    counts = [0] * len(options)
+    for user_votes in vote_map.values():
+        for i in user_votes:
+            if i < len(counts):
+                counts[i] += 1
+    ranked = sorted(
+        enumerate(options),
+        key=lambda x: counts[x[0]],
+        reverse=True
+    )
+    desc = ""
+    for i, (idx, opt) in enumerate(ranked, start=1):
+        desc += f"{i}ㆍ　{opt}　–　**{counts[idx]}** votes\n"
+    return discord.Embed(
+        title=f"Final Results: {session['question']}",
+        description=desc,
+        color=0xffffff
+    )
+
+@tasks.loop(seconds=10)
+async def vote_auto_close_loop():
+    now = int(time.time())
+    for session in votes.find({"ends_at": {"$lte": now}}):
+        try:
+            channel = bot.get_channel(session["channel_id"])
+            if not channel:
+                continue
+            message = await channel.fetch_message(session["_id"])
+            if not message.components:
+                continue
+            results = build_final_results(session)
+            await message.edit(embed=results, view=None)
+            await message.reply("**Vote has ended.**")
+            votes.update_one(
+                {"_id": session["_id"]},
+                {"$set": {"closed": True}}
+            )
+        except Exception:
+            continue
+
+@tasks.loop(minutes=5)
+async def vote_cleanup_loop():
+    now = int(time.time())
+    one_hour_ago = now - 3600
+    votes.delete_many({
+        "closed": True,
+        "closed_at": {"$lte": one_hour_ago}
+    })
+
 
 role = app_commands.Group(name="role", description="Manage roles.")
 bot.tree.add_command(role)
