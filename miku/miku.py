@@ -157,6 +157,13 @@ def get_quota_config():
         "sr_reports_quota": 0,
         "sr_reviews_quota": 0
     }
+# helpers
+def apply_break(quota, member):
+    if get(member.guild.roles, id=full_break) in member.roles:
+        return -1
+    if get(member.guild.roles, id=half_break) in member.roles:
+        return max(1, quota // 2)
+    return quota
 
 @tasks.loop(time=datetime.time(hour=0, minute=0))
 async def weekly_quota():
@@ -191,18 +198,11 @@ async def weekly_quota():
     sr_r = get(guild.roles, id=sr_role)
     rep_r = get(guild.roles, id=rep_role)
     tr_r = get(guild.roles, id=tr_role)
-    # helpers
-    def apply_break(quota, member):
-        if get(member.guild.roles, id=full_break) in member.roles:
-            return -1
-        if get(member.guild.roles, id=half_break) in member.roles:
-            return max(1, quota // 2)
-        return quota
+
     def ratio(done, quota):
         if quota in (-1, 0):
             return -1 if quota == -1 else 1
         return round(min(done / quota, 1), 3)
-
     config = staffweeklycol.find_one({"_id": "global"}) or {
         "reports_quota": 0,
         "sr_reports_quota": 0,
@@ -473,9 +473,10 @@ async def quota(ctx, user_id: str = None):
         current_reviews_quota = (
             get_quota_config().get("sr_reviews_quota", 0)
         )
+        current_reviews_quota = apply_break(current_reviews_quota, member)
         current_reviews_ratio = (
             round(min(current_reviews / current_reviews_quota, 1), 2)
-            if current_reviews_quota > 0 else 0
+            if current_reviews_quota >= 0 else -1
         )
         quota_display = "FULL BREAK" if current_reviews_quota == -1 else str(current_reviews_quota)
         ratio_display = "N/A" if current_reviews_ratio == -1 else f"{current_reviews_ratio:.2f}"
@@ -486,7 +487,8 @@ async def quota(ctx, user_id: str = None):
         current_reports_quota = get_quota_config().get("sr_reports_quota", 0)
     else:
         current_reports_quota = get_quota_config().get("reports_quota", 0)
-    current_reports_ratio = round(min(current_reports / current_reports_quota, 1), 2) if current_reports_quota > 0 else 0
+    current_reports_quota = apply_break(current_reports_quota, member)
+    current_reports_ratio = round(min(current_reports / current_reports_quota, 1), 2) if current_reports_quota >= 0 else -1
     quota_display = "FULL BREAK" if current_reports_quota == -1 else str(current_reports_quota)
     ratio_display = "N/A" if current_reports_ratio == -1 else f"{current_reports_ratio:.2f}"
     embed.description += f"\nreports　–　**{current_reports}** / {quota_display}　–　`{ratio_display}`"
@@ -528,9 +530,10 @@ async def quota_history(ctx, user_id: str = None):
         current_reviews_quota = (
             get_quota_config().get("sr_reviews_quota", 0)
         )
+        current_reviews_quota = apply_break(current_reviews_quota, member)
         current_reviews_ratio = (
             round(min(current_reviews / current_reviews_quota, 1), 2)
-            if current_reviews_quota > 0 else 0
+            if current_reviews_quota >= 0 else -1
         )
         quota_display = "FULL BREAK" if current_reviews_quota == -1 else str(current_reviews_quota)
         ratio_display = "N/A" if current_reviews_ratio == -1 else f"{current_reviews_ratio:.2f}"
@@ -569,9 +572,10 @@ async def quota_history(ctx, user_id: str = None):
         current_reports_quota = (
             get_quota_config().get("reports_quota", 0)
         )
+    current_reports_quota = apply_break(current_reports_quota, member)
     current_reports_ratio = (
         round(min(current_reports / current_reports_quota, 1), 2)
-        if current_reports_quota > 0 else 0
+        if current_reports_quota >= 0 else -1
     )
     quota_display = "FULL BREAK" if current_reports_quota == -1 else str(current_reports_quota)
     ratio_display = "N/A" if current_reports_ratio == -1 else f"{current_reports_ratio:.2f}"
