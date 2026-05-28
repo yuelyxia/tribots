@@ -45,6 +45,7 @@ QUOTA_CHANNEL = 1505563131655749712
 
 # tri roles info
 staff_role = 1373803879623430268
+ticket_ping = 1449382692671193294
 o5_role = 1372426616671834234
 adm_role = 1375276457890287748
 sr_role = 1375254710952661102
@@ -198,7 +199,17 @@ async def weekly_quota():
     sr_r = get(guild.roles, id=sr_role)
     rep_r = get(guild.roles, id=rep_role)
     tr_r = get(guild.roles, id=tr_role)
-
+    full_break_r = get(guild.roles, id=full_break)
+    half_break_r = get(guild.roles, id=half_break)
+    def apply_breakbal(member, weekly_profile):
+        bal = weekly_profile.get("breakbal", 12)
+        if full_break_role in member.roles:
+            bal -= 1
+        elif half_break_role in member.roles:
+            bal -= 0.5
+        else:
+            bal += 0.125
+        return max(bal, 0)
     def ratio(done, quota):
         if quota in (-1, 0):
             return -1 if quota == -1 else 1
@@ -208,11 +219,31 @@ async def weekly_quota():
         "sr_reports_quota": 0,
         "sr_reviews_quota": 0
     }
-    staff_members = set(o5_r.members + adm_r.members + sr_r.members + rep_r.members + tr_r.members)
+    staff_members = set(o5_r.members + adm_r.members + sr_r.members + rep_r.members + tr_r.members + full_break_r.members + half_break_r.members)
     for member in staff_members:
         staff_id = str(member.id)
+        full_break_role = guild.get_role(full_break)
+        half_break_role = guild.get_role(half_break)
+        ticket_ping_role = guild.get_role(ticket_ping)
         staff_profile = trusteduserscol.find_one({"_id": staff_id}) or {}
         weekly_profile = staffweeklycol.find_one({"_id": staff_id}) or {}
+        weekly_profile["breakbal"] = apply_breakbal(member, weekly_profile)
+        if weekly_profile["breakbal"] <= 0:
+            remove_roles = []
+            if member.get_role(full_break):
+                remove_roles.append(full_break_role)
+            if member.get_role(half_break):
+                remove_roles.append(half_break_role)
+            await member.remove_roles(*remove_roles)
+            restore_roles = []
+            for rid in weekly_profile.get("saved_roles", []):
+                role = guild.get_role(rid)
+                if role:
+                    restore_roles.append(role)
+            restore_roles.append(ticket_ping_role)
+            await member.add_roles(*restore_roles)
+            weekly_profile["saved_roles"] = []
+            staffweeklycol.replace_one({"_id": str(member.id)}, weekly_profile, upsert=True)
         weekly_reviews = int(weekly_profile.get("weekly_reviews", 0))
         weekly_reports = int(weekly_profile.get("weekly_reports", 0))
         is_sr = any(role.id == sr_role for role in member.roles)
@@ -448,12 +479,9 @@ def get_staff_rank(member):
     return "Staff"
 
 @bot.command(name="q")
-async def quota(ctx, user_id: str = None):
-    target_id = user_id or str(ctx.author.id)
-    member = ctx.guild.get_member(int(target_id.strip("<@>")))
-    if not member:
-        return await ctx.send("Invalid user or user not in this server.")
-    weekly_profile = staffweeklycol.find_one({"_id": target_id})
+async def quota(ctx, member: discord.Member = None):
+    if not member: member = ctx.author
+    weekly_profile = staffweeklycol.find_one({"_id": member})
     if not weekly_profile:
         return await ctx.send("No quota history found for this user.")
     t_r = get(ctx.guild.roles, id=t_role)
@@ -496,12 +524,9 @@ async def quota(ctx, user_id: str = None):
     await ctx.reply(embeds=[profile, embed])
 
 @bot.command(name="qh")
-async def quota_history(ctx, user_id: str = None):
-    target_id = user_id or str(ctx.author.id)
-    member = ctx.guild.get_member(int(target_id.strip("<@>")))
-    if not member:
-        return await ctx.send("Invalid user or user not in this server.")
-    weekly_profile = staffweeklycol.find_one({"_id": target_id})
+async def quota_history(ctx, member: discord.Member=None):
+    if not member: member = ctx.author
+    weekly_profile = staffweeklycol.find_one({"_id": member})
     if not weekly_profile:
         return await ctx.send("No quota history found for this user.")
     t_r = get(ctx.guild.roles, id=t_role)
@@ -593,6 +618,72 @@ async def quota_history(ctx, user_id: str = None):
     )
     reports_embed.description+=f"\n\n**Overall Ratio**　ㆍ　`{overall_reports_ratio:.2f}`"
     embeds.append(reports_embed)
+    await ctx.reply(embeds=embeds)
+
+@bot.command(name="bb")
+async def bb(ctx, member: discord.Member=None):
+    if not member: member = ctx.author
+    t_r = get(ctx.guild.roles, id=t_role)
+    in_training = set(t_r.members)
+    if member in in_training:
+        return await ctx.send("This staff is still in training.")
+    embeds = []
+    rank = get_staff_rank(member)
+    profile = discord.Embed(colour=0xffffff)
+    profile.set_thumbnail(url=f"{member.display_avatar}")
+    profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
+    embeds.append(profile)
+    staff_id = str(member.id)
+    weekly_profile = staffweeklycol.find_one({"_id": staff_id}) or {}
+    full_break_r = ctx.guild.get_role(full_break)
+    half_break_r = ctx.guild.get_role(half_break)
+    bal = weekly_profile.get("breakbal", 12)
+    is_full = full_break_r in member.roles
+    is_half = half_break_r in member.roles
+    is_sr = any(role.id == sr_role for role in member.roles)
+    if is_sr:
+        sr_reviews_quota = get_quota_config().get("sr_reviews_quota", 0)
+        sr_reports_quota = get_quota_config().get("sr_reports_quota", 0)
+        sr_reviews_quota = apply_break(sr_reviews_quota, member)
+        sr_reports_quota = apply_break(sr_reports_quota, member)
+        met_reviews = weekly_profile.get("weekly_reviews", 0) >= sr_reviews_quota
+        met_reports = weekly_profile.get("weekly_reports", 0) >= sr_reports_quota
+        met_quota = met_reviews and met_reports
+    else:
+        reports_quota = get_quota_config().get("reports_quota", 0)
+        reports_quota = apply_break(reports_quota, member)
+        met_quota = weekly_profile.get("weekly_reports", 0) >= reports_quota
+    if is_full:
+        preview = bal - 1
+        state = "full break"
+    elif is_half:
+        preview = bal - 0.5
+        state = "half break"
+    else:
+        if met_quota:
+            preview = bal + 0.125
+            state = "active (+0.125)"
+        else:
+            preview = bal
+            state = "active (+0)"
+    preview = max(0, round(preview, 3))
+    bal = round(bal, 3)
+    embed = discord.Embed(
+        title="break balance",
+        colour=0xffffff
+    )
+    embed.description = (
+        f"status　–　{state}\n"
+        f"current balance　–　**{bal}**\n"
+    )
+    if "active" not in state:
+        embed.description += f"after deduction　–　**{preview}**\n"
+    else:
+        embed.description += f"after quota check　–　**{preview}**"
+
+    if preview < 0.5:
+        embed.description += "\n\nYou will be unable to go on break soon."
+    embeds.append(embed)
     await ctx.reply(embeds=embeds)
 
 @bot.command()
@@ -968,6 +1059,92 @@ async def lbr(ctx):
                 f"{member.mention}　–　"
                 f"**{reviews}** all ㆍ **{weekly_reviews}** week")
     await ctx.reply("## _ _　　　reviews leaderboard", embed=embed)
+
+
+@bot.tree.command(name="break", description="Toggle full or half break.")
+@app_commands.checks.has_role(staff_role)
+async def break_command(interaction: discord.Interaction, type: Literal["full", "half"]):
+    await interaction.response.defer()
+    member = interaction.user
+    guild = interaction.guild
+    ban_perms = 1373517806921973900
+    files_access = 1459594433371705575
+    defender = 1374364037818617856
+    sr_of_the_month = 1498909625263722537
+    senior_reporter = 1372426698242658324
+    trial_senior_reporter = 1462972920467951728
+    staff_trainer = 1498599499893837874
+    sr_ping = 1375254710952661102
+    reporter_of_the_month = 1447056456401551410
+    reporter = 1372426736205303808
+    trial_reporter = 1372426794585817088
+    in_training =  1396701840321679391
+    STAFF_ROLES = [ban_perms, files_access, defender, sr_of_the_month, senior_reporter, trial_senior_reporter, staff_trainer, sr_ping, reporter_of_the_month, reporter, trial_reporter, in_training]
+    if member.get_role(in_training):
+        return await interaction.followup.send("In training staff cannot go on break.")
+    profile = staffweeklycol.find_one({"_id": str(member.id)})
+    if profile:
+        profile.setdefault("breakbal", 12)
+        profile.setdefault("saved_roles", [])
+        breakbal = profile["breakbal"]
+        cost = 1 if type == "full" else 0.5
+        if breakbal - cost < 0:
+            return await interaction.followup.send(
+                f"You do not have enough break balance.\nCurrent balance: **{breakbal}**")
+        full_break_role = guild.get_role(full_break)
+        half_break_role = guild.get_role(half_break)
+        ticket_ping_role = guild.get_role(ticket_ping)
+        current_break = None
+        if member.get_role(full_break):
+            current_break = "full"
+        elif member.get_role(half_break):
+            current_break = "half"
+        if current_break == type:
+            remove_roles = []
+            if member.get_role(full_break):
+                remove_roles.append(full_break_role)
+            if member.get_role(half_break):
+                remove_roles.append(half_break_role)
+            await member.remove_roles(*remove_roles)
+            restore_roles = []
+            for rid in profile.get("saved_roles", []):
+                role = guild.get_role(rid)
+                if role:
+                    restore_roles.append(role)
+            restore_roles.append(ticket_ping_role)
+            await member.add_roles(*restore_roles)
+            profile["saved_roles"] = []
+            staffweeklycol.replace_one({"_id": str(member.id)}, profile, upsert=True)
+            return await interaction.followup.send("You are now off break.")
+        elif current_break:
+            if current_break == "full":
+                await member.remove_roles(full_break_role)
+                await member.add_roles(half_break_role)
+            elif current_break == "half":
+                await member.remove_roles(half_break_role)
+                await member.add_roles(full_break_role)
+            return await interaction.followup.send(f"Changed break status to **{type} break**.")
+        else:
+            if type == "full":
+                await member.add_roles(full_break_role)
+                saved_roles = []
+                remove_roles = []
+                for rid in STAFF_ROLES:
+                    role = guild.get_role(rid)
+                    if role and member.get_role(rid):
+                        saved_roles.append(rid)
+                        remove_roles.append(role)
+                if member.get_role(ticket_ping):
+                    remove_roles.append(ticket_ping_role)
+                if remove_roles:
+                    await member.remove_roles(*remove_roles)
+                profile["saved_roles"] = saved_roles
+                staffweeklycol.replace_one({"_id": str(member.id)}, profile, upsert=True)
+            if type == "half":
+                await member.add_roles(half_break_role)
+            await interaction.followup.send(f"You are now on **{type} break**.")
+    else:
+        return await interaction.followup.send("User not appointed as current TRI Staff.")
 
 class StaffRulesView(discord.ui.View):
     def __init__(self):
