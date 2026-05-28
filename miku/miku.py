@@ -481,7 +481,8 @@ def get_staff_rank(member):
 @bot.command(name="q")
 async def quota(ctx, member: discord.Member = None):
     if not member: member = ctx.author
-    weekly_profile = staffweeklycol.find_one({"_id": member})
+    staff_id = str(member.id)
+    weekly_profile = staffweeklycol.find_one({"_id": staff_id})
     if not weekly_profile:
         return await ctx.send("No quota history found for this user.")
     t_r = get(ctx.guild.roles, id=t_role)
@@ -526,7 +527,8 @@ async def quota(ctx, member: discord.Member = None):
 @bot.command(name="qh")
 async def quota_history(ctx, member: discord.Member=None):
     if not member: member = ctx.author
-    weekly_profile = staffweeklycol.find_one({"_id": member})
+    staff_id = str(member.id)
+    weekly_profile = staffweeklycol.find_one({"_id": staff_id})
     if not weekly_profile:
         return await ctx.send("No quota history found for this user.")
     t_r = get(ctx.guild.roles, id=t_role)
