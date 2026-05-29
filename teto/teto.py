@@ -4057,6 +4057,7 @@ class UserVoteView(discord.ui.View):
                 new_name = current_name if current_name.startswith("p-") else f"p-{current_name}"
                 await asyncio.sleep(2)
                 await interaction.channel.edit(name=new_name, archived=True, locked=True)
+                return
             #
             if not add_case_list:  # only alts edited
                 await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
@@ -6571,12 +6572,10 @@ class ServerVoteView(discord.ui.View):
                 await asyncio.sleep(2)
                 await interaction.channel.edit(name=new_name, archived=True, locked=True)
                 return
-
             #
             if add_case_list == []:  # only owner edited
                 await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                     "embeds": [r_profile], "view": ServerVoteView()}))
-
             elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
                 add_case_list = add_case_list[0]
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -6585,7 +6584,6 @@ class ServerVoteView(discord.ui.View):
                 add_case_list = [add_case_list]
                 await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                     "embeds": embeds, "view": ServerVoteView()}))
-
             else:  # new case exists
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
