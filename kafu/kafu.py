@@ -42,6 +42,7 @@ timezones = kafu["timezones"]
 vouch_servers = kafu["vouch_servers"]
 voices = kafu["voices"]
 votes = kafu["votes"]
+ticket_claims = kafu["ticket_claims"]
 
 TRI_Archive = 1371673839695826974
 Tethys = 1434471275723493388
@@ -97,6 +98,7 @@ async def on_ready():
     customrole_expiry_loop.start()
     vote_auto_close_loop.start()
     vote_cleanup_loop.start()
+    ticket_claim_cleanup_loop.start()
     if not hasattr(bot, "queue_started"):
         bot.loop.create_task(message_update_worker())
         bot.queue_started = True
@@ -831,55 +833,33 @@ async def rn_error(ctx, error):
         return await ctx.send(f"This command is on cooldown. Retry in {round(remaining)} seconds.")
     raise error
 
-CLAIM_REGEX = re.compile(r"<@!?(\d+)> has claimed the ticket\.")
-UNCLAIM_REGEX = re.compile(r"<@!?(\d+)> has unclaimed the ticket\.")
+async def get_active_claims(channel_id):
+    data = ticket_claims.find_one({"_id": channel_id})
+    if not data:
+        return []
+    return data.get("claimed_by", [])
 
-async def get_active_claims(channel):
-    claim_counts = defaultdict(int)
-    async for msg in channel.history(limit=None, oldest_first=True):
-        if msg.author.id != KAFU:
-            continue
-        if not msg.embeds:
-            continue
-        for embed in msg.embeds:
-            content = embed.description or ""
-            match = CLAIM_REGEX.search(content)
-            if match:
-                user_id = int(match.group(1))
-                claim_counts[user_id] += 1
-                continue
-            match = UNCLAIM_REGEX.search(content)
-            if match:
-                user_id = int(match.group(1))
-                claim_counts[user_id] -= 1
-                continue
-    active_users = [uid for uid, count in claim_counts.items() if count > 0]
-    return active_users
+async def active_claim(channel_id, user_id):
+    data = ticket_claims.find_one({"_id": channel_id})
+    if not data:
+        return False
+    return user_id in data.get("claimed_by", [])
 
-async def active_claim(channel, user_id):
-    count = 0
-    async for msg in channel.history(limit=None, oldest_first=True):
-        if msg.author.id != KAFU or not msg.embeds:
-            continue
-        for embed in msg.embeds:
-            content = embed.description
-            claim_match = CLAIM_REGEX.search(content)
-            if claim_match and int(claim_match.group(1)) == user_id:
-                count += 1
-                continue
-            unclaim_match = UNCLAIM_REGEX.search(content)
-            if unclaim_match and int(unclaim_match.group(1)) == user_id:
-                count -= 1
-                continue
-    return count > 0
+async def get_uncredited_claims(channel_id):
+    data = ticket_claims.find_one({"_id": channel_id})
+    if not data:
+        return []
+    claimed = set(data.get("claimed_by", []))
+    closed = set(data.get("closed_claims", []))
+    return list(claimed - closed)
 
-async def credits_already_given(channel):
-    async for msg in channel.history(limit=50, oldest_first=False):  # bottom → top
-        if msg.author.id != KAFU:
-            continue
-        if msg.content and "Ticket credit(s) have been given" in msg.content:
-            return True
-    return False
+@tasks.loop(hours=1)
+async def ticket_claim_cleanup_loop():
+    cutoff = int(time.time()) - 86400
+    ticket_claims.delete_many({
+        "closed": True,
+        "closed_at": {"$lte": cutoff}
+    })
 
 @bot.command(name="claim")
 async def claim(ctx, mode: str = None, member: discord.Member = None):
@@ -889,37 +869,33 @@ async def claim(ctx, mode: str = None, member: discord.Member = None):
         upsert=True,
         return_document=True
     )
-    if server_info:
-        if not server_info.get("staff_role"):
-            await ctx.reply("**staff role** has not been set up for this server.")
+    if not server_info.get("staff_role"):
+        await ctx.reply("**staff role** has not been set up for this server.")
+        return
+    if not server_info.get("adm_role"):
+        await ctx.reply("**adm role** has not been set up for this server.")
+        return
+    staff_role = server_info["staff_role"]
+    adm_role = server_info["adm_role"]
+    if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) not in ctx.author.roles:
+        return
+    target = ctx.author
+    if mode == "force":
+        if not (get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
+            await ctx.reply("Unauthorised.")
             return
-        if not server_info.get("adm_role"):
-            await ctx.reply("**adm role** has not been set up for this server.")
+        if not member:
+            await ctx.reply("Please specify a user to force claim.")
             return
-        staff_role = server_info.get("staff_role")
-        adm_role = server_info.get("adm_role")
-        if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
-            if mode == "force":
-                if get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles:
-                    if not member:
-                        await ctx.send("Please specify a user to force claim.")
-                        return
-                    already_claimed = await active_claim(channel=ctx.channel, user_id=member.id)
-                    if already_claimed:
-                        await ctx.reply("They have already claimed this ticket.")
-                        return
-                    target = member
-                else:
-                    await ctx.reply("Unauthorised.")
-                    return
-            else:
-                target = ctx.author
-                already_claimed = await active_claim(channel=ctx.channel, user_id=ctx.author.id)
-                if already_claimed:
-                    await ctx.reply("You have already claimed this ticket.")
-                    return
-            embed = discord.Embed(colour=0xffffff, description=f"{target.mention} has claimed the ticket.")
-            await ctx.reply(embed=embed)
+        target = member
+    already_claimed = await active_claim(ctx.channel.id, target.id)
+    if already_claimed:
+        await ctx.reply("User has already claimed this ticket.")
+        return
+    ticket_claims.update_one({"_id": ctx.channel.id},
+                             {"$addToSet": {"claimed_by": target.id}, "$set": {"closed": False}}, upsert=True)
+    embed = discord.Embed(colour=0xffffff, description=f"{target.mention} has claimed the ticket.")
+    await ctx.reply(embed=embed)
 
 @bot.command(name="unclaim")
 async def unclaim(ctx, mode: str = None, member: discord.Member = None):
@@ -929,37 +905,35 @@ async def unclaim(ctx, mode: str = None, member: discord.Member = None):
         upsert=True,
         return_document=True
     )
-    if server_info:
-        if not server_info.get("staff_role"):
-            await ctx.reply("**staff role** has not been set up for this server.")
+    if not server_info.get("staff_role"):
+        await ctx.reply("**staff role** has not been set up for this server.")
+        return
+    if not server_info.get("adm_role"):
+        await ctx.reply("**adm role** has not been set up for this server.")
+        return
+    staff_role = server_info["staff_role"]
+    adm_role = server_info["adm_role"]
+    if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) not in ctx.author.roles:
+        return
+    target = ctx.author
+    if mode == "force":
+        if not (get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
+            await ctx.reply("Unauthorised.")
             return
-        if not server_info.get("adm_role"):
-            await ctx.reply("**adm role** has not been set up for this server.")
+        if not member:
+            await ctx.reply("Please specify a user to force unclaim.")
             return
-        staff_role = server_info.get("staff_role")
-        adm_role = server_info.get("adm_role")
-        if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
-            if mode == "force":
-                if get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles:
-                    if not member:
-                        await ctx.send("Please specify a user to force claim.")
-                        return
-                    already_claimed = await active_claim(channel=ctx.channel, user_id=member.id)
-                    if not already_claimed:
-                        await ctx.reply("They have not claimed this ticket.")
-                        return
-                    target = member
-                else:
-                    await ctx.reply("Unauthorised.")
-                    return
-            else:
-                target = ctx.author
-                already_claimed = await active_claim(channel=ctx.channel, user_id=ctx.author.id)
-                if not already_claimed:
-                    await ctx.reply("You have not claimed this ticket.")
-                    return
-            embed = discord.Embed(colour=0xffffff, description=f"{target.mention} has unclaimed the ticket.")
-            await ctx.reply(embed=embed)
+        target = member
+    already_claimed = await active_claim(ctx.channel.id, target.id)
+    if not already_claimed:
+        await ctx.reply("User has not claimed this ticket.")
+        return
+    ticket_claims.update_one(
+        {"_id": ctx.channel.id},
+        {"$pull": {"claimed_by": target.id}}
+    )
+    embed = discord.Embed(colour=0xffffff, description=f"{target.mention} has unclaimed the ticket.")
+    await ctx.reply(embed=embed)
 
 @bot.command(name="claims")
 async def claims(ctx, *args):
@@ -974,12 +948,13 @@ async def claims(ctx, *args):
     if not server_info.get("staff_role"):
         await ctx.reply("**staff role** has not been set up for this server.")
         return
-    staff_role = server_info.get("staff_role")
-    if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
-        active_claims = await get_active_claims(ctx.channel)
-        mentions = [f"<@{uid}>" for uid in active_claims]
-        embed = discord.Embed(colour=0xffffff, description = f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
-        await ctx.reply(embed=embed)
+    staff_role = server_info["staff_role"]
+    if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) not in ctx.author.roles:
+        return
+    active_claims = await get_active_claims(ctx.channel.id)
+    mentions = [f"<@{uid}>" for uid in active_claims]
+    embed = discord.Embed(colour=0xffffff, description=f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
+    await ctx.reply(embed=embed)
 
 @bot.command(name="close")
 async def close(ctx, *args):
@@ -1001,11 +976,10 @@ async def close(ctx, *args):
             if ctx.guild.id == TRI_Archive and not get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
                 await ctx.reply("You are not authorised to close this ticket.")
                 return
-            already_given = await credits_already_given(ctx.channel)
-            if already_given:
-                await ctx.reply("Ticket credits have already been given.")
+            active_claims = await get_uncredited_claims(ctx.channel.id)
+            if not active_claims:
+                await ctx.reply("No new ticket credits to give.")
                 return
-            active_claims = await get_active_claims(ctx.channel)
             mentions = [f"<@{uid}>" for uid in active_claims]
             embed = discord.Embed(colour=0xffffff, description=f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
             await ctx.reply(embed=embed, view=TicketCloseView(active_claims))
@@ -1026,24 +1000,23 @@ class TicketCloseView(discord.ui.View):
         if not staff_role: return
         if get(interaction.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
             if interaction.guild.id == TRI_Archive and not get(interaction.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
-                await interaction.followup.send("You are not authorised to close this ticket.", ephemeral=True)
+                return await interaction.followup.send("You are not authorised to close this ticket.", ephemeral=True)
             operations = []
             for uid in self.active_claims:
-                try:
-                    staff_data = server_info.get("staff").get(str(uid))
-                    if staff_data is None:
-                        raise KeyError(uid)
-                    staff_data["monthly_tickets"] = staff_data.get("monthly_tickets", 0) + 1
-                    staff_data["tickets"] = staff_data.get("tickets", 0) + 1
-                    operations.append(UpdateOne(
-                        {"_id": str(interaction.guild.id), f"staff.{str(uid)}": {"$exists": True}},
-                        {"$inc": {f"staff.{str(uid)}.monthly_tickets": 1, f"staff.{str(uid)}.tickets": 1},
-                         }))
-                except KeyError:
+                staff_data = server_info.get("staff", {}).get(str(uid))
+                if staff_data is None:
                     await interaction.followup.send(f"Unable to add ticket credit to <@{uid}>.", ephemeral=True)
                     continue
+                operations.append(UpdateOne(
+                    {"_id": str(interaction.guild.id), f"staff.{str(uid)}": {"$exists": True}},
+                    {"$inc": {f"staff.{str(uid)}.monthly_tickets": 1, f"staff.{str(uid)}.tickets": 1},
+                     }))
+
             if operations:
                 servers.bulk_write(operations)
+            ticket_claims.update_one({"_id": interaction.channel.id},
+                                     {"$addToSet": {"closed_claims": {"$each": self.active_claims}},
+                                      "$set": {"closed": True, "closed_at": int(time.time())}}, upsert=True)
             await interaction.edit_original_response(content="Ticket credit(s) have been given.", view=None)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, custom_id="ticketclose:cancel")
