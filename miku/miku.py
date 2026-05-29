@@ -1445,6 +1445,7 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
                 await interaction.channel.send(content=message, files=files_to_send, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
             else:
                 await interaction.channel.send(message, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
+        message = message.replace("\\n", "\n")
         print(f"{interaction.user.name}: {message}")
         await interaction.followup.send("Your message has been sent.", ephemeral=True)
     except Exception:
@@ -1482,7 +1483,13 @@ async def anon_edit(interaction: discord.Interaction, message_id: str, message: 
                         if resp.status == 200:
                             data = io.BytesIO(await resp.read())
                             files_to_send.append(discord.File(data, filename=img.filename))
+        message = message.replace("\\n", "\n")
         allowed_mentions = discord.AllowedMentions.all()
+        if not get(interaction.user.guild.roles, id=adm_role) in interaction.user.roles or get(interaction.user.guild.roles,
+                                                                                           id=tethys_adm_role) in interaction.user.roles:
+            allowed_mentions = discord.AllowedMentions(everyone=False, roles=False)
+            for word in banned_words:
+                message = message.replace(word, "*" * len(word))
         if files_to_send:
             await target_message.edit(content=message, attachments=files_to_send, allowed_mentions=allowed_mentions)
         else:
