@@ -3348,12 +3348,9 @@ class OthersModal(discord.ui.Modal, title="ㆍㆍOthers"):
         tickets.insert_one(new_ticket)
 
 
-
-
 @bot.command()
 async def sync(ctx: commands.Context):
     await bot.tree.sync()
 
 
 bot.run(TOKEN)
-
