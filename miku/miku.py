@@ -1179,7 +1179,7 @@ class StaffGuideView(discord.ui.View):
 ### Promotion Requirements
 ㆍ**2 weeks of quota** (not necessarily consecutive)
 ㆍ**15 non-hitter reports**
-ㆍ**3 appeals**
+ㆍ**1 appeal**
 ㆍ**20 votes**
             """), ephemeral=True)
         if self.select_callback.values[0] == "breaks":
