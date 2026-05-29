@@ -764,7 +764,7 @@ class TagsView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "scammer":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:red_arrow1:1388148121242177726>　　　　　scammer
+## <a:redarrow:1388148121242177726>　　　　　scammer
 　　**__definition__**
 
 > users who have shown the **intention to, have attempted to, have admitted to, and/or have scammed**.
@@ -789,7 +789,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "scam server owner":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:red_arrow1:1388148121242177726>　　　　　scam server owner
+## <a:redarrow:1388148121242177726>　　　　　scam server owner
 　　**__definition__**
 
 > users who **own scam servers** or have owned scam servers in the past.
@@ -802,11 +802,12 @@ class TagsView(discord.ui.View):
 　　**__notes__**
 
 > - screenshots of **vencord** or **serverinfo bot command** are preferred. If you do not have vencord, ask another staff for help.
+> - the scam server owner may only be appealed if the scam server has been appealed.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "raider":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:red_arrow1:1388148121242177726>　　　　　raider
+## <a:redarrow:1388148121242177726>　　　　　raider
 　　**__definition__**
 
 > users who have **raided server(s)**.
@@ -817,30 +818,87 @@ class TagsView(discord.ui.View):
 > - participating in, coordinating, or assisting a raid, regardless of success or scale.
 > - supplying raid tools, bots, or scripts to others for the purpose of raiding.
 
-　　**__notes__**
-
-> - screenshots of **vencord** or **serverinfo bot command** are preferred. If you do not have vencord, ask another staff for help.
-
 -# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "plagiarist":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:red_arrow1:1388148121242177726>　　　　　plagiarist
+## <a:redarrow:1388148121242177726>　　　　　plagiarist
 　　**__definition__**
 
-> users who
-> 　⤷　
+> users who have claimed others’ creative works as their own, or have shared/used such works without the rightful owner’s permission.
+> 　⤷　includes audio, visual, written works etc.
 
 　　**__examples__**
 
-> - 
+> - claiming others’ creative works as one’s own.
+> - heavily referencing, copying, or tracing another person’s artwork and claiming it as original.
+> - failing to disclose significant references, tracing, or use of another’s work when offering the artwork for sale.
+
+-# **confrontation is __required__.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "fake event host":
+            embed = discord.Embed(colour=0xFF0045, description="""
+## <a:redarrow:1388148121242177726>　　　　　fake event host
+　　**__definition__**
+
+> users who have hosted events and refused to or repeatedly delayed giving the participant their prize/reward provided that the participant had followed all rules strictly.
+> 　⤷　e.g. giveaways, invite rewards.
+
+-# **confrontation is __required__.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "impersonator":
+            embed = discord.Embed(colour=0xFF0045, description="""
+## <a:redarrow:1388148121242177726>　　　　　impersonator
+　　**__definition__**
+
+> users who deliberately imitate or copy the profile, name, layout and/or description of another user without the real user’s permission, with the intent of deception
+> 　⤷　use of another’s identity with malicious intent.
+
+-# **confrontation is __required__.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "vouch scammer":
+            embed = discord.Embed(colour=0xFF0045, description="""
+## <a:redarrow:1388148121242177726>　　　　　vouch scammer
+　　**__definition__**
+
+> users who use spammed (often botted) vouches or stolen proofs/vouches, with the intent of deceiving others.
+> 　⤷　show evidence of vouches left by ≥4 users with similar account creation dates.
 
 　　**__notes__**
 
-> - 
+> - a server owner may be reported as vouch scammer for allowing spammed vouches in a trading server.
+> - neither the vouched user nor voucher are reportable unless there is evidence of them scamming/attempting to scam.
 
--# **confrontation is __required__.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+-# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "suspect":
+            embed = discord.Embed(colour=0xFF0045, description="""
+## <a:yellowarrow:1509836964453548133>　　　　　suspect
+　　**__definition__**
+
+> users who have exhibited suspicious behaviour.
+
+　　**__examples__**
+
+> - refusing to use mm or ghosting/blocking after mm is mentioned, especially mms from trusted servers.
+> - insisting on using a “personal” mm; insisting on trading via a mm in a group chat.
+> - suggesting scam server(s) **and** refusing to use trusted servers or ghosting/blocking when asked to use trusted servers.
+> - offering to mm/pilot without mm/pilot roles in any trading servers.
+> - owning a server that is suspected of having scam activity (suspect server).
+
+　　**__notes__**
+
+> - trade must have been agreed to.
+> it is not reportable if
+> - the user unknowingly suggested scam server(s).
+> - the user ghosts or blocks due to the contributor being rude towards them, or due to not being interested in the trade anymore.
+
+-# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
