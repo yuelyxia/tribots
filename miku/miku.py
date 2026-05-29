@@ -877,7 +877,7 @@ class TagsView(discord.ui.View):
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "suspect":
-            embed = discord.Embed(colour=0xFF0045, description="""
+            embed = discord.Embed(colour=0xFFD643, description="""
 ## <a:yellowarrow:1509836964453548133>　　　　　suspect
 　　**__definition__**
 
@@ -894,11 +894,42 @@ class TagsView(discord.ui.View):
 　　**__notes__**
 
 > - trade must have been agreed to.
-> it is not reportable if
-> - the user unknowingly suggested scam server(s).
-> - the user ghosts or blocks due to the contributor being rude towards them, or due to not being interested in the trade anymore.
+> - it is not reportable if
+> 　–　the user unknowingly suggested scam server(s).
+> 　–　the user ghosts or blocks due to the contributor being rude towards them, or due to not being interested in the trade anymore.
 
 -# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "unprofessional mm":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　　　　unprofessional mm
+　　**__definition__**
+
+> mm is deemed unprofessional if they have proven to be irresponsible in their service.
+> this tag is for mming of lower-risked games, e.g. genshin, hsr, wuwa, hi3, zzz, prsk, roblox accounts or items. 
+> 　⤷　usually excludes idv, unless irreversible damage was done to an account due to lack of basic knowledge of the game.
+
+　　**__examples__**
+
+> - items or accounts were put at preventable or unnecessary risks
+> 　–　not checking the validity of every receipt sent
+> 　–　not checking basic account details carefully before the account is given to the other trader.
+> - items or accounts were lost, damaged and/or retrieved (i.e. scammed) in a preventable situation
+> 　–　knowingly mming for a scammer, which led to the items/accounts getting lost, damaged and/or retrieved.
+> 　–　incorrectly securing an account, which led to the items/accounts getting lost, damaged and/or retrieved.
+> 　–　altering the state of the account(s) without both traders’ permissions.
+> - account was lost, damaged and/or retrieved (i.e. scammed) in an unpreventable situation but the trader was **not** informed of the risks beforehand.
+> - mm lost an account in an unpreventable situation but did not attempt to offer any compensation whatsoever.
+> - not sending compulsory mm screenshots into the ticket and unable to provide them when needed.
+
+　　**__notes__**
+
+> - it is not reportable if
+> 　–　mm lost an account in an unpreventable situation and offered compensation that the trader was satisfied with, or continually attempted to offer compensation, subject to limitations such as the mm’s financial ability.
+> 　–　account was retrieved in an unpreventable situation and the trader consented to the risks beforehand.
+> 　–　low or moderate preventable risks were taken but no harm was done to the account in the end.
+
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
