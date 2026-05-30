@@ -57,6 +57,7 @@ staff_trainer = 1498599499893837874
 full_break = 1505568168880636014
 half_break = 1505568134617235546
 tri_supporter = 1465630182462460040
+archived_staff = 1505062096336064552
 
 TRI_Archive = 1371673839695826974
 
@@ -1195,7 +1196,7 @@ async def break_command(interaction: discord.Interaction, type: Literal["full", 
     trial_reporter = 1372426794585817088
     in_training =  1396701840321679391
     STAFF_ROLES = [ban_perms, files_access, defender, sr_of_the_month, senior_reporter, trial_senior_reporter, staff_trainer, sr_ping, reporter_of_the_month, reporter, trial_reporter, in_training]
-    if member.get_role(in_training):
+    if get(member.roles, id=in_training):
         return await interaction.followup.send("In training staff cannot go on break.")
     profile = staffweeklycol.find_one({"_id": str(member.id)})
     if profile:
@@ -1208,6 +1209,7 @@ async def break_command(interaction: discord.Interaction, type: Literal["full", 
                 f"You do not have enough break balance.\nCurrent balance: **{breakbal}**")
         full_break_role = guild.get_role(full_break)
         half_break_role = guild.get_role(half_break)
+        archived_staff_role = guild.get_role(archived_staff)
         ticket_ping_role = guild.get_role(ticket_ping)
         current_break = None
         if member.get_role(full_break):
@@ -1215,7 +1217,7 @@ async def break_command(interaction: discord.Interaction, type: Literal["full", 
         elif member.get_role(half_break):
             current_break = "half"
         if current_break == type:
-            remove_roles = []
+            remove_roles = [archived_staff_role]
             if member.get_role(full_break):
                 remove_roles.append(full_break_role)
             if member.get_role(half_break):
@@ -1233,11 +1235,34 @@ async def break_command(interaction: discord.Interaction, type: Literal["full", 
             return await interaction.followup.send("You are now off break.")
         elif current_break:
             if current_break == "full":
-                await member.remove_roles(full_break_role)
+                remove_roles = [full_break_role, archived_staff_role]
+                await member.remove_roles(*remove_roles)
+                restore_roles = []
+                for rid in profile.get("saved_roles", []):
+                    role = guild.get_role(rid)
+                    if role:
+                        restore_roles.append(role)
+                restore_roles.append(ticket_ping_role)
+                await member.add_roles(*restore_roles)
+                profile["saved_roles"] = []
+                staffweeklycol.replace_one({"_id": str(member.id)}, profile, upsert=True)
                 await member.add_roles(half_break_role)
             elif current_break == "half":
                 await member.remove_roles(half_break_role)
                 await member.add_roles(full_break_role)
+                saved_roles = []
+                remove_roles = []
+                for rid in STAFF_ROLES:
+                    role = guild.get_role(rid)
+                    if role and member.get_role(rid):
+                        saved_roles.append(rid)
+                        remove_roles.append(role)
+                if member.get_role(ticket_ping):
+                    remove_roles.append(ticket_ping_role)
+                if remove_roles:
+                    await member.remove_roles(*remove_roles)
+                profile["saved_roles"] = saved_roles
+                staffweeklycol.replace_one({"_id": str(member.id)}, profile, upsert=True)
             return await interaction.followup.send(f"Changed break status to **{type} break**.")
         else:
             if type == "full":
