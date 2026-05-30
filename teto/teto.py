@@ -46,9 +46,9 @@ TICKETS_CHANNEL = 1375261699111784478
 o5_role = 1372426616671834234
 staff_role = 1373803879623430268
 ticket_ping = 1449382692671193294
-in_training = 1396701840321679391
-sr_role = 1375254710952661102
-adm_role = 1375276457890287748
+t_role = 1396701840321679391
+sr_ping = 1375254710952661102
+adm_ping = 1375276457890287748
 
 new_user_report_ping = 1375275062185168957
 updated_user_report_ping = 1459590866724323625
@@ -81,10 +81,10 @@ yellow_server_tags = ["Suspect Server"]
 games_list = ["Genshin Impact", "Honkai: Star Rail", "Wuthering Waves", "Roblox", "Project Sekai", "Cookie Run: Kingdom", "Identity V", "Valorant", "Others", "N/A"]
 
 def is_sr(user):
-    return any(role.id in (sr_role, adm_role) for role in user.roles)
+    return any(role.id in (sr_ping, adm_ping) for role in user.roles)
 
 def is_active_staff(user):
-    return any(role.id in (ticket_ping, adm_role) for role in user.roles)
+    return any(role.id in (ticket_ping, adm_ping) for role in user.roles)
 
 # formatting functions
 
@@ -617,7 +617,7 @@ async def c(ctx, *, to_check: str = None):
                     trusteduser_profile = trusteduserscol.find_one(user_query)
                     if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                 and (is_active_staff(ctx.author)
-                                                     or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
+                                                     or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
                         await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
                                         embeds=reported_user_profile(main_user, main_user_profile),
                                         view=EditUserReportView(main_user, main_user_profile, requested_by,
@@ -634,7 +634,7 @@ async def c(ctx, *, to_check: str = None):
                     trusteduser_profile = trusteduserscol.find_one(user_query)
                     if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                 and (is_active_staff(ctx.author)
-                                                     or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
+                                                     or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
                         await ctx.reply(f"User is reported.",
                                         embeds=reported_user_profile(user, user_profile),
                                         view=EditUserReportView(user, user_profile, requested_by, len(user_profile) - 2))
@@ -650,7 +650,7 @@ async def c(ctx, *, to_check: str = None):
                 trusteduser_profile = trusteduserscol.find_one(user_query)
                 if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                             and (is_active_staff(ctx.author)
-                                                 or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
+                                                 or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
                     await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
                 else:
                     await ctx.reply(embed=profile, view=MemberView())
@@ -723,7 +723,7 @@ async def c(ctx, *, to_check: str = None):
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (is_active_staff(ctx.author)
-                                                         or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
+                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
                             await ctx.reply(f"Server is reported.",
                                             embeds=reported_server_profile(guild, server_profile),
                                             view=EditServerReportView(guild, server_profile, requested_by,
@@ -740,7 +740,7 @@ async def c(ctx, *, to_check: str = None):
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (is_active_staff(ctx.author)
-                                                         or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
+                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
                             await ctx.reply(embed=profile, view=NewServerReportView(guild, requested_by))
                         else:
                             await ctx.reply(embed=profile, view=MemberView())
@@ -768,7 +768,7 @@ async def c(ctx, *, to_check: str = None):
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (is_active_staff(ctx.author)
-                                                         or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
+                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
                             await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
                                             embeds=reported_user_profile(main_user, main_user_profile),
                                             view=EditUserReportView(main_user, main_user_profile, requested_by,
@@ -785,7 +785,7 @@ async def c(ctx, *, to_check: str = None):
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (is_active_staff(ctx.author)
-                                                         or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
+                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
                             await ctx.reply(f"User is reported.",
                                             embeds=reported_user_profile(user, user_profile),
                                             view=EditUserReportView(user, user_profile, requested_by,
@@ -803,7 +803,7 @@ async def c(ctx, *, to_check: str = None):
                     trusteduser_profile = trusteduserscol.find_one(user_query)
                     if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                 and (is_active_staff(ctx.author)
-                                                     or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
+                                                     or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
                         requested_by = ctx.author
                         await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
                     else:
@@ -7250,12 +7250,12 @@ async def pr(ctx):
 @bot.command(name="sr", help="Pings sr+.")
 @commands.has_any_role(staff_role)
 async def sr(ctx):
-    await ctx.reply(f"<@&{sr_role}>")
+    await ctx.reply(f"<@&{sr_ping}>")
 
 @bot.command(name="adm", help="Pings adm+.")
 @commands.has_any_role(staff_role)
 async def adm(ctx):
-    await ctx.reply(f"<@&{adm_role}>")
+    await ctx.reply(f"<@&{adm_ping}>")
 
 @bot.command(name="tp", help="Pings ticket ping.")
 @commands.has_any_role(staff_role)
@@ -7289,7 +7289,7 @@ async def tp(ctx):
     proof9="Proof image 9",
     proof10="Proof image 10",
 )
-@app_commands.checks.has_any_role(adm_role, sr_role, ticket_ping)
+@app_commands.checks.has_any_role(adm_ping, sr_ping, ticket_ping)
 async def report(
     interaction: discord.Interaction,
     user: discord.User,
@@ -7433,7 +7433,7 @@ async def report(
 
 @bot.tree.command(name="merge", description="Merges the reports of two users. This action is irreversible.")
 @app_commands.describe(main="Main", alt="Alt")
-@app_commands.checks.has_any_role(adm_role, sr_role)
+@app_commands.checks.has_any_role(adm_ping, sr_ping)
 async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
     if main.strip("<@>") != alt.strip("<@>"):
         try:
@@ -7519,7 +7519,7 @@ bot.tree.add_command(disable)
 
 @disable.command(name="vote", description="Disables a staff vote.")
 @app_commands.describe(message_id="Message ID of vote")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def disable_vote(interaction: discord.Interaction, message_id: str):
     try:
         message = await interaction.channel.fetch_message(int(message_id))
@@ -7551,7 +7551,7 @@ async def disable_vote(interaction: discord.Interaction, message_id: str):
 
 @disable.command(name="report", description="Disables a report/appeal.")
 @app_commands.describe(message_id="Message ID of report/appeal")
-@app_commands.checks.has_any_role(adm_role, sr_role)
+@app_commands.checks.has_any_role(adm_ping, sr_ping)
 async def disable_report(interaction: discord.Interaction, message_id: str):
     try:
         message = await interaction.channel.fetch_message(int(message_id))
@@ -7581,7 +7581,7 @@ settings = app_commands.Group(name="set", description="Set.")
 bot.tree.add_command(settings)
 
 @settings.command(name="points")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def set_points(interaction: discord.Interaction, user: str, category: Literal["reports", "reviews", "votes"], timeframe: Literal["weekly", "alltime"], value: str):
     if not is_int(value):
         await interaction.response.send_message("Please input a valid integer value.", ephemeral=True)
@@ -7625,7 +7625,7 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
 
 @bot.tree.command(name="appoint", description="Appoint a staff/trusted user.")
 @app_commands.describe(user="User to appoint", category="staff/mm/pilot/trader")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def appoint(interaction: discord.Interaction, user: str, category: Literal["staff", "mm", "pilot", "trader"]):
     try:
         user = await bot.fetch_user(int(user.strip("<@>")))
@@ -7733,7 +7733,7 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
 
 @bot.tree.command(name="dismiss", description="Dismiss a staff/trusted user.")
 @app_commands.describe(user="User to dismiss", category="staff/mm/pilot/trader")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def dismiss(interaction: discord.Interaction, user: str, category: Literal["staff", "mm", "pilot", "trader"]):
     try:
         user = await bot.fetch_user(int(user.strip("<@>")))
