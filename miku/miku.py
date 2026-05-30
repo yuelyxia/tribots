@@ -426,10 +426,12 @@ bot.tree.add_command(settings)
 
 @settings.command(name="breakbal", description="Set break balance for a staff or all staff.")
 @app_commands.checks.has_role(adm_role)
-async def set_breakbal(interaction: discord.Interaction, user: str, value: int | float):
+async def set_breakbal(interaction: discord.Interaction, user: str, value: float):
     await interaction.response.defer(ephemeral=True)
     if value < 0:
         return await interaction.followup.send("Break balance cannot be negative.", ephemeral=True)
+    if value.is_integer():
+        value = int(value)
     if user.lower() == "all":
         result = staffweeklycol.update_many({}, {"$set": {"breakbal": value}})
         return await interaction.followup.send(f"Set break balance to **{value}** for **{result.modified_count}** users.", ephemeral=True)
