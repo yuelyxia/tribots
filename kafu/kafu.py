@@ -349,9 +349,14 @@ async def quota_check():
                             total_tickets += monthly_tickets
                         tickets_embed = discord.Embed(description=desc if desc else "No staff found.", colour = 0xffffff)
                         summary = discord.Embed(colour=0xffffff)
-                        summary.description = (
-                            f"✦　　┈　　total credits　　┈　　**{total_credits}**\n✦　　┈　　total tickets　　┈　　**{total_tickets}**")
-                        await channel.send("## _ _　　　staff leaderboard", embed=staff_embed)
+                        if guild_id == TRI_Archive:
+                            summary.description = (
+                                f"✦　　┈　　total tickets　　┈　　**{total_tickets}**")
+                        else:
+                            summary.description = (
+                                f"✦　　┈　　total credits　　┈　　**{total_credits}**\n✦　　┈　　total tickets　　┈　　**{total_tickets}**")
+                        if guild_id != TRI_Archive:
+                            await channel.send("## _ _　　　staff leaderboard", embed=staff_embed)
                         await channel.send("## _ _　　　tickets leaderboard", embed=tickets_embed)
                         await channel.send("## _ _　　　monthly summary", embed=summary)
                     except discord.NotFound: pass
