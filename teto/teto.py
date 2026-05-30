@@ -80,6 +80,12 @@ yellow_server_tags = ["Suspect Server"]
 
 games_list = ["Genshin Impact", "Honkai: Star Rail", "Wuthering Waves", "Roblox", "Project Sekai", "Cookie Run: Kingdom", "Identity V", "Valorant", "Others", "N/A"]
 
+def is_sr(user):
+    return any(role.id in (sr_role, adm_role) for role in user.roles)
+
+def is_active_staff(user):
+    return any(role.id in (ticket_ping, adm_role) for role in user.roles)
+
 # formatting functions
 
 def default_user_profile(user):
@@ -610,7 +616,7 @@ async def c(ctx, *, to_check: str = None):
                     user_query = {"_id": str(user_id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
                     if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
+                                                and (is_active_staff(ctx.author)
                                                      or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                         await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
                                         embeds=reported_user_profile(main_user, main_user_profile),
@@ -627,7 +633,7 @@ async def c(ctx, *, to_check: str = None):
                     user_query = {"_id": str(user_id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
                     if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
+                                                and (is_active_staff(ctx.author)
                                                      or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                         await ctx.reply(f"User is reported.",
                                         embeds=reported_user_profile(user, user_profile),
@@ -643,7 +649,7 @@ async def c(ctx, *, to_check: str = None):
                 user_query = {"_id": str(user_id)}
                 trusteduser_profile = trusteduserscol.find_one(user_query)
                 if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                            and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
+                                            and (is_active_staff(ctx.author)
                                                  or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                     await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
                 else:
@@ -716,7 +722,7 @@ async def c(ctx, *, to_check: str = None):
                         user_query = {"_id": str(ctx.author.id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                    and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
+                                                    and (is_active_staff(ctx.author)
                                                          or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                             await ctx.reply(f"Server is reported.",
                                             embeds=reported_server_profile(guild, server_profile),
@@ -733,7 +739,7 @@ async def c(ctx, *, to_check: str = None):
                         user_query = {"_id": str(ctx.author.id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                    and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
+                                                    and (is_active_staff(ctx.author)
                                                          or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                             await ctx.reply(embed=profile, view=NewServerReportView(guild, requested_by))
                         else:
@@ -761,7 +767,7 @@ async def c(ctx, *, to_check: str = None):
                         user_query = {"_id": str(ctx.author.id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                    and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
+                                                    and (is_active_staff(ctx.author)
                                                          or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                             await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
                                             embeds=reported_user_profile(main_user, main_user_profile),
@@ -778,7 +784,7 @@ async def c(ctx, *, to_check: str = None):
                         user_query = {"_id": str(ctx.author.id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                    and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
+                                                    and (is_active_staff(ctx.author)
                                                          or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                             await ctx.reply(f"User is reported.",
                                             embeds=reported_user_profile(user, user_profile),
@@ -796,7 +802,7 @@ async def c(ctx, *, to_check: str = None):
                     user_query = {"_id": str(ctx.author.id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
                     if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                and (get(ctx.guild.roles, id=ticket_ping) in ctx.author.roles
+                                                and (is_active_staff(ctx.author)
                                                      or get(ctx.guild.roles, id=in_training) in ctx.author.roles)):
                         requested_by = ctx.author
                         await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
@@ -1129,7 +1135,7 @@ class NewUserReportView(discord.ui.View):
                                           })
             except DuplicateKeyError: pass
             await msg.edit(embeds=embeds, view=AltsView())
-        elif any(role.id == ticket_ping for role in interaction.user.roles):
+        elif is_active_staff(interaction.user):
             await interaction.followup.send(
                 "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
                 ephemeral=True)
@@ -1158,7 +1164,7 @@ class AltsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1238,7 +1244,7 @@ class AltsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(r_profile_list[2])
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -1312,7 +1318,7 @@ class UserTagsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1337,7 +1343,7 @@ class UserTagsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1405,7 +1411,7 @@ class GamesView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1430,7 +1436,7 @@ class GamesView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1495,7 +1501,7 @@ class UserReasonView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1519,7 +1525,7 @@ class UserReasonView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1593,7 +1599,7 @@ class UserContributorView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1618,7 +1624,7 @@ class UserContributorView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1700,7 +1706,7 @@ class UserProofsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -1771,7 +1777,7 @@ class UserProofsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(add_case_list[7])
                 await interaction.followup.send(f"Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -1787,7 +1793,7 @@ class UserProofsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(r_profile_list[2])
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -1805,7 +1811,7 @@ class UserProofsView(discord.ui.View):
             inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="userproofs:accept")
@@ -1826,7 +1832,7 @@ class UserProofsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 add_case_list[6] = f"<@{interaction.user.id}>"
                 #
@@ -2064,7 +2070,7 @@ class EditUserReportView(discord.ui.View):
                 pass
             embeds = [r_profile, reason_embed]
             await msg.edit(embeds=embeds, view=EditAltsOnlyView())
-        elif any(role.id == ticket_ping for role in interaction.user.roles):
+        elif is_active_staff(interaction.user):
             await interaction.followup.send(
                 "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
                 ephemeral=True)
@@ -2157,7 +2163,7 @@ class EditUserReportView(discord.ui.View):
             add_case = format_user_add_case(add_case_list, case_title)
             embeds = [r_profile, add_case]
             await msg.edit(embeds=embeds, view=AddReportAltsView())
-        elif any(role.id == ticket_ping for role in interaction.user.roles):
+        elif is_active_staff(interaction.user):
             await interaction.followup.send(
                 "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
                 ephemeral=True)
@@ -2234,7 +2240,7 @@ class EditUserReportView(discord.ui.View):
             add_case = format_user_add_case(add_case_list, case_title)
             embeds = [r_profile, add_case, reason_embed]
             await msg.edit(embeds=embeds, view=UserAppealView())
-        elif any(role.id == ticket_ping for role in interaction.user.roles):
+        elif is_active_staff(interaction.user):
             await interaction.followup.send(
                 "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
                 ephemeral=True)
@@ -2366,7 +2372,7 @@ class EditAltsOnlyView(discord.ui.View):
             r_profile_list = session["r_profile_list"]
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(r_profile_list[2])
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -2391,7 +2397,7 @@ class EditAltsOnlyView(discord.ui.View):
             inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="editaltsonly:accept")
@@ -2410,7 +2416,7 @@ class EditAltsOnlyView(discord.ui.View):
             user = await bot.fetch_user(user_id)
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 #
@@ -2700,7 +2706,7 @@ class UserAppealView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
         #
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(r_profile_list[2])
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -2726,7 +2732,7 @@ class UserAppealView(discord.ui.View):
             inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="userappeal:accept")
@@ -2747,7 +2753,7 @@ class UserAppealView(discord.ui.View):
             user = await bot.fetch_user(user_id)
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -2954,7 +2960,7 @@ class AddReportAltsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3098,7 +3104,7 @@ class AddReportAltsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(r_profile_list[2])
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -3223,7 +3229,7 @@ class AddReportUserTagsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3247,7 +3253,7 @@ class AddReportUserTagsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3329,7 +3335,7 @@ class AddReportGamesView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3353,7 +3359,7 @@ class AddReportGamesView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3418,7 +3424,7 @@ class AddReportUserReasonView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3442,7 +3448,7 @@ class AddReportUserReasonView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3516,7 +3522,7 @@ class AddReportUserContributorView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3541,7 +3547,7 @@ class AddReportUserContributorView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3624,7 +3630,7 @@ class AddReportUserProofsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -3693,7 +3699,7 @@ class AddReportUserProofsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(add_case_list[7])
                 await interaction.followup.send(f"Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -3709,7 +3715,7 @@ class AddReportUserProofsView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             #
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(r_profile_list[2])
                 await interaction.followup.send(f"Alts Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -3727,7 +3733,7 @@ class AddReportUserProofsView(discord.ui.View):
             inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="addreportuserproofs:accept")
@@ -3748,7 +3754,7 @@ class AddReportUserProofsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 add_case_list[6] = f"<@{interaction.user.id}>"
                 r_profile = format_user_r_profile(user, r_profile_list, title)
@@ -4258,7 +4264,7 @@ class UserVoteView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles
-            sr_check = any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by and len(
+            sr_check = is_sr(interaction.user) and interaction.user.id != requested_by and len(
                 agree_users) >= 4
             if o5_check or sr_check:
                 accepted_by = interaction.user.id
@@ -4562,7 +4568,7 @@ class NewServerReportView(discord.ui.View):
                                           })
             except DuplicateKeyError: pass
             await msg.edit(embeds=embeds, view=ServerOwnerView())
-        elif any(role.id == ticket_ping for role in interaction.user.roles):
+        elif is_active_staff(interaction.user):
             await interaction.followup.send(
                 f"This was requested by {requested_by.mention}, you cannot interact with this component.",
                 ephemeral=True)
@@ -4589,7 +4595,7 @@ class ServerOwnerView(discord.ui.View):
             case_title = session["case_title"]
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -4658,7 +4664,7 @@ class ServerTagsView(discord.ui.View):
             case_title = session["case_title"]
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -4680,7 +4686,7 @@ class ServerTagsView(discord.ui.View):
             case_title = session["case_title"]
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -4746,7 +4752,7 @@ class ServerReasonView(discord.ui.View):
             case_title = session["case_title"]
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -4768,7 +4774,7 @@ class ServerReasonView(discord.ui.View):
             case_title = session["case_title"]
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -4837,7 +4843,7 @@ class ServerContributorView(discord.ui.View):
             case_title = session["case_title"]
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -4860,7 +4866,7 @@ class ServerContributorView(discord.ui.View):
             case_title = session["case_title"]
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -4938,7 +4944,7 @@ class ServerProofsView(discord.ui.View):
             case_title = session["case_title"]
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -5007,7 +5013,7 @@ class ServerProofsView(discord.ui.View):
             add_case_list = session["add_case_list"]
             guild_id = session["guild_id"]
             #
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(add_case_list[6])
                 await interaction.followup.send(f"Proofs for `{guild_id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -5025,7 +5031,7 @@ class ServerProofsView(discord.ui.View):
             inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="serverproofs:accept")
@@ -5046,7 +5052,7 @@ class ServerProofsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 add_case_list[5] = f"<@{interaction.user.id}>"
                 #
@@ -5278,7 +5284,7 @@ class EditServerReportView(discord.ui.View):
                 pass
             embeds = [r_profile, reason_embed]
             await msg.edit(embeds=embeds, view=EditOwnerOnlyView())
-        elif any(role.id == ticket_ping for role in interaction.user.roles):
+        elif is_active_staff(interaction.user):
             await interaction.followup.send(
                 "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
                 ephemeral=True)
@@ -5376,7 +5382,7 @@ class EditServerReportView(discord.ui.View):
             add_case = format_server_add_case(add_case_list, case_title)
             embeds = [r_profile, add_case]
             await msg.edit(embeds=embeds, view=AddReportOwnerView())
-        elif any(role.id == ticket_ping for role in interaction.user.roles):
+        elif is_active_staff(interaction.user):
             await interaction.followup.send(
                 "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
                 ephemeral=True)
@@ -5461,7 +5467,7 @@ class EditServerReportView(discord.ui.View):
             add_case = format_server_add_case(add_case_list, case_title)
             embeds = [r_profile, add_case, reason_embed]
             await msg.edit(embeds=embeds, view=ServerAppealView())
-        elif any(role.id == ticket_ping for role in interaction.user.roles):
+        elif is_active_staff(interaction.user):
             await interaction.followup.send(
                 "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
                 ephemeral=True)
@@ -5505,7 +5511,7 @@ class EditOwnerOnlyView(discord.ui.View):
             inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="editowneronly:accept")
@@ -5525,7 +5531,7 @@ class EditOwnerOnlyView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 #
@@ -5670,7 +5676,7 @@ class ServerAppealView(discord.ui.View):
             inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="serverappeal:accept")
@@ -5692,7 +5698,7 @@ class ServerAppealView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -5834,7 +5840,7 @@ class AddReportOwnerView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -5912,7 +5918,7 @@ class AddReportServerTagsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -5935,7 +5941,7 @@ class AddReportServerTagsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -6015,7 +6021,7 @@ class AddReportServerReasonView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -6038,7 +6044,7 @@ class AddReportServerReasonView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -6110,7 +6116,7 @@ class AddReportServerContributorView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -6134,7 +6140,7 @@ class AddReportServerContributorView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -6212,7 +6218,7 @@ class AddReportServerProofsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -6275,7 +6281,7 @@ class AddReportServerProofsView(discord.ui.View):
             add_case_list = session["add_case_list"]
             guild_id = session["guild_id"]
             #
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 image_embeds = image_links_to_embeds(add_case_list[6])
                 await interaction.followup.send(f"Proofs for `{guild_id}`",
                                                 embeds=image_embeds, ephemeral=True)
@@ -6293,7 +6299,7 @@ class AddReportServerProofsView(discord.ui.View):
             inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if requested_by == interaction.user.id or any(role.id == sr_role for role in interaction.user.roles):
+            if requested_by == interaction.user.id or is_sr(interaction.user):
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="addreportserverproofs:accept")
@@ -6314,7 +6320,7 @@ class AddReportServerProofsView(discord.ui.View):
             #
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
-            if any(role.id == sr_role for role in interaction.user.roles) and interaction.user.id != requested_by:
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
                 add_case_list[5] = f"<@{interaction.user.id}>"
                 #
@@ -6777,7 +6783,7 @@ class ServerVoteView(discord.ui.View):
             guild_id = session["guild_id"]
             #
             o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles
-            sr_check = get(interaction.user.guild.roles, id=sr_role) in interaction.user.roles and interaction.user.id != requested_by and len(
+            sr_check = is_sr(interaction.user) and interaction.user.id != requested_by and len(
                 agree_users) >= 4
             if o5_check or sr_check:
                 accepted_by = interaction.user.id
@@ -7283,7 +7289,7 @@ async def tp(ctx):
     proof9="Proof image 9",
     proof10="Proof image 10",
 )
-@app_commands.checks.has_role(ticket_ping)
+@app_commands.checks.has_any_role(adm_role, sr_role, ticket_ping)
 async def report(
     interaction: discord.Interaction,
     user: discord.User,
@@ -7427,7 +7433,7 @@ async def report(
 
 @bot.tree.command(name="merge", description="Merges the reports of two users. This action is irreversible.")
 @app_commands.describe(main="Main", alt="Alt")
-@app_commands.checks.has_role(sr_role)
+@app_commands.checks.has_any_role(adm_role, sr_role)
 async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
     if main.strip("<@>") != alt.strip("<@>"):
         try:
@@ -7545,7 +7551,7 @@ async def disable_vote(interaction: discord.Interaction, message_id: str):
 
 @disable.command(name="report", description="Disables a report/appeal.")
 @app_commands.describe(message_id="Message ID of report/appeal")
-@app_commands.checks.has_role(sr_role)
+@app_commands.checks.has_any_role(adm_role, sr_role)
 async def disable_report(interaction: discord.Interaction, message_id: str):
     try:
         message = await interaction.channel.fetch_message(int(message_id))
