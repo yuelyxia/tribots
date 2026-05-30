@@ -424,6 +424,28 @@ async def weekly_quota():
 settings = app_commands.Group(name="set", description="Set.")
 bot.tree.add_command(settings)
 
+@settings.command(name="breakbal", description="Set break balance for a staff or all staff.")
+@app_commands.checks.has_role(adm_role)
+async def set_breakbal(interaction: discord.Interaction, user: str, value: int | float):
+    await interaction.response.defer(ephemeral=True)
+    if value < 0:
+        return await interaction.followup.send("Break balance cannot be negative.", ephemeral=True)
+    if user.lower() == "all":
+        result = staffweeklycol.update_many({}, {"$set": {"breakbal": value}})
+        return await interaction.followup.send(f"Set break balance to **{value}** for **{result.modified_count}** users.", ephemeral=True)
+    try:
+        user_id = int(user.strip("<@!>"))
+    except ValueError:
+        return await interaction.followup.send("Invalid user.", ephemeral=True)
+    member = interaction.guild.get_member(user_id)
+    if not member:
+        return await interaction.followup.send("User not in server.", ephemeral=True)
+    profile = staffweeklycol.find_one({"_id": str(user_id)})
+    if profile:
+        profile["breakbal"] = value
+        staffweeklycol.replace_one({"_id": str(user_id)}, profile, upsert=True)
+        await interaction.followup.send(f"`{user_id}`’s break balance has been set to **{value}**.", ephemeral=True)
+
 @settings.command(name="quota", description="Set weekly report quota for staff")
 @app_commands.describe(quota="Weekly report quota")
 @app_commands.checks.has_role(adm_role)
@@ -1554,7 +1576,7 @@ async def anon_error(interaction: discord.Interaction, error):
 @anon.command(name="edit", description="Edit MIKU’s message.")
 @app_commands.checks.cooldown(2, 5)
 @app_commands.describe(message_id="The message to edit", message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
-@app_commands.checks.has_permissions(administrator=True)
+@app_commands.checks.has_role(adm_role)
 async def anon_edit(interaction: discord.Interaction, message_id: str, message: str, image1: Optional[discord.Attachment] = None, image2: Optional[discord.Attachment] = None, image3: Optional[discord.Attachment] = None, image4: Optional[discord.Attachment] = None, image5: Optional[discord.Attachment] = None, image6: Optional[discord.Attachment] = None, image7: Optional[discord.Attachment] = None, image8: Optional[discord.Attachment] = None, image9: Optional[discord.Attachment] = None, image10: Optional[discord.Attachment] = None):
     await interaction.response.defer(ephemeral=True)
     try:
