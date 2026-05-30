@@ -47,17 +47,28 @@ QUOTA_CHANNEL = 1505563131655749712
 staff_role = 1373803879623430268
 ticket_ping = 1449382692671193294
 o5_role = 1372426616671834234
-adm_role = 1375276457890287748
-sr_role = 1375254710952661102
+adm_role = 1372426657335345163
+tadm_role = 1373517323914448906
+adm_ping = 1375276457890287748
+sr_of_the_month = 1498909625263722537
+sr_role = 1372426698242658324
+tsr_role = 1372426698242658324
+sr_ping = 1375254710952661102
+reporter_of_the_month = 1447056456401551410
 rep_role = 1372426736205303808
 tr_role = 1372426794585817088
 t_role = 1396701840321679391
 ban_perms = 1373517806921973900
+files_access = 1459594433371705575
+defender = 1374364037818617856
 staff_trainer = 1498599499893837874
 full_break = 1505568168880636014
 half_break = 1505568134617235546
 tri_supporter = 1465630182462460040
 archived_staff = 1505062096336064552
+
+STAFF_ROLES = [ban_perms, files_access, defender, sr_of_the_month, sr_role, tsr_role, staff_trainer, sr_ping,
+               reporter_of_the_month, rep_role, tr_role, t_role]
 
 TRI_Archive = 1371673839695826974
 
@@ -247,7 +258,7 @@ async def weekly_quota():
             staffweeklycol.replace_one({"_id": str(member.id)}, weekly_profile, upsert=True)
         weekly_reviews = int(weekly_profile.get("weekly_reviews", 0))
         weekly_reports = int(weekly_profile.get("weekly_reports", 0))
-        is_sr = any(role.id == sr_role for role in member.roles)
+        is_sr = any(role.id in (sr_ping, adm_ping) for role in member.roles)
         if is_sr:
             rq = config["sr_reports_quota"]
         else:
@@ -426,7 +437,7 @@ settings = app_commands.Group(name="set", description="Set.")
 bot.tree.add_command(settings)
 
 @settings.command(name="breakbal", description="Set break balance for a staff or all staff.")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def set_breakbal(interaction: discord.Interaction, user: str, value: float):
     await interaction.response.defer(ephemeral=True)
     if value < 0:
@@ -451,7 +462,7 @@ async def set_breakbal(interaction: discord.Interaction, user: str, value: float
 
 @settings.command(name="quota", description="Set weekly report quota for staff")
 @app_commands.describe(quota="Weekly report quota")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def set_quota(interaction: discord.Interaction, quota: int):
     if quota < 0:
         return await interaction.response.send_message("Quota must be at least 0.", ephemeral=True)
@@ -467,7 +478,7 @@ async def set_quota(interaction: discord.Interaction, quota: int):
 
 @settings.command(name="srquota", description="Set weekly quota for SR+")
 @app_commands.describe(quota="Weekly report quota", type="Reports/Reviews")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def set_srquota(interaction: discord.Interaction, quota: int, type: Literal["reports", "reviews"]):
     if quota < 1:
         return await interaction.response.send_message(
@@ -495,8 +506,12 @@ def get_staff_rank(member):
         return "Overseer"
     elif get(member.guild.roles, id=adm_role) in member.roles:
         return "Admin"
+    elif get(member.guild.roles, id=tadm_role) in member.roles:
+        return "Trial Admin"
     elif get(member.guild.roles, id=sr_role) in member.roles:
         return "Senior Reporter"
+    elif get(member.guild.roles, id=tsr_role) in member.roles:
+        return "Trial Senior Reporter"
     elif get(member.guild.roles, id=rep_role) in member.roles:
         return "Reporter"
     elif get(member.guild.roles, id=tr_role) in member.roles:
@@ -521,7 +536,7 @@ async def quota(ctx, member: discord.Member = None):
     profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
     embeds.append(profile)
     embed = discord.Embed(title="quota progress", colour=0xffffff, description="")
-    is_sr = any(role.id == sr_role for role in member.roles)
+    is_sr = any(role.id in (sr_ping, adm_ping) for role in member.roles)
     if is_sr:
         current_reviews = weekly_profile.get("weekly_reviews", 0)
         current_reviews_quota = (
@@ -566,7 +581,7 @@ async def quota_history(ctx, member: discord.Member=None):
     profile.set_thumbnail(url=f"{member.display_avatar}")
     profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
     embeds.append(profile)
-    is_sr = any(role.id == sr_role for role in member.roles)
+    is_sr = any(role.id in (sr_ping, adm_ping) for role in member.roles)
     if is_sr:
         reviews_history = weekly_profile.get("reviews_quota_list", [])
         reviews_embed = discord.Embed(title="reviews quota history", colour=0xffffff)
@@ -667,7 +682,7 @@ async def bb(ctx, member: discord.Member=None):
     bal = weekly_profile.get("breakbal", 12)
     is_full = full_break_r in member.roles
     is_half = half_break_r in member.roles
-    is_sr = any(role.id == sr_role for role in member.roles)
+    is_sr = any(role.id in (sr_ping, adm_ping) for role in member.roles)
     if is_sr:
         sr_reviews_quota = get_quota_config().get("sr_reviews_quota", 0)
         sr_reports_quota = get_quota_config().get("sr_reports_quota", 0)
@@ -742,6 +757,7 @@ async def help(ctx):
 ### quota
 `q`　┈　Sends quota progress for this week.
 `qh`　┈　Sends quota history for the past 8 weeks.
+`bb`　┈　Sends break balance.
 ### leaderboard
 `lb`　┈　Sends the current week’s reports leaderboard.
 `lbr`　┈　Sends the current week’s reviews leaderboard.
@@ -773,7 +789,7 @@ tags_options = [
 ]
 
 @bot.command(name="tags", help="Sends the descriptions of demerit tags.")
-async def tags(ctx, *, string: str = None):
+async def tags(ctx, *, tag: str = None):
     await ctx.reply(embed=discord.Embed(colour=0xffffff, title = "demerit　tags　⸝⸝.ᐟ", description="""
 　　use the dropdown to select a tag and view its description.
     """), view=TagsView())
@@ -1183,20 +1199,7 @@ async def break_command(interaction: discord.Interaction, type: Literal["full", 
     await interaction.response.defer()
     member = interaction.user
     guild = interaction.guild
-    ban_perms = 1373517806921973900
-    files_access = 1459594433371705575
-    defender = 1374364037818617856
-    sr_of_the_month = 1498909625263722537
-    senior_reporter = 1372426698242658324
-    trial_senior_reporter = 1462972920467951728
-    staff_trainer = 1498599499893837874
-    sr_ping = 1375254710952661102
-    reporter_of_the_month = 1447056456401551410
-    reporter = 1372426736205303808
-    trial_reporter = 1372426794585817088
-    in_training =  1396701840321679391
-    STAFF_ROLES = [ban_perms, files_access, defender, sr_of_the_month, senior_reporter, trial_senior_reporter, staff_trainer, sr_ping, reporter_of_the_month, reporter, trial_reporter, in_training]
-    if get(member.roles, id=in_training):
+    if get(member.roles, id=t_role):
         return await interaction.followup.send("In training staff cannot go on break.")
     profile = staffweeklycol.find_one({"_id": str(member.id)})
     if profile:
@@ -1400,7 +1403,7 @@ staff = app_commands.Group(name="staff", description="Staff.")
 bot.tree.add_command(staff)
 
 @staff.command(name="accepted", description="Assigns trainee roles to accepted staff.")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 @app_commands.describe(user="User to assign roles.")
 async def staff_accepted(interaction: discord.Interaction, user: discord.Member):
     try:
@@ -1412,7 +1415,7 @@ async def staff_accepted(interaction: discord.Interaction, user: discord.Member)
         await interaction.response.send_message("Successfully assigned trainee roles to the user.")
 
 @staff.command(name="rules", description="Sends staff rules.")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def staff_rules(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
 ## <:2paperclip:1449650494044639335>　　staff　　rules　　୨୧
@@ -1447,7 +1450,7 @@ async def staff_rules(interaction: discord.Interaction):
     await interaction.response.send_message("Staff Rules have been sent.", ephemeral=True)
 
 @staff.command(name="guide", description="Sends staff guide.")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def staff_guide(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
 ## <:whitebow:1388714593211125971>　　staff　　guide　　୨୧
@@ -1456,7 +1459,7 @@ async def staff_guide(interaction: discord.Interaction):
     await interaction.response.send_message("Staff Guide has been sent.", ephemeral=True)
 
 @bot.tree.command(name="faq", description="Sends faq embeds.")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def faq(interaction: discord.Interaction, image: discord.Attachment=None):
     await interaction.response.defer(ephemeral=True)
     if image:
@@ -1572,7 +1575,7 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
                             data = io.BytesIO(await resp.read())
                             files_to_send.append(discord.File(data, filename=img.filename))
         message = message.replace("\\n", "\n")
-        if get(interaction.user.guild.roles, id=adm_role) in interaction.user.roles or get(interaction.user.guild.roles, id=tethys_adm_role) in interaction.user.roles:
+        if get(interaction.user.guild.roles, id=adm_ping) in interaction.user.roles or get(interaction.user.guild.roles, id=tethys_adm_role) in interaction.user.roles:
             if files_to_send:
                 await interaction.channel.send(content=message, files=files_to_send)
             else:
@@ -1603,7 +1606,7 @@ async def anon_error(interaction: discord.Interaction, error):
 @anon.command(name="edit", description="Edit MIKU’s message.")
 @app_commands.checks.cooldown(2, 5)
 @app_commands.describe(message_id="The message to edit", message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def anon_edit(interaction: discord.Interaction, message_id: str, message: str, image1: Optional[discord.Attachment] = None, image2: Optional[discord.Attachment] = None, image3: Optional[discord.Attachment] = None, image4: Optional[discord.Attachment] = None, image5: Optional[discord.Attachment] = None, image6: Optional[discord.Attachment] = None, image7: Optional[discord.Attachment] = None, image8: Optional[discord.Attachment] = None, image9: Optional[discord.Attachment] = None, image10: Optional[discord.Attachment] = None):
     await interaction.response.defer(ephemeral=True)
     try:
@@ -1623,7 +1626,7 @@ async def anon_edit(interaction: discord.Interaction, message_id: str, message: 
                             files_to_send.append(discord.File(data, filename=img.filename))
         message = message.replace("\\n", "\n")
         allowed_mentions = discord.AllowedMentions.all()
-        if not get(interaction.user.guild.roles, id=adm_role) in interaction.user.roles or get(interaction.user.guild.roles,
+        if not get(interaction.user.guild.roles, id=adm_ping) in interaction.user.roles or get(interaction.user.guild.roles,
                                                                                            id=tethys_adm_role) in interaction.user.roles:
             allowed_mentions = discord.AllowedMentions(everyone=False, roles=False)
             for word in banned_words:
@@ -1645,7 +1648,7 @@ bot.tree.add_command(create)
 
 @create.command(name="training", description="Creates a training thread.")
 @app_commands.describe(name="Name of trainee", user_id="User ID of trainee")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def create_training(interaction: discord.Interaction, name: str, user_id: str):
     if interaction.channel.id == TRAINING_CHANNEL:
         try:
@@ -1734,7 +1737,7 @@ class ConfirmCloseView(discord.ui.View):
         style=discord.ButtonStyle.red
     )
     async def confirm_close(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if get(interaction.user.guild.roles, id=adm_role) not in interaction.user.roles:
+        if get(interaction.user.guild.roles, id=adm_ping) not in interaction.user.roles:
             await interaction.response.send_message("You do not have permission.", ephemeral=True)
             return
         data = filescol.find_one({"_id": self.message_id})
@@ -1767,7 +1770,7 @@ class FileView(discord.ui.View):
 
     @discord.ui.button(label="Close", style=discord.ButtonStyle.red, custom_id="file_close")
     async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if get(interaction.user.guild.roles, id=adm_role) not in interaction.user.roles:
+        if get(interaction.user.guild.roles, id=adm_ping) not in interaction.user.roles:
             await interaction.response.send_message("You do not have permission.", ephemeral=True)
             return
         await interaction.response.send_message("Are you sure you want to close this file?", ephemeral=True,
@@ -1790,7 +1793,7 @@ bot.tree.add_command(tickets)
 
 @tickets.command(name="add", description="Add a user or role to all active ticket threads.")
 @app_commands.describe(target="User or Role ID / mention")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def tickets_add(interaction: discord.Interaction, target: str):
     guild = interaction.guild
     ticket_channel = guild.get_channel(TICKET_CHANNEL)
@@ -1829,7 +1832,7 @@ async def tickets_add(interaction: discord.Interaction, target: str):
 
 @tickets.command(name="remove", description="Remove a user or role from all active ticket threads")
 @app_commands.describe(target="User or Role ID / mention")
-@app_commands.checks.has_role(adm_role)
+@app_commands.checks.has_role(adm_ping)
 async def tickets_remove(interaction: discord.Interaction, target: str):
     guild = interaction.guild
     ticket_channel = guild.get_channel(TICKET_CHANNEL)
