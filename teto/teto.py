@@ -1073,7 +1073,10 @@ class NewUserReportView(discord.ui.View):
             if "vote_channel_id" in existing_entry:
                 vote_channel_id = existing_entry["vote_channel_id"]
                 vote_message_id = existing_entry["_id"]
-                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
                 await interaction.followup.send(f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
@@ -2022,7 +2025,10 @@ class EditUserReportView(discord.ui.View):
             if "vote_channel_id" in existing_entry:
                 vote_channel_id = existing_entry["vote_channel_id"]
                 vote_message_id = existing_entry["_id"]
-                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -2092,7 +2098,10 @@ class EditUserReportView(discord.ui.View):
             if "vote_channel_id" in existing_entry:
                 vote_channel_id = existing_entry["vote_channel_id"]
                 vote_message_id = existing_entry["_id"]
-                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -2185,7 +2194,10 @@ class EditUserReportView(discord.ui.View):
             if "vote_channel_id" in existing_entry:
                 vote_channel_id = existing_entry["vote_channel_id"]
                 vote_message_id = existing_entry["_id"]
-                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -5228,7 +5240,10 @@ class EditServerReportView(discord.ui.View):
             if "vote_channel_id" in existing_entry:
                 vote_channel_id = existing_entry["vote_channel_id"]
                 vote_message_id = existing_entry["_id"]
-                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -5305,7 +5320,10 @@ class EditServerReportView(discord.ui.View):
             if "vote_channel_id" in existing_entry:
                 vote_channel_id = existing_entry["vote_channel_id"]
                 vote_message_id = existing_entry["_id"]
-                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -5404,7 +5422,10 @@ class EditServerReportView(discord.ui.View):
             if "vote_channel_id" in existing_entry:
                 vote_channel_id = existing_entry["vote_channel_id"]
                 vote_message_id = existing_entry["_id"]
-                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -7335,7 +7356,10 @@ async def report(
         if "vote_channel_id" in existing_entry:
             vote_channel_id = existing_entry["vote_channel_id"]
             vote_message_id = existing_entry["_id"]
-            vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+            vote_channel = bot.get_channel(vote_channel_id)
+            if not vote_channel:
+                vote_channel = await bot.fetch_channel(vote_channel_id)
+            vote_message = await vote_channel.fetch_message(vote_message_id)
             await interaction.followup.send(
                 f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
         # ongoing report
