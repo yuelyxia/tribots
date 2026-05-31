@@ -4275,9 +4275,10 @@ class UserVoteView(discord.ui.View):
             reason = session.get("reason")
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
-            o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles
+            o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles and len(
+                agree_users) >= 5
             sr_check = is_sr(interaction.user) and interaction.user.id != requested_by and len(
-                agree_users) >= 4
+                agree_users) >= 5
             if o5_check or sr_check:
                 accepted_by = interaction.user.id
                 user_id = user.id
@@ -6803,9 +6804,10 @@ class ServerVoteView(discord.ui.View):
             reason = session.get("reason")
             guild_id = session["guild_id"]
             #
-            o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles
+            o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles and len(
+                agree_users) >= 5
             sr_check = is_sr(interaction.user) and interaction.user.id != requested_by and len(
-                agree_users) >= 4
+                agree_users) >= 5
             if o5_check or sr_check:
                 accepted_by = interaction.user.id
                 server_query = {"_id": str(guild_id)}
