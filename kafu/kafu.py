@@ -426,7 +426,10 @@ def format_duration(seconds: int) -> str:
         value = seconds // count
         if value:
             seconds -= value * count
-            result.append(f"{value}{suffix}")
+            if value > 1:
+                result.append(f"{value} {suffix}s")
+            else:
+                result.append(f"{value} {suffix}")
     return " ".join(result)
 
 @bot.event
@@ -462,12 +465,8 @@ async def on_message(message: discord.Message):
         if not data:
             continue
         afk.update_one({"_id": member.id}, {"$push": {"mentions": {"user_id": message.author.id, "jump_url": message.jump_url}}})
-        await message.reply(
-            f"**{member.display_name}** has been afk since "
-            f"<t:{data["since"]}:R> "
-            f"(<t:{data["since"]}:t>)\n"
-            f"Reason: **{data["reason"]}**"
-        )
+        embed = discord.Embed(colour=0xffffff, description=f"**{member.display_name}** has been afk since <t:{data["since"]}:R>\nReason: **{data["reason"]}**")
+        await message.reply(embed=embed)
 
     guild_id = message.guild.id
     server_query = {"_id": str(guild_id)}
