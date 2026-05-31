@@ -411,11 +411,33 @@ async def quota_check():
                             server_info[category][user_id]["monthly"] = 0
                 servers.replace_one({"_id": server_info["_id"]}, server_info)
 
+
+def format_duration(seconds: int) -> str:
+    if seconds < 60:
+        return f"{seconds}s"
+    intervals = (
+        ("days", 86400),
+        ("hours", 3600),
+        ("minutes", 60),
+        ("seconds", 1),
+    )
+    result = []
+    for suffix, count in intervals:
+        value = seconds // count
+        if value:
+            seconds -= value * count
+            result.append(f"{value}{suffix}")
+    return " ".join(result)
+
 @bot.event
 async def on_message(message: discord.Message):
+    if message.author.id == bot.user.id:
+        return
+
     data = afk.find_one({"_id": message.author.id})
     if data:
         duration = int(time.time()) - data["since"]
+        duration = format_duration(duration_seconds)
         mentions = data.get("mentions", [])
         lines = []
         for i, mention in enumerate(mentions[:20], start=1):
@@ -423,8 +445,8 @@ async def on_message(message: discord.Message):
 
         embed = discord.Embed(
             colour=0xffffff,
+            title="Welcome back!",
             description=
-            "**Welcome back!**\n"
             f"You were afk for {duration}.\n\n"
             f"You received **{len(mentions)}** mention(s).\n"
         )
