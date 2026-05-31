@@ -437,7 +437,7 @@ async def on_message(message: discord.Message):
     data = afk.find_one({"_id": message.author.id})
     if data:
         duration = int(time.time()) - data["since"]
-        duration = format_duration(duration_seconds)
+        duration = format_duration(duration)
         mentions = data.get("mentions", [])
         lines = []
         for i, mention in enumerate(mentions[:20], start=1):
