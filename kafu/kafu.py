@@ -43,6 +43,7 @@ vouch_servers = kafu["vouch_servers"]
 voices = kafu["voices"]
 votes = kafu["votes"]
 ticket_claims = kafu["ticket_claims"]
+afk = kafu["afk"]
 
 TRI_Archive = 1371673839695826974
 Tethys = 1434471275723493388
@@ -412,8 +413,40 @@ async def quota_check():
 
 @bot.event
 async def on_message(message: discord.Message):
-    if message.guild is None:
-        return
+    data = afk.find_one({"_id": message.author.id})
+    if data:
+        duration = int(time.time()) - data["since"]
+        mentions = data.get("mentions", [])
+        lines = []
+        for i, mention in enumerate(mentions[:20], start=1):
+            lines.append(f"-# {i}ㆍ　<@{mention["user_id"]}>　–　{mention["jump_url"]}")
+
+        embed = discord.Embed(
+            colour=0xffffff,
+            description=
+            "**Welcome back!**\n"
+            f"You were afk for {duration}.\n\n"
+            f"You received **{len(mentions)}** mention(s).\n"
+        )
+        if lines:
+            embed.description +="\n".join(lines)
+        await message.reply(embed=embed)
+        afk.delete_one({"_id": message.author.id})
+
+    for member in message.mentions:
+        if member.id == message.author.id:
+            continue
+        data = afk.find_one({"_id": member.id})
+        if not data:
+            continue
+        afk.update_one({"_id": member.id}, {"$push": {"mentions": {"user_id": message.author.id, "jump_url": message.jump_url}}})
+        await message.reply(
+            f"**{member.display_name}** has been afk since "
+            f"<t:{data["since"]}:R> "
+            f"(<t:{data["since"]}:t>)\n"
+            f"Reason: **{data["reason"]}**"
+        )
+
     guild_id = message.guild.id
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one(server_query)
@@ -456,8 +489,7 @@ async def on_message(message: discord.Message):
                     accent = get_accent(message.author.id)
                     await tts_queues[guild_id].put((
                         f"{message.author.display_name} says {text}",
-                        accent
-                    ))
+                        accent))
 
     await bot.process_commands(message)
 
@@ -478,6 +510,13 @@ async def on_member_remove(member):
                 )
 
 # text commands
+
+@bot.command(name="afk")
+async def afk_command(ctx, *, reason="none"):
+    embed = discord.Embed(colour=0xffffff, description=f"You are now afk with reason: **{reason}**")
+    await ctx.reply(embed=embed)
+    afk.update_one({"_id": ctx.author.id}, {"$set": {"reason": reason, "since": int(time.time()), "mentions": []}},
+                   upsert=True)
 
 @bot.command(name="pilot")
 async def pilot(ctx, *, desc:str=None):
