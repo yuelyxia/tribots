@@ -416,10 +416,10 @@ def format_duration(seconds: int) -> str:
     if seconds < 60:
         return f"{seconds}s"
     intervals = (
-        ("days", 86400),
-        ("hours", 3600),
-        ("minutes", 60),
-        ("seconds", 1),
+        ("day", 86400),
+        ("hour", 3600),
+        ("minute", 60),
+        ("second", 1),
     )
     result = []
     for suffix, count in intervals:
