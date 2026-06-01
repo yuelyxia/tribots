@@ -48,6 +48,7 @@ afk = kafu["afk"]
 TRI_Archive = 1371673839695826974
 Tethys = 1434471275723493388
 ticket_ping = 1449382692671193294
+sr_ping = 1375254710952661102
 KAFU = 1457009979817988241
 
 USERGUIDE = "https://docs.google.com/document/d/1Af_bHhXTjpJ9GkIPihmSQYibDVMYTFnUBhaA7DlQ29s/"
@@ -1040,8 +1041,9 @@ async def close(ctx, *args):
             return
         staff_role = server_info.get("staff_role")
         adm_ping = server_info.get("adm_ping")
+        is_sr = any(role.id in (sr_ping, adm_ping) for role in ctx.author.roles)
         if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
-            if ctx.guild.id == TRI_Archive and not get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
+            if ctx.guild.id == TRI_Archive and not is_sr:
                 await ctx.reply("You are not authorised to close this ticket.")
                 return
             active_claims = await get_uncredited_claims(ctx.channel.id)
