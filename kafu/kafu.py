@@ -406,9 +406,12 @@ async def quota_check():
                     except discord.NotFound: pass
                     except discord.Forbidden: pass
                 for category in ["staff", "mms", "pilots"]:
-                    if category in server_info:
+                    if category in server_info and isinstance(server_info[category], dict):
                         for user_id in server_info[category]:
-                            server_info[category][user_id]["monthly"] = 0
+                            if "monthly" in server_info[category][user_id]:
+                                server_info[category][user_id]["monthly"] = 0
+                            if "monthly_tickets" in server_info[category][user_id]:
+                                server_info[category][user_id]["monthly_tickets"] = 0
                 servers.replace_one({"_id": server_info["_id"]}, server_info)
 
 
@@ -778,9 +781,9 @@ async def adm(ctx):
     server_info = servers.find_one(server_query)
     if not server_info:
         return
-    adm_role = server_info.get("adm_role")
-    if adm_role:
-        await ctx.reply(f"{adm_role}")
+    adm_ping = server_info.get("adm_ping")
+    if adm_ping:
+        await ctx.reply(f"{adm_ping}")
 
 @bot.command(name="revive", help="Pings revive.")
 async def revive(ctx):
@@ -937,16 +940,16 @@ async def claim(ctx, mode: str = None, member: discord.Member = None):
     if not server_info.get("staff_role"):
         await ctx.reply("**staff role** has not been set up for this server.")
         return
-    if not server_info.get("adm_role"):
-        await ctx.reply("**adm role** has not been set up for this server.")
+    if not server_info.get("adm_ping"):
+        await ctx.reply("**adm ping** has not been set up for this server.")
         return
     staff_role = server_info["staff_role"]
-    adm_role = server_info["adm_role"]
+    adm_ping = server_info["adm_ping"]
     if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) not in ctx.author.roles:
         return
     target = ctx.author
     if mode == "force":
-        if not (get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
+        if not (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
             await ctx.reply("Unauthorised.")
             return
         if not member:
@@ -973,16 +976,16 @@ async def unclaim(ctx, mode: str = None, member: discord.Member = None):
     if not server_info.get("staff_role"):
         await ctx.reply("**staff role** has not been set up for this server.")
         return
-    if not server_info.get("adm_role"):
-        await ctx.reply("**adm role** has not been set up for this server.")
+    if not server_info.get("adm_ping"):
+        await ctx.reply("**adm ping** has not been set up for this server.")
         return
     staff_role = server_info["staff_role"]
-    adm_role = server_info["adm_role"]
+    adm_ping = server_info["adm_ping"]
     if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) not in ctx.author.roles:
         return
     target = ctx.author
     if mode == "force":
-        if not (get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
+        if not (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
             await ctx.reply("Unauthorised.")
             return
         if not member:
@@ -1036,9 +1039,9 @@ async def close(ctx, *args):
             await ctx.reply("**staff role** has not been set up for this server.")
             return
         staff_role = server_info.get("staff_role")
-        adm_role = server_info.get("adm_role")
+        adm_ping = server_info.get("adm_ping")
         if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
-            if ctx.guild.id == TRI_Archive and not get(ctx.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
+            if ctx.guild.id == TRI_Archive and not get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
                 await ctx.reply("You are not authorised to close this ticket.")
                 return
             active_claims = await get_uncredited_claims(ctx.channel.id)
@@ -1061,10 +1064,10 @@ class TicketCloseView(discord.ui.View):
         server_info = servers.find_one(server_query)
         if not server_info: return
         staff_role = server_info.get("staff_role")
-        adm_role = server_info.get("adm_role")
+        adm_ping = server_info.get("adm_ping")
         if not staff_role: return
         if get(interaction.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
-            if interaction.guild.id == TRI_Archive and not get(interaction.guild.roles, id=int(adm_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
+            if interaction.guild.id == TRI_Archive and not get(interaction.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
                 return await interaction.followup.send("You are not authorised to close this ticket.", ephemeral=True)
             operations = []
             for uid in self.active_claims:
@@ -2803,7 +2806,7 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
             staff_roles += parse_roles(server_info.get("staff_role"))
             staff_roles += parse_roles(server_info.get("staff_ping"))
             staff_roles += parse_roles(server_info.get("staff_break"))
-            staff_roles += parse_roles(server_info.get("adm_role"))
+            staff_roles += parse_roles(server_info.get("adm_ping"))
             staff_roles += parse_roles(server_info.get("ban_perms"))
             mm_roles = parse_roles(server_info.get("mm_roles"))
             mm_roles += parse_roles(server_info.get("mm_role"))
@@ -2864,7 +2867,7 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
             staff_roles += parse_roles(server_info.get("staff_role"))
             staff_roles += parse_roles(server_info.get("staff_ping"))
             staff_roles += parse_roles(server_info.get("staff_break"))
-            staff_roles += parse_roles(server_info.get("adm_role"))
+            staff_roles += parse_roles(server_info.get("adm_ping"))
             staff_roles += parse_roles(server_info.get("ban_perms"))
             mm_roles = parse_roles(server_info.get("mm_roles"))
             mm_roles += parse_roles(server_info.get("mm_role"))
@@ -2925,7 +2928,7 @@ async def dismiss_error(interaction: discord.Interaction, error: app_commands.Ap
 @app_commands.checks.has_permissions(administrator=True)
 async def setup(interaction: discord.Interaction, topic: Optional[Literal[
     "bans warns channel", "transcripts channel", "staff lb channel", "services lb channel", "revive ping",
-    "staff roles", "staff role", "staff ping", "staff break", "adm role", "ban perms",
+    "staff roles", "staff role", "staff ping", "staff break", "adm ping", "ban perms",
     "mm roles", "mm role", "mm ping", "mm supervisor", "mm trainer", "mm break", "mm vouch channel",
     "pilot roles", "pilot role", "pilot ping", "pilot supervisor", "pilot trainer", "pilot break", "pilot vouch channel"
 ]]=None, input: Optional[str]=None):
@@ -2949,7 +2952,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         staff_embed.add_field(name="staff role", value=server_info.get("staff_role", "unset"), inline=False) #
         staff_embed.add_field(name="staff ping", value=server_info.get("staff_ping", "unset"), inline=False) #
         staff_embed.add_field(name="staff break", value=server_info.get("staff_break", "unset"), inline=False)  #
-        staff_embed.add_field(name="adm role", value=server_info.get("adm_role", "unset"), inline=False) #
+        staff_embed.add_field(name="adm ping", value=server_info.get("adm_ping", "unset"), inline=False) #
         staff_embed.add_field(name="ban perms", value=server_info.get("ban_perms", "unset"), inline=False)  #
         service_embed = discord.Embed(colour=0xffffff)
         service_embed.add_field(name="mm roles", value=server_info.get("mm_roles", "unset"), inline=False) #
@@ -2969,6 +2972,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         embeds = [general_embed, staff_embed, service_embed]
         await interaction.response.send_message(embeds=embeds, ephemeral=True)
     if topic == "bans warns channel" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["bans_warns_channel"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("The **bans warns channel** has been reset.")
+            return
         try: bans_warns_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound: await interaction.response.send_message("Invalid channel.")
         else:
@@ -2977,6 +2985,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **bans warns channel** has been set to {bans_warns_channel}.")
     if topic == "transcripts channel" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["transcripts_channel"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("The **transcripts channel** has been reset.")
+            return
         try: transcripts_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound: await interaction.response.send_message("Invalid channel.")
         else:
@@ -2985,6 +2998,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **transcripts channel** has been set to {transcripts_channel}.")
     if topic == "staff lb channel" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["staff_lb_channel"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("The **staff lb channel** has been reset.")
+            return
         try: staff_lb_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound: await interaction.response.send_message("Invalid channel.")
         else:
@@ -2993,6 +3011,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **staff lb channel** has been set to {staff_lb_channel}.")
     if topic == "services lb channel" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["services_lb_channel"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("The **services lb channel** has been reset.")
+            return
         try:
             services_lb_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound:
@@ -3004,6 +3027,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(
                 f"The **services lb channel** has been set to {services_lb_channel}.")
     if topic == "revive ping" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["revive_ping"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**revive ping** has been reset.")
+            return
         revive_ping = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(revive_ping))
         if role:
@@ -3014,6 +3042,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "staff roles" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["staff_roles"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**staff roles** have been reset.")
+            return
         staff_roles = input.replace("<@&", "").replace(">", "").split()
         valid_roles = []
         for staff_role in staff_roles:
@@ -3028,6 +3061,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid roles.")
     if topic == "staff role" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["staff_role"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**staff role** has been reset.")
+            return
         staff_role = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(staff_role))
         if role:
@@ -3038,6 +3076,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "staff ping" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["staff_ping"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**staff ping** has been reset.")
+            return
         staff_ping = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(staff_ping))
         if role:
@@ -3048,6 +3091,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "staff break" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["staff_break"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**staff break** has been reset.")
+            return
         staff_break = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(staff_break))
         if role:
@@ -3057,17 +3105,27 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**staff break** has been set to {staff_break}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
-    if topic == "adm role" and input is not None:
-        adm_role = input.replace("<@&", "").replace(">", "")
-        role = interaction.guild.get_role(int(adm_role))
-        if role:
-            adm_role = f"<@&{role.id}>"
-            server_info["adm_role"] = adm_role
+    if topic == "adm ping" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["adm_ping"] = None
             servers.replace_one(server_query, server_info)
-            await interaction.response.send_message(f"**adm role** has been set to {adm_role}.")
+            await interaction.response.send_message("**adm ping** has been reset.")
+            return
+        adm_ping = input.replace("<@&", "").replace(">", "")
+        role = interaction.guild.get_role(int(adm_ping))
+        if role:
+            adm_ping = f"<@&{role.id}>"
+            server_info["adm_ping"] = adm_ping
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(f"**adm ping** has been set to {adm_ping}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "ban perms" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["ban_perms"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**ban perms** has been reset.")
+            return
         ban_perms = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(ban_perms))
         if role:
@@ -3078,6 +3136,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm roles" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["mm_roles"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**mm roles** have been reset.")
+            return
         mm_roles = input.replace("<@&", "").replace(">", "").split()
         valid_roles = []
         for mm_role in mm_roles:
@@ -3092,6 +3155,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid roles.")
     if topic == "mm role" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["mm_role"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**mm role** has been reset.")
+            return
         mm_role = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_role))
         if role:
@@ -3102,6 +3170,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm ping" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["mm_ping"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**mm ping** has been reset.")
+            return
         mm_ping = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_ping))
         if role:
@@ -3112,6 +3185,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm supervisor" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["mm_supervisor"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**mm supervisor** has been reset.")
+            return
         mm_supervisor = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_supervisor))
         if role:
@@ -3122,6 +3200,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm trainer" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["mm_trainer"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**mm trainer** has been reset.")
+            return
         mm_trainer = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_trainer))
         if role:
@@ -3132,6 +3215,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm break" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["mm_break"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**mm break** has been reset.")
+            return
         mm_break = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(mm_break))
         if role:
@@ -3142,6 +3230,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "mm vouch channel" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["mm_vouch_channel"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**mm vouch channel** has been reset.")
+            return
         try:
             mm_vouch_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound:
@@ -3152,6 +3245,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **mm vouch channel** has been set to {mm_vouch_channel}.")
     if topic == "pilot roles" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["pilot_roles"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**pilot roles** have been reset.")
+            return
         pilot_roles = input.replace("<@&", "").replace(">", "").split()
         valid_roles = []
         for pilot_role in pilot_roles:
@@ -3166,6 +3264,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid roles.")
     if topic == "pilot role" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["pilot_role"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**pilot role** has been reset.")
+            return
         pilot_role = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_role))
         if role:
@@ -3176,6 +3279,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot ping" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["pilot_ping"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**pilot ping** has been reset.")
+            return
         pilot_ping = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_ping))
         if role:
@@ -3186,6 +3294,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot supervisor" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["pilot_supervisor"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**pilot supervisor** has been reset.")
+            return
         pilot_supervisor = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_supervisor))
         if role:
@@ -3196,6 +3309,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot trainer" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["pilot_trainer"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**pilot trainer** has been reset.")
+            return
         pilot_trainer = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_trainer))
         if role:
@@ -3206,6 +3324,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot break" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["pilot_break"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**pilot break** has been reset.")
+            return
         pilot_break = input.replace("<@&", "").replace(">", "")
         role = interaction.guild.get_role(int(pilot_break))
         if role:
@@ -3216,6 +3339,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         else:
             await interaction.response.send_message(f"Invalid role.")
     if topic == "pilot vouch channel" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["pilot_vouch_channel"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("**pilot vouch channel** has been reset.")
+            return
         try:
             pilot_vouch_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
         except discord.NotFound:
