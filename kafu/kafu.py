@@ -1041,11 +1041,13 @@ async def close(ctx, *args):
             return
         staff_role = server_info.get("staff_role")
         adm_ping = server_info.get("adm_ping")
-        is_sr = any(role.id in (sr_ping, adm_ping) for role in ctx.author.roles)
         if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
-            if ctx.guild.id == TRI_Archive and not is_sr:
-                await ctx.reply("You are not authorised to close this ticket.")
-                return
+            if ctx.guild.id == TRI_Archive:
+                adm_ping = 1375276457890287748
+                is_sr = any(role.id in (sr_ping, adm_ping) for role in ctx.author.roles)
+                if not is_sr:
+                    await ctx.reply("You are not authorised to close this ticket.")
+                    return
             active_claims = await get_uncredited_claims(ctx.channel.id)
             if not active_claims:
                 await ctx.reply("No new ticket credits to give.")
