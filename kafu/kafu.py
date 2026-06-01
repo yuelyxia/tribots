@@ -1040,14 +1040,11 @@ async def close(ctx, *args):
             await ctx.reply("**staff role** has not been set up for this server.")
             return
         staff_role = server_info.get("staff_role")
-        adm_ping = server_info.get("adm_ping")
+        adm_ping = server_info["adm_ping"]
         if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
             if ctx.guild.id == TRI_Archive:
-                adm_ping = 1375276457890287748
-                is_sr = any(role.id in (sr_ping, adm_ping) for role in ctx.author.roles)
-                if not is_sr:
-                    await ctx.reply("You are not authorised to close this ticket.")
-                    return
+                if not (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
+                    return await ctx.reply("You are not authorised to close this ticket.")
             active_claims = await get_uncredited_claims(ctx.channel.id)
             if not active_claims:
                 await ctx.reply("No new ticket credits to give.")
@@ -1068,11 +1065,12 @@ class TicketCloseView(discord.ui.View):
         server_info = servers.find_one(server_query)
         if not server_info: return
         staff_role = server_info.get("staff_role")
-        adm_ping = server_info.get("adm_ping")
+        adm_ping = server_info["adm_ping"]
         if not staff_role: return
         if get(interaction.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
-            if interaction.guild.id == TRI_Archive and not get(interaction.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
-                return await interaction.followup.send("You are not authorised to close this ticket.", ephemeral=True)
+            if interaction.guild.id == TRI_Archive:
+                if not (get(interaction.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in interaction.user.roles or interaction.user.guild_permissions.manage_roles):
+                    return await interaction.followup.send("You are not authorised to close this ticket.")
             operations = []
             for uid in self.active_claims:
                 staff_data = server_info.get("staff", {}).get(str(uid))
