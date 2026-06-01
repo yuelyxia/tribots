@@ -291,7 +291,7 @@ async def weekly_quota():
             vratios = [x[2] for x in weekly_profile["reviews_quota_list"] if x[2] != -1]
             ravg = sum(rratios) / len(rratios) if rratios else None
             vavg = sum(vratios) / len(vratios) if vratios else None
-            if (ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 7) or (vavg is not None and vavg < 0.5 and len(weekly_profile.get("reviews_quota_list", [])) > 2):
+            if (ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 7) or (vavg is not None and vavg < 0.5 and len(weekly_profile.get("reviews_quota_list", [])) > 7):
                 sr_demotion_list.append([staff_id, round(ravg, 3), round(vavg, 3)])
             if (ravg is not None and ravg < 0.8 and len(weekly_profile.get("reports_quota_list", [])) > 2) or (vavg is not None and vavg < 0.8 and len(weekly_profile.get("reviews_quota_list", [])) > 2):
                 member = guild.get_member(int(staff_id))
