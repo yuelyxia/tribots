@@ -72,7 +72,7 @@ async def on_ready():
 async def on_message(message: discord.Message):
     neru_logs_channel = bot.get_channel(NERU_LOGS)
     if message.author.id == 703886990948565003:
-        pattern1 = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@\d{17,20}>\s*\((\d{17,20})\)"
+        pattern1 = r"\((\d{17,20})\)\s*-\s*Main account\s*:.*?\((\d{17,20})\)"
         match1 = re.search(pattern1, message.content)
         match2 = False
         if message.embeds:
@@ -494,7 +494,7 @@ async def import_recent(interaction: discord.Interaction):
                             m = re.search(r"\((\d{17,20})\)", field.value)
                             if m:
                                 alt2_id = m.group(1)
-                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@\d{17,20}>\s*\((\d{17,20})\)"
+                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:.*?\((\d{17,20})\)"
                 match = re.search(pattern, message.content)
                 if match:
                     alt1_id, alt2_id = match.group(1), match.group(2)
@@ -795,7 +795,7 @@ async def import_all(interaction: discord.Interaction):
                             m = re.search(r"\((\d{17,20})\)", field.value)
                             if m:
                                 alt2_id = m.group(1)
-                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*<@\d{17,20}>\s*\((\d{17,20})\)"
+                pattern = r"\((\d{17,20})\)\s*-\s*Main account\s*:.*?\((\d{17,20})\)"
                 match = re.search(pattern, message.content)
                 if match:
                     alt1_id, alt2_id = match.group(1), match.group(2)
