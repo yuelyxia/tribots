@@ -1852,7 +1852,7 @@ class UserProofsView(discord.ui.View):
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
-                    content=f"Report accepted by <@{accepted_by.id}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
                     embeds=embeds, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
@@ -2443,7 +2443,7 @@ class EditAltsOnlyView(discord.ui.View):
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
-                    content=f"Report accepted by <@{accepted_by.id}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
                     embed=r_profile, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
@@ -3782,7 +3782,7 @@ class AddReportUserProofsView(discord.ui.View):
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
-                    content=f"Report accepted by <@{accepted_by.id}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
                     embeds=embeds, view=UserVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
@@ -5082,7 +5082,7 @@ class ServerProofsView(discord.ui.View):
                 new_report_thread = await new_report_message.create_thread(name=f"server-{guild_id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
                     embeds=embeds, view=ServerVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
@@ -5564,7 +5564,7 @@ class EditOwnerOnlyView(discord.ui.View):
                 new_report_thread = await new_report_message.create_thread(name=f"server-{guild_id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
-                    content=f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
                     embed=r_profile, view=ServerVoteView())
                 vote_channel_id = vote_msg.channel.id
                 vote_message_id = vote_msg.id
@@ -7608,10 +7608,7 @@ bot.tree.add_command(settings)
 
 @settings.command(name="points")
 @app_commands.checks.has_role(adm_ping)
-async def set_points(interaction: discord.Interaction, user: str, category: Literal["reports", "reviews", "votes"], timeframe: Literal["weekly", "alltime"], value: str):
-    if not is_int(value):
-        await interaction.response.send_message("Please input a valid integer value.", ephemeral=True)
-        return
+async def set_points(interaction: discord.Interaction, user: str, category: Literal["reports", "reviews", "votes"], timeframe: Literal["weekly", "alltime"], value: int):
     try:
         user = await bot.fetch_user(int(user.strip("<@>")))
     except Exception:
