@@ -1095,7 +1095,8 @@ async def fm(ctx):
         first_message = [msg async for msg in thread.history(limit=1, oldest_first=True)]
         if first_message:
             msg = first_message[0]
-            await ctx.reply(f"First message: [Jump]({msg.jump_url})")
+            embed = discord.Embed(title="First message", description=f"[Jump]({msg.jump_url})", colour=0xffffff)
+            await ctx.reply(embed=embed)
     else:
         await ctx.reply("This command can only be used in a thread.")
 
