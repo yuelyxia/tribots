@@ -1290,6 +1290,26 @@ async def break_command(interaction: discord.Interaction, type: Literal["full", 
     else:
         return await interaction.followup.send("User not appointed as current TRI Staff.")
 
+# slash commands
+
+staff = app_commands.Group(name="staff", description="Staff.")
+bot.tree.add_command(staff)
+
+@staff.command(name="accepted", description="Assigns trainee roles to accepted staff.")
+@app_commands.checks.has_role(adm_ping)
+@app_commands.describe(user="User to assign roles.")
+async def staff_accepted(interaction: discord.Interaction, user: discord.Member):
+    try:
+        await user.add_roles(interaction.guild.get_role(int(t_role)), interaction.guild.get_role(int(staff_role)))
+        await user.edit(nick=f"tㆍ{user.display_name}")
+    except:
+        return await interaction.response.send_message("Unable to assign trainee roles to the user.")
+    else:
+        await interaction.response.send_message("Successfully assigned trainee roles to the user.")
+
+send = app_commands.Group(name="send", description="Send embeds/rules/guides.")
+bot.tree.add_command(send)
+
 class StaffRulesView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -1397,27 +1417,9 @@ class StaffGuideView(discord.ui.View):
 ㆍSends closing guide.
                 """), ephemeral=True)
 
-
-# slash commands
-
-staff = app_commands.Group(name="staff", description="Staff.")
-bot.tree.add_command(staff)
-
-@staff.command(name="accepted", description="Assigns trainee roles to accepted staff.")
+@send.command(name="staffrules", description="Sends staff rules.")
 @app_commands.checks.has_role(adm_ping)
-@app_commands.describe(user="User to assign roles.")
-async def staff_accepted(interaction: discord.Interaction, user: discord.Member):
-    try:
-        await user.add_roles(interaction.guild.get_role(int(t_role)), interaction.guild.get_role(int(staff_role)))
-        await user.edit(nick=f"tㆍ{user.display_name}")
-    except:
-        return await interaction.response.send_message("Unable to assign trainee roles to the user.")
-    else:
-        await interaction.response.send_message("Successfully assigned trainee roles to the user.")
-
-@staff.command(name="rules", description="Sends staff rules.")
-@app_commands.checks.has_role(adm_ping)
-async def staff_rules(interaction: discord.Interaction):
+async def send_staffrules(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
 ## <:2paperclip:1449650494044639335>　　staff　　rules　　୨୧
 ### Follow Server Rules
@@ -1450,24 +1452,155 @@ async def staff_rules(interaction: discord.Interaction):
 """), view=StaffRulesView())
     await interaction.response.send_message("Staff Rules have been sent.", ephemeral=True)
 
-@staff.command(name="guide", description="Sends staff guide.")
+@send.command(name="staffguide", description="Sends staff guide.")
 @app_commands.checks.has_role(adm_ping)
-async def staff_guide(interaction: discord.Interaction):
+async def send_staffguide(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
 ## <:whitebow:1388714593211125971>　　staff　　guide　　୨୧
 　　`,help` for list of TRI bots commands.
 """), view=StaffGuideView())
     await interaction.response.send_message("Staff Guide has been sent.", ephemeral=True)
 
-@bot.tree.command(name="faq", description="Sends faq embeds.")
+@send.command(name="rules", description="Sends server rules.")
 @app_commands.checks.has_role(adm_ping)
-async def faq(interaction: discord.Interaction, image: discord.Attachment=None):
+async def send_rules(interaction: discord.Interaction, colour: str=None, image: discord.Attachment=None):
     await interaction.response.defer(ephemeral=True)
+    colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
+    if image:
+        image_embed = discord.Embed(colour=colour)
+        image_embed.set_image(url=image.url)
+        await interaction.channel.send("_ _", embed=image_embed)
+    embed1 = discord.Embed(colour=colour, title="_ _　　✦，　〝　general　guidelines　◝", description="""
+**　⸝⸝⊹　follow discord [tos](https://discord.com/terms) and [gls](https://discord.com/guidelines)ㆍ**
+╴read discord terms of service & guidelines fully to ensure you don’t break them.
+
+**　⊹⸝⸝　be respectful﹐strictly no hateㆍ**
+╴be civil, any form of harassment, discrimination, bullying, etc will not be tolerated.
+
+**　⸝⸝⊹　do not reveal or ask for personal infoㆍ**
+╴this includes other’s info and your own, please do not share too much for your own and others' safety.
+
+**　⊹⸝⸝　no plagiarismㆍ**
+╴inspiration is allowed but do not plagiarise any content, please give proper credits.
+
+**　⊹⸝⸝　respect the staff﹐open a ticket for help ／ concernsㆍ**
+╴listen to staff and respect them, do not block them as they are here to help you. if you have concerns, need help or would like to report someone who broke the rules please open a ticket and do not deal with the problem yourself.
+
+**　⸝⸝⊹　no ads ／ self - promo﹙includes dms﹚ㆍ**
+╴any form of self promotion is strictly __prohibited__.
+    """)
+    await interaction.channel.send("_ _", embed=embed1)
+    embed2 = discord.Embed(colour=colour, title="_ _　　✦，　〝　language　etiquette　◝", description="""
+**　⸝⸝⊹　nsfw is strictly prohibitedㆍ**
+╴includes both images and nsfw text, this is a public server and minors are present.
+
+**　⊹⸝⸝　no excessive swearing﹐or slursㆍ**
+╴swearing is alright, as long as it isn’t unnecessarily excessive or targeted towards someone in a serious matter. slurs will strictly result in an immediate ban, even if it is reclaimable by you.
+
+**　⸝⸝⊹ 　do not spam anything for any reasonㆍ**
+╴this includes text, images, pings, etc..
+    """)
+    await interaction.channel.send("_ _", embed=embed2)
+    embed3 = discord.Embed(colour=colour, title="_ _　　✦，　〝　reporting　don’ts　◝", description="""
+**　⸝⸝⊹　no false reportsㆍ**
+╴falsely reporting someone and producing fake evidence will result in a ban.
+
+**　⸝⸝⊹　no briberyㆍ**
+╴any attempt to bribe someone or any attempt to take a bribe, is strictly prohibited.
+    """)
+    await interaction.channel.send("_ _", embed=embed3)
+    embed4 = discord.Embed(colour=colour, description="""
+**　ㆍ<:whitebow:1388714593211125971>　full version of rules [here](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/edit?pli=1&tab=t.0#heading=h.1qtqm2f0dk9x)　♪**
+    """)
+    await interaction.channel.send("_ _", embed=embed4)
+    await interaction.followup.send("Sent!")
+
+
+@send.command(name="reactroles", description="Sends react roles embeds.")
+@app_commands.checks.has_role(adm_ping)
+async def send_reactroles(interaction: discord.Interaction, colour: str=None, image: discord.Attachment=None):
+    await interaction.response.defer(ephemeral=True)
+    colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
+    if image:
+        image_embed = discord.Embed(colour=colour)
+        image_embed.set_image(url=image.url)
+        await interaction.channel.send("_ _", embed=image_embed)
+    await interaction.channel.send("""
+_ _
+_ _　　<:cutie:1388714793585606656>ㆍ**claim  roles  here** ㆍㆍ
+-# <:greyreply:1448474301673115748>　click  for  the  role ,  click  again  to  remove .
+""")
+    embed1 = discord.Embed(colour=colour, title="★．．　age　range　⊹⁺₊", description="""  
+-# _ _
+　❜ <:whiteheart:1434538078747365507> ㆍ18 +　︵
+　 <:whitebow:1388714593211125971> ㆍ16 — 17　❜
+　❜ <:whitestar:1388147381152911381> ㆍ13 — 15　︵
+""")
+    msg1 = await interaction.channel.send("_ _", embed=embed1)
+    embed2 = discord.Embed(colour=colour, title="★．．　pronouns　⊹⁺₊", description="""  
+-# _ _
+　┅ <:whitebutterfly:1459750881611354237> ㆍhe 　❀
+　 <:whitepaperclip:1449650494044639335> ㆍ she 　┅
+　┅ <:whitestar:1388147381152911381> ㆍthey 　❀
+　 <:whitebowheart:1459750975710691410> ㆍ ask 　┅
+    """)
+    msg2 = await interaction.channel.send("_ _", embed=embed2)
+    embed3 = discord.Embed(colour=colour, title="★．．　pings　⊹⁺₊", description="""  
+-# _ _
+　∿ <:whitestar:1388147381152911381> ㆍnew user report　⿻
+　 <:whitebow:1388714593211125971> ㆍupdated user report　∿
+　∿ <:whitepaperclip:1449650494044639335> ㆍappealed user report　⿻
+　 <:whiteheart:1434538078747365507> ㆍnew server report　∿
+　∿ <:whitebutterfly:1459750881611354237> ㆍupdated server report　⿻
+　 <:whitebowheart:1459750975710691410> ㆍappealed server report　∿
+""")
+    msg3 = await interaction.channel.send("_ _", embed=embed3)
+    embed4 = discord.Embed(colour=colour, description="""  
+-# _ _
+　⬩ <:whitebutterfly:1459750881611354237> ㆍnews　✿
+　 <:whitebow:1388714593211125971> ㆍticket status　⬩
+    """)
+    msg4 = await interaction.channel.send("_ _", embed=embed4)
+    await interaction.followup.send("Sent!")
+    await interaction.followup.send(f"""
+Use the following commands to add react roles:
+
+`!rr addmany {interaction.channel.id} {msg1.id}
+<:whiteheart:1434538078747365507> 1375276990096998440 
+<:whitebow:1388714593211125971> 1375277014679818332 
+<:whitestar:1388147381152911381> 1375277046204203148`
+
+`!rr addmany {interaction.channel.id} {msg2.id}
+<:whitebutterfly:1459750881611354237> 1375274759507411034
+<:whitepaperclip:1449650494044639335> 1375274745616011355
+<:whitestar:1388147381152911381> 1375274890894250045
+<:whitebowheart:1459750975710691410> 1375274908275445780`
+
+`!rr addmany {interaction.channel.id} {msg3.id}
+<:whitestar:1388147381152911381> 1375275062185168957
+<:whitebow:1388714593211125971> 1459590866724323625
+<:whitepaperclip:1449650494044639335> 1459590865335877663
+<:whiteheart:1434538078747365507> 1375275002537971742
+<:whitebutterfly:1459750881611354237> 1459590362703204405 
+<:whitebowheart:1459750975710691410> 1459590364292972776`
+
+`!rr addmany {interaction.channel.id} {msg4.id}
+<:whitebutterfly:1459750881611354237> 1375276744956706916
+<:whitebow:1388714593211125971> 1459594319110602833`
+
+""", ephemeral=True)
+
+
+@send.command(name="faq", description="Sends faq.")
+@app_commands.checks.has_role(adm_ping)
+async def send_faq(interaction: discord.Interaction, colour: str=None, image: discord.Attachment=None):
+    await interaction.response.defer(ephemeral=True)
+    colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
     if image:
         image_embed = discord.Embed(colour=0xffffff)
         image_embed.set_image(url=image.url)
         await interaction.channel.send("_ _", embed=image_embed)
-    embed1 = discord.Embed(colour=0xffffff, description="""
+    embed1 = discord.Embed(colour=colour, description="""
 ### <:blank:1383116055550890095>–　what is tri?
 
 > - trade report investigation archive (**tri archive**) est. may 2025 is a server dedicated to **spreading awareness on dangerous, unlawful, or suspicious activity**, while also **commending outstanding mms/pilots and trusted traders** for upholding integrity and professionalism.
@@ -1479,7 +1612,7 @@ async def faq(interaction: discord.Interaction, image: discord.Attachment=None):
 > - we accept a wide range of reports, not only on scammers and suspects but also on dangerous or blacklisted individuals such as raiders, plagiarists or unprofessional staff. when in doubt, feel free to open a ticket to ask.
 """)
     msg1 = await interaction.channel.send("_ _", embed=embed1)
-    embed2 = discord.Embed(colour=0xffffff, description="""
+    embed2 = discord.Embed(colour=colour, description="""
 ### <:blank:1383116055550890095>–　how to check users or servers?
 
 > - `,c` to check; `,c [user id]` or `,c [invite]`
@@ -1494,7 +1627,7 @@ async def faq(interaction: discord.Interaction, image: discord.Attachment=None):
 
 """)
     msg2 = await interaction.channel.send("_ _", embed=embed2)
-    embed3 = discord.Embed(colour=0xffffff, description="""
+    embed3 = discord.Embed(colour=colour, description="""
 ### <:blank:1383116055550890095>–　how to stay updated with tri’s reports?
 
 > - follow tri’s report announcement channels <#1375132097605406721> and <#1375184563675856916> to receive updates in your own server.
@@ -1505,7 +1638,7 @@ async def faq(interaction: discord.Interaction, image: discord.Attachment=None):
 > - `/check all` to check your server for users with bannable reports.
 """)
     msg3 = await interaction.channel.send("_ _", embed=embed3)
-    embed4 = discord.Embed(colour=0xffffff, description=f"""
+    embed4 = discord.Embed(colour=colour, description=f"""
 ### <:blank:1383116055550890095>–　how to make a report?
 
 > - <#1375261699111784478> to make a report.
@@ -1516,7 +1649,7 @@ async def faq(interaction: discord.Interaction, image: discord.Attachment=None):
 
 """)
     msg4 = await interaction.channel.send("_ _", embed=embed4)
-    embed5 = discord.Embed(colour=0xffffff, description=f"""
+    embed5 = discord.Embed(colour=colour, description=f"""
 ### <:blank:1383116055550890095>–　how to make an appeal?
 
 > - <#1375261699111784478> to make an appeal if you believe your report is inaccurate or unfair, or if you have served minimum report period (mrp) as stated in [legal codex](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/).
@@ -1525,7 +1658,7 @@ async def faq(interaction: discord.Interaction, image: discord.Attachment=None):
 > - you may request for a staff to be your defender i.e. argue in favour of your appeal. however, defenders will remain unbiased, and appeals will still be judged based on the facts and evidence presented.
 """)
     msg5 = await interaction.channel.send("_ _", embed=embed5)
-    embed6 = discord.Embed(colour=0xffffff, description=f"""
+    embed6 = discord.Embed(colour=colour, description=f"""
 ### <:blank:1383116055550890095>–　what is tri’s tos, server rules and ban policy?
 > - our terms of service may be found [here](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/edit?tab=t.0#heading=h.d0k3z1hwlns).
 > - please read through [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160) carefully. not following rules may result in warns or bans.
@@ -1544,13 +1677,18 @@ async def faq(interaction: discord.Interaction, image: discord.Attachment=None):
 
 """)
     msg6 = await interaction.channel.send("_ _", embed=embed6)
-    embed = discord.Embed(colour=0xffffff, description=f"""
-### <:blank:1383116055550890095>–　[what is tri?]({msg1.jump_url})
-### <:blank:1383116055550890095>–　[how to check users or servers?]({msg2.jump_url})
-### <:blank:1383116055550890095>–　[how to stay updated with tri’s reports?]({msg3.jump_url})
-### <:blank:1383116055550890095>–　[how to make a report?]({msg4.jump_url})
-### <:blank:1383116055550890095>–　[how to make an appeal?]({msg5.jump_url})
-### <:blank:1383116055550890095>–　[what is tri’s tos, server rules and ban policy?]({msg6.jump_url})
+    embed = discord.Embed(colour=colour, description=f"""
+<:blank:1383116055550890095>–　[what is tri?]({msg1.jump_url})
+-# <:blank:1383116055550890095>
+<:blank:1383116055550890095>–　[how to check users or servers?]({msg2.jump_url})
+-# <:blank:1383116055550890095>
+<:blank:1383116055550890095>–　[how to stay updated with tri’s reports?]({msg3.jump_url})
+-# <:blank:1383116055550890095>
+<:blank:1383116055550890095>–　[how to make a report?]({msg4.jump_url})
+-# <:blank:1383116055550890095>
+<:blank:1383116055550890095>–　[how to make an appeal?]({msg5.jump_url})
+-# <:blank:1383116055550890095>
+<:blank:1383116055550890095>–　[what is tri’s tos, rules and ban policy?]({msg6.jump_url})
 """)
     await interaction.channel.send("_ _", embed=embed)
     await interaction.followup.send("Sent!", ephemeral=True)
