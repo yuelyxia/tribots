@@ -2025,6 +2025,16 @@ async def mass_delete(interaction: discord.Interaction, start: str, end: str):
             pass
     await progress.edit(content=f"Done. Deleted **{count}** messages.")
 
+@bot.tree.command(name="say", description="KAFU will speak on your behalf.")
+@app_commands.checks.cooldown(1, 3)
+@app_commands.describe(message="Your message")
+async def anon_say(interaction: discord.Interaction, message: str):
+    message = message.replace("\\n", "\n")
+    try:
+        await interaction.response.send_message(message, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
+    except Exception as e:
+        await interaction.response.send_message(f"Unable to send message: {e}", ephemeral=True)
+
 @bot.tree.command(name="ban", description="Bans a user.")
 @app_commands.describe(user="User to ban", reason="Reason for ban")
 async def ban(interaction: discord.Interaction, user: str, reason: Optional[str], image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
