@@ -1711,21 +1711,8 @@ bot.tree.add_command(anon)
 @app_commands.checks.cooldown(1, 5)
 @app_commands.describe(message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
 async def anon_say(interaction: discord.Interaction, message: str, image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
-    if not interaction.guild:
-        images = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10]
-                  if img is not None]
-        files_to_send = []
-        async with aiohttp.ClientSession() as session:
-            for img in images:
-                if img.content_type and img.content_type.startswith('image/'):
-                    async with session.get(img.url) as resp:
-                        if resp.status == 200:
-                            data = io.BytesIO(await resp.read())
-                            files_to_send.append(discord.File(data, filename=img.filename))
-        message = message.replace("\\n", "\n")
-        return await interaction.response.send_message(message, files=files_to_send, ephemeral=False)
     await interaction.response.defer(ephemeral=True)
-    if interaction.guild and not any(role.id in (staff_role, tethys_adm_role) for role in interaction.user.roles):
+    if interaction.guild and interaction.guild.id == TRI_Archive and not any(role.id in (staff_role, tethys_adm_role) for role in interaction.user.roles):
         return await interaction.followup.send("You are unauthorised to use this command.")
     try:
         images = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10]
@@ -1739,7 +1726,10 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
                             data = io.BytesIO(await resp.read())
                             files_to_send.append(discord.File(data, filename=img.filename))
         message = message.replace("\\n", "\n")
-        if get(interaction.user.guild.roles, id=adm_ping) in interaction.user.roles or get(interaction.user.guild.roles, id=tethys_adm_role) in interaction.user.roles:
+        if not interaction.guild or interaction.guild.id != TRI_Archive:
+            await interaction.followup.send("Your message has been sent.", ephemeral=True)
+            return await interaction.followup.send(content=message, files=files_to_send, ephemeral=False)
+        elif get(interaction.user.guild.roles, id=adm_ping) in interaction.user.roles or get(interaction.user.guild.roles, id=tethys_adm_role) in interaction.user.roles:
             if files_to_send:
                 await interaction.channel.send(content=message, files=files_to_send)
             else:
