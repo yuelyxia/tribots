@@ -988,11 +988,11 @@ closing_options = [
 async def cl(ctx, *, string: str = None):
     if ctx.guild.id == TRI_Archive:
         await ctx.reply(embed=discord.Embed(colour=0xffffff, title = "closing　guide　⸝⸝.ᐟ", description="""
-ㆍrename ticket　┈　`,rn (name) tbc`
-ㆍping sr+　┈　`,sr`
-ㆍsee format for closing statements using the dropdown below.
-ㆍplease merge identical reasons.
-ㆍfor mass reports, you may wish to use `,pr` after reports are published to retrieve IDs easily.
+- rename ticket　┈　`,rn (name) tbc`
+- ping sr+　┈　`,sr`
+- see format for closing statements using the dropdown below.
+- please merge identical reasons.
+- for mass reports, you may wish to use `,pr` after reports are published to retrieve IDs easily.
         """), view=ClosingView())
 
 class ClosingView(discord.ui.View):
@@ -1004,44 +1004,44 @@ class ClosingView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "report":
             await interaction.response.send_message(embed=discord.Embed(description="""
-ㆍnew report　┈　`new report on (ID) as (tags)`
-ㆍadded report　┈　`added report on (ID) as (tags)`
-ㆍedited alts　┈　`edited alts for (ID) - added (alt alt alt), removed (alt alt alt)`
-ㆍedited server owner　┈　`server owner edited for (ID)`
-ㆍinsufficient proof　┈　`no report on (ID) // insufficient proof`
-ㆍdeleted user　┈　`no report on (ID) // deleted user`
-ㆍunresponsive contributor　┈　`no report on (ID) // unresponsive contributor`
-ㆍcontributor left server　┈　`no report on (ID) // contributor left server`
+- new report　┈　`new report on (ID) as (tags)`
+- added report　┈　`added report on (ID) as (tags)`
+- edited alts　┈　`edited alts for (ID) - added (alt alt alt), removed (alt alt alt)`
+- edited server owner　┈　`server owner edited for (ID)`
+- insufficient proof　┈　`no report on (ID) // insufficient proof`
+- deleted user　┈　`no report on (ID) // deleted user`
+- unresponsive contributor　┈　`no report on (ID) // unresponsive contributor`
+- contributor left server　┈　`no report on (ID) // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "appeal":
             await interaction.response.send_message(embed=discord.Embed(description="""
-ㆍaccepted appeal　┈　`accepted appeal on (ID) as (tags)`
-ㆍrejected appeal　┈　`no appeal on (ID) // invalid reason`
-ㆍinsufficient proof　┈　`no appeal on (ID) // insufficient proof`
-ㆍunresponsive contributor　┈　`no appeal on (ID) // unresponsive contributor`
-ㆍcontributor left server　┈　`no appeal on (ID) // contributor left server`
+- accepted appeal　┈　`accepted appeal on (ID) as (tags)`
+- rejected appeal　┈　`no appeal on (ID) // invalid reason`
+- insufficient proof　┈　`no appeal on (ID) // insufficient proof`
+- unresponsive contributor　┈　`no appeal on (ID) // unresponsive contributor`
+- contributor left server　┈　`no appeal on (ID) // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "verify":
             await interaction.response.send_message(embed=discord.Embed(description="""
-ㆍsuccessful manual verification　┈　`(ID) manually verified`
-ㆍunresponsive contributor　┈　`unresponsive contributor`
-ㆍcontributor left server　┈　`contributor left server`
+- successful manual verification　┈　`(ID) manually verified`
+- unresponsive contributor　┈　`unresponsive contributor`
+- contributor left server　┈　`contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "others":
             await interaction.response.send_message(embed=discord.Embed(description="""
-ㆍanswered question(s)　┈　`query answered`
-ㆍbanned user(s)　┈　`no report // banned (ID) for (reason)`
-ㆍduplicate/troll ticket　┈　`no report`
+- answered question(s)　┈　`query answered`
+- banned user(s)　┈　`no report // banned (ID) for (reason)`
+- duplicate/troll ticket　┈　`no report`
 """), ephemeral=True)
         if self.select_callback.values[0] == "sr+":
             await interaction.response.send_message(embed=discord.Embed(description="""
-ㆍrename ticket　┈　`,rn (name) tbc (sr name)`
-ㆍcheck active reports and give feedback　┈　`,ar`
-ㆍif done correctly, accept reports for voting in order.
-ㆍcheck reports in voting　┈　`,vr`
-ㆍwait until 4 agree votes before you can publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
-ㆍcheck published reports　┈　`,pr` and `,c (ID)` or `,mc (IDs)`
-ㆍask reporter for closing and close the ticket.
+- rename ticket　┈　`,rn (name) tbc (sr name)`
+- check active reports and give feedback　┈　`,ar`
+- if done correctly, accept reports for voting in order.
+- check reports in voting　┈　`,vr`
+- wait until 4 agree votes before you can publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
+- check published reports　┈　`,pr` and `,c (ID)` or `,mc (IDs)`
+- ask reporter for closing and close the ticket.
 """), ephemeral=True)
 
 @bot.command(name="getids", help="Extracts valid user IDs from the string provided.")
@@ -1335,87 +1335,89 @@ class StaffGuideView(discord.ui.View):
         if self.select_callback.values[0] == "trial":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### Trial Period
-ㆍ**14–90 days**
-ㆍExceeding 90 days results in an **unappealable demotion** (you may reapply)
-ㆍ**Asking questions is encouraged** and will not affect your status
-ㆍ**No breaks in the first 14 days** unless it’s an emergency
+- **14–90 days**
+- Exceeding 90 days results in an **unappealable demotion** (you may reapply)
+- **Asking questions is encouraged** and will not affect your status
+- **No breaks in the first 14 days** unless it’s an emergency
 ### Promotion Requirements
-ㆍ**2 weeks of quota** (not necessarily consecutive)
-ㆍ**15 non-hitter reports**
-ㆍ**1 appeal**
-ㆍ**20 votes**
+- **2 weeks of quota** (not necessarily consecutive)
+- **10 non-hitter reports**
+- **1 appeal**
+- **20 votes**
             """), ephemeral=True)
         if self.select_callback.values[0] == "breaks":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### Break Types
-ㆍ**Half Break** — weekly quota is **halved (rounded down)**
-ㆍ**Full Break** — weekly quota is **not counted**
+- **Half Break** — weekly quota is **halved (rounded down)**
+- **Full Break** — weekly quota is **not counted**
 ### Break Rules
-ㆍStaff **cannot earn Annual Leave** while on break
-ㆍ**1 Full Break** may be split into **2 Half Breaks**
+- Staff **cannot earn Annual Leave** while on break
+- **1 Full Break** may be split into **2 Half Breaks**
 ### Annual Leave
-ㆍIncludes **all types of leave**
-ㆍBasic entitlement: **12 Full Breaks**
-ㆍ**1/8 Full Break** for each **week of completed quota**
+- Includes **all types of leave**
+- Basic entitlement: **12 Full Breaks**
+- **1/8 Full Break** for each **week of completed quota**
             """), ephemeral=True)
         if self.select_callback.values[0] == "quota":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### Quota Basics
-ㆍWeekly quota ranges between **5–10 reports/appeals**
-ㆍOnly **successfully published** reports/appeals are counted
-ㆍHitter reports count toward quota but have **low promotion value**
+- Weekly quota ranges between **5–10 reports/appeals**
+- Only **successfully published** reports/appeals are counted
+- Hitter reports count toward quota but have **low promotion value**
 ### Strikes
-ㆍEach week of **incomplete quota** while **not on a Full Break = 1 strike**
+- Each week of **incomplete quota** while **not on a Full Break = 1 strike**
 ### Consequences for Incomplete Quota
-ㆍ**Demotion in rank:**
-　ㆍ2 consecutive strikes with **no breaks taken**
-　ㆍ3 consecutive strikes with **≤ 1 Full Break** taken in total
-　ㆍ4 or more strikes (not necessarily consecutive) within the **past 8 weeks**
-ㆍ**Demotion from Staff:**
-　ㆍAverage activity of **below 50%** over the **past 8 weeks**
-　ㆍFull Break weeks are **excluded** from calculation, but Half Break weeks are **included**
-　ㆍActivity is measured by **quota fulfilled**, capped at **100% per week**
+- **Demotion in rank:**
+    - 2 consecutive strikes with **no breaks taken**
+    - 3 consecutive strikes with **≤ 1 Full Break** taken in total
+    - 4 or more strikes (not necessarily consecutive) within the **past 8 weeks**
+- **Demotion from Staff:**
+    - Average activity of **below 50%** over the **past 8 weeks**
+    - Full Break weeks are **excluded** from calculation, but Half Break weeks are **included**
+    - Activity is measured by **quota fulfilled**, capped at **100% per week**
             """), ephemeral=True)
         if self.select_callback.values[0] == "tickets":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### Ticket Claiming
-ㆍThe **first Staff** to send a proper greeting (e.g. hi) handles the ticket
-ㆍIf multiple greetings are sent, **reload Discord** to see who was first
-ㆍOther Staff must **delete their messages**
+- The **first Staff** to send a proper greeting (e.g. hi) handles the ticket
+- If multiple greetings are sent, **reload Discord** to see who was first
+- Other Staff must **delete their messages**
 ### Ticket Handling
-ㆍOnly **one Staff** may handle a ticket at a time
-ㆍA **Defender** may assist if required
-ㆍOnly **one Senior Reporter** may review when requested
-ㆍAfter acceptance for voting, the **sr+ who publishes** the report is responsible for **closing the ticket**
+- Only **one Staff** may handle a ticket at a time
+- A **Defender** may assist if required
+- Only **one Senior Reporter** may review when requested
+- After acceptance for voting, the **sr+ who publishes** the report is responsible for **closing the ticket**
 ### Ticket Priority
-ㆍHandle **older tickets first**
-ㆍDo not skip tickets because they seem difficult
+- Handle **older tickets first**
+- Do not skip tickets because they seem difficult
 ### Ticket Limits
-ㆍ**Trial Reporter** — 1 active, 2 on-hold, 1 self ticket
-ㆍ**Reporter** — 2 active, 2 on-hold, 1 self ticket
-ㆍIf an on-hold ticket becomes active and exceeds your limit, you must **open one active ticket to other Staff**
+- **Trial Reporter** — 1 active, 2 on-hold, 1 self ticket
+- **Reporter** — 2 active, 2 on-hold, 1 self ticket
+- If an on-hold ticket becomes active and exceeds your limit, you must **open one active ticket to other Staff**
 ### On-Hold
-ㆍStaff may place **their own tickets** on hold when necessary
-ㆍCommon reasons include:
-　ㆍWaiting for Defendant response
-　ㆍWaiting for Contributor response
-ㆍAbuse of on-hold may result in **warnings or demotion**
+- Staff may place **their own tickets** on hold when necessary
+- Common reasons include:
+    - Waiting for Defendant response
+    - Waiting for Contributor response
+- Abuse of on-hold may result in **warnings or demotion**
 ### Ticket Closure
-ㆍIf the Contributor does not reply within **12 hours**, you may request closure
-ㆍIf no meaningful proof is provided within **4 hours**, you may request closure
+- If the Contributor does not reply within **12 hours**, you may request closure
+- If no meaningful proof is provided within **4 hours**, you may request closure
             """), ephemeral=True)
         if self.select_callback.values[0] == "autoresponders":
             await interaction.response.send_message(embed=discord.Embed(description="""
 ### ,adm
-ㆍPings adm+.
+- Pings adm+.
 ### ,sr
-ㆍPings sr+.
+- Pings sr+.
 ### ,tp
-ㆍPings ticket ping, e.g. when you want open a ticket to other Staff.
+- Pings ticket ping, e.g. when you want open a ticket to other Staff.
 ### ,ban
-ㆍPings ban perms.
+- Pings ban perms.
 ### ,cl
-ㆍSends closing guide.
+- Sends closing guide.
+### ,tags
+- Sends tags descriptions.
                 """), ephemeral=True)
 
 @send.command(name="staffrules", description="Sends staff rules.")
@@ -1424,32 +1426,32 @@ async def send_staffrules(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
 ## <:2paperclip:1449650494044639335>　　staff　　rules　　୨୧
 ### Follow Server Rules
-ㆍAdhere to all [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160)
-ㆍParticular focus on **No Discrimination**, **No Hate or Threats**, and **No NSFW Content**
+- Adhere to all [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160)
+- Particular focus on **No Discrimination**, **No Hate or Threats**, and **No NSFW Content**
 ### Confidentiality
-ㆍFollow the Non-Disclosure Agreement (NDA)
-ㆍViolation may result in immediate removal from Staff, a report as Unprofessional Staff, and/or a server ban depending on severity
+- Follow the Non-Disclosure Agreement (NDA)
+- Violation may result in immediate removal from Staff, a report as Unprofessional Staff, and/or a server ban depending on severity
 ### Ticket Protocol
-ㆍOnly one Staff should handle a ticket at a time, unless a Defender is required
-ㆍDo not hijack tickets assigned to others
-ㆍAvoid tickets where you are related to the Defendant
-ㆍKeep communication on-topic and case-related; no side-chatting
-ㆍWhen handling multiple reports in a ticket, address one at a time in order
+- Only one Staff should handle a ticket at a time, unless a Defender is required
+- Do not hijack tickets assigned to others
+- Avoid tickets where you are related to the Defendant
+- Keep communication on-topic and case-related; no side-chatting
+- When handling multiple reports in a ticket, address one at a time in order
 ### Professionalism
-ㆍReports on Staff may result in quarantine and demotion if accepted
-ㆍSpeaking negatively about ticket participants or Staff (current or former) is Unprofessional and will be addressed
+- Reports on Staff may result in quarantine and demotion if accepted
+- Speaking negatively about ticket participants or Staff (current or former) is Unprofessional and will be addressed
 ### Respect
-ㆍRemain respectful, even toward those you dislike
-ㆍPersonal feelings are not an excuse for rudeness or unprofessional behavior
+- Remain respectful, even toward those you dislike
+- Personal feelings are not an excuse for rudeness or unprofessional behavior
 ### No Inappropriate Jokes
-ㆍJokes about ||suicide||, ||self-harm||, or ||body shaming|| (e.g., "||kys||", "||fat||", "||keep yourself safe||") are strictly prohibited
-ㆍEven if said without ill-intention, these are not acceptable as they may make others uncomfortable
+- Jokes about ||suicide||, ||self-harm||, or ||body shaming|| (e.g., "||kys||", "||fat||", "||keep yourself safe||") are strictly prohibited
+- Even if said without ill-intention, these are not acceptable as they may make others uncomfortable
 ### No Drama
-ㆍKeep personal conflicts out of the server
-ㆍResolve issues privately and respectfully, or seek proper mediation
+- Keep personal conflicts out of the server
+- Resolve issues privately and respectfully, or seek proper mediation
 ### No Favouritism
-ㆍDo not excessively praise, defend, or favour specific individuals
-ㆍFavoritism that undermines neutrality, decision-making, or report handling is prohibited
+- Do not excessively praise, defend, or favour specific individuals
+- Favoritism that undermines neutrality, decision-making, or report handling is prohibited
 """), view=StaffRulesView())
     await interaction.response.send_message("Staff Rules have been sent.", ephemeral=True)
 
