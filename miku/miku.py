@@ -1699,9 +1699,11 @@ bot.tree.add_command(anon)
 @anon.command(name="say", description="MIKU will speak on your behalf.")
 @app_commands.checks.cooldown(1, 5)
 @app_commands.describe(message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
-@app_commands.checks.has_any_role(staff_role, tethys_adm_role)
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def anon_say(interaction: discord.Interaction, message: str, image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
     await interaction.response.defer(ephemeral=True)
+    if interaction.guild and not any(role.id in (staff_role, tethys_adm_role) for role in interaction.user.roles):
+        return
     try:
         images = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10]
                   if img is not None]
@@ -1714,7 +1716,7 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
                             data = io.BytesIO(await resp.read())
                             files_to_send.append(discord.File(data, filename=img.filename))
         message = message.replace("\\n", "\n")
-        if get(interaction.user.guild.roles, id=adm_ping) in interaction.user.roles or get(interaction.user.guild.roles, id=tethys_adm_role) in interaction.user.roles:
+        if not interaction.guild or (get(interaction.user.guild.roles, id=adm_ping) in interaction.user.roles or get(interaction.user.guild.roles, id=tethys_adm_role) in interaction.user.roles):
             if files_to_send:
                 await interaction.channel.send(content=message, files=files_to_send)
             else:
@@ -1728,8 +1730,8 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
                 await interaction.channel.send(message, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False))
         print(f"{interaction.user.name}: {message}")
         await interaction.followup.send("Your message has been sent.", ephemeral=True)
-    except Exception:
-        await interaction.followup.send(f"Unable to send message.", ephemeral=True)
+    except Exception as e:
+        await interaction.followup.send(f"Unable to send message: {e}", ephemeral=True)
 
 @anon.error
 async def anon_error(interaction: discord.Interaction, error):
