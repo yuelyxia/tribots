@@ -127,6 +127,7 @@ async def on_ready():
     bot.add_view(TagsView())
     bot.add_view(FileView())
     weekly_quota.start()
+    await bot.tree.sync()
 
 # loop tasks
 
@@ -1693,17 +1694,26 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
     await interaction.channel.send("_ _", embed=embed)
     await interaction.followup.send("Sent!", ephemeral=True)
 
-anon = app_commands.Group(name="anon", description="Do something anonymously.")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+@app_commands.user_install()
+@app_commands.guild_install()
+class AnonGroup(app_commands.Group):
+    def __init__(self):
+        super().__init__(name="anon", description="Do something anonymously.")
+
+anon = AnonGroup()
 bot.tree.add_command(anon)
 
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+@app_commands.user_install()
+@app_commands.guild_install()
 @anon.command(name="say", description="MIKU will speak on your behalf.")
 @app_commands.checks.cooldown(1, 5)
 @app_commands.describe(message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
-@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 async def anon_say(interaction: discord.Interaction, message: str, image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
     await interaction.response.defer(ephemeral=True)
     if interaction.guild and not any(role.id in (staff_role, tethys_adm_role) for role in interaction.user.roles):
-        return
+        return await interaction.followup.send("You are unauthorised to use this command.")
     try:
         images = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10]
                   if img is not None]
@@ -1716,7 +1726,10 @@ async def anon_say(interaction: discord.Interaction, message: str, image1: Optio
                             data = io.BytesIO(await resp.read())
                             files_to_send.append(discord.File(data, filename=img.filename))
         message = message.replace("\\n", "\n")
-        if not interaction.guild or (get(interaction.user.guild.roles, id=adm_ping) in interaction.user.roles or get(interaction.user.guild.roles, id=tethys_adm_role) in interaction.user.roles):
+        if not interaction.guild:
+            await interaction.followup.send("Your message has been sent.", ephemeral=True)
+            return await interaction.followup.send(content=message, files=files_to_send, ephemeral=False)
+        elif get(interaction.user.guild.roles, id=adm_ping) in interaction.user.roles or get(interaction.user.guild.roles, id=tethys_adm_role) in interaction.user.roles:
             if files_to_send:
                 await interaction.channel.send(content=message, files=files_to_send)
             else:
@@ -1747,9 +1760,12 @@ async def anon_error(interaction: discord.Interaction, error):
 @anon.command(name="edit", description="Edit MIKU’s message.")
 @app_commands.checks.cooldown(2, 5)
 @app_commands.describe(message_id="The message to edit", message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
-@app_commands.checks.has_role(adm_ping)
 async def anon_edit(interaction: discord.Interaction, message_id: str, message: str, image1: Optional[discord.Attachment] = None, image2: Optional[discord.Attachment] = None, image3: Optional[discord.Attachment] = None, image4: Optional[discord.Attachment] = None, image5: Optional[discord.Attachment] = None, image6: Optional[discord.Attachment] = None, image7: Optional[discord.Attachment] = None, image8: Optional[discord.Attachment] = None, image9: Optional[discord.Attachment] = None, image10: Optional[discord.Attachment] = None):
     await interaction.response.defer(ephemeral=True)
+    if interaction.guild and not any(role.id in (adm_ping, tethys_adm_role) for role in interaction.user.roles):
+        return await interaction.followup.send("You are unauthorised to use this command.")
+    if not interaction.guild and interaction.channel_id is None:
+        return await interaction.followup.send("Discord limitations prevent editing old messages in DMs.")
     try:
         target_message = await interaction.channel.fetch_message(int(message_id))
         if target_message.author.id != bot.user.id:
@@ -1767,11 +1783,6 @@ async def anon_edit(interaction: discord.Interaction, message_id: str, message: 
                             files_to_send.append(discord.File(data, filename=img.filename))
         message = message.replace("\\n", "\n")
         allowed_mentions = discord.AllowedMentions.all()
-        if not get(interaction.user.guild.roles, id=adm_ping) in interaction.user.roles or get(interaction.user.guild.roles,
-                                                                                           id=tethys_adm_role) in interaction.user.roles:
-            allowed_mentions = discord.AllowedMentions(everyone=False, roles=False)
-            for word in banned_words:
-                message = message.replace(word, "*" * len(word))
         if files_to_send:
             await target_message.edit(content=message, attachments=files_to_send, allowed_mentions=allowed_mentions)
         else:
