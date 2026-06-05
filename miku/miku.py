@@ -1005,42 +1005,42 @@ class ClosingView(discord.ui.View):
         if self.select_callback.values[0] == "report":
             await interaction.response.send_message(embed=discord.Embed(description="""
 - new report
-  - `new report on 𝗶𝗱 as 𝘁𝗮𝗴`
-  - `new report on 𝗶𝗱 (alt 𝗶𝗱) as 𝘁𝗮𝗴, 𝘁𝗮𝗴`
+  - `new report on 𝗂𝖽 as 𝗍𝖺𝗀`
+  - `new report on 𝗂𝖽 (alt 𝗂𝖽) as 𝗍𝖺𝗀, 𝗍𝖺𝗀`
 - added report
-  - `added report on 𝗶𝗱 as 𝘁𝗮𝗴`
+  - `added report on 𝗂𝖽 as 𝗍𝖺𝗀`
 - edited alts only
-  - `edited alts for 𝗶𝗱 - added alt alt alt, removed alt alt alt`
+  - `edited alts for 𝗂𝖽 - added alt alt alt, removed alt alt alt`
 - edited server owner
-  - `server owner edited for 𝗶𝗱`
+  - `server owner edited for 𝗂𝖽`
 - insufficient proof
-  - `no report on 𝗶𝗱 // insufficient proof`
+  - `no report on 𝗂𝖽 // insufficient proof`
 - deleted user
-  - `no report on 𝗶𝗱 // deleted user`
+  - `no report on 𝗂𝖽 // deleted user`
 - issue resolved
-  - `no report on 𝗶𝗱 // issue resolved`
+  - `no report on 𝗂𝖽 // issue resolved`
 - unresponsive contributor
-  - `no report on 𝗶𝗱 // unresponsive contributor`
+  - `no report on 𝗂𝖽 // unresponsive contributor`
 - contributor left server
-  - `no report on 𝗶𝗱 // contributor left server`
+  - `no report on 𝗂𝖽 // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "appeal":
             await interaction.response.send_message(embed=discord.Embed(description="""
 - accepted appeal
-  - `accepted appeal on 𝗶𝗱 as 𝘁𝗮𝗴`
+  - `accepted appeal on 𝗂𝖽 as 𝗍𝖺𝗀`
 - rejected appeal
-  - `no appeal on 𝗶𝗱 // inval𝗶𝗱 reason`
+  - `no appeal on 𝗂𝖽 // invalid reason`
 - insufficient proof
-  - `no appeal on 𝗶𝗱 // insufficient proof`
+  - `no appeal on 𝗂𝖽 // insufficient proof`
 - unresponsive contributor
-  - `no appeal on 𝗶𝗱 // unresponsive contributor`
+  - `no appeal on 𝗂𝖽 // unresponsive contributor`
 - contributor left server
-  - `no appeal on 𝗶𝗱 // contributor left server`
+  - `no appeal on 𝗂𝖽 // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "verify":
             await interaction.response.send_message(embed=discord.Embed(description="""
 - successful manual verification
-  - `𝗶𝗱 manually verified`
+  - `𝗂𝖽 manually verified`
 - unresponsive contributor
   - `unresponsive contributor`
 - contributor left server
@@ -1051,7 +1051,7 @@ class ClosingView(discord.ui.View):
 - answered question(s)
   - `query answered`
 - banned user(s)
-  - `no report // banned 𝗶𝗱 for (reason)`
+  - `no report // banned 𝗂𝖽 for (reason)`
 - duplicate/troll ticket
   - `no report`
 """), ephemeral=True)
@@ -1066,7 +1066,7 @@ class ClosingView(discord.ui.View):
   - `,vr`
 - wait until 5 agree votes before you can publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
 - check published reports
-  - `,pr` and `,c 𝗶𝗱` or `,mc 𝗶𝗱 𝗶𝗱 𝗶𝗱`
+  - `,pr` and `,c 𝗂𝖽` or `,mc 𝗂𝖽 𝗂𝖽 𝗂𝖽`
 - ask reporter for closing and close the ticket.
 """), ephemeral=True)
 
