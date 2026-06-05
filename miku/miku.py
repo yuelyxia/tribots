@@ -937,8 +937,8 @@ class TagsView(discord.ui.View):
 
 > - trade must have been agreed to.
 > - it is not reportable if
-> 　–　the user unknowingly suggested scam server(s).
-> 　–　the user ghosts or blocks due to the contributor being rude towards them, or due to not being interested in the trade anymore.
+>   - the user unknowingly suggested scam server(s).
+>   - the user ghosts or blocks due to the contributor being rude towards them, or due to not being interested in the trade anymore.
 
 -# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
@@ -955,12 +955,12 @@ class TagsView(discord.ui.View):
 　　**__examples__**
 
 > - items or accounts were put at preventable or unnecessary risks
-> 　–　not checking the validity of every receipt sent
-> 　–　not checking basic account details carefully before the account is given to the other trader.
+>   - not checking the validity of every receipt sent
+>   - not checking basic account details carefully before the account is given to the other trader.
 > - items or accounts were lost, damaged and/or retrieved (i.e. scammed) in a preventable situation
-> 　–　knowingly mming for a scammer, which led to the items/accounts getting lost, damaged and/or retrieved.
-> 　–　incorrectly securing an account, which led to the items/accounts getting lost, damaged and/or retrieved.
-> 　–　altering the state of the account(s) without both traders’ permissions.
+>   - knowingly mming for a scammer, which led to the items/accounts getting lost, damaged and/or retrieved.
+>   - incorrectly securing an account, which led to the items/accounts getting lost, damaged and/or retrieved.
+>   - altering the state of the account(s) without both traders’ permissions.
 > - account was lost, damaged and/or retrieved (i.e. scammed) in an unpreventable situation but the trader was **not** informed of the risks beforehand.
 > - mm lost an account in an unpreventable situation but did not attempt to offer any compensation whatsoever.
 > - not sending compulsory mm screenshots into the ticket and unable to provide them when needed.
@@ -968,9 +968,9 @@ class TagsView(discord.ui.View):
 　　**__notes__**
 
 > - it is not reportable if
-> 　–　mm lost an account in an unpreventable situation and offered compensation that the trader was satisfied with, or continually attempted to offer compensation, subject to limitations such as the mm’s financial ability.
-> 　–　account was retrieved in an unpreventable situation and the trader consented to the risks beforehand.
-> 　–　low or moderate preventable risks were taken but no harm was done to the account in the end.
+>   - mm lost an account in an unpreventable situation and offered compensation that the trader was satisfied with, or continually attempted to offer compensation, subject to limitations such as the mm’s financial ability.
+>   - account was retrieved in an unpreventable situation and the trader consented to the risks beforehand.
+>   - low or moderate preventable risks were taken but no harm was done to the account in the end.
 
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -1004,43 +1004,69 @@ class ClosingView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "report":
             await interaction.response.send_message(embed=discord.Embed(description="""
-- new report　┈　`new report on (ID) as (tags)`
-- added report　┈　`added report on (ID) as (tags)`
-- edited alts　┈　`edited alts for (ID) - added (alt alt alt), removed (alt alt alt)`
-- edited server owner　┈　`server owner edited for (ID)`
-- insufficient proof　┈　`no report on (ID) // insufficient proof`
-- deleted user　┈　`no report on (ID) // deleted user`
-- unresponsive contributor　┈　`no report on (ID) // unresponsive contributor`
-- contributor left server　┈　`no report on (ID) // contributor left server`
+- new report
+  - `new report on 𝗶𝗱 as 𝘁𝗮𝗴`
+  - `new report on 𝗶𝗱 (alt 𝗶𝗱) as 𝘁𝗮𝗴, 𝘁𝗮𝗴`
+- added report
+  - `added report on 𝗶𝗱 as 𝘁𝗮𝗴`
+- edited alts only
+  - `edited alts for 𝗶𝗱 - added alt alt alt, removed alt alt alt`
+- edited server owner
+  - `server owner edited for 𝗶𝗱`
+- insufficient proof
+  - `no report on 𝗶𝗱 // insufficient proof`
+- deleted user
+  - `no report on 𝗶𝗱 // deleted user`
+- issue resolved
+  - `no report on 𝗶𝗱 // issue resolved`
+- unresponsive contributor
+  - `no report on 𝗶𝗱 // unresponsive contributor`
+- contributor left server
+  - `no report on 𝗶𝗱 // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "appeal":
             await interaction.response.send_message(embed=discord.Embed(description="""
-- accepted appeal　┈　`accepted appeal on (ID) as (tags)`
-- rejected appeal　┈　`no appeal on (ID) // invalid reason`
-- insufficient proof　┈　`no appeal on (ID) // insufficient proof`
-- unresponsive contributor　┈　`no appeal on (ID) // unresponsive contributor`
-- contributor left server　┈　`no appeal on (ID) // contributor left server`
+- accepted appeal
+  - `accepted appeal on 𝗶𝗱 as 𝘁𝗮𝗴`
+- rejected appeal
+  - `no appeal on 𝗶𝗱 // inval𝗶𝗱 reason`
+- insufficient proof
+  - `no appeal on 𝗶𝗱 // insufficient proof`
+- unresponsive contributor
+  - `no appeal on 𝗶𝗱 // unresponsive contributor`
+- contributor left server
+  - `no appeal on 𝗶𝗱 // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "verify":
             await interaction.response.send_message(embed=discord.Embed(description="""
-- successful manual verification　┈　`(ID) manually verified`
-- unresponsive contributor　┈　`unresponsive contributor`
-- contributor left server　┈　`contributor left server`
+- successful manual verification
+  - `𝗶𝗱 manually verified`
+- unresponsive contributor
+  - `unresponsive contributor`
+- contributor left server
+  - `contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "others":
             await interaction.response.send_message(embed=discord.Embed(description="""
-- answered question(s)　┈　`query answered`
-- banned user(s)　┈　`no report // banned (ID) for (reason)`
-- duplicate/troll ticket　┈　`no report`
+- answered question(s)
+  - `query answered`
+- banned user(s)
+  - `no report // banned 𝗶𝗱 for (reason)`
+- duplicate/troll ticket
+  - `no report`
 """), ephemeral=True)
         if self.select_callback.values[0] == "sr+":
             await interaction.response.send_message(embed=discord.Embed(description="""
-- rename ticket　┈　`,rn (name) tbc (sr name)`
-- check active reports and give feedback　┈　`,ar`
+- rename ticket
+  - `,rn (name) tbc (sr name)`
+- check active reports and give feedback
+  - `,ar`
 - if done correctly, accept reports for voting in order.
-- check reports in voting　┈　`,vr`
-- wait until 4 agree votes before you can publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
-- check published reports　┈　`,pr` and `,c (ID)` or `,mc (IDs)`
+- check reports in voting
+  - `,vr`
+- wait until 5 agree votes before you can publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
+- check published reports
+  - `,pr` and `,c 𝗶𝗱` or `,mc 𝗶𝗱 𝗶𝗱 𝗶𝗱`
 - ask reporter for closing and close the ticket.
 """), ephemeral=True)
 
@@ -1368,13 +1394,13 @@ class StaffGuideView(discord.ui.View):
 - Each week of **incomplete quota** while **not on a Full Break = 1 strike**
 ### Consequences for Incomplete Quota
 - **Demotion in rank:**
-    - 2 consecutive strikes with **no breaks taken**
-    - 3 consecutive strikes with **≤ 1 Full Break** taken in total
-    - 4 or more strikes (not necessarily consecutive) within the **past 8 weeks**
+  - 2 consecutive strikes with **no breaks taken**
+  - 3 consecutive strikes with **≤ 1 Full Break** taken in total
+  - 4 or more strikes (not necessarily consecutive) within the **past 8 weeks**
 - **Demotion from Staff:**
-    - Average activity of **below 50%** over the **past 8 weeks**
-    - Full Break weeks are **excluded** from calculation, but Half Break weeks are **included**
-    - Activity is measured by **quota fulfilled**, capped at **100% per week**
+  - Average activity of **below 50%** over the **past 8 weeks**
+  - Full Break weeks are **excluded** from calculation, but Half Break weeks are **included**
+  - Activity is measured by **quota fulfilled**, capped at **100% per week**
             """), ephemeral=True)
         if self.select_callback.values[0] == "tickets":
             await interaction.response.send_message(embed=discord.Embed(description="""
@@ -1397,8 +1423,8 @@ class StaffGuideView(discord.ui.View):
 ### On-Hold
 - Staff may place **their own tickets** on hold when necessary
 - Common reasons include:
-    - Waiting for Defendant response
-    - Waiting for Contributor response
+  - Waiting for Defendant response
+  - Waiting for Contributor response
 - Abuse of on-hold may result in **warnings or demotion**
 ### Ticket Closure
 - If the Contributor does not reply within **12 hours**, you may request closure
@@ -1459,7 +1485,7 @@ async def send_staffrules(interaction: discord.Interaction):
 @app_commands.checks.has_role(adm_ping)
 async def send_staffguide(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
-## <:whitebow:1388714593211125971>　　staff　　guide　　୨୧
+## <:whitebow:1388714593211125971>　　staff　　guide　　ꫂ᭪
 　　`,help` for list of TRI bots commands.
 """), view=StaffGuideView())
     await interaction.response.send_message("Staff Guide has been sent.", ephemeral=True)

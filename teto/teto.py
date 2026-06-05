@@ -3778,7 +3778,7 @@ class AddReportUserProofsView(discord.ui.View):
                 disagree_users = []
                 alts_proofs_embeds = image_links_to_embeds(r_profile_list[2])
                 proofs_embeds = image_links_to_embeds(add_case_list[7])
-                new_report_message = await vote_channel.send(content=f"Report added on `{user.id}`")
+                new_report_message = await vote_channel.send(content=f"Added report on `{user.id}`")
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
@@ -4000,7 +4000,7 @@ class UserVoteView(discord.ui.View):
                         userscol.update_one(query_filter, update_operation)
 
                         user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
-                        await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nReport added on `{user.id}`",
+                        await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nAdded report on `{user.id}`",
                                                         embeds=embeds)
                         await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             "view": None, "embeds": embeds}))
@@ -4407,7 +4407,7 @@ class UserVoteView(discord.ui.View):
                         userscol.update_one(query_filter, update_operation)
 
                         user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
-                        await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nReport added on `{user.id}`",
+                        await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nAdded report on `{user.id}`",
                                                         embeds=embeds)
                         await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             "view": None, "embeds": embeds}))
@@ -6360,7 +6360,7 @@ class AddReportServerProofsView(discord.ui.View):
                 disagree_users = []
                 all_images_to_show = add_case_list[6]
                 image_embeds = image_links_to_embeds(all_images_to_show)
-                new_report_message = await vote_channel.send(content=f"Report added on `{guild_id}`")
+                new_report_message = await vote_channel.send(content=f"Added report on `{guild_id}`")
                 new_report_thread = await new_report_message.create_thread(name=f"server-{guild_id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
@@ -6522,7 +6522,7 @@ class ServerVoteView(discord.ui.View):
                         serverscol.update_one(query_filter, update_operation)
 
                         server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
-                        await server_reports_channel.send(content=f"<@&{updated_server_report_ping}>\nReport added on `{guild_id}`",
+                        await server_reports_channel.send(content=f"<@&{updated_server_report_ping}>\nAdded report on `{guild_id}`",
                                                           embeds=embeds)
                         await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                                                                                 "view": None,
@@ -6912,7 +6912,7 @@ class ServerVoteView(discord.ui.View):
                         serverscol.update_one(query_filter, update_operation)
 
                         server_reports_channel = bot.get_channel(SERVER_REPORTS_CHANNEL)
-                        await server_reports_channel.send(content=f"<@&{updated_server_report_ping}>\nReport added on `{guild_id}`",
+                        await server_reports_channel.send(content=f"<@&{updated_server_report_ping}>\nAdded report on `{guild_id}`",
                                                         embeds=embeds)
                         await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
                             "view": None, "embeds": embeds}))
