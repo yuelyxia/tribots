@@ -3911,7 +3911,7 @@ class UserVoteView(discord.ui.View):
             #
             r_profile = format_user_r_profile(user, r_profile_list, title)
             #
-            if len(agree_users) >= 8:
+            if len(agree_users) >= 8 and len(agree_users) > len(disagree_users):
                 user_id = user.id
                 user_query = {"_id": str(user_id)}
                 user_profile = userscol.find_one(user_query)
@@ -4309,9 +4309,9 @@ class UserVoteView(discord.ui.View):
             user_id = session["user_id"]
             user = await bot.fetch_user(user_id)
             o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles and len(
-                agree_users) >= 5
+                agree_users) >= 5 and len(agree_users) > len(disagree_users)
             sr_check = is_sr(interaction.user) and interaction.user.id != requested_by and len(
-                agree_users) >= 5
+                agree_users) >= 5 and len(agree_users) > len(disagree_users)
             if o5_check or sr_check:
                 accepted_by = interaction.user.id
                 user_id = user.id
@@ -6453,7 +6453,7 @@ class ServerVoteView(discord.ui.View):
             #
             r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
             #
-            if len(agree_users) >= 8:
+            if len(agree_users) >= 8 and len(agree_users) > len(disagree_users):
                 server_query = {"_id": str(guild_id)}
                 server_profile = serverscol.find_one(server_query)
                 if server_profile:  # if editing existing reported user
@@ -6838,9 +6838,9 @@ class ServerVoteView(discord.ui.View):
             guild_id = session["guild_id"]
             #
             o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles and len(
-                agree_users) >= 5
+                agree_users) >= 5 and len(agree_users) > len(disagree_users)
             sr_check = is_sr(interaction.user) and interaction.user.id != requested_by and len(
-                agree_users) >= 5
+                agree_users) >= 5 and len(agree_users) > len(disagree_users)
             if o5_check or sr_check:
                 accepted_by = interaction.user.id
                 server_query = {"_id": str(guild_id)}
