@@ -304,11 +304,11 @@ def format_server_r_profile(guild, r_profile_list, title):
         colour = "\u001b[0m"
     if guild.icon:
         r_profile.set_thumbnail(url=f"{guild.icon.url}")
-    r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
-    r_profile.description += f"{guild.name}\n`{guild.id}`\n**Owner** – {r_profile_list[0]}"
+    r_profile.description = f"```ansi\n{colour}{title}\u001b[0m\n```"
+    r_profile.description += f"{guild.name}\n`{guild.id}`"
     if guild.created_at:
-        r_profile.description += "\n**Server Created** – " + f"<t:{round(int(guild.created_at.timestamp()))}:D> (<t:{round(int(guild.created_at.timestamp()))}:R>)" + '\n'
-    r_profile.description += "\n**Other Tag(s)** – " + r_profile_list[1]
+        r_profile.description += "\n**Server Created** – " + f"<t:{round(int(guild.created_at.timestamp()))}:D> (<t:{round(int(guild.created_at.timestamp()))}:R>)\n"
+    r_profile.description += f"\n**Owner** – {r_profile_list[0]}\n**Other Tag(s)** – " + r_profile_list[1]
     if guild.banner:
         r_profile.set_image(url=guild.banner.url)
     return r_profile
@@ -322,9 +322,9 @@ def format_server_add_case(add_case_list, case_title):
     tags_list = add_case_list[1].split(", ")
     tags_strings = []
     for tag in tags_list:
-        if tag in red_tags:
+        if tag in red_server_tags:
             colour = "\u001b[1;31m"
-        elif tag in yellow_tags:
+        elif tag in yellow_server_tags:
             colour = "\u001b[1;33m"
         else:
             colour = "\u001b[0m"
@@ -353,14 +353,14 @@ def reconstruct_server_r_profile(guild_data, r_profile_list, title):
     if guild_icon:
         r_profile.set_thumbnail(url=guild_icon)
     r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
-    r_profile.description += f"\n{guild_name}\n`{guild_id}`\n**Owner** – {r_profile_list[0]}"
+    r_profile.description += f"\n{guild_name}\n`{guild_id}`"
     if guild_created_at:
         ts = int(guild_created_at)
         r_profile.description += (
             f"\n**Server Created** – "
             f"<t:{ts}:D> (<t:{ts}:R>)\n"
         )
-    r_profile.description += f"\n**Other Tag(s)** – {r_profile_list[1]}"
+    r_profile.description += f"\n**Owner** – {r_profile_list[0]}\n**Other Tag(s)** – {r_profile_list[1]}"
     if guild_banner:
         r_profile.set_image(url=guild_banner)
     return r_profile
