@@ -1907,7 +1907,7 @@ class UserProofsView(discord.ui.View):
                     "agree_users": agree_users,
                     "disagree_users": disagree_users,
                 })
-                await new_report_thread.send(content=f"Alt Proofs for `{user.id}`", embeds=alts_proofs_embeds)
+                await new_report_thread.send(content=f"Alts Proofs for `{user.id}`", embeds=alts_proofs_embeds)
                 await new_report_thread.send(content=f"Proofs for `{user.id}`", embeds=proofs_embeds)
                 await old_message_edit_queue.put(
                     (message, {"content": "Report has been submitted for voting.", "embeds": embeds, "view": None}))
@@ -2838,7 +2838,7 @@ class UserAppealView(discord.ui.View):
                     "agree_users": agree_users,
                     "disagree_users": disagree_users,
                 })
-                await new_report_thread.send(content=f"Alt Proofs for `{user.id}`", embeds=alts_proofs_embeds)
+                await new_report_thread.send(content=f"Alts Proofs for `{user.id}`", embeds=alts_proofs_embeds)
                 await new_report_thread.send(content=f"Proofs for `{user.id}`", embeds=proofs_embeds)
                 await old_message_edit_queue.put(
                     (message, {"content": "Appeal has been submitted for voting.", "embeds": embeds, "view": None}))
@@ -3837,7 +3837,7 @@ class AddReportUserProofsView(discord.ui.View):
                     "agree_users": agree_users,
                     "disagree_users": disagree_users,
                 })
-                await new_report_thread.send(content=f"Alt Proofs for `{user.id}`", embeds=alts_proofs_embeds)
+                await new_report_thread.send(content=f"Alts Proofs for `{user.id}`", embeds=alts_proofs_embeds)
                 await new_report_thread.send(content=f"Proofs for `{user.id}`", embeds=proofs_embeds)
                 await old_message_edit_queue.put(
                     (message, {"content": "Report has been submitted for voting.", "embeds": embeds, "view": None}))
@@ -7442,7 +7442,7 @@ async def report(
     r_profile_list = [
         alt_string,                    # [0] alts
         "",                            # [1] other tags (auto below)
-        alt_proof_links               # [2] alt proofs
+        alt_proof_links               # [2] alts proofs
     ]
     sorted_tags = sort_user_tags(tags.title().split(", "))
     case_title = sorted_tags[0]
