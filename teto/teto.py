@@ -276,10 +276,8 @@ def format_user_add_case(add_case_list, case_title):
         add_case.description = (f"```ansi\n{tags_string}\n```")
         add_case.description += "**Date Added** – " + add_case_list[0]
         add_case.description += "\n**Game(s)** – " + add_case_list[1]
-        add_case.description += "\n\n> **Reason** – " + add_case_list[3]
-        add_case.description += "\n\n> **Contributor** – " + add_case_list[4]
-        add_case.description += "\n> **TRI Staff** – " + add_case_list[5]
-        add_case.description += "\n> **Accepted by** – " + add_case_list[6]
+        add_case.description += f"\n\n> **Reason** – {add_case_list[3]}"
+        add_case.description += f"\n\n> **Contributor** – {add_case_list[4]}\n> **TRI Staff** – {add_case_list[5]}\n> **Accepted by** – {add_case_list[6]}"
     return add_case
 def format_trustedserver_profile(guild):
     if guild.id == TRI_Archive:
@@ -307,7 +305,7 @@ def format_server_r_profile(guild, r_profile_list, title):
     if guild.icon:
         r_profile.set_thumbnail(url=f"{guild.icon.url}")
     r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
-    r_profile.description += f"\n{guild.name}\n`{guild.id}`\n**Owner** – {r_profile_list[0]}"
+    r_profile.description += f"{guild.name}\n`{guild.id}`\n**Owner** – {r_profile_list[0]}"
     if guild.created_at:
         r_profile.description += "\n**Server Created** – " + f"<t:{round(int(guild.created_at.timestamp()))}:D> (<t:{round(int(guild.created_at.timestamp()))}:R>)" + '\n'
     r_profile.description += "\n**Other Tag(s)** – " + r_profile_list[1]
@@ -335,9 +333,7 @@ def format_server_add_case(add_case_list, case_title):
     add_case.description = (f"```ansi\n{tags_string}\n```")
     add_case.description += "**Date Added** – " + add_case_list[0]
     add_case.description += "\n\n> **Reason** – " + add_case_list[2]
-    add_case.description += "\n\n> **Contributor** – " + add_case_list[3]
-    add_case.description += "\n> **TRI Staff** – " + add_case_list[4]
-    add_case.description += "\n> **Accepted by** – " + add_case_list[5]
+    add_case.description += f"\n\n> **Contributor** – {add_case_list[3]}\n> **TRI Staff** – {add_case_list[4]}\n> **Accepted by** – {add_case_list[5]}"
     return add_case
 def reconstruct_server_r_profile(guild_data, r_profile_list, title):
     if title in red_server_tags:
