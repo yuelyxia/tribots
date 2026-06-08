@@ -415,6 +415,9 @@ async def a(ctx, *, to_check: str = None):
                     proof_with_server = f"[{guild.name}]({jump_url}) ┈ dc"
             except Exception:
                 pass
+        if isinstance(base_proof, str) and base_proof.endswith(">"):
+            parts = base_proof.split(" ┈ ")
+            proof_with_server = f"[image]({parts[0]}) ┈ {parts[1]}" # not server but whatever
         lines_without_server.append(f"ㆍ　`{alt}` ┈ {base_proof}")
         lines_with_server.append(f"ㆍ　`{alt}` ┈ {proof_with_server}")
     LIMIT = 3900
