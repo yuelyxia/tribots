@@ -798,7 +798,7 @@ async def tags(ctx, *, tag: str = None):
 
 class TagsView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=600)
+        super().__init__(timeout=None)
         self.add_item(discord.ui.Button(label="Legal Codex", style=discord.ButtonStyle.grey,
                                         url="https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/"))
 
@@ -1002,7 +1002,7 @@ async def cl(ctx, *, string: str = None):
 
 class ClosingView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=600)
+        super().__init__(timeout=None)
 
     @discord.ui.select(options=closing_options, placeholder="‎　　Select a closing type . . .　　　", custom_id="closing",
                        max_values=1)
