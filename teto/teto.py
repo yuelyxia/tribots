@@ -846,7 +846,7 @@ async def c(ctx, *, to_check: str = None):
 # reported user
 class ReportedUserView(discord.ui.View):
     def __init__(self, user, user_profile, requested_by, current_case):
-        super().__init__(timeout=600)
+        super().__init__(timeout=1440)
         self.user = user
         self.user_profile = user_profile
         self.requested_by = requested_by
@@ -939,7 +939,7 @@ class ReportedUserView(discord.ui.View):
                                                          view=ReportedUserView(user, user_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="reporteduser:proofs")
+    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reporteduser:proofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -955,7 +955,8 @@ class ReportedUserView(discord.ui.View):
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Alts Proofs", style=discord.ButtonStyle.grey, custom_id="reporteduser:altsproofs")
+
+    @discord.ui.button(label="𝘢𝘭𝘵𝘴 𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reporteduser:altsproofs")
     async def alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -970,7 +971,7 @@ class ReportedUserView(discord.ui.View):
 # reported server
 class ReportedServerView(discord.ui.View):
     def __init__(self, guild, server_profile, requested_by, current_case):
-        super().__init__(timeout=600)
+        super().__init__(timeout=1440)
         self.guild = guild
         self.server_profile = server_profile
         self.requested_by = requested_by
@@ -1063,7 +1064,7 @@ class ReportedServerView(discord.ui.View):
                                                          view=ReportedServerView(guild, server_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="reportedserver:proofs")
+    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reportedserver:proofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1089,7 +1090,7 @@ class MemberView(discord.ui.View):
 # new user
 class NewUserReportView(discord.ui.View):
     def __init__(self, user, requested_by):
-        super().__init__(timeout=600)
+        super().__init__(timeout=1440)
         self.user = user
         self.requested_by = requested_by
 
@@ -1919,7 +1920,7 @@ class UserProofsView(discord.ui.View):
 # edit user
 class EditUserReportView(discord.ui.View):
     def __init__(self, user, user_profile, requested_by, current_case):
-        super().__init__(timeout=600)
+        super().__init__(timeout=1440)
         self.user = user
         self.user_profile = user_profile
         self.requested_by = requested_by
@@ -2016,7 +2017,7 @@ class EditUserReportView(discord.ui.View):
                                                          view=EditUserReportView(user, user_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="edituserreport:proofs", row=0)
+    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="edituserreport:proofs", row=0)
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -2032,7 +2033,7 @@ class EditUserReportView(discord.ui.View):
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="Alts Proofs", style=discord.ButtonStyle.grey, custom_id="edituserreport:altsproofs", row=0)
+    @discord.ui.button(label="𝘢𝘭𝘵𝘴 𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="edituserreport:altsproofs", row=0)
     async def alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -4532,7 +4533,7 @@ class UserVoteView(discord.ui.View):
 # new server
 class NewServerReportView(discord.ui.View):
     def __init__(self, guild, requested_by):
-        super().__init__(timeout=600)
+        super().__init__(timeout=1440)
         self.guild = guild
         self.requested_by = requested_by
     @discord.ui.button(label="Report", style=discord.ButtonStyle.red, custom_id="newserverreport:report")
@@ -5148,7 +5149,7 @@ class ServerProofsView(discord.ui.View):
 # edit server
 class EditServerReportView(discord.ui.View):
     def __init__(self, guild, server_profile, requested_by, current_case):
-        super().__init__(timeout=600)
+        super().__init__(timeout=1440)
         self.guild = guild
         self.server_profile = server_profile
         self.requested_by = requested_by
@@ -5241,7 +5242,7 @@ class EditServerReportView(discord.ui.View):
                                                          view=EditServerReportView(guild, server_profile, requested_by,
                                                                                  current_case))
 
-    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="editserverreport:seeproofs")
+    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="editserverreport:seeproofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
