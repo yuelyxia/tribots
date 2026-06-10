@@ -2060,7 +2060,7 @@ class EditTRLogModal(discord.ui.Modal, title="Edit TR Log"):
             text=f"Last edited by {interaction.user}",
             icon_url=interaction.user.display_avatar.url
         )
-        await self.message.edit(embed=embed)
+        await self.message.edit(embed=embed, view=TRLogView())
         await interaction.response.send_message("TR Log updated.", ephemeral=True)
 
 
