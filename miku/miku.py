@@ -798,7 +798,7 @@ async def tags(ctx, *, tag: str = None):
 
 class TagsView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None)
+        super().__init__(timeout=600)
         self.add_item(discord.ui.Button(label="Legal Codex", style=discord.ButtonStyle.grey,
                                         url="https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/"))
 
@@ -931,7 +931,7 @@ class TagsView(discord.ui.View):
 > - refusing to use mm or ghosting/blocking after mm is mentioned, especially mms from trusted servers.
 > - insisting on using a “personal” mm; insisting on trading via a mm in a group chat.
 > - suggesting scam server(s) **and** refusing to use trusted servers or ghosting/blocking when asked to use trusted servers.
-> - offering to mm/pilot without mm/pilot roles in any trading servers.
+> - offering and insisting to mm/pilot without mm/pilot roles in any trading servers.
 > - owning a server that is suspected of having scam activity (suspect server).
 
 　　**__notes__**
@@ -955,9 +955,10 @@ class TagsView(discord.ui.View):
 
 　　**__examples__**
 
-> - items or accounts were put at preventable or unnecessary risks
+> - items or accounts were put at **preventable, unnecessary and unreasonable** risks
 >   - not checking the validity of every receipt sent
 >   - not checking basic account details carefully before the account is given to the other trader.
+>   - knowingly breaking reasonable service rules of a trading server in which they are a mm, especially rules set in place to ensure the mm’s and traders’ safety.
 > - items or accounts were lost, damaged and/or retrieved (i.e. scammed) in a preventable situation
 >   - knowingly mming for a scammer, which led to the items/accounts getting lost, damaged and/or retrieved.
 >   - incorrectly securing an account, which led to the items/accounts getting lost, damaged and/or retrieved.
@@ -965,6 +966,9 @@ class TagsView(discord.ui.View):
 > - account was lost, damaged and/or retrieved (i.e. scammed) in an unpreventable situation but the trader was **not** informed of the risks beforehand.
 > - mm lost an account in an unpreventable situation but did not attempt to offer any compensation whatsoever.
 > - not sending compulsory mm screenshots into the ticket and unable to provide them when needed.
+> - not following important steps of the full mm procedure within a trading server in which they are a mm
+>   - not sending login and/or logout screenshots within the ticket, unless mm is unable to due to special circumstances.
+>   - traders fail to complete mm forms accurately, which creates ambiguity between the accounts/items described and the accounts/items actually secured and traded, and mm failed to resolve the discrepany before proceeding. not reportable if mm is able to prove traders agreed to such changes before proceeding.
 
 　　**__notes__**
 
@@ -982,14 +986,14 @@ closing_options = [
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍAppeal", value="appeal"),
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍVerify", value="verify"),
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍOthers", value="others"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍSR+", value="sr+"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍsr+", value="sr+"),
 ]
 
 @bot.command(name="cl", help="Sends closing guide.")
 async def cl(ctx, *, string: str = None):
     if ctx.guild.id == TRI_Archive:
         await ctx.reply(embed=discord.Embed(colour=0xffffff, title = "closing　guide　⸝⸝.ᐟ", description="""
-- rename ticket　┈　`,rn (name) tbc`
+- rename ticket　┈　`,rn 𝐧𝐚𝐦𝐞 tbc`
 - ping sr+　┈　`,sr`
 - see format for closing statements using the dropdown below.
 - please merge identical reasons.
@@ -998,7 +1002,7 @@ async def cl(ctx, *, string: str = None):
 
 class ClosingView(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None)
+        super().__init__(timeout=600)
 
     @discord.ui.select(options=closing_options, placeholder="‎　　Select a closing type . . .　　　", custom_id="closing",
                        max_values=1)
@@ -1006,42 +1010,42 @@ class ClosingView(discord.ui.View):
         if self.select_callback.values[0] == "report":
             await interaction.response.send_message(embed=discord.Embed(description="""
 - new report
-  - `new report on 𝗂𝖽 as 𝗍𝖺𝗀`
-  - `new report on 𝗂𝖽 (alt 𝗂𝖽) as 𝗍𝖺𝗀, 𝗍𝖺𝗀`
+  - `new report on 𝐢𝐝 as 𝐭𝐚𝐠`
+  - `new report on 𝐢𝐝 (alt 𝐢𝐝) as 𝐭𝐚𝐠, 𝐭𝐚𝐠`
 - added report
-  - `added report on 𝗂𝖽 as 𝗍𝖺𝗀`
+  - `added report on 𝐢𝐝 as 𝐭𝐚𝐠`
 - edited alts only
-  - `edited alts for 𝗂𝖽 - added alt alt alt, removed alt alt alt`
+  - `edited alts for 𝐢𝐝 - added 𝐢𝐝 𝐢𝐝, removed 𝐢𝐝`
 - edited server owner
-  - `server owner edited for 𝗂𝖽`
+  - `server owner edited for 𝐢𝐝`
 - insufficient proof
-  - `no report on 𝗂𝖽 // insufficient proof`
+  - `no report on 𝐢𝐝 // insufficient proof`
 - deleted user
-  - `no report on 𝗂𝖽 // deleted user`
+  - `no report on 𝐢𝐝 // deleted user`
 - issue resolved
-  - `no report on 𝗂𝖽 // issue resolved`
+  - `no report on 𝐢𝐝 // issue resolved`
 - unresponsive contributor
-  - `no report on 𝗂𝖽 // unresponsive contributor`
+  - `no report on 𝐢𝐝 // unresponsive contributor`
 - contributor left server
-  - `no report on 𝗂𝖽 // contributor left server`
+  - `no report on 𝐢𝐝 // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "appeal":
             await interaction.response.send_message(embed=discord.Embed(description="""
 - accepted appeal
-  - `accepted appeal on 𝗂𝖽 as 𝗍𝖺𝗀`
+  - `accepted appeal on 𝐢𝐝 as 𝐭𝐚𝐠`
 - rejected appeal
-  - `no appeal on 𝗂𝖽 // invalid reason`
+  - `no appeal on 𝐢𝐝 // invalid reason`
 - insufficient proof
-  - `no appeal on 𝗂𝖽 // insufficient proof`
+  - `no appeal on 𝐢𝐝 // insufficient proof`
 - unresponsive contributor
-  - `no appeal on 𝗂𝖽 // unresponsive contributor`
+  - `no appeal on 𝐢𝐝 // unresponsive contributor`
 - contributor left server
-  - `no appeal on 𝗂𝖽 // contributor left server`
+  - `no appeal on 𝐢𝐝 // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "verify":
             await interaction.response.send_message(embed=discord.Embed(description="""
 - successful manual verification
-  - `𝗂𝖽 manually verified`
+  - `𝐢𝐝 manually verified`
 - unresponsive contributor
   - `unresponsive contributor`
 - contributor left server
@@ -1052,14 +1056,14 @@ class ClosingView(discord.ui.View):
 - answered question(s)
   - `query answered`
 - banned user(s)
-  - `no report // banned 𝗂𝖽 for (reason)`
+  - `no report // banned 𝐢𝐝 for 𝐫𝐞𝐚𝐬𝐨𝐧`
 - duplicate/troll ticket
   - `no report`
 """), ephemeral=True)
         if self.select_callback.values[0] == "sr+":
             await interaction.response.send_message(embed=discord.Embed(description="""
 - rename ticket
-  - `,rn (name) tbc (sr name)`
+  - `,rn 𝐧𝐚𝐦𝐞 tbc 𝐬𝐫 𝐧𝐚𝐦𝐞`
 - check active reports and give feedback
   - `,ar`
 - if done correctly, accept reports for voting in order.
@@ -1067,8 +1071,10 @@ class ClosingView(discord.ui.View):
   - `,vr`
 - wait until 5 agree votes before you can publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
 - check published reports
-  - `,pr` and `,c 𝗂𝖽` or `,mc 𝗂𝖽 𝗂𝖽 𝗂𝖽`
-- ask reporter for closing and close the ticket.
+  - `,pr` and `,c 𝐢𝐝` or `,mc 𝐢𝐝 𝐢𝐝 𝐢𝐝`
+- ask reporter for closing
+- `,close` to give ticket credit(s)
+- `/close` or click the `Close with Reason` button to close the ticket; input closing as the reason.
 """), ephemeral=True)
 
 @bot.command(name="getids", help="Extracts valid user IDs from the string provided.")
@@ -1368,8 +1374,8 @@ class StaffGuideView(discord.ui.View):
 - **No breaks in the first 14 days** unless it’s an emergency
 ### Promotion Requirements
 - **2 weeks of quota** (not necessarily consecutive)
-- **10 non-hitter reports**
-- **1 appeal**
+- **10 non-hitter report tickets**
+- **1 appeal ticket**
 - **20 votes**
             """), ephemeral=True)
         if self.select_callback.values[0] == "breaks":
@@ -1451,7 +1457,7 @@ class StaffGuideView(discord.ui.View):
 @app_commands.checks.has_role(adm_ping)
 async def send_staffrules(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
-## <:2paperclip:1449650494044639335>　　staff　　rules　　୨୧
+## <:2paperclip:1449650494044639335>　　staff　　rules　　ꫂ᭪
 ### Follow Server Rules
 - Adhere to all [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160)
 - Particular focus on **No Discrimination**, **No Hate or Threats**, and **No NSFW Content**
