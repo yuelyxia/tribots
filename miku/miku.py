@@ -1870,7 +1870,7 @@ class FileModal(discord.ui.Modal, title="Create File"):
             pass
         embed = discord.Embed(color=0xffffff)
         embed.add_field(name="User ID", value=str(user.id), inline=True)
-        embed.add_field(name="Username", value=str(user.name), inline=True)
+        embed.add_field(name="User", value=f"{user.mention} ({user.name})", inline=True)
         embed.add_field(name="Tag(s)", value="", inline=False)
         embed.add_field(name="Reason", value="", inline=False)
         embed.add_field(name="Link to thread", value=thread.mention, inline=False)
@@ -1994,7 +1994,7 @@ class TRLogModal(discord.ui.Modal, title="Create TR Log"):
         await interaction.response.send_message(f"Log created for `{user.id}`.", ephemeral=True)
         embed = discord.Embed(color=0xffffff)
         embed.add_field(name="User ID", value=str(user.id), inline=True)
-        embed.add_field(name="Username", value=str(user.name), inline=True)
+        embed.add_field(name="User", value=f"{user.mention} ({user.name})", inline=True)
         embed.add_field(name="Link to thread", value=thread.mention, inline=False)
         msg = await interaction.channel.send(embed=embed)
         thread_embed = discord.Embed(color=0xffffff)
@@ -2065,7 +2065,7 @@ class EditTRLogModal(discord.ui.Modal, title="Edit TR Log"):
 
 
 @create.command(name="trlog", description="Creates a tr log.")
-async def create_file(interaction: discord.Interaction):
+async def create_trlog(interaction: discord.Interaction):
     if interaction.channel.id != 1513548750495154246:
         return await interaction.response.send_message("You cannot use this command in this channel.", ephemeral=True)
     await interaction.response.send_modal(TRLogModal())
