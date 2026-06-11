@@ -158,7 +158,7 @@ async def on_message(message: discord.Message):
                                 new_user = {"_id": alt2_id, "main": alt1_id}
                                 userscol.insert_one(new_user)
                                 await neru_logs_channel.send(
-                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                             elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
                                 r_profile_list = user2_profile["r_profile_list"]
                                 user2_alts = r_profile_list[0].strip("`").split()
@@ -169,7 +169,7 @@ async def on_message(message: discord.Message):
                                 new_user = {"_id": alt1_id, "main": alt2_id}
                                 userscol.insert_one(new_user)
                                 await neru_logs_channel.send(
-                                    f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                    f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                             else:
                                 await neru_logs_channel.send(
                                     f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -207,7 +207,7 @@ async def on_message(message: discord.Message):
                             new_user = {"_id": alt2_id, "main": alt1_id}
                             userscol.insert_one(new_user)
                             await neru_logs_channel.send(
-                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                         elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
                             r_profile_list = user2_profile["r_profile_list"]
                             user2_alts = r_profile_list[0].strip("`").split()
@@ -218,7 +218,7 @@ async def on_message(message: discord.Message):
                             new_user = {"_id": alt1_id, "main": alt2_id}
                             userscol.insert_one(new_user)
                             await neru_logs_channel.send(
-                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -257,7 +257,7 @@ async def on_message(message: discord.Message):
                             new_user = {"_id": alt2_id, "main": alt1_id}
                             userscol.insert_one(new_user)
                             await neru_logs_channel.send(
-                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                         elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
                             r_profile_list = user2_profile["r_profile_list"]
                             user2_alts = r_profile_list[0].strip("`").split()
@@ -268,7 +268,7 @@ async def on_message(message: discord.Message):
                             new_user = {"_id": alt1_id, "main": alt2_id}
                             userscol.insert_one(new_user)
                             await neru_logs_channel.send(
-                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -304,7 +304,7 @@ async def on_message(message: discord.Message):
                             new_user = {"_id": alt2_id, "main": alt1_id}
                             userscol.insert_one(new_user)
                             await neru_logs_channel.send(
-                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                         elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
                             r_profile_list = user2_profile["r_profile_list"]
                             user2_alts = r_profile_list[0].strip("`").split()
@@ -315,7 +315,7 @@ async def on_message(message: discord.Message):
                             new_user = {"_id": alt1_id, "main": alt2_id}
                             userscol.insert_one(new_user)
                             await neru_logs_channel.send(
-                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -579,7 +579,7 @@ async def import_recent(interaction: discord.Interaction):
                                 except DuplicateKeyError:
                                     continue
                                 await neru_logs_channel.send(
-                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                             elif user2_profile and len(
                                     user2_profile) > 2:  # user 2 reported, user 1 not reported
                                 r_profile_list = user2_profile["r_profile_list"]
@@ -594,7 +594,7 @@ async def import_recent(interaction: discord.Interaction):
                                 except DuplicateKeyError:
                                     continue
                                 await neru_logs_channel.send(
-                                    f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                    f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                             else:
                                 await neru_logs_channel.send(
                                     f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -637,7 +637,7 @@ async def import_recent(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                         elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                             r_profile_list = user2_profile["r_profile_list"]
                             user2_alts = r_profile_list[0].strip("`").split()
@@ -651,7 +651,7 @@ async def import_recent(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -695,7 +695,7 @@ async def import_recent(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                         elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                             r_profile_list = user2_profile["r_profile_list"]
                             user2_alts = r_profile_list[0].strip("`").split()
@@ -709,7 +709,7 @@ async def import_recent(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -750,7 +750,7 @@ async def import_recent(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                         elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                             r_profile_list = user2_profile["r_profile_list"]
                             user2_alts = r_profile_list[0].strip("`").split()
@@ -764,7 +764,7 @@ async def import_recent(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -880,7 +880,7 @@ async def import_all(interaction: discord.Interaction):
                                 except DuplicateKeyError:
                                     continue
                                 await neru_logs_channel.send(
-                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                    f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                             elif user2_profile and len(
                                     user2_profile) > 2:  # user 2 reported, user 1 not reported
                                 r_profile_list = user2_profile["r_profile_list"]
@@ -895,7 +895,7 @@ async def import_all(interaction: discord.Interaction):
                                 except DuplicateKeyError:
                                     continue
                                 await neru_logs_channel.send(
-                                    f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                    f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                             else:
                                 await neru_logs_channel.send(
                                     f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -938,7 +938,7 @@ async def import_all(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                         elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                             r_profile_list = user2_profile["r_profile_list"]
                             user2_alts = r_profile_list[0].strip("`").split()
@@ -952,7 +952,7 @@ async def import_all(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -996,7 +996,7 @@ async def import_all(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                         elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                             r_profile_list = user2_profile["r_profile_list"]
                             user2_alts = r_profile_list[0].strip("`").split()
@@ -1010,7 +1010,7 @@ async def import_all(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
@@ -1051,7 +1051,7 @@ async def import_all(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} `{alt2_id}` has been added to the report on `{alt1_id}`")
+                                f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof} \n`{alt2_id}` has been added to the report on `{alt1_id}`")
                         elif user2_profile and len(user2_profile) > 2:  # user 2 reported, user 1 not reported
                             r_profile_list = user2_profile["r_profile_list"]
                             user2_alts = r_profile_list[0].strip("`").split()
@@ -1065,7 +1065,7 @@ async def import_all(interaction: discord.Interaction):
                             except DuplicateKeyError:
                                 continue
                             await neru_logs_channel.send(
-                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} `{alt1_id}` has been added to the report on `{alt2_id}`")
+                                f"`{alt2_id}` and `{alt1_id}` have been added as alts.\n{formatted_proof} \n`{alt1_id}` has been added to the report on `{alt2_id}`")
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
