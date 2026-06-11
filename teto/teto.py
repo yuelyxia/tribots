@@ -246,8 +246,8 @@ def format_user_r_profile(user, r_profile_list, title):
     r_profile.set_thumbnail(url=f"{user.display_avatar}")
     r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
     r_profile.description += f"{user.name}\n`{user.id}`\n{user.mention}"
-    r_profile.description += "\n**Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
-    r_profile.description += "\n**Alts** – " + r_profile_list[0]
+    r_profile.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
+    r_profile.description += f"\n**Alt(s)** – {r_profile_list[0] or "None"}"
     r_profile.description += "\n**Other Tag(s)** – " + r_profile_list[1]
     return r_profile
 def format_user_add_case(add_case_list, case_title):
@@ -260,6 +260,8 @@ def format_user_add_case(add_case_list, case_title):
     else:
         add_case = discord.Embed()
     if add_case_list:
+        add_case.description = f"**{add_case_list[2]}**\n"
+        """
         tags_list = add_case_list[2].split(", ")
         tags_strings = []
         for tag in tags_list:
@@ -274,10 +276,17 @@ def format_user_add_case(add_case_list, case_title):
             tags_strings.append(f"{colour}{tag}\u001b[0m")
         tags_string = ", ".join(tags_strings)
         add_case.description = (f"```ansi\n{tags_string}\n```")
-        add_case.description += "**Date Added** – " + add_case_list[0]
-        add_case.description += "\n**Game(s)** – " + add_case_list[1]
-        add_case.description += f"\n\n> **Reason** – {add_case_list[3]}"
-        add_case.description += f"\n\n> **Contributor** – {add_case_list[4]}\n> **TRI Staff** – {add_case_list[5]}\n> **Accepted by** – {add_case_list[6]}"
+        """
+        add_case.description += "-# **Date Added** – " + add_case_list[0]
+        add_case.description += "\n-# **Game(s)** – " + add_case_list[1]
+        #add_case.description += f"\n\n-# **Contributor** – {add_case_list[4]}"
+        add_case.description += f"\n\n**Reason** – {add_case_list[3]}\n\u200b"
+        #add_case.description += f"\n> **Contributor** – {add_case_list[4]}\n> **TRI Staff** – {add_case_list[5]}\n> **Accepted by** – {add_case_list[6]}"
+        add_case.description += f"\n-# **Contributor** – {add_case_list[4]}\n-# **TRI Staff** – {add_case_list[5]}\n-# **Accepted by** – {add_case_list[6]}"
+        """add_case.add_field(name="Contributor", value=f"-# {add_case_list[4]}")
+        add_case.add_field(name="TRI Staff", value=f"-# {add_case_list[5]}")
+        add_case.add_field(name="Accepted by", value=f"-# {add_case_list[6]}")"""
+
     return add_case
 def format_trustedserver_profile(guild):
     if guild.id == TRI_Archive:
@@ -307,7 +316,7 @@ def format_server_r_profile(guild, r_profile_list, title):
     r_profile.description = f"```ansi\n{colour}{title}\u001b[0m\n```"
     r_profile.description += f"{guild.name}\n`{guild.id}`"
     if guild.created_at:
-        r_profile.description += "\n**Server Created** – " + f"<t:{round(int(guild.created_at.timestamp()))}:D> (<t:{round(int(guild.created_at.timestamp()))}:R>)\n"
+        r_profile.description += "\n-# **Server Created** – " + f"<t:{round(int(guild.created_at.timestamp()))}:D> (<t:{round(int(guild.created_at.timestamp()))}:R>)\n"
     r_profile.description += f"\n**Owner** – {r_profile_list[0]}\n**Other Tag(s)** – " + r_profile_list[1]
     if guild.banner:
         r_profile.set_image(url=guild.banner.url)
@@ -319,6 +328,8 @@ def format_server_add_case(add_case_list, case_title):
         add_case = discord.Embed(colour=0xd9b534)
     else:
         add_case = discord.Embed()
+    add_case.description = f"**{add_case_list[1]}**\n"
+    """
     tags_list = add_case_list[1].split(", ")
     tags_strings = []
     for tag in tags_list:
@@ -331,9 +342,10 @@ def format_server_add_case(add_case_list, case_title):
         tags_strings.append(f"{colour}{tag}\u001b[0m")
     tags_string = ", ".join(tags_strings)
     add_case.description = (f"```ansi\n{tags_string}\n```")
-    add_case.description += "**Date Added** – " + add_case_list[0]
-    add_case.description += "\n\n> **Reason** – " + add_case_list[2]
-    add_case.description += f"\n\n> **Contributor** – {add_case_list[3]}\n> **TRI Staff** – {add_case_list[4]}\n> **Accepted by** – {add_case_list[5]}"
+    """
+    add_case.description += "-# **Date Added** – " + add_case_list[0]
+    add_case.description += f"\n\n**Reason** – {add_case_list[2]}\n\u200b"
+    add_case.description += f"\n-# **Contributor** – {add_case_list[3]}\n-# **TRI Staff** – {add_case_list[4]}\n-# **Accepted by** – {add_case_list[5]}"
     return add_case
 def reconstruct_server_r_profile(guild_data, r_profile_list, title):
     if title in red_server_tags:
@@ -357,7 +369,7 @@ def reconstruct_server_r_profile(guild_data, r_profile_list, title):
     if guild_created_at:
         ts = int(guild_created_at)
         r_profile.description += (
-            f"\n**Server Created** – "
+            f"\n-# **Server Created** – "
             f"<t:{ts}:D> (<t:{ts}:R>)\n"
         )
     r_profile.description += f"\n**Owner** – {r_profile_list[0]}\n**Other Tag(s)** – {r_profile_list[1]}"
