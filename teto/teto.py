@@ -1333,6 +1333,8 @@ class AltsModal(discord.ui.Modal, title="Alts"):
                         valid_alts.append(alt_id.id)
             if len(valid_alts) != 0:
                 r_profile_list[0] = alts_string(valid_alts)
+            else:
+                r_profile_list[0] = ""
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
