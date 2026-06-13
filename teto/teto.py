@@ -260,7 +260,7 @@ def format_user_add_case(add_case_list, case_title):
     else:
         add_case = discord.Embed()
     if add_case_list:
-        add_case.description = f"**{add_case_list[2]}**\n"
+        add_case.description = f"**{add_case_list[2] or "TBC"}**\n"
         """
         tags_list = add_case_list[2].split(", ")
         tags_strings = []
@@ -328,7 +328,7 @@ def format_server_add_case(add_case_list, case_title):
         add_case = discord.Embed(colour=0xd9b534)
     else:
         add_case = discord.Embed()
-    add_case.description = f"**{add_case_list[1]}**\n"
+    add_case.description = f"**{add_case_list[1] or "TBC"}**\n"
     """
     tags_list = add_case_list[1].split(", ")
     tags_strings = []
