@@ -807,7 +807,7 @@ class TagsView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "scammer":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　　　　scammer
+## <a:redarrow:1388148121242177726>　　scammer
 　　**__definition__**
 
 > users who have shown the **intention to, have attempted to, have admitted to, and/or have scammed**.
@@ -818,13 +818,16 @@ class TagsView(discord.ui.View):
 > - gaining control of victim’s account (directly or via MM) and ghosting/blocking without completing the trade.
 > - sending malicious links (e.g. beam links) to steal accounts, items, or information.
 > - providing a different account/item than agreed and refusing to refund or trade back.
+> - refusal, failure, or unreasonable delay in providing mutually accepted payment for services rendered.
+> - refusing to refund or provide agreed items after receiving payment, including attempts to justify non-fulfilment under a “final sale” policy.
+> - refusing to provide warranty, replacement, or refund for an account or item after a trade when no prior “no warranty” agreement was clearly stated or mutually accepted.
 > - faking account details (e.g. edited or stolen screenshots).
 > - retrieving an account or filing chargebacks after a completed trade to reclaim money or assets.
 > - causing damage to others’ account or items, especially with malicious intent.
 
 　　**__notes__**
 
-> - **admitting to scamming:** only reportable with proof (e.g., hit logs). claims alone aren’t enough.
+> - **admitting to scamming:** only reportable with proof (e.g. hit logs). claims alone aren’t enough.
 > - **scam backs:** open a ticket before attempting a scam back to avoid being reported. please provide proof of original ownership and proof of the scam.
 
 -# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
@@ -832,7 +835,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "scam server owner":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　　　　scam server owner
+## <a:redarrow:1388148121242177726>　　scam server owner
 　　**__definition__**
 
 > users who **own scam servers** or have owned scam servers in the past.
@@ -850,7 +853,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "raider":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　　　　raider
+## <a:redarrow:1388148121242177726>　　raider
 　　**__definition__**
 
 > users who have **raided server(s)**.
@@ -866,7 +869,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "plagiarist":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　　　　plagiarist
+## <a:redarrow:1388148121242177726>　　plagiarist
 　　**__definition__**
 
 > users who have claimed others’ creative works as their own, or have shared/used such works without the rightful owner’s permission.
@@ -874,16 +877,16 @@ class TagsView(discord.ui.View):
 
 　　**__examples__**
 
-> - claiming others’ creative works as one’s own.
+> - claiming others’ creative works as one’s own, including ai-generated works.
 > - heavily referencing, copying, or tracing another person’s artwork and claiming it as original.
-> - failing to disclose significant references, tracing, or use of another’s work when offering the artwork for sale.
+> - failing to disclose significant references, tracing, or use of another’s work when offering the creative work(s) for sale.
 
 -# **confrontation is __required__.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "fake event host":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　　　　fake event host
+## <a:redarrow:1388148121242177726>　　fake event host
 　　**__definition__**
 
 > users who have hosted events and refused to or repeatedly delayed giving the participant their prize/reward provided that the participant had followed all rules strictly.
@@ -894,7 +897,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "impersonator":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　　　　impersonator
+## <a:redarrow:1388148121242177726>　　impersonator
 　　**__definition__**
 
 > users who deliberately imitate or copy the profile, name, layout and/or description of another user without the real user’s permission, with the intent of deception
@@ -905,7 +908,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "vouch scammer":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　　　　vouch scammer
+## <a:redarrow:1388148121242177726>　　vouch scammer
 　　**__definition__**
 
 > users who use spammed (often botted) vouches or stolen proofs/vouches, with the intent of deceiving others.
@@ -976,6 +979,7 @@ class TagsView(discord.ui.View):
 >   - mm lost an account in an unpreventable situation and offered compensation that the trader was satisfied with, or continually attempted to offer compensation, subject to limitations such as the mm’s financial ability.
 >   - account was retrieved in an unpreventable situation and the trader consented to the risks beforehand.
 >   - low or moderate preventable risks were taken but no harm was done to the account in the end.
+>   - mm is new/unfamiliar with the rules of the discord trading community.
 
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
