@@ -1154,13 +1154,13 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                         user1_profile = userscol.find_one(user1_query)
                         user2_query = {"_id": alt2_id}
                         user2_profile = userscol.find_one(user2_query)
-                        if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                        if user1_profile and user2_profile and len(user1_profile or "")>2 and len(user2_profile or "")>2:
                             await interaction.followup.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
-                        elif user1_profile and len(user1_profile)>2: # user 1 reported, user 2 not reported
+                        elif user1_profile and len(user1_profile)>2 and not (user2_profile and len(user2_profile or "")<2): # user 1 reported, user 2 not reported
                             await interaction.followup.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
-                        elif user2_profile and len(user2_profile)>2: # user 2 reported, user 1 not reported
+                        elif user2_profile and len(user2_profile)>2 and not (user1_profile and len(user1_profile or "")<2): # user 2 reported, user 1 not reported
                             await interaction.followup.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                         else: # none reported
@@ -1189,13 +1189,13 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                     user1_profile = userscol.find_one(user1_query)
                     user2_query = {"_id": alt2_id}
                     user2_profile = userscol.find_one(user2_query)
-                    if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                    if user1_profile and user2_profile and len(user1_profile or "")>2 and len(user2_profile or "")>2:
                         await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
-                    elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                    elif user1_profile and len(user1_profile)>2 and not (user2_profile and len(user2_profile or "")<2):  # user 1 reported, user 2 not reported
                         await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
-                    elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                    elif user2_profile and len(user2_profile)>2 and not (user1_profile and len(user1_profile or "")<2):  # user 2 reported, user 1 not reported
                         await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                     else:  # none reported
@@ -1223,13 +1223,13 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                     user1_profile = userscol.find_one(user1_query)
                     user2_query = {"_id": alt2_id}
                     user2_profile = userscol.find_one(user2_query)
-                    if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                    if user1_profile and user2_profile and len(user1_profile or "")>2 and len(user2_profile or "")>2:
                         await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
-                    elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                    elif user1_profile and len(user1_profile)>2 and not (user2_profile and len(user2_profile or "")<2):  # user 1 reported, user 2 not reported
                         await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
-                    elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                    elif user2_profile and len(user2_profile)>2 and not (user1_profile and len(user1_profile or "")<2):  # user 2 reported, user 1 not reported
                         await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                     else:  # none reported
@@ -1254,13 +1254,13 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                     user1_profile = userscol.find_one(user1_query)
                     user2_query = {"_id": alt2_id}
                     user2_profile = userscol.find_one(user2_query)
-                    if user1_profile and user2_profile and len(user1_profile)>2 and len(user2_profile)>2:
+                    if user1_profile and user2_profile and len(user1_profile or "")>2 and len(user2_profile or "")>2:
                         await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
-                    elif user1_profile and len(user1_profile)>2:  # user 1 reported, user 2 not reported
+                    elif user1_profile and len(user1_profile)>2 and not (user2_profile and len(user2_profile or "")<2):  # user 1 reported, user 2 not reported
                         await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
-                    elif user2_profile and len(user2_profile)>2:  # user 2 reported, user 1 not reported
+                    elif user2_profile and len(user2_profile)>2 and not (user1_profile and len(user1_profile or "")<2):  # user 2 reported, user 1 not reported
                         await interaction.followup.send(
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                     else:  # none reported
