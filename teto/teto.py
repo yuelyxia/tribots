@@ -10543,7 +10543,7 @@ class AccountVoteView(discord.ui.View):
             reason = session.get("reason")
             game_uid = session["account_id"]
             o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles and len(
-                agree_users) >= 1 and len(agree_users) > len(disagree_users)
+                agree_users) >= 5 and len(agree_users) > len(disagree_users)
             sr_check = is_sr(interaction.user) and interaction.user.id != requested_by and len(
                 agree_users) >= 5 and len(agree_users) > len(disagree_users)
             if o5_check or sr_check:
