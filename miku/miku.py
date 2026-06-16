@@ -1588,22 +1588,33 @@ _ _　　<:cutie:1388714793585606656>ㆍ**claim  roles  here** ㆍㆍ
 　 <:whitebowheart:1459750975710691410> ㆍ ask 　┅
     """)
     msg2 = await interaction.channel.send("_ _", embed=embed2)
-    embed3 = discord.Embed(colour=colour, title="★．．　pings　⊹⁺₊", description="""  
+    embed3 = discord.Embed(colour=colour, title="★．．　user　update　pings　⊹⁺₊", description="""  
 -# _ _
 　∿ <:whitestar:1388147381152911381> ㆍnew user report　⿻
 　 <:whitebow:1388714593211125971> ㆍupdated user report　∿
 　∿ <:whitepaperclip:1449650494044639335> ㆍappealed user report　⿻
+""")
+    msg3 = await interaction.channel.send("_ _", embed=embed3)
+    embed4 = discord.Embed(colour=colour, title="★．．　server　update　pings　⊹⁺₊", description="""  
+-# _ _
 　 <:whiteheart:1434538078747365507> ㆍnew server report　∿
 　∿ <:whitebutterfly:1459750881611354237> ㆍupdated server report　⿻
 　 <:whitebowheart:1459750975710691410> ㆍappealed server report　∿
 """)
-    msg3 = await interaction.channel.send("_ _", embed=embed3)
-    embed4 = discord.Embed(colour=colour, description="""  
+    msg4 = await interaction.channel.send("_ _", embed=embed4)
+    embed5 = discord.Embed(colour=colour, title="★．．　account　update　pings　⊹⁺₊", description="""  
+-# _ _
+　 <:whitebutterfly:1459750881611354237> ㆍnew account report　⿻
+　∿ <:whitepaperclip:1449650494044639335> ㆍupdated account report　∿
+　 <:whitestar:1388147381152911381> ㆍappealed account report　⿻
+""")
+    msg5 = await interaction.channel.send("_ _", embed=embed5)
+    embed6 = discord.Embed(colour=colour, description="""  
 -# _ _
 　⬩ <:whitebutterfly:1459750881611354237> ㆍnews　✿
 　 <:whitebow:1388714593211125971> ㆍticket status　⬩
     """)
-    msg4 = await interaction.channel.send("_ _", embed=embed4)
+    msg6 = await interaction.channel.send("_ _", embed=embed6)
     await interaction.followup.send("Sent!")
     await interaction.followup.send(f"""
 Use the following commands to add react roles:
@@ -1622,12 +1633,19 @@ Use the following commands to add react roles:
 `!rr addmany {interaction.channel.id} {msg3.id}
 <:whitestar:1388147381152911381> 1375275062185168957
 <:whitebow:1388714593211125971> 1459590866724323625
-<:whitepaperclip:1449650494044639335> 1459590865335877663
+<:whitepaperclip:1449650494044639335> 1459590865335877663`
+
+`!rr addmany {interaction.channel.id} {msg4.id}
 <:whiteheart:1434538078747365507> 1375275002537971742
 <:whitebutterfly:1459750881611354237> 1459590362703204405 
 <:whitebowheart:1459750975710691410> 1459590364292972776`
 
-`!rr addmany {interaction.channel.id} {msg4.id}
+`!rr addmany {interaction.channel.id} {msg5.id}
+<:whitebutterfly:1459750881611354237> 1515589534438395914
+<:whitepaperclip:1449650494044639335> 1515589535059284148
+<:whitestar:1388147381152911381> 1515589539069169844
+
+`!rr addmany {interaction.channel.id} {msg6.id}
 <:whitebutterfly:1459750881611354237> 1375276744956706916
 <:whitebow:1388714593211125971> 1459594319110602833`
 
@@ -1644,21 +1662,26 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
         image_embed.set_image(url=image.url)
         await interaction.channel.send("_ _", embed=image_embed)
     embed1 = discord.Embed(colour=colour, description="""
-### <:blank:1383116055550890095>–　what is tri?
+### <a:whitearrow2:1388147186654515273>　　what is tri?
 
 > - trade report investigation archive (**tri archive**) est. may 2025 is a server dedicated to **spreading awareness on dangerous, unlawful, or suspicious activity**, while also **commending outstanding mms/pilots and trusted traders** for upholding integrity and professionalism.
 > - we also aim to **hold unprofessional behaviour accountable**, especially among staff members entrusted with positions of responsibility within the trading community.
 
-　　**__why tri?__**
+　　**__what does tri report?__**
 
-> - we have over 20 tags to report users and servers as accurately as possible.
+> - we have over 20 tags to report users, servers and game accounts as accurately as possible.
 > - we accept a wide range of reports, not only on scammers and suspects but also on dangerous or blacklisted individuals such as raiders, plagiarists or unprofessional staff. when in doubt, feel free to open a ticket to ask.
+> - we also report game accounts to provide greater transparency regarding account histories to help traders make more informed decisions.
+>   - if you are the rightful owner of a scammed account and have successfully recovered it, you may open a ticket to update the account’s status.
 """)
     msg1 = await interaction.channel.send("_ _", embed=embed1)
     embed2 = discord.Embed(colour=colour, description="""
-### <:blank:1383116055550890095>–　how to check users or servers?
+### <a:whitearrow2:1388147186654515273>　　how to check for reports?
 
-> - `,c` to check; `,c [user id]` or `,c [invite]`
+> - `,c` to check
+>   - `,c 𝐮𝐬𝐞𝐫 𝐢𝐝`
+>   - `,c 𝐢𝐧𝐯𝐢𝐭𝐞`
+>   - `,c 𝐠𝐚𝐦𝐞 𝐮𝐢𝐝`
 > - how to obtain user id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
 
 　　**__examples__**
@@ -1667,71 +1690,73 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
 > - `,c` <@1450073025818136598>
 > - `,c tri`
 > - `,c https://discord.gg/tri`
+> - `,c genshin 666666666`
+> - `,c Honkai: Star Rail 777777777`
+> - `,c idv eu/na10101010`
 
 """)
     msg2 = await interaction.channel.send("_ _", embed=embed2)
     embed3 = discord.Embed(colour=colour, description="""
-### <:blank:1383116055550890095>–　how to stay updated with tri’s reports?
+### <a:whitearrow2:1388147186654515273>　　how to stay updated with tri’s reports?
 
-> - follow tri’s report announcement channels <#1375132097605406721> and <#1375184563675856916> to receive updates in your own server.
+> - follow tri’s report announcement channels <#1375132097605406721>, <#1375184563675856916> and <#1515531623045533716> to receive updates in your own server.
 > - how to follow a channel? guide [here](https://support.discord.com/hc/en-us/articles/360028384531-Channel-Following-FAQ).
 
 > - add tri’s bot <@1457249982104211467> to your server by clicking **add app** on the bot’s profile, or click [here](https://discord.com/oauth2/authorize?client_id=1457249982104211467).
-> - `,c` to check users or servers using <@1457249982104211467>.
+> - `,c` to check users, servers or accounts using <@1457249982104211467>.
 > - `/check all` to check your server for users with bannable reports.
 """)
     msg3 = await interaction.channel.send("_ _", embed=embed3)
     embed4 = discord.Embed(colour=colour, description=f"""
-### <:blank:1383116055550890095>–　how to make a report?
+### <a:whitearrow2:1388147186654515273>　　how to make a report?
 
 > - <#1375261699111784478> to make a report.
-> - please ensure you have the accused user id or server invite. how to obtain user id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
-> - please also check if the accused has been reported recently (within the past 6 months) for similar reasons.
+>   - please ensure you have the user id, server invite or account uid.
+>   - how to obtain user id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
+>   - please also check if the user has been reported recently (within the past 6 months) for similar reasons. [how to check for reports?]({msg2.jump_url})
 > - provide **uncropped**, **unedited** screenshots or screen recordings from **top to bottom** as far as possible.
-> - [how to check users or servers?]({msg2.jump_url})
 
 """)
     msg4 = await interaction.channel.send("_ _", embed=embed4)
     embed5 = discord.Embed(colour=colour, description=f"""
-### <:blank:1383116055550890095>–　how to make an appeal?
+### <a:whitearrow2:1388147186654515273>　　how to make an appeal?
 
 > - <#1375261699111784478> to make an appeal if you believe your report is inaccurate or unfair, or if you have served minimum report period (mrp) as stated in [legal codex](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/).
-> - note that appeals based on mrp are not guaranteed and will be reviewed on a case by case basis.
+>   - note that appeals based on mrp are not guaranteed and will be reviewed on a case by case basis.
 > - please provide all relevant information that may prove your report to be inaccurate or unfair.
 > - you may request for a staff to be your defender i.e. argue in favour of your appeal. however, defenders will remain unbiased, and appeals will still be judged based on the facts and evidence presented.
 """)
     msg5 = await interaction.channel.send("_ _", embed=embed5)
     embed6 = discord.Embed(colour=colour, description=f"""
-### <:blank:1383116055550890095>–　what is tri’s tos, server rules and ban policy?
+### <a:whitearrow2:1388147186654515273>　　what are tri’s tos and server rules?
 > - our terms of service may be found [here](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/edit?tab=t.0#heading=h.d0k3z1hwlns).
 > - please read through [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160) carefully. not following rules may result in warns or bans.
-
-　　**__ban policy__**
-
 > - we do not ban scammers so that they may make an appeal.
-> **what do we ban?**
+
+　　**__what does tri ban?__**
+
 > - not following discord [tos](https://discord.com/terms) or [guidelines](https://discord.com/guidelines).
 > - racist, sexist, homophobic, xenophobic, or similar slurs and sentiments
 > - targeted hate, threats of violence, doxxing, or sharing private info.
 > - false or malicious reports. this includes editing proofs.
 > - advertising products, services, events, or servers.
-> - attempting to bribe or gain favors from staff, even outside the server.
+> - attempting to bribe or gain favours from staff, even outside the server.
 > - nsfw material, even if mentioned as a joke.
 
 """)
     msg6 = await interaction.channel.send("_ _", embed=embed6)
     embed = discord.Embed(colour=colour, description=f"""
-<:blank:1383116055550890095>–　[what is tri?]({msg1.jump_url})
+<:whiteheart:1434538078747365507>　　[what is tri?]({msg1.jump_url})
 -# <:blank:1383116055550890095>
-<:blank:1383116055550890095>–　[how to check users or servers?]({msg2.jump_url})
+<:whiteheart:1434538078747365507>　　[how to check for reports?]({msg2.jump_url})
 -# <:blank:1383116055550890095>
-<:blank:1383116055550890095>–　[how to stay updated with tri’s reports?]({msg3.jump_url})
+<:whiteheart:1434538078747365507>　　[how to stay updated with tri’s reports?]({msg3.jump_url})
 -# <:blank:1383116055550890095>
-<:blank:1383116055550890095>–　[how to make a report?]({msg4.jump_url})
+<:whiteheart:1434538078747365507>　　[how to make a report?]({msg4.jump_url})
 -# <:blank:1383116055550890095>
-<:blank:1383116055550890095>–　[how to make an appeal?]({msg5.jump_url})
+<:whiteheart:1434538078747365507>　　[how to make an appeal?]({msg5.jump_url})
 -# <:blank:1383116055550890095>
-<:blank:1383116055550890095>–　[what is tri’s tos, rules and ban policy?]({msg6.jump_url})
+<:whiteheart:1434538078747365507>　　[what are tri’s tos and server rules?]({msg6.jump_url})
 """)
     await interaction.channel.send("_ _", embed=embed)
     await interaction.followup.send("Sent!", ephemeral=True)
