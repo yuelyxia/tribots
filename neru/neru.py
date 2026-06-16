@@ -49,7 +49,7 @@ def alts_string(alts_list):
     return string
 def default_no_alts(user):
     profile = discord.Embed(colour=0xffffff)
-    profile.description = f"{user.name}\n`{user.id}`\n{user.mention}\n\n"
+    profile.description = f"{user.mention} {user.name}\n`{user.id}`\n\n"
     profile.description += f"<:whitecross:1462774085737119828>　No alts logged for this user."
     return profile
 
@@ -92,14 +92,14 @@ async def on_message(message: discord.Message):
                 alt1_id = match1.group(1)
                 alt2_id = match1.group(2)
             if alt1_id != alt2_id:
-                proof = f"{message.jump_url} ┈ dc"
+                proof = f"{message.jump_url} – dc"
                 try:
                     parts = message.jump_url.split('/')
                     guild_id = int(parts[-3])
                     guild = await bot.fetch_guild(guild_id)
                     if guild:
                         server_name = guild.name
-                        formatted_proof = proof + f" ┈ {server_name}"
+                        formatted_proof = proof + f" – {server_name}"
                 except Exception:
                     pass
                 alt1_query = {"_id": alt1_id}
@@ -350,12 +350,12 @@ async def ma(ctx, *, to_check: str = None):
             user_id = str(user.id)
             alts_info = altscol.find_one({"_id": user_id})
             if not alts_info:
-                lines.append(f"{user.mention} `{user.id}` ┈ No alts")
+                lines.append(f"{user.mention} `{user.id}` – No alts")
                 continue
             else:
                 alts_count = len(alts_info.get("alts", []))
                 if alts_count > 0:
-                    lines.append(f"**{user.mention} `{user.id}` ┈ {alts_count} alt(s)**")
+                    lines.append(f"**{user.mention} `{user.id}` – {alts_count} alt(s)**")
                     continue
         line_groups = [lines[i:i + 25] for i in range(0, len(lines), 25)][:10]
         for group in line_groups:
@@ -405,24 +405,24 @@ async def a(ctx, *, to_check: str = None):
     for i, alt in enumerate(alts):
         base_proof = proofs[i] if i < len(proofs) else "No proof"
         proof_with_server = base_proof
-        if isinstance(base_proof, str) and base_proof.endswith(" ┈ dc"):
+        if isinstance(base_proof, str) and base_proof.endswith(" – dc"):
             jump_url = base_proof[:-5]
             parts = jump_url.split("/")
             try:
                 guild_id = int(parts[-3])
                 guild = bot.get_guild(guild_id) or await bot.fetch_guild(guild_id)
                 if guild:
-                    proof_with_server = f"[{guild.name}]({jump_url}) ┈ dc"
+                    proof_with_server = f"[{guild.name}]({jump_url}) – dc"
             except Exception:
                 pass
         if isinstance(base_proof, str) and base_proof.endswith(">"):
-            parts = base_proof.split(" ┈ ")
-            proof_with_server = f"[image]({parts[0]}) ┈ {parts[1]}" # not server but whatever
-        lines_without_server.append(f"ㆍ　`{alt}` ┈ {base_proof}")
-        lines_with_server.append(f"ㆍ　`{alt}` ┈ {proof_with_server}")
+            parts = base_proof.split(" – ")
+            proof_with_server = f"[image]({parts[0]}) – {parts[1]}" # not server but whatever
+        lines_without_server.append(f"ㆍ　`{alt}` – {base_proof}")
+        lines_with_server.append(f"ㆍ　`{alt}` – {proof_with_server}")
     LIMIT = 3900
     GLOBAL_LIMIT = 5800
-    header = f"{user.name}\n`{user.id}`\n{user.mention}\n\n<a:whitealert:1496542298908000257>　**Alt(s)**\n"
+    header = f"{user.mention} {user.name}\n`{user.id}`\n\n<a:whitealert:1496542298908000257>　**Alt(s)**\n"
     def calculate_total_chars(lines_list):
         total_embed_chars = 0
         current_chunk = []
@@ -505,7 +505,7 @@ async def import_recent(interaction: discord.Interaction):
                     continue
                 if alt1_id == alt2_id:
                     continue
-                proof = f"{message.jump_url} ┈ dc"
+                proof = f"{message.jump_url} – dc"
                 formatted_proof = proof
                 try:
                     parts = message.jump_url.split('/')
@@ -513,7 +513,7 @@ async def import_recent(interaction: discord.Interaction):
                     guild = await bot.fetch_guild(guild_id)
                     if guild:
                         server_name = guild.name
-                        formatted_proof = proof + f" ┈ {server_name}"
+                        formatted_proof = proof + f" – {server_name}"
                 except Exception:
                     pass
                 alt1_query = {"_id": alt1_id}
@@ -806,7 +806,7 @@ async def import_all(interaction: discord.Interaction):
                     continue
                 if alt1_id == alt2_id:
                     continue
-                proof = f"{message.jump_url} ┈ dc"
+                proof = f"{message.jump_url} – dc"
                 formatted_proof = proof
                 try:
                     parts = message.jump_url.split('/')
@@ -814,7 +814,7 @@ async def import_all(interaction: discord.Interaction):
                     guild = await bot.fetch_guild(guild_id)
                     if guild:
                         server_name = guild.name
-                        formatted_proof = proof + f" ┈ {server_name}"
+                        formatted_proof = proof + f" – {server_name}"
                 except Exception:
                     pass
                 alt1_query = {"_id": alt1_id}
@@ -1101,7 +1101,7 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
     url = await upload_attachment(image)
     if not url:
         return await interaction.followup.send("Please provide a valid image.")
-    proof = f"{url} ┈ added by {interaction.user.mention}"
+    proof = f"{url} – added by {interaction.user.mention}"
     if user1.strip("<@>") != user2.strip("<@>"):
         try:
             alt1 = await bot.fetch_user(int(user1.strip("<@>")))
