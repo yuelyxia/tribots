@@ -1643,7 +1643,7 @@ Use the following commands to add react roles:
 `!rr addmany {interaction.channel.id} {msg5.id}
 <:whitebutterfly:1459750881611354237> 1515589534438395914
 <:whitepaperclip:1449650494044639335> 1515589535059284148
-<:whitestar:1388147381152911381> 1515589539069169844
+<:whitestar:1388147381152911381> 1515589539069169844`
 
 `!rr addmany {interaction.channel.id} {msg6.id}
 <:whitebutterfly:1459750881611354237> 1375276744956706916
