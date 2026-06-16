@@ -1202,7 +1202,7 @@ async def check_all(interaction: discord.Interaction):
 @bot.command()
 async def sync(ctx: commands.Context):
     await bot.tree.sync()
-    reports_count = userscol.count_documents({}) + serverscol.count_documents({})
+    reports_count = userscol.count_documents({}) + serverscol.count_documents({}) + accountscol.count_documents({})
     await bot.change_presence(status=discord.Status.dnd,
         activity=discord.Activity(
             type=discord.ActivityType.watching,
