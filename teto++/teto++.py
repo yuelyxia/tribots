@@ -514,9 +514,12 @@ async def c(ctx, *, to_check: str = None):
     if " " in to_check:
         match = re.match(r"(.+?)\s+(\S+)$", to_check)
         if match:
-            game = match.group(1).strip()
-            uid = match.group(2).strip()
-            game_uid = format_game_uid(game, uid)
+            game_input = match.group(1).strip()
+            uid_input = match.group(2).strip()
+            game = format_game(game_input)
+            if game is None:
+                return await ctx.reply(f"The game {game_input} is **invalid** or **unsupported**.")
+            game_uid = format_game_uid(game, uid_input)
             account_query = {"_id": str(game_uid)}
             account_profile = accountscol.find_one(account_query)
             if account_profile:
