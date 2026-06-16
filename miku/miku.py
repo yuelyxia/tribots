@@ -1017,7 +1017,6 @@ class ClosingView(discord.ui.View):
   - `new report on 𝐢𝐝 as 𝐭𝐚𝐠`
   - `new report on 𝐢𝐝 (alt 𝐢𝐝) as 𝐭𝐚𝐠, 𝐭𝐚𝐠`
   - `new report on 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 as 𝐭𝐚𝐠`
-  - `new report on 𝐠𝐚𝐦𝐞 𝐮𝐢𝐝 as 𝐭𝐚𝐠`
 - added report
   - `added report on 𝐢𝐝 as 𝐭𝐚𝐠`
 - edited alts only
