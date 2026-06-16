@@ -919,7 +919,7 @@ class TagsView(discord.ui.View):
 > - a server owner may be reported as vouch scammer for allowing spammed vouches in a trading server.
 > - neither the vouched user nor voucher are reportable unless there is evidence of them scamming/attempting to scam.
 
--# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+-# **confrontation is __preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "suspect":
