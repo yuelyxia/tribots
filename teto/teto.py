@@ -27,6 +27,7 @@ client = pymongo.MongoClient(CLIENT)
 db = client["database"]
 userscol = db["users"]
 serverscol = db["servers"]
+accountscol = db["accounts"]
 trusteduserscol = db["trusted_users"]
 trustedserverscol = db["trusted_servers"]
 staffweeklycol = db["staff_weekly"]
@@ -40,6 +41,7 @@ PROOFS_CHANNEL = 1455055877034868769
 VOTE_CHANNEL = 1434537315791016210
 USER_REPORTS_CHANNEL = 1375132097605406721
 SERVER_REPORTS_CHANNEL = 1375184563675856916
+ACCOUNT_REPORTS_CHANNEL = 1515531623045533716
 TICKETS_CHANNEL = 1375261699111784478
 
 # tri roles info
@@ -56,6 +58,9 @@ appealed_user_report_ping = 1459590865335877663
 new_server_report_ping = 1375275002537971742
 updated_server_report_ping = 1459590362703204405
 appealed_server_report_ping = 1459590364292972776
+new_account_report_ping = 1515589534438395914
+updated_account_report_ping = 1515589535059284148
+appealed_account_report_ping = 1515589539069169844
 
 # tri bots
 tri_bots = [
@@ -78,7 +83,10 @@ yellow_tags = ["Suspect", "Service Ban", "Unprofessional MM", "Unprofessional Pi
 red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "Fake Event Server"]
 yellow_server_tags = ["Suspect Server"]
 
-games_list = ["Genshin Impact", "Honkai: Star Rail", "Wuthering Waves", "Roblox", "Project Sekai", "Cookie Run: Kingdom", "Identity V", "Valorant", "Others", "N/A"]
+red_account_tags = ["Scammed Account", "Leeched Account"]
+yellow_account_tags = ["Under Investigation", "Advertised by Scammer"]
+
+games_list = ["Genshin Impact", "Honkai: Star Rail", "Wuthering Waves", "Roblox", "Zenless Zone Zero", "Honkai Impact 3rd", "Project Sekai", "Cookie Run: Kingdom", "Identity V", "Valorant", "Others", "N/A"]
 
 def is_sr(user):
     return any(role.id in (sr_ping, adm_ping) for role in user.roles)
@@ -261,32 +269,13 @@ def format_user_add_case(add_case_list, case_title):
         add_case = discord.Embed()
     if add_case_list:
         add_case.description = f"**{add_case_list[2] or "TBC"}**\n"
-        """
-        tags_list = add_case_list[2].split(", ")
-        tags_strings = []
-        for tag in tags_list:
-            if tag == "Ex-offender":
-                colour = "\u001b[1;33m"
-            elif tag in red_tags:
-                colour = "\u001b[1;31m"
-            elif tag in yellow_tags:
-                colour = "\u001b[1;33m"
-            else:
-                colour = "\u001b[0m"
-            tags_strings.append(f"{colour}{tag}\u001b[0m")
-        tags_string = ", ".join(tags_strings)
-        add_case.description = (f"```ansi\n{tags_string}\n```")
-        """
         add_case.description += "-# **Date Added** – " + add_case_list[0]
         add_case.description += "\n-# **Game(s)** – " + add_case_list[1]
-        #add_case.description += f"\n\n-# **Contributor** – {add_case_list[4]}"
         add_case.description += f"\n\n**Reason** – {add_case_list[3]}\n\u200b"
-        #add_case.description += f"\n> **Contributor** – {add_case_list[4]}\n> **TRI Staff** – {add_case_list[5]}\n> **Accepted by** – {add_case_list[6]}"
         add_case.description += f"\n-# **Contributor** – {add_case_list[4]}\n-# **TRI Staff** – {add_case_list[5]}\n-# **Accepted by** – {add_case_list[6]}"
         """add_case.add_field(name="Contributor", value=f"-# {add_case_list[4]}")
         add_case.add_field(name="TRI Staff", value=f"-# {add_case_list[5]}")
         add_case.add_field(name="Accepted by", value=f"-# {add_case_list[6]}")"""
-
     return add_case
 def format_trustedserver_profile(guild):
     if guild.id == TRI_Archive:
@@ -329,20 +318,6 @@ def format_server_add_case(add_case_list, case_title):
     else:
         add_case = discord.Embed()
     add_case.description = f"**{add_case_list[1] or "TBC"}**\n"
-    """
-    tags_list = add_case_list[1].split(", ")
-    tags_strings = []
-    for tag in tags_list:
-        if tag in red_server_tags:
-            colour = "\u001b[1;31m"
-        elif tag in yellow_server_tags:
-            colour = "\u001b[1;33m"
-        else:
-            colour = "\u001b[0m"
-        tags_strings.append(f"{colour}{tag}\u001b[0m")
-    tags_string = ", ".join(tags_strings)
-    add_case.description = (f"```ansi\n{tags_string}\n```")
-    """
     add_case.description += "-# **Date Added** – " + add_case_list[0]
     add_case.description += f"\n\n**Reason** – {add_case_list[2]}\n\u200b"
     add_case.description += f"\n-# **Contributor** – {add_case_list[3]}\n-# **TRI Staff** – {add_case_list[4]}\n-# **Accepted by** – {add_case_list[5]}"
@@ -377,6 +352,177 @@ def reconstruct_server_r_profile(guild_data, r_profile_list, title):
         r_profile.set_image(url=guild_banner)
     return r_profile
 
+
+def format_game(game):
+    if game.lower() in ["genshin", "gi", "genshin impact"]:
+        game = "Genshin Impact"
+    elif game.lower() in ["hsr", "honkai star rail", "honkai: star rail"]:
+        game = "Honkai: Star Rail"
+    elif game.lower() in ["wuwa", "wuthering waves"]:
+        game = "Wuthering Waves"
+    elif game.lower() in ["rblx", "roblox"]:
+        game = "Roblox"
+    elif game.lower() in ["zzz", "zenless zone zero"]:
+        game = "Zenless Zone Zero"
+    elif game.lower() in ["hi3", "honkai impact 3rd", "honkai impact"]:
+        game = "Honkai Impact 3rd"
+    elif game.lower() in ["project sekai", "prsk", "pjsk", "project sekai: colorful stage", "project sekai: colourful stage", "project sekai colorful stage", "project sekai colourful stage", "colorful stage", "colourful stage", "colorfulstage", "colourfulstage"]:
+        game = "Project Sekai"
+    elif game.lower() in ["crk", "cookie run kingdom", "cookie run: kingdom"]:
+        game = "Cookie Run: Kingdom"
+    elif game.lower() in ["idv", "identity v"]:
+        game = "Identity V"
+    elif game.lower() in ["valorant"]:
+        game = "Valorant"
+    else:
+        return None
+    return game
+def get_game_icon(game):
+    game = format_game(game)
+    if game == "Genshin Impact":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516025983076143174/genshin.png?ex=6a3124b8&is=6a2fd338&hm=5d671a96d68705e20bd54d9bd833497d9077cec2149d412eb9580ac943d4ebd6&=&format=webp&quality=lossless&width=1024&height=1024"
+    elif game == "Honkai: Star Rail":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516026005532446741/hsr.jpg?ex=6a3124be&is=6a2fd33e&hm=9678434ab7eaebc8fc09f9f3c336d95bd0f5cab888f7c36a58b31506a873f292&=&format=webp&width=1580&height=1580"
+    elif game == "Wuthering Waves":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516026232121069648/image.png?ex=6a3124f4&is=6a2fd374&hm=e6fd4759dd08d9fbdd8cb469219e887b284e20bb51ba5b43408c7bf2962f02ed&=&format=webp&quality=lossless&width=1580&height=1580"
+    elif game == "Roblox":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516270091681927218/500px-Roblox_28202529_28App_Icon29.svg.png?ex=6a320810&is=6a30b690&hm=bd89b113f822cdae762c07bfbd5692447bdcd13de4fe1ea3bd10e3a35bcba2c4&=&format=webp&quality=lossless&width=1000&height=1000"
+    elif game == "Zenless Zone Zero":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516027356777680926/image.png?ex=6a312600&is=6a2fd480&hm=2e375ceeb0a0dd8caec476d8ea106334dd6dcc9db99bbbe46cbdd5990fe169d0&=&format=webp&quality=lossless&width=700&height=700"
+    elif game == "Honkai Impact 3rd":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516027382153089054/rKiMpbQqkg-LUolGjtRvi3T-SEVL30hY_2A1PWK0jagN380TUXj0SHQu9fkmiDdEAtA_J4SHW8p_czxpAAbyYw.png?ex=6a312606&is=6a2fd486&hm=f9b5d4a6ebace2e076fdfff5f9da349b5799444476d65908cfcab8c37704d7b5&=&format=webp&quality=lossless&width=1024&height=1024"
+    elif game == "Project Sekai":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516270868807024691/pdv4ajv4O-ow2BVpWopiMy9XSHXTJSEzi1gjTeD-mg4V3bkM6dmu8qJv_-Poupg5mQ6wNXlhJRuXaH-8SE91.png?ex=6a3208ca&is=6a30b74a&hm=49f291eab7537e755e6b42023bf0dd7d64593fcd48e9382fb541ba78448774c5&=&format=webp&quality=lossless&width=1024&height=1024"
+    elif game == "Cookie Run: Kingdom":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516269434442874980/J1zzZf_Clyg51sikuBbfTMD_sGVK64Ki5vyVtn3MmkUUzQ-AxKWq2-WuVDnpkrpai6Icun3wXspttadNAxy4djI.png?ex=6a320774&is=6a30b5f4&hm=3f007a0828065da94c7b449d6ae2a1132a1c6f907cd86b32ef5e5255664eb7a5&=&format=webp&quality=lossless&width=700&height=700"
+    elif game == "Identity V":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516027416198516797/gP6SK4EnELXuvGQWstDib8kmu7IS_TtyxRPfATilagj1PFW7zDfbiU8qn5vaPEju5OUB_NwuaN8qtFZVpPUbng.png?ex=6a31260e&is=6a2fd48e&hm=0a51cab196a17826e467e8730f8460d66a32cd6c2dd8efa230fec7ef1dd5adb9&=&format=webp&quality=lossless&width=700&height=700"
+    else:
+        return None
+    return icon
+
+def default_account_profile(game_uid):
+    profile = discord.Embed()
+    game, uid = game_uid.split("ㆍ")
+    icon = get_game_icon(game)
+    if icon: profile.set_thumbnail(url=f"{icon}")
+    profile.description = f"**{game}**ㆍ`{uid}`"
+    profile.set_footer(text="✦　This account is unreported or invalid.")
+    return profile
+def reported_account_profile(game_uid, account_profile):
+    r_profile_list = account_profile["r_profile_list"]
+    no_of_cases = len(account_profile) - 2
+    #
+    cases = []
+    for i in range(1, no_of_cases + 1):
+        cases.append(account_profile[str(i)])
+    latest_case = cases[-1]
+    latest_tags = latest_case[2].split(", ")
+    all_tags_list = []
+    for case in cases:
+        all_tags_list.extend(case[2].split(", "))
+    all_tags_list = sort_account_tags(all_tags_list)
+    if "Recovered Account" in latest_tags:
+        title = "Recovered Account"
+    else:
+        title = all_tags_list[0]
+    #
+    newest_case_tags = cases[-1][2].split(", ")
+    newest_case_title = newest_case_tags[0]
+    r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+    add_case = format_account_add_case(cases[-1], newest_case_title)
+    add_case.set_footer(text=f"Page {len(cases)} of {no_of_cases}")
+    embeds = [r_profile, add_case]
+    return embeds
+def sort_account_tags(tags):
+    sorted_tags = []
+    for tag_to_find in red_account_tags:
+        for i in range(0, len(tags)):
+            tag = tags[i]
+            if tag == tag_to_find:
+                sorted_tags.append(tag)
+    for tag_to_find in yellow_account_tags:
+        for i in range(0, len(tags)):
+            tag = tags[i]
+            if tag == tag_to_find:
+                sorted_tags.append(tag)
+    for i in range(0, len(tags)):
+        tag = tags[i]
+        if tag == "Recovered Account":
+            sorted_tags.append(tag)
+    return sorted_tags
+def format_account_r_profile(game_uid, r_profile_list, title):
+    if title == "Recovered Account":
+        r_profile = discord.Embed(colour=0x1DCCA9)
+        colour = "\u001b[1;32m"
+    elif title in red_account_tags:
+        r_profile = discord.Embed(colour=0xFF0045)
+        colour = "\u001b[1;31m"
+    elif title in yellow_account_tags:
+        r_profile = discord.Embed(colour=0xFFD643)
+        colour = "\u001b[1;33m"
+    else:
+        r_profile = discord.Embed()
+        colour = "\u001b[0m"
+    game, uid = game_uid.split("ㆍ")
+    icon = get_game_icon(game)
+    if icon: r_profile.set_thumbnail(url=f"{icon}")
+    r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
+    r_profile.description += f"**{game}**\n`{uid}`"
+    links = []
+    for link in r_profile_list[0]:
+        game, uid = link.split("ㆍ")
+        links.append(f"{game}ㆍ`{uid}`")
+    r_profile.description += f"\n**Linked Account(s)**\n{"\n".join(links) or "None"}"
+    r_profile.description += f"\n**Other Tag(s)** – {r_profile_list[1] or "None"}"
+    return r_profile
+def format_account_add_case(add_case_list, case_title):
+    if case_title == "Recovered Account":
+        add_case = discord.Embed(colour=0x1DCCA9)
+    elif case_title in red_account_tags:
+        add_case = discord.Embed(colour=0xFF0045)
+    elif case_title in yellow_account_tags:
+        add_case = discord.Embed(colour=0xFFD643)
+    else:
+        add_case = discord.Embed()
+    if add_case_list:
+        add_case.description = f"**{add_case_list[2] or "TBC"}**\n"
+        add_case.description += "-# **Date Added** – " + add_case_list[0]
+        add_case.description += f"\n-# **Related User(s)** – {add_case_list[1] or "None"}"
+        add_case.description += f"\n\n**Reason** – {add_case_list[3]}\n\u200b"
+        add_case.description += f"\n-# **Contributor** – {add_case_list[4]}\n-# **TRI Staff** – {add_case_list[5]}\n-# **Accepted by** – {add_case_list[6]}"
+    return add_case
+def format_game_uid(game, uid):
+    game = format_game(game)
+    if uid.lower().startswith("eu/na") or uid.lower().startswith("euna"):
+        uid = uid.lower().replace("eu/na", "EU/NA").replace("euna", "EU/NA")
+    elif uid.lower().startswith("asia"):
+        uid = uid.lower().replace("asia", "Asia")
+    elif uid.lower().startswith("jp"):
+        uid = uid.lower().replace("jp", "JP")
+    elif uid.lower().startswith("en"):
+        uid = uid.lower().replace("en", "EN")
+    elif uid.lower().startswith("tw"):
+        uid = uid.lower().replace("tw", "TW")
+    elif uid.lower().startswith("kr"):
+        uid = uid.lower().replace("kr", "KR")
+    game_uid = f"{game}ㆍ{uid}"
+    return game_uid
+def get_game_uid_list(text):
+    unique_game_uids = set()
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        match = re.match(r"(.+?)\s+(\S+)$", line)
+        if match:
+            raw_game = match.group(1).strip()
+            raw_uid = match.group(2).strip()
+            formatted_result = format_game_uid(raw_game, raw_uid)
+            if formatted_result:
+                unique_game_uids.add(formatted_result)
+    game_uid_list = list(unique_game_uids)
+    return game_uid_list
 
 class UnknownGuild:
     icon=None
@@ -413,6 +559,8 @@ games_options = [
     discord.SelectOption(label="Honkai: Star Rail", value="Honkai: Star Rail"),
     discord.SelectOption(label="Wuthering Waves", value="Wuthering Waves"),
     discord.SelectOption(label="Roblox", value="Roblox"),
+    discord.SelectOption(label="Zenless Zone Zero", value="Zenless Zone Zero"),
+    discord.SelectOption(label="Honkai Impact 3rd", value="Honkai Impact 3rd"),
     discord.SelectOption(label="Project Sekai", value="Project Sekai"),
     discord.SelectOption(label="Cookie Run: Kingdom", value="Cookie Run: Kingdom"),
     discord.SelectOption(label="Identity V", value="Identity V"),
@@ -426,9 +574,16 @@ server_tags_options = [
     discord.SelectOption(label="Impersonator Server", value="Impersonator Server"),
     discord.SelectOption(label="Fake Vouch Server", value="Fake Vouch Server"),
     discord.SelectOption(label="Fake Event Server", value="Fake Event Server"),
-discord.SelectOption(label="Suspect Server", value="Suspect Server"),
+    discord.SelectOption(label="Suspect Server", value="Suspect Server"),
 ]
 
+account_tag_options = [
+    discord.SelectOption(label="Scammed Account", value="Scammed Account"),
+    discord.SelectOption(label="Leeched Account", value="Leeched Account"),
+    discord.SelectOption(label="Under Investigation", value="Under Investigation"),
+    discord.SelectOption(label="Advertised by Scammer", value="Advertised by Scammer"),
+    discord.SelectOption(label="Recovered Account", value="Recovered Account"),
+]
 
 @tasks.loop(hours=1.0)
 async def update_reports_count():
@@ -521,6 +676,21 @@ async def on_ready():
     bot.add_view(AddReportServerContributorView())
     bot.add_view(AddReportServerProofsView())
     bot.add_view(ServerVoteView())
+    bot.add_view(LinksView())
+    bot.add_view(AccountTagsView())
+    bot.add_view(RelatedUsersView())
+    bot.add_view(AccountReasonView())
+    bot.add_view(AccountContributorView())
+    bot.add_view(AccountProofsView())
+    bot.add_view(EditLinksOnlyView())
+    bot.add_view(AccountAppealView())
+    bot.add_view(AddReportLinksView())
+    bot.add_view(AddReportAccountTagsView())
+    bot.add_view(AddReportRelatedUsersView())
+    bot.add_view(AddReportAccountReasonView())
+    bot.add_view(AddReportAccountContributorView())
+    bot.add_view(AddReportAccountProofsView())
+    bot.add_view(AccountVoteView())
 
 
 @bot.event
@@ -637,160 +807,69 @@ async def mc(ctx, *, to_check: str = None):
 @bot.command(name="c", help="Checks a user or server.")
 async def c(ctx, *, to_check: str = None):
     requested_by = ctx.author
-    if to_check == None:
-        user = ctx.author
-        user_id = user.id
-        user_query = {"_id": str(user_id)}
-        trusteduser_profile = trusteduserscol.find_one(user_query)
-        if trusteduser_profile and not (
-                trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
-                trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and
-                trusteduser_profile["trader"] == 0):
-            trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
-            await ctx.reply("User is trusted.", embed=trusted_embed)
-        #
-        else:
-            user_profile = userscol.find_one(user_query)
-            if user_profile:
-                if len(user_profile) == 2:
-                    main = user_profile['main']
-                    user_query = {"_id": main}
-                    main_user_profile = userscol.find_one(user_query)
-                    main_user = await bot.fetch_user(int(main))
+
+    to_check = to_check.strip()
+    if " " in to_check:
+        match = re.match(r"(.+?)\s+(\S+)$", to_check)
+        if match:
+            game = match.group(1).strip()
+            uid = match.group(2).strip()
+            game_uid = format_game_uid(game, uid)
+            account_query = {"_id": str(game_uid)}
+            account_profile = accountscol.find_one(account_query)
+            if account_profile:
+                if len(account_profile) == 2:
+                    main = account_profile['main']
+                    account_query = {"_id": main}
+                    main_profile = accountscol.find_one(account_query)
                     #
-                    user_query = {"_id": str(user_id)}
+                    user_query = {"_id": str(ctx.author.id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
                     if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                 and (is_active_staff(ctx.author)
                                                      or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                        await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
-                                        embeds=reported_user_profile(main_user, main_user_profile),
-                                        view=EditUserReportView(main_user, main_user_profile, requested_by,
-                                                            len(main_user_profile) - 2))
+                        await ctx.reply(f"Account `{game_uid}` is linked to `{main}`.",
+                                        embeds=reported_account_profile(main, main_profile),
+                                        view=EditAccountReportView(main, main_profile, requested_by,
+                                                                   len(main_profile) - 2))
                     else:
-                        await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
-                                        embeds=reported_user_profile(main_user, main_user_profile),
-                                        view=ReportedUserView(main_user, main_user_profile, requested_by,
-                                                              len(main_user_profile) - 2))
-                #
+                        await ctx.reply(
+                            f"Account `{game_uid}` is linked to `{main}`.",
+                            embeds=reported_account_profile(main, main_profile),
+                            view=ReportedAccountView(main, main_profile, requested_by,
+                                                     len(main_profile) - 2))
                 else:
                     #
-                    user_query = {"_id": str(user_id)}
+                    user_query = {"_id": str(ctx.author.id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
                     if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                 and (is_active_staff(ctx.author)
                                                      or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                        await ctx.reply(f"User is reported.",
-                                        embeds=reported_user_profile(user, user_profile),
-                                        view=EditUserReportView(user, user_profile, requested_by, len(user_profile) - 2))
+                        await ctx.reply(f"Account is reported.",
+                                        embeds=reported_account_profile(game_uid, account_profile),
+                                        view=EditAccountReportView(game_uid, account_profile, requested_by,
+                                                                   len(account_profile) - 2))
                     else:
-                        await ctx.reply(f"User is reported.",
-                                        embeds=reported_user_profile(user, user_profile),
-                                        view=ReportedUserView(user, user_profile, requested_by, len(user_profile) - 2))
+                        await ctx.reply(f"Account is reported.",
+                                        embeds=reported_account_profile(game_uid, account_profile),
+                                        view=ReportedAccountView(game_uid, account_profile, requested_by,
+                                                                 len(account_profile) - 2))
             #
             else:
-                profile = default_user_profile(user)
+                profile = default_account_profile(game_uid)
                 #
-                user_query = {"_id": str(user_id)}
+                user_query = {"_id": str(ctx.author.id)}
                 trusteduser_profile = trusteduserscol.find_one(user_query)
                 if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                             and (is_active_staff(ctx.author)
                                                  or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                    await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
+                    requested_by = ctx.author
+                    await ctx.reply(embed=profile, view=NewAccountReportView(game_uid, requested_by))
                 else:
                     await ctx.reply(embed=profile, view=MemberView())
-
     else:
-        try:
-            if int(to_check.strip('<@>')) in tri_bots:
-                user = await bot.fetch_user(int(to_check.strip('<@>')))
-                user_id = user.id
-                profile = discord.Embed(colour=0xffffff)
-                profile.set_thumbnail(url=f"{user.display_avatar.url}")
-                profile.description = f"{user.mention} {user.name}\n`{user.id}`"
-                profile.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
-                if user_id == 1450073025818136598:
-                    profile.description += "\n**TETO** ┈ report bot for `/tri`"
-                elif user_id == 1457249982104211467:
-                    profile.description += "\n**TETO++** ┈ report bot for `/tri`"
-                elif user_id == 1457382953293320304:
-                    profile.description += "\n**NERU** ┈ alts bot for `/tri`"
-                elif user_id == 1457309787044839477:
-                    profile.description += "\n**MIKU** ┈ utils bot for `/tri`"
-                elif user_id == 1457009979817988241:
-                    profile.description += "\n**KAFU** ┈ tickets bot for `/tri`"
-                profile.set_footer(text="✦　TRI bot")
-                await ctx.reply(embed=profile)
-                return
-        except Exception: pass
-        try:
-            user = await bot.fetch_user(int(to_check.strip('<@>')))
-        except discord.NotFound:
-            server_query = {"_id": to_check.strip('<@>')}
-            trustedserver_profile = trustedserverscol.find_one(server_query)
-            if trustedserver_profile:
-                trusted_embed = format_trustedserver_profile(UnknownGuild(int(to_check.strip('<@>'))))
-                await ctx.reply("Server is trusted.", embed=trusted_embed)
-            else:
-                server_profile = serverscol.find_one(server_query)
-                if server_profile:  # reported server
-                    await ctx.reply(f"Server is reported.",
-                                        embeds=reported_server_profile(UnknownGuild(int(to_check.strip('<@>'))), server_profile),
-                                        view=ReportedServerView(UnknownGuild(int(to_check.strip('<@>'))), server_profile, requested_by,
-                                                                len(server_profile) - 2))
-                else:  # unreported server
-                    await ctx.reply("Please provide a valid user ID. To check servers, please provide a valid invite link.")
-
-        except discord.HTTPException as e:
-            await ctx.reply(f"An error occurred: {e}")
-        except ValueError:
-            try:
-                invite = await bot.fetch_invite(to_check)
-            except discord.NotFound:
-                await ctx.reply("The invite link is **invalid** or **expired**.")
-            except discord.Forbidden:
-                await ctx.reply("Unable to access details of invite.")
-            except Exception as e:
-                await ctx.reply(f"An error occurred: {e}")
-            else:
-                guild = invite.guild
-                guild_id = invite.guild.id
-                server_query = {"_id": str(guild_id)}
-                trustedserver_profile = trustedserverscol.find_one(server_query)
-                if trustedserver_profile:
-                    trusted_embed = format_trustedserver_profile(guild)
-                    await ctx.reply("Server is trusted.", embed=trusted_embed)
-                else:
-                    server_profile = serverscol.find_one(server_query)
-                    if server_profile:  # reported server
-                        #
-                        user_query = {"_id": str(ctx.author.id)}
-                        trusteduser_profile = trusteduserscol.find_one(user_query)
-                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                    and (is_active_staff(ctx.author)
-                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                            await ctx.reply(f"Server is reported.",
-                                            embeds=reported_server_profile(guild, server_profile),
-                                            view=EditServerReportView(guild, server_profile, requested_by,
-                                                                    len(server_profile) - 2))
-                        else:
-                            await ctx.reply(f"Server is reported.",
-                                            embeds=reported_server_profile(guild, server_profile),
-                                            view=ReportedServerView(guild, server_profile, requested_by,
-                                                                  len(server_profile) - 2))
-                    else:  # unreported server
-                        profile = default_server_profile(guild)
-                        #
-                        user_query = {"_id": str(ctx.author.id)}
-                        trusteduser_profile = trusteduserscol.find_one(user_query)
-                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                    and (is_active_staff(ctx.author)
-                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                            await ctx.reply(embed=profile, view=NewServerReportView(guild, requested_by))
-                        else:
-                            await ctx.reply(embed=profile, view=MemberView())
-        #
-        else:
+        if to_check == None:
+            user = ctx.author
             user_id = user.id
             user_query = {"_id": str(user_id)}
             trusteduser_profile = trusteduserscol.find_one(user_query)
@@ -800,6 +879,7 @@ async def c(ctx, *, to_check: str = None):
                     trusteduser_profile["trader"] == 0):
                 trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
                 await ctx.reply("User is trusted.", embed=trusted_embed)
+            #
             else:
                 user_profile = userscol.find_one(user_query)
                 if user_profile:
@@ -809,7 +889,7 @@ async def c(ctx, *, to_check: str = None):
                         main_user_profile = userscol.find_one(user_query)
                         main_user = await bot.fetch_user(int(main))
                         #
-                        user_query = {"_id": str(ctx.author.id)}
+                        user_query = {"_id": str(user_id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (is_active_staff(ctx.author)
@@ -819,40 +899,191 @@ async def c(ctx, *, to_check: str = None):
                                             view=EditUserReportView(main_user, main_user_profile, requested_by,
                                                                 len(main_user_profile) - 2))
                         else:
-                            await ctx.reply(
-                                f"User `{user_id}` is reported as alt of `{main}`.",
-                                embeds=reported_user_profile(main_user, main_user_profile),
-                                view=ReportedUserView(main_user, main_user_profile, requested_by,
-                                                      len(main_user_profile) - 2))
+                            await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
+                                            embeds=reported_user_profile(main_user, main_user_profile),
+                                            view=ReportedUserView(main_user, main_user_profile, requested_by,
+                                                                  len(main_user_profile) - 2))
+                    #
                     else:
                         #
-                        user_query = {"_id": str(ctx.author.id)}
+                        user_query = {"_id": str(user_id)}
                         trusteduser_profile = trusteduserscol.find_one(user_query)
                         if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                     and (is_active_staff(ctx.author)
                                                          or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
                             await ctx.reply(f"User is reported.",
                                             embeds=reported_user_profile(user, user_profile),
-                                            view=EditUserReportView(user, user_profile, requested_by,
-                                                                len(user_profile) - 2))
+                                            view=EditUserReportView(user, user_profile, requested_by, len(user_profile) - 2))
                         else:
                             await ctx.reply(f"User is reported.",
                                             embeds=reported_user_profile(user, user_profile),
-                                            view=ReportedUserView(user, user_profile, requested_by,
-                                                                  len(user_profile) - 2))
+                                            view=ReportedUserView(user, user_profile, requested_by, len(user_profile) - 2))
                 #
                 else:
                     profile = default_user_profile(user)
                     #
-                    user_query = {"_id": str(ctx.author.id)}
+                    user_query = {"_id": str(user_id)}
                     trusteduser_profile = trusteduserscol.find_one(user_query)
                     if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
                                                 and (is_active_staff(ctx.author)
                                                      or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                        requested_by = ctx.author
                         await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
                     else:
                         await ctx.reply(embed=profile, view=MemberView())
+
+        else:
+            try:
+                if int(to_check.strip('<@>')) in tri_bots:
+                    user = await bot.fetch_user(int(to_check.strip('<@>')))
+                    user_id = user.id
+                    profile = discord.Embed(colour=0xffffff)
+                    profile.set_thumbnail(url=f"{user.display_avatar.url}")
+                    profile.description = f"{user.mention} {user.name}\n`{user.id}`"
+                    profile.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
+                    if user_id == 1450073025818136598:
+                        profile.description += "\n**TETO** ┈ report bot for `/tri`"
+                    elif user_id == 1457249982104211467:
+                        profile.description += "\n**TETO++** ┈ report bot for `/tri`"
+                    elif user_id == 1457382953293320304:
+                        profile.description += "\n**NERU** ┈ alts bot for `/tri`"
+                    elif user_id == 1457309787044839477:
+                        profile.description += "\n**MIKU** ┈ utils bot for `/tri`"
+                    elif user_id == 1457009979817988241:
+                        profile.description += "\n**KAFU** ┈ tickets bot for `/tri`"
+                    profile.set_footer(text="✦　TRI bot")
+                    await ctx.reply(embed=profile)
+                    return
+            except Exception: pass
+            try:
+                user = await bot.fetch_user(int(to_check.strip('<@>')))
+            except discord.NotFound:
+                server_query = {"_id": to_check.strip('<@>')}
+                trustedserver_profile = trustedserverscol.find_one(server_query)
+                if trustedserver_profile:
+                    trusted_embed = format_trustedserver_profile(UnknownGuild(int(to_check.strip('<@>'))))
+                    await ctx.reply("Server is trusted.", embed=trusted_embed)
+                else:
+                    server_profile = serverscol.find_one(server_query)
+                    if server_profile:  # reported server
+                        await ctx.reply(f"Server is reported.",
+                                            embeds=reported_server_profile(UnknownGuild(int(to_check.strip('<@>'))), server_profile),
+                                            view=ReportedServerView(UnknownGuild(int(to_check.strip('<@>'))), server_profile, requested_by,
+                                                                    len(server_profile) - 2))
+                    else:  # unreported server
+                        await ctx.reply("Please provide a valid user ID. To check servers, please provide a valid invite link.")
+
+            except discord.HTTPException as e:
+                await ctx.reply(f"An error occurred: {e}")
+            except ValueError:
+                try:
+                    invite = await bot.fetch_invite(to_check)
+                except discord.NotFound:
+                    await ctx.reply("The invite link is **invalid** or **expired**.")
+                except discord.Forbidden:
+                    await ctx.reply("Unable to access details of invite.")
+                except Exception as e:
+                    await ctx.reply(f"An error occurred: {e}")
+                else:
+                    guild = invite.guild
+                    guild_id = invite.guild.id
+                    server_query = {"_id": str(guild_id)}
+                    trustedserver_profile = trustedserverscol.find_one(server_query)
+                    if trustedserver_profile:
+                        trusted_embed = format_trustedserver_profile(guild)
+                        await ctx.reply("Server is trusted.", embed=trusted_embed)
+                    else:
+                        server_profile = serverscol.find_one(server_query)
+                        if server_profile:  # reported server
+                            #
+                            user_query = {"_id": str(ctx.author.id)}
+                            trusteduser_profile = trusteduserscol.find_one(user_query)
+                            if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
+                                                        and (is_active_staff(ctx.author)
+                                                             or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
+                                await ctx.reply(f"Server is reported.",
+                                                embeds=reported_server_profile(guild, server_profile),
+                                                view=EditServerReportView(guild, server_profile, requested_by,
+                                                                        len(server_profile) - 2))
+                            else:
+                                await ctx.reply(f"Server is reported.",
+                                                embeds=reported_server_profile(guild, server_profile),
+                                                view=ReportedServerView(guild, server_profile, requested_by,
+                                                                      len(server_profile) - 2))
+                        else:  # unreported server
+                            profile = default_server_profile(guild)
+                            #
+                            user_query = {"_id": str(ctx.author.id)}
+                            trusteduser_profile = trusteduserscol.find_one(user_query)
+                            if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
+                                                        and (is_active_staff(ctx.author)
+                                                             or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
+                                await ctx.reply(embed=profile, view=NewServerReportView(guild, requested_by))
+                            else:
+                                await ctx.reply(embed=profile, view=MemberView())
+            #
+            else:
+                user_id = user.id
+                user_query = {"_id": str(user_id)}
+                trusteduser_profile = trusteduserscol.find_one(user_query)
+                if trusteduser_profile and not (
+                        trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
+                        trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and
+                        trusteduser_profile["trader"] == 0):
+                    trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
+                    await ctx.reply("User is trusted.", embed=trusted_embed)
+                else:
+                    user_profile = userscol.find_one(user_query)
+                    if user_profile:
+                        if len(user_profile) == 2:
+                            main = user_profile['main']
+                            user_query = {"_id": main}
+                            main_user_profile = userscol.find_one(user_query)
+                            main_user = await bot.fetch_user(int(main))
+                            #
+                            user_query = {"_id": str(ctx.author.id)}
+                            trusteduser_profile = trusteduserscol.find_one(user_query)
+                            if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
+                                                        and (is_active_staff(ctx.author)
+                                                             or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
+                                await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
+                                                embeds=reported_user_profile(main_user, main_user_profile),
+                                                view=EditUserReportView(main_user, main_user_profile, requested_by,
+                                                                    len(main_user_profile) - 2))
+                            else:
+                                await ctx.reply(
+                                    f"User `{user_id}` is reported as alt of `{main}`.",
+                                    embeds=reported_user_profile(main_user, main_user_profile),
+                                    view=ReportedUserView(main_user, main_user_profile, requested_by,
+                                                          len(main_user_profile) - 2))
+                        else:
+                            #
+                            user_query = {"_id": str(ctx.author.id)}
+                            trusteduser_profile = trusteduserscol.find_one(user_query)
+                            if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
+                                                        and (is_active_staff(ctx.author)
+                                                             or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
+                                await ctx.reply(f"User is reported.",
+                                                embeds=reported_user_profile(user, user_profile),
+                                                view=EditUserReportView(user, user_profile, requested_by,
+                                                                    len(user_profile) - 2))
+                            else:
+                                await ctx.reply(f"User is reported.",
+                                                embeds=reported_user_profile(user, user_profile),
+                                                view=ReportedUserView(user, user_profile, requested_by,
+                                                                      len(user_profile) - 2))
+                    #
+                    else:
+                        profile = default_user_profile(user)
+                        #
+                        user_query = {"_id": str(ctx.author.id)}
+                        trusteduser_profile = trusteduserscol.find_one(user_query)
+                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
+                                                    and (is_active_staff(ctx.author)
+                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
+                            requested_by = ctx.author
+                            await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
+                        else:
+                            await ctx.reply(embed=profile, view=MemberView())
 
 
 # reported user
@@ -891,22 +1122,22 @@ class ReportedUserView(discord.ui.View):
             title = all_tags_list[0]
             if current_case != 1:
                 prev_index = current_case - 2
-            try:
-                prev_case_tags = cases[prev_index][2].split(", ")
-            except Exception:
-                pass
-            else:
-                prev_case_title = prev_case_tags[0]
-                r_profile = format_user_r_profile(user, r_profile_list, title)
-                add_case = format_user_add_case(cases[prev_index], prev_case_title)
-                #
-                current_case -= 1
-                self.current_case = current_case
-                add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
-                embeds = [r_profile, add_case]
-                await interaction.edit_original_response(content="User is reported.", embeds=embeds,
-                                                         view=ReportedUserView(user, user_profile, requested_by,
-                                                                               current_case))
+                try:
+                    prev_case_tags = cases[prev_index][2].split(", ")
+                except Exception:
+                    pass
+                else:
+                    prev_case_title = prev_case_tags[0]
+                    r_profile = format_user_r_profile(user, r_profile_list, title)
+                    add_case = format_user_add_case(cases[prev_index], prev_case_title)
+                    #
+                    current_case -= 1
+                    self.current_case = current_case
+                    add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
+                    embeds = [r_profile, add_case]
+                    await interaction.edit_original_response(content="User is reported.", embeds=embeds,
+                                                             view=ReportedUserView(user, user_profile, requested_by,
+                                                                                   current_case))
 
     @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="reporteduser:next")
     async def next_button(self, interaction, button):
@@ -1091,6 +1322,132 @@ class ReportedServerView(discord.ui.View):
         image_links = cases[current_case - 1][6]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{guild.id}`", embeds=image_embeds, ephemeral=True)
+
+# reported account
+class ReportedAccountView(discord.ui.View):
+    def __init__(self, game_uid, account_profile, requested_by, current_case):
+        super().__init__(timeout=1440)
+        self.game_uid = game_uid
+        self.account_profile = account_profile
+        self.requested_by = requested_by
+        self.current_case = current_case
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="reportedaccount:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        requested_by = self.requested_by
+        current_case = self.current_case
+        #
+        no_of_cases = len(account_profile) - 2
+        if requested_by == interaction.user:
+            r_profile_list = account_profile["r_profile_list"]
+            cases = []
+            for i in range(1, no_of_cases + 1):
+                cases.append(account_profile[str(i)])
+            latest_case = cases[-1]
+            latest_tags = latest_case[2].split(", ")
+            all_tags_list = []
+            for case in cases:
+                all_tags_list.extend(case[2].split(", "))
+            all_tags_list = sort_account_tags(all_tags_list)
+            if "Recovered Account" in latest_tags:
+                title = "Recovered Account"
+            else:
+                title = all_tags_list[0]
+            if current_case != 1:
+                prev_index = current_case - 2
+                try:
+                    prev_case_tags = cases[prev_index][2].split(", ")
+                except Exception:
+                    pass
+                else:
+                    prev_case_title = prev_case_tags[0]
+                    r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                    add_case = format_account_add_case(cases[prev_index], prev_case_title)
+                    #
+                    current_case -= 1
+                    self.current_case = current_case
+                    add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
+                    embeds = [r_profile, add_case]
+                    await interaction.edit_original_response(content="Account is reported.", embeds=embeds,
+                                                             view=ReportedAccountView(game_uid, account_profile, requested_by,
+                                                                                   current_case))
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="reportedaccount:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        requested_by = self.requested_by
+        current_case = self.current_case
+        #
+        no_of_cases = len(account_profile) - 2
+        if requested_by == interaction.user:
+            r_profile_list = account_profile["r_profile_list"]
+            cases = []
+            for i in range(1, no_of_cases + 1):
+                cases.append(account_profile[str(i)])
+            latest_case = cases[-1]
+            latest_tags = latest_case[2].split(", ")
+            all_tags_list = []
+            for case in cases:
+                all_tags_list.extend(case[2].split(", "))
+            all_tags_list = sort_account_tags(all_tags_list)
+            if "Recovered Account" in latest_tags:
+                title = "Recovered Account"
+            else:
+                title = all_tags_list[0]
+            next_index = current_case
+            try:
+                next_case_tags = cases[next_index][2].split(", ")
+            except Exception:
+                pass
+            else:
+                next_case_title = next_case_tags[0]
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(cases[next_index], next_case_title)
+                #
+                current_case += 1
+                self.current_case = current_case
+                add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
+                embeds = [r_profile, add_case]
+                await interaction.edit_original_response(content="Account is reported.", embeds=embeds,
+                                                         view=ReportedAccountView(game_uid, account_profile, requested_by,
+                                                                               current_case))
+
+    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reportedaccount:proofs")
+    async def proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        current_case = self.current_case
+        #
+        no_of_cases = len(account_profile) - 2
+        cases = []
+        for i in range(1, no_of_cases + 1):
+            cases.append(account_profile[str(i)])
+        image_links = cases[current_case - 1][7]
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
+
+
+    @discord.ui.button(label="𝘭𝘪𝘯𝘬𝘴 𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reportedaccount:linksproofs")
+    async def links_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        #
+        r_profile_list = account_profile["r_profile_list"]
+        image_links = r_profile_list[2]
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Links Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
+
 
 # member
 class MemberView(discord.ui.View):
@@ -1969,22 +2326,22 @@ class EditUserReportView(discord.ui.View):
             title = all_tags_list[0]
             if current_case != 1:
                 prev_index = current_case - 2
-            try:
-                prev_case_tags = cases[prev_index][2].split(", ")
-            except Exception:
-                pass
-            else:
-                prev_case_title = prev_case_tags[0]
-                r_profile = format_user_r_profile(user, r_profile_list, title)
-                add_case = format_user_add_case(cases[prev_index], prev_case_title)
-                #
-                current_case -= 1
-                self.current_case = current_case
-                add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
-                embeds = [r_profile, add_case]
-                await interaction.edit_original_response(content="User is reported.", embeds=embeds,
-                                                         view=EditUserReportView(user, user_profile, requested_by,
-                                                                               current_case))
+                try:
+                    prev_case_tags = cases[prev_index][2].split(", ")
+                except Exception:
+                    pass
+                else:
+                    prev_case_title = prev_case_tags[0]
+                    r_profile = format_user_r_profile(user, r_profile_list, title)
+                    add_case = format_user_add_case(cases[prev_index], prev_case_title)
+                    #
+                    current_case -= 1
+                    self.current_case = current_case
+                    add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
+                    embeds = [r_profile, add_case]
+                    await interaction.edit_original_response(content="User is reported.", embeds=embeds,
+                                                             view=EditUserReportView(user, user_profile, requested_by,
+                                                                                   current_case))
 
     @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="edituserreport:next",
                        row=0)
@@ -7043,6 +7400,3367 @@ class ServerVoteView(discord.ui.View):
             else:
                 await interaction.followup.send("You do not have permission to publish the report.", ephemeral=True)
 
+
+# new account
+class NewAccountReportView(discord.ui.View):
+    def __init__(self, game_uid, requested_by):
+        super().__init__(timeout=1440)
+        self.game_uid = game_uid
+        self.requested_by = requested_by
+
+    @discord.ui.button(label="Report", style=discord.ButtonStyle.red, custom_id="newaccountreport:report")
+    async def report_button(self, interaction, button):
+        #
+        game_uid = self.game_uid
+        requested_by = self.requested_by
+        #
+        await interaction.response.defer()
+        existing_entry = inprogresscol.find_one({"account_id": game_uid})
+        if existing_entry:
+            # ongoing vote
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
+                await interaction.followup.send(f"There already exists an ongoing vote on `{game_uid}`: {vote_message.jump_url}")
+            # ongoing report
+            else:
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
+                await interaction.followup.send(
+                        f"There already exists an ongoing report on `{game_uid}`: {message.jump_url}")
+            return
+        if requested_by == interaction.user:
+            await interaction.edit_original_response(view=None)
+            msg = await interaction.followup.send(f"Initializing report on `{game_uid}`...", wait=True)
+            title = "TBC"
+            case_title = "TBC"
+            r_profile_list = [
+                # [0] links
+                "",
+                # [1] other tags
+                "",
+                # [2] links_image_links
+                [],
+            ]
+            add_case_list = [
+                # [0] date added
+                "",
+                # [1] related users
+                "",
+                # [2] tags
+                "",
+                # [3] reason
+                "",
+                # [4] contributor
+                "",
+                # [5] tri staff
+                "",
+                # [6] accepted by
+                "",
+                # [7] image_links
+                [],
+            ]
+            add_case_list[
+                0] = f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)"
+            add_case_list[5] = f"<@{interaction.user.id}>"
+            channel_id = msg.channel.id
+            message_id = msg.id
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            try:
+                inprogresscol.insert_one({"_id": message_id,
+                                          "account_id": game_uid,
+                                          "requested_by": requested_by.id,
+                                          "channel_id": channel_id,
+                                          "r_profile_list": r_profile_list,
+                                          "add_case_list": add_case_list,
+                                          "title": title,
+                                          "case_title": case_title
+                                          })
+            except DuplicateKeyError: pass
+            await msg.edit(embeds=embeds, view=LinksView())
+        elif is_active_staff(interaction.user):
+            await interaction.followup.send(
+                "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
+                ephemeral=True)
+        else:
+            await interaction.followup.send("You do not have permission to use this button.", ephemeral=True)
+
+class LinksView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="links:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AccountTagsView())
+
+    @discord.ui.button(label="Links", style=discord.ButtonStyle.green, custom_id="links:input")
+    async def links_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            #
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(LinksModal())
+
+    @discord.ui.button(label="Add Links Proofs", style=discord.ButtonStyle.green, custom_id="links:linksproofs")
+    async def links_proofs_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            #
+            if requested_by == interaction.user.id:
+                image_links = []
+                r_profile_list[2] = []
+                await interaction.response.send_message(
+                    "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
+                    ephemeral=True)
+
+                # Wait for a follow-up message from the user in the same channel
+                def check(m):
+                    # Check if the message is from the same user, in the same channel, and has an attachment
+                    return m.author == interaction.user and m.channel == interaction.channel
+
+                try:
+                    msg = await bot.wait_for('message', check=check, timeout=120.0)
+                except asyncio.TimeoutError:
+                    await interaction.followup.send("You took too long to upload an image.", ephemeral=True)
+                    return
+                if msg.attachments:
+                    for attachment in msg.attachments:
+                        # Ensure the attachment is an image (optional check)
+                        if attachment.content_type and attachment.content_type.startswith('image/'):
+                            try:
+                                # 1. Download the file data using aiohttp
+                                async with aiohttp.ClientSession() as http_session:
+                                    async with http_session.get(attachment.url) as resp:
+                                        # For this example, we just send back the image URL and filename
+                                        data = io.BytesIO(await resp.read())
+                                        file = discord.File(data, filename=attachment.filename)
+                                        channel_to_send = bot.get_channel(PROOFS_CHANNEL)
+                                        sent_message = await channel_to_send.send(file=file)
+                                        if sent_message.attachments:
+                                            new_image_url = sent_message.attachments[0].url
+                                            image_links.append(new_image_url)
+                                            r_profile_list[2].append(new_image_url)
+                            except Exception:
+                                await msg.channel.send(f"An error occurred with file {attachment.filename}")
+                #
+                inprogresscol.update_one(
+                    {"_id": interaction.message.id},
+                    {"$set": {"r_profile_list": r_profile_list}}
+                )
+                #
+                image_embeds = image_links_to_embeds(image_links)
+                await interaction.followup.send(f"Images received from {interaction.user.mention}.",
+                                                embeds=image_embeds)
+
+    @discord.ui.button(label="Show Links Proofs", style=discord.ButtonStyle.grey, custom_id="links:showlinksproofs")
+    async def show_links_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            game_uid = session["account_id"]
+            #
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                image_embeds = image_links_to_embeds(r_profile_list[2])
+                await interaction.followup.send(f"Links Proofs for `{game_uid}`",
+                                                embeds=image_embeds, ephemeral=True)
+class LinksModal(discord.ui.Modal, title="Links"):
+    links = discord.ui.TextInput(label="Links", placeholder="List links here and leave a newline between game UIDs.",
+                                required=True, style=discord.TextStyle.long)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            links_input = self.links.value
+            game_uid_list = get_game_uid_list(links_input)
+            r_profile_list[0] = game_uid_list or []
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"r_profile_list": r_profile_list}}
+            )
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await message.edit(embeds=embeds, view=LinksView())
+
+class AccountTagsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="accounttags:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=LinksView())
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="accounttags:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=RelatedUsersView())
+
+    @discord.ui.select(options=account_tag_options, placeholder="Select Tag(s)...", custom_id="accounttags:select",
+                       max_values=len(account_tag_options))
+    async def select_callback(self, interaction, select):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id:
+                sorted_tags = sort_account_tags(self.select_callback.values)
+                case_title = sorted_tags[0]
+                tags = selected_string(sorted_tags)
+                add_case_list[2] = tags
+                if "Recovered Account" in tags:
+                    title = "Recovered Account"
+                    all_other_tags = selected_string([tag for tag in sorted_tags if tag != "Recovered Account"])
+                else:
+                    title = sorted_tags[0]
+                    all_other_tags = selected_string(sorted_tags[1:])
+                r_profile_list[1] = all_other_tags
+                #
+                inprogresscol.update_one(
+                    {"_id": interaction.message.id},
+                    {"$set": {
+                        "r_profile_list": r_profile_list,
+                        "add_case_list": add_case_list,
+                        "title": title,
+                        "case_title": case_title, }
+                    })
+                #
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds)
+
+def related_users_string(user_ids):
+    return " ".join(f"`{user_id}`" for user_id in user_ids)
+
+class RelatedUsersView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="relatedusers:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AccountTagsView())
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey,
+                       custom_id="relatedusers:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AccountReasonView())
+
+    @discord.ui.button(
+        label="Related Users",
+        style=discord.ButtonStyle.green,
+        custom_id="relatedusers:input"
+    )
+    async def related_users_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session and session["requested_by"] == interaction.user.id:
+            await interaction.response.send_modal(RelatedUsersModal())
+
+class RelatedUsersModal(
+    discord.ui.Modal,
+    title="Related Users"
+):
+    related_users = discord.ui.TextInput(
+        label="Related Users",
+        placeholder="List user IDs separated by spaces.",
+        required=True,
+        style=discord.TextStyle.paragraph
+    )
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            thread = await bot.fetch_channel(session["channel_id"])
+            message = await thread.fetch_message(interaction.message.id)
+            ids = self.related_users.value.split()
+            valid_users = []
+            for id in ids:
+                try:
+                    fetched = await bot.fetch_user(int(id))
+                except Exception:
+                    continue
+                if fetched.id not in valid_users:
+                    valid_users.append(fetched.id)
+            r_profile_list = session["r_profile_list"]
+            if len(valid_users):
+                add_case_list[3] = related_users_string(valid_users)
+            else:
+                add_case_list[3] = ""
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"add_case_list": add_case_list}}
+            )
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await message.edit(embeds=embeds, view=RelatedUsersView())
+
+class AccountReasonView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="accountreason:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=RelatedUsersView())
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="accountreason:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AccountContributorView())
+
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="accountreason:input")
+    async def reason_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(AccountReasonModal())
+class AccountReasonModal(discord.ui.Modal, title="Reason"):
+    reason = discord.ui.TextInput(label="Reason", placeholder="Input reason here.", required=True,
+                                  style=discord.TextStyle.long)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            reason = re.sub(r"\s+", " ", self.reason.value)
+            add_case_list[3] = reason
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"add_case_list": add_case_list}},
+            )
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await message.edit(embeds=embeds, view=AccountReasonView())
+
+class AccountContributorView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey,
+                       custom_id="accountcontributor:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AccountReasonView())
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey,
+                       custom_id="accountcontributor:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AccountProofsView())
+
+    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="accountcontributor:input")
+    async def contributor_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            #
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(AccountContributorModal())
+class AccountContributorModal(discord.ui.Modal, title="Contributor"):
+    contributor = discord.ui.TextInput(label="Contributor",
+                                       placeholder="Account ID / n if Anonymous.", required=True,
+                                       style=discord.TextStyle.short)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            contributor_input = self.contributor.value
+            if contributor_input.lower() == "n":
+                add_case_list[4] = "Anonymous"
+            else:
+                try:
+                    contributor_id = await bot.fetch_user(int(contributor_input))
+                except Exception:
+                    add_case_list[4] = ""
+                else:
+                    add_case_list[4] = f"<@{contributor_id.id}>"
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"add_case_list": add_case_list}},
+            )
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await message.edit(embeds=embeds, view=AccountContributorView())
+
+class AccountProofsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="accountproofs:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AccountContributorView())
+
+    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="accountproofs:input")
+    async def proofs_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            add_case_list = session["add_case_list"]
+            #
+            if requested_by == interaction.user.id:
+                image_links = []
+                add_case_list[7] = []
+                await interaction.response.send_message(
+                    "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
+                    ephemeral=True)
+
+                # Wait for a follow-up message from the user in the same channel
+                def check(m):
+                    # Check if the message is from the same user, in the same channel, and has an attachment
+                    return m.author == interaction.user and m.channel == interaction.channel
+
+                try:
+                    msg = await bot.wait_for('message', check=check, timeout=120.0)
+                except asyncio.TimeoutError:
+                    await interaction.followup.send("You took too long to upload an image.", ephemeral=True)
+                    return
+                if msg.attachments:
+                    for attachment in msg.attachments:
+                        # Ensure the attachment is an image (optional check)
+                        if attachment.content_type and attachment.content_type.startswith('image/'):
+                            try:
+                                # 1. Download the file data using aiohttp
+                                async with aiohttp.ClientSession() as http_session:
+                                    async with http_session.get(attachment.url) as resp:
+                                        # For this example, we just send back the image URL and filename
+                                        data = io.BytesIO(await resp.read())
+                                        file = discord.File(data, filename=attachment.filename)
+                                        channel_to_send = bot.get_channel(PROOFS_CHANNEL)
+                                        sent_message = await channel_to_send.send(file=file)
+                                        if sent_message.attachments:
+                                            new_image_url = sent_message.attachments[0].url
+                                            image_links.append(new_image_url)
+                                            add_case_list[7].append(new_image_url)
+                            except Exception:
+                                await msg.channel.send(f"An error occurred with file {attachment.filename}")
+                #
+                inprogresscol.update_one(
+                    {"_id": interaction.message.id},
+                    {"$set": {"add_case_list": add_case_list}},
+                )
+                #
+                image_embeds = image_links_to_embeds(image_links)
+                await interaction.followup.send(f"Images received from {interaction.user.mention}.",
+                                                embeds=image_embeds)
+
+    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="accountproofs:showproofs")
+    async def show_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            add_case_list = session["add_case_list"]
+            game_uid = session["account_id"]
+            #
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                image_embeds = image_links_to_embeds(add_case_list[7])
+                await interaction.followup.send(f"Proofs for `{game_uid}`",
+                                                embeds=image_embeds, ephemeral=True)
+
+    @discord.ui.button(label="Show Links Proofs", style=discord.ButtonStyle.grey, custom_id="accountproofs:showlinksproofs")
+    async def show_links_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            game_uid = session["account_id"]
+            #
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                image_embeds = image_links_to_embeds(r_profile_list[2])
+                await interaction.followup.send(f"Links Proofs for `{game_uid}`",
+                                                embeds=image_embeds, ephemeral=True)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="accountproofs:cancel")
+    async def cancel_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            #
+            inprogresscol.delete_one({"_id": interaction.message.id})
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
+
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accountproofs:accept")
+    async def accept_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
+                accepted_by = interaction.user
+                add_case_list[6] = f"<@{interaction.user.id}>"
+                #
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                #
+                vote_channel = bot.get_channel(VOTE_CHANNEL)
+                agree_users = []
+                disagree_users = []
+                links_proofs_embeds = image_links_to_embeds(r_profile_list[2])
+                proofs_embeds = image_links_to_embeds(add_case_list[7])
+                new_report_message = await vote_channel.send(content=f"New report on `{game_uid}`")
+                new_report_thread = await new_report_message.create_thread(name=f"{game_uid}")
+                await new_report_thread.send(f"<@&{ticket_ping}>")
+                vote_msg = await new_report_thread.send(
+                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    embeds=embeds, view=AccountVoteView())
+                vote_channel_id = vote_msg.channel.id
+                vote_message_id = vote_msg.id
+                old_session = inprogresscol.find_one({"account_id": game_uid})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "account_id": game_uid,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
+                await new_report_thread.send(content=f"Links Proofs for `{game_uid}`", embeds=links_proofs_embeds)
+                await new_report_thread.send(content=f"Proofs for `{game_uid}`", embeds=proofs_embeds)
+                await old_message_edit_queue.put(
+                    (message, {"content": "Report has been submitted for voting.", "embeds": embeds, "view": None}))
+            else:
+                await interaction.followup.send("You do not have permission to accept the report for voting.",
+                                                ephemeral=True)
+
+
+# edit account
+class EditAccountReportView(discord.ui.View):
+    def __init__(self, game_uid, account_profile, requested_by, current_case):
+        super().__init__(timeout=1440)
+        self.game_uid = game_uid
+        self.account_profile = account_profile
+        self.requested_by = requested_by
+        self.current_case = current_case
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="editaccountreport:prev",
+                       row=0)
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        requested_by = self.requested_by
+        current_case = self.current_case
+        #
+        no_of_cases = len(account_profile) - 2
+        #
+        if requested_by == interaction.user:
+            r_profile_list = account_profile["r_profile_list"]
+            cases = []
+            for i in range(1, no_of_cases + 1):
+                cases.append(account_profile[str(i)])
+            latest_case = cases[-1]
+            latest_tags = latest_case[2].split(", ")
+            all_tags_list = []
+            for case in cases:
+                all_tags_list.extend(case[2].split(", "))
+            all_tags_list = sort_account_tags(all_tags_list)
+            if "Recovered Account" in latest_tags:
+                title = "Recovered Account"
+            else:
+                title = all_tags_list[0]
+            if current_case != 1:
+                prev_index = current_case - 2
+                try:
+                    prev_case_tags = cases[prev_index][2].split(", ")
+                except Exception:
+                    pass
+                else:
+                    prev_case_title = prev_case_tags[0]
+                    r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                    add_case = format_account_add_case(cases[prev_index], prev_case_title)
+                    #
+                    current_case -= 1
+                    self.current_case = current_case
+                    add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
+                    embeds = [r_profile, add_case]
+                    await interaction.edit_original_response(content="Account is reported.", embeds=embeds,
+                                                             view=EditAccountReportView(game_uid, account_profile, requested_by,
+                                                                                   current_case))
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="editaccountreport:next",
+                       row=0)
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        requested_by = self.requested_by
+        current_case = self.current_case
+        #
+        no_of_cases = len(account_profile) - 2
+        #
+        if requested_by == interaction.user:
+            r_profile_list = account_profile["r_profile_list"]
+            cases = []
+            for i in range(1, no_of_cases + 1):
+                cases.append(account_profile[str(i)])
+            latest_case = cases[-1]
+            latest_tags = latest_case[2].split(", ")
+            all_tags_list = []
+            for case in cases:
+                all_tags_list.extend(case[2].split(", "))
+            all_tags_list = sort_account_tags(all_tags_list)
+            if "Recovered Account" in latest_tags:
+                title = "Recovered Account"
+            else:
+                title = all_tags_list[0]
+            next_index = current_case
+            try:
+                next_case_tags = cases[next_index][2].split(", ")
+            except Exception:
+                pass
+            else:
+                next_case_title = next_case_tags[0]
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(cases[next_index], next_case_title)
+                #
+                current_case += 1
+                self.current_case = current_case
+                add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
+                embeds = [r_profile, add_case]
+                await interaction.edit_original_response(content="Account is reported.", embeds=embeds,
+                                                         view=EditAccountReportView(game_uid, account_profile, requested_by,
+                                                                               current_case))
+
+    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="editaccountreport:proofs", row=0)
+    async def proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        current_case = self.current_case
+        #
+        no_of_cases = len(account_profile) - 2
+        cases = []
+        for i in range(1, no_of_cases + 1):
+            cases.append(account_profile[str(i)])
+        image_links = cases[current_case - 1][7]
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
+
+    @discord.ui.button(label="𝘭𝘪𝘯𝘬𝘴 𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="editaccountreport:linksproofs", row=0)
+    async def links_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        #
+        r_profile_list = account_profile["r_profile_list"]
+        image_links = r_profile_list[2]
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Links Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
+
+    @discord.ui.button(label="Edit Links", style=discord.ButtonStyle.primary, custom_id="editaccountreport:editlinks", row=1)
+    async def edit_links_button(self, interaction, button):
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        requested_by = self.requested_by
+        #
+        await interaction.response.defer()
+        existing_entry = inprogresscol.find_one({"account_id": game_uid})
+        if existing_entry:
+            # ongoing vote
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{game_uid}`: {vote_message.jump_url}")
+            # ongoing report
+            else:
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{game_uid}`: {message.jump_url}")
+            return
+        if requested_by == interaction.user:
+            await interaction.edit_original_response(view=None)
+            msg = await interaction.followup.send(f"Editing links for `{game_uid}`...", wait=True)
+            r_profile_list = account_profile["r_profile_list"]
+            cases = []
+            no_of_cases = len(account_profile) - 2
+            for i in range(1, no_of_cases + 1):
+                cases.append(account_profile[str(i)])
+            latest_case = cases[-1]
+            latest_tags = latest_case[2].split(", ")
+            all_tags_list = []
+            for case in cases:
+                all_tags_list.extend(case[2].split(", "))
+            all_tags_list = sort_account_tags(all_tags_list)
+            if "Recovered Account" in latest_tags:
+                title = "Recovered Account"
+            else:
+                title = all_tags_list[0]
+            channel_id = msg.channel.id
+            message_id = msg.id
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            reason = ""
+            reason_embed = discord.Embed(title="Reason", description=reason)
+            try:
+                inprogresscol.insert_one({"_id": message_id,
+                                          "account_id": game_uid,
+                                          "requested_by": requested_by.id,
+                                          "channel_id": channel_id,
+                                          "r_profile_list": r_profile_list,
+                                          "title": title,
+                                          "reason": reason,
+                                          })
+            except DuplicateKeyError:
+                pass
+            embeds = [r_profile, reason_embed]
+            await msg.edit(embeds=embeds, view=EditLinksOnlyView())
+        elif is_active_staff(interaction.user):
+            await interaction.followup.send(
+                "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
+                ephemeral=True)
+        else:
+            await interaction.followup.send("You do not have permission to use this button.", ephemeral=True)
+
+    @discord.ui.button(label="Add Report", style=discord.ButtonStyle.red, custom_id="editaccountreport:addreport", row=1)
+    async def add_report_button(self, interaction, button):
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        requested_by = self.requested_by
+        current_case = self.current_case
+        #
+        await interaction.response.defer()
+        existing_entry = inprogresscol.find_one({"account_id": game_uid})
+        if existing_entry:
+            # ongoing vote
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{game_uid}`: {vote_message.jump_url}")
+            # ongoing report
+            else:
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{game_uid}`: {message.jump_url}")
+            return
+        if requested_by == interaction.user:
+            await interaction.edit_original_response(view=None)
+            msg = await interaction.followup.send(f"Adding report on `{game_uid}`...", wait=True)
+            r_profile_list = account_profile["r_profile_list"]
+            cases = []
+            no_of_cases = len(account_profile) - 2
+            for i in range(1, no_of_cases + 1):
+                cases.append(account_profile[str(i)])
+            latest_case = cases[-1]
+            latest_tags = latest_case[2].split(", ")
+            all_tags_list = []
+            for case in cases:
+                all_tags_list.extend(case[2].split(", "))
+            all_tags_list = sort_account_tags(all_tags_list)
+            if "Recovered Account" in latest_tags:
+                title = "Recovered Account"
+            else:
+                title = all_tags_list[0]
+            #
+            case_title = "TBC"
+            add_case_list = [
+                # [0] date added
+                "",
+                # [1] related users
+                "",
+                # [2] tags
+                "",
+                # [3] reason
+                "",
+                # [4] contributor
+                "",
+                # [5] tri staff
+                "",
+                # [6] accepted by
+                "",
+                # [7] image_links
+                [],
+            ]
+            add_case_list[
+                0] = f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)"
+            add_case_list[5] = f"<@{interaction.user.id}>"
+            channel_id = msg.channel.id
+            message_id = msg.id
+            try:
+                inprogresscol.insert_one({"_id": message_id,
+                                          "account_id": game_uid,
+                                          "requested_by": requested_by.id,
+                                          "channel_id": channel_id,
+                                          "r_profile_list": r_profile_list,
+                                          "add_case_list": add_case_list,
+                                          "title": title,
+                                          "case_title": case_title
+                                          })
+            except DuplicateKeyError:
+                pass
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await msg.edit(embeds=embeds, view=AddReportLinksView())
+        elif is_active_staff(interaction.user):
+            await interaction.followup.send(
+                "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
+                ephemeral=True)
+        else:
+            await interaction.followup.send("You do not have permission to use this button.", ephemeral=True)
+
+    @discord.ui.button(label="Appeal", style=discord.ButtonStyle.green, custom_id="editaccountreport:appeal", row=1)
+    async def appeal_button(self, interaction, button):
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        requested_by = self.requested_by
+        current_case = self.current_case
+        #
+        await interaction.response.defer()
+        existing_entry = inprogresscol.find_one({"account_id": game_uid})
+        if existing_entry:
+            # ongoing vote
+            if "vote_channel_id" in existing_entry:
+                vote_channel_id = existing_entry["vote_channel_id"]
+                vote_message_id = existing_entry["_id"]
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(vote_message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing vote on `{game_uid}`: {vote_message.jump_url}")
+            # ongoing report
+            else:
+                channel_id = existing_entry["channel_id"]
+                message_id = existing_entry["_id"]
+                thread = await bot.fetch_channel(channel_id)
+                message = await thread.fetch_message(message_id)
+                await interaction.followup.send(
+                    f"There already exists an ongoing report on `{game_uid}`: {message.jump_url}")
+            return
+        if requested_by == interaction.user:
+            await interaction.edit_original_response(view=None)
+            msg = await interaction.followup.send(f"Appealing for `{game_uid}`...", wait=True)
+            r_profile_list = account_profile["r_profile_list"]
+            cases = []
+            no_of_cases = len(account_profile) - 2
+            for i in range(1, no_of_cases + 1):
+                cases.append(account_profile[str(i)])
+            latest_case = cases[-1]
+            latest_tags = latest_case[2].split(", ")
+            all_tags_list = []
+            for case in cases:
+                all_tags_list.extend(case[2].split(", "))
+            all_tags_list = sort_account_tags(all_tags_list)
+            if "Recovered Account" in latest_tags:
+                title = "Recovered Account"
+            else:
+                title = all_tags_list[0]
+            current_index = current_case - 1
+            add_case_list = account_profile[str(current_case)]
+            case_tags = cases[current_index][2].split(", ")
+            case_title = case_tags[0]
+            channel_id = msg.channel.id
+            message_id = msg.id
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            reason = ""
+            reason_embed = discord.Embed(title="Reason", colour=0x1dcca9, description=reason)
+            try:
+                inprogresscol.insert_one({"_id": message_id,
+                                          "account_id": game_uid,
+                                          "requested_by": requested_by.id,
+                                          "channel_id": channel_id,
+                                          "r_profile_list": r_profile_list,
+                                          "add_case_list": add_case_list,
+                                          "title": title,
+                                          "case_title": case_title,
+                                          "reason": reason
+                                          })
+            except DuplicateKeyError:
+                pass
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case, reason_embed]
+            await msg.edit(embeds=embeds, view=AccountAppealView())
+        elif is_active_staff(interaction.user):
+            await interaction.followup.send(
+                "This was requested by " + f"{requested_by.mention}, you cannot interact with this component.",
+                ephemeral=True)
+        else:
+            await interaction.followup.send("You do not have permission to use this button.", ephemeral=True)
+
+
+# edit links only
+class EditLinksOnlyView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label="Add Links", style=discord.ButtonStyle.green, custom_id="editlinksonly:addlinks")
+    async def add_links_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(AddLinksOnlyModal())
+
+    @discord.ui.button(label="Remove Links", style=discord.ButtonStyle.red, custom_id="editlinksonly:removelinks")
+    async def remove_links_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(RemoveLinksOnlyModal())
+
+    @discord.ui.button(label="Add Links Proofs", style=discord.ButtonStyle.green, custom_id="editlinksonly:addlinksproofs")
+    async def add_links_proofs_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            if requested_by == interaction.user.id:
+                image_links = []
+                original_image_links = r_profile_list[2].copy()
+                await interaction.response.send_message(
+                    f"Please send the images you would like to upload (max {10 - len(r_profile_list[2])}).",
+                    ephemeral=True)
+                def check(m):
+                    return m.author == interaction.user and m.channel == interaction.channel
+
+                try:
+                    msg = await bot.wait_for('message', check=check, timeout=120.0)
+                except asyncio.TimeoutError:
+                    await interaction.followup.send("You took too long to upload an image.", ephemeral=True)
+                    return
+                if msg.attachments:
+                    for attachment in msg.attachments:
+                        # Ensure the attachment is an image (optional check)
+                        if attachment.content_type and attachment.content_type.startswith('image/'):
+                            try:
+                                # 1. Download the file data using aiohttp
+                                async with aiohttp.ClientSession() as http_session:
+                                    async with http_session.get(attachment.url) as resp:
+                                        # For this example, we just send back the image URL and filename
+                                        data = io.BytesIO(await resp.read())
+                                        file = discord.File(data, filename=attachment.filename)
+                                        channel_to_send = bot.get_channel(PROOFS_CHANNEL)
+                                        sent_message = await channel_to_send.send(file=file)
+                                        if sent_message.attachments:
+                                            new_image_url = sent_message.attachments[0].url
+                                            image_links.append(new_image_url)
+                                            r_profile_list[2].append(new_image_url)
+                            except Exception:
+                                await msg.channel.send(f"An error occurred with file {attachment.filename}")
+                if len(r_profile_list[2]) > 10:
+                    await interaction.followup.send(
+                        f"There are a total of {len(r_profile_list[2])} images, exceeding the max limit of 10. Please try again.")
+                    r_profile_list[2] = original_image_links
+                else:
+                    inprogresscol.update_one(
+                        {"_id": interaction.message.id},
+                        {"$set": {"r_profile_list": r_profile_list}}
+                    )
+                    #
+                    image_embeds = image_links_to_embeds(image_links)
+                    await interaction.followup.send(f"Images received from {interaction.user.mention}.",
+                                                    embeds=image_embeds)
+
+    @discord.ui.button(label="Remove Links Proofs", style=discord.ButtonStyle.red, custom_id="editlinksonly:removelinksproofs")
+    async def remove_links_proofs_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            if requested_by == interaction.user.id:
+                await interaction.response.send_message(
+                    f"Please list image(s) you would like to remove, from 1 to {len(r_profile_list[2])}, with a space between each number.",
+                    ephemeral=True)
+                def check(m):
+                    return m.author == interaction.user and m.channel == interaction.channel
+
+                try:
+                    msg = await bot.wait_for('message', check=check, timeout=120.0)
+                except asyncio.TimeoutError:
+                    await interaction.followup.send("You took too long to respond.", ephemeral=True)
+                    return
+                try:
+                    to_remove = msg.content.split()
+                    indices_to_remove = []
+                    for i in to_remove:
+                        indices_to_remove.append(int(i) - 1)
+                    indices_to_remove = set(indices_to_remove)
+                except Exception:
+                    await interaction.followup.send("Invalid response. Please try again.", ephemeral=True)
+                else:
+                    images_removed = []
+                    for i in indices_to_remove:
+                        if 0 <= i < len(r_profile_list[2]):
+                            images_removed.append(r_profile_list[2][i])
+                    r_profile_list[2] = [value for index, value in enumerate(r_profile_list[2]) if
+                                         index not in indices_to_remove]
+                    inprogresscol.update_one(
+                        {"_id": interaction.message.id},
+                        {"$set": {"r_profile_list": r_profile_list}}
+                    )
+                    #
+                    image_embeds = image_links_to_embeds(images_removed)
+                    await interaction.followup.send(f"Images removed by {interaction.user.mention}.",
+                                                    embeds=image_embeds)
+
+    @discord.ui.button(label="Show Links Proofs", style=discord.ButtonStyle.grey, custom_id="editlinksonly:showlinksproofs")
+    async def show_links_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            game_uid = session["account_id"]
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                image_embeds = image_links_to_embeds(r_profile_list[2])
+                await interaction.followup.send(f"Links Proofs for `{game_uid}`",
+                                                embeds=image_embeds, ephemeral=True)
+
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="editlinksonly:reason")
+    async def reason_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(LinksReasonModal())
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="editlinksonly:cancel")
+    async def cancel_button(self, interaction, button):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            inprogresscol.delete_one({"_id": interaction.message.id})
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
+
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="editlinksonly:accept")
+    async def accept_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            title = session["title"]
+            reason = session["reason"]
+            game_uid = session["account_id"]
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
+                accepted_by = interaction.user
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                #
+                vote_channel = bot.get_channel(VOTE_CHANNEL)
+                add_case_list = []
+                case_title = ""
+                agree_users = []
+                disagree_users = []
+                all_images_to_show = r_profile_list[2]
+                image_embeds = image_links_to_embeds(all_images_to_show)
+                new_report_message = await vote_channel.send(content=f"Links edited for `{game_uid}`")
+                new_report_thread = await new_report_message.create_thread(name=f"{game_uid}")
+                await new_report_thread.send(f"<@&{ticket_ping}>")
+                vote_msg = await new_report_thread.send(
+                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    embed=r_profile, view=AccountVoteView())
+                vote_channel_id = vote_msg.channel.id
+                vote_message_id = vote_msg.id
+                old_session = inprogresscol.find_one({"account_id": game_uid})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "account_id": game_uid,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "reason": reason,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
+                await new_report_thread.send(content=f"Links Proofs for `{game_uid}`", embeds=image_embeds)
+                reason_embed = discord.Embed(title="Reason", description=reason)
+                await new_report_thread.send(content=f"Reason for change(s)", embed=reason_embed)
+                embeds = [r_profile, reason_embed]
+                await old_message_edit_queue.put(
+                    (message, {"content": "Report has been submitted for voting.", "embeds": embeds, "view": None}))
+            else:
+                await interaction.followup.send("You do not have permission to accept the report for voting.",
+                                                ephemeral=True)
+class AddLinksOnlyModal(discord.ui.Modal, title="Add Links"):
+    links = discord.ui.TextInput(label="Add Links", placeholder="List links here and leave a newline between game UIDs.",
+                                required=True, style=discord.TextStyle.long)
+    def __init__(self):
+        super().__init__(timeout=None)
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            title = session["title"]
+            reason = session["reason"]
+            game_uid = session["account_id"]
+            #
+            original_links = r_profile_list[0] if r_profile_list[0] else []
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            links_input = self.links.value
+            links_list = get_game_uid_list(links_input)
+            valid_links = []
+            for link in links_list:
+                if link not in valid_links and link not in original_links and link != game_uid:
+                    valid_links.append(link)
+            if len(valid_links) != 0:
+                r_profile_list[0] = original_links + valid_links
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"r_profile_list": r_profile_list}}
+            )
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            reason_embed = discord.Embed(title="Reason", description=reason)
+            embeds = [r_profile, reason_embed]
+            await message.edit(embeds=embeds, view=EditLinksOnlyView())
+class RemoveLinksOnlyModal(discord.ui.Modal, title="Remove Links"):
+    links = discord.ui.TextInput(label="Remove Links", placeholder="List links here and leave a newline between game UIDs.",
+                                required=True, style=discord.TextStyle.long)
+    def __init__(self):
+        super().__init__(timeout=None)
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            title = session["title"]
+            reason = session["reason"]
+            game_uid = session["account_id"]
+            #
+            original_links = r_profile_list[0] if r_profile_list[0] else []
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            links_input = self.links.value
+            links_list = get_game_uid_list(links_input)
+            valid_links = []
+            for link in links_list:
+                if link not in valid_links and link in original_links and link != game_uid:
+                    valid_links.append(link)
+            if len(valid_links) != 0:
+                remaining_links = [element for element in original_links if element not in set(valid_links)]
+                if len(remaining_links) != 0:
+                    r_profile_list[0] = remaining_links
+                else:
+                    r_profile_list[0] = []
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"r_profile_list": r_profile_list}}
+            )
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            reason_embed = discord.Embed(title="Reason", description=reason)
+            embeds = [r_profile, reason_embed]
+            await message.edit(embeds=embeds, view=EditLinksOnlyView())
+class LinksReasonModal(discord.ui.Modal, title="Reason"):
+    reason_input = discord.ui.TextInput(label="Reason", placeholder="Please explain the change(s) you have made.",
+                                        required=True, style=discord.TextStyle.long)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            title = session["title"]
+            reason = session["reason"]
+            game_uid = session["account_id"]
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            reason = str(self.reason_input.value)
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"reason": reason}}
+            )
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            reason_embed = discord.Embed(title="Reason", description=reason)
+            embeds = [r_profile, reason_embed]
+            await message.edit(embeds=embeds, view=EditLinksOnlyView())
+
+
+# account appeal
+class AccountAppealView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Add Links", style=discord.ButtonStyle.green, custom_id="accountappeal:addlinks")
+    async def add_links_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(AddLinksAppealModal())
+
+    @discord.ui.button(label="Remove Links", style=discord.ButtonStyle.red, custom_id="accountappeal:removelinks")
+    async def remove_links_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(RemoveLinksAppealModal())
+
+    @discord.ui.button(label="Add Links Proofs", style=discord.ButtonStyle.green, custom_id="accountappeal:addlinksproofs")
+    async def add_links_proofs_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            if requested_by == interaction.user.id:
+                image_links = []
+                original_image_links = r_profile_list[2].copy()
+                await interaction.response.send_message(
+                    f"Please send the images you would like to upload (max {10 - len(r_profile_list[2])}).",
+                    ephemeral=True)
+                def check(m):
+                    return m.author == interaction.user and m.channel == interaction.channel
+                try:
+                    msg = await bot.wait_for('message', check=check, timeout=120.0)
+                except asyncio.TimeoutError:
+                    await interaction.followup.send("You took too long to upload an image.", ephemeral=True)
+                    return
+                if msg.attachments:
+                    for attachment in msg.attachments:
+                        # Ensure the attachment is an image (optional check)
+                        if attachment.content_type and attachment.content_type.startswith('image/'):
+                            try:
+                                # 1. Download the file data using aiohttp
+                                async with aiohttp.ClientSession() as http_session:
+                                    async with http_session.get(attachment.url) as resp:
+                                        # For this example, we just send back the image URL and filename
+                                        data = io.BytesIO(await resp.read())
+                                        file = discord.File(data, filename=attachment.filename)
+                                        channel_to_send = bot.get_channel(PROOFS_CHANNEL)
+                                        sent_message = await channel_to_send.send(file=file)
+                                        if sent_message.attachments:
+                                            new_image_url = sent_message.attachments[0].url
+                                            image_links.append(new_image_url)
+                                            r_profile_list[2].append(new_image_url)
+                            except Exception:
+                                await msg.channel.send(f"An error occurred with file {attachment.filename}")
+                if len(r_profile_list[2]) > 10:
+                    await interaction.followup.send(
+                        f"There are a total of {len(r_profile_list[2])} images, exceeding the max limit of 10. Please try again.")
+                    r_profile_list[2] = original_image_links
+                else:
+                    inprogresscol.update_one(
+                        {"_id": interaction.message.id},
+                        {"$set": {"r_profile_list": r_profile_list}}
+                    )
+                    image_embeds = image_links_to_embeds(image_links)
+                    await interaction.followup.send(f"Images received from {interaction.user.mention}.",
+                                                    embeds=image_embeds)
+
+    @discord.ui.button(label="Remove Links Proofs", style=discord.ButtonStyle.red, custom_id="accountappeal:removelinksproofs")
+    async def remove_links_proofs_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            if requested_by == interaction.user.id:
+                await interaction.response.send_message(
+                    f"Please list image(s) you would like to remove, from 1 to {len(r_profile_list[2])}, with a space between each number.",
+                    ephemeral=True)
+                # Wait for a follow-up message from the user in the same channel
+                def check(m):
+                    # Check if the message is from the same user, in the same channel
+                    return m.author == interaction.user and m.channel == interaction.channel
+                try:
+                    msg = await bot.wait_for('message', check=check, timeout=120.0)
+                except asyncio.TimeoutError:
+                    await interaction.followup.send("You took too long to respond.", ephemeral=True)
+                    return
+                try:
+                    to_remove = msg.content.split()
+                    indices_to_remove = []
+                    for i in to_remove:
+                        indices_to_remove.append(int(i) - 1)
+                    indices_to_remove = set(indices_to_remove)
+                except Exception:
+                    await interaction.followup.send("Invalid response. Please try again.", ephemeral=True)
+                else:
+                    images_removed = []
+                    for i in indices_to_remove:
+                        if 0 <= i < len(r_profile_list[2]):
+                            images_removed.append(r_profile_list[2][i])
+                    r_profile_list[2] = [value for index, value in enumerate(r_profile_list[2]) if
+                                         index not in indices_to_remove]
+                    inprogresscol.update_one(
+                        {"_id": interaction.message.id},
+                        {"$set": {"r_profile_list": r_profile_list}}
+                    )
+                    image_embeds = image_links_to_embeds(images_removed)
+                    await interaction.followup.send(f"Images removed by {interaction.user.mention}.",
+                                                    embeds=image_embeds)
+
+    @discord.ui.button(label="Show Links Proofs", style=discord.ButtonStyle.grey, custom_id="accountappeal:showlinksproofs")
+    async def show_links_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            game_uid = session["account_id"]
+        #
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                image_embeds = image_links_to_embeds(r_profile_list[2])
+                await interaction.followup.send(f"Links Proofs for `{game_uid}`",
+                                                embeds=image_embeds, ephemeral=True)
+
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.primary, custom_id="accountappeal:reason")
+    async def reason_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            #
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(AccountAppealReasonModal())
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="accountappeal:cancel")
+    async def cancel_button(self, interaction, button):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            inprogresscol.delete_one({"_id": interaction.message.id})
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
+
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accountappeal:accept")
+    async def accept_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            reason = session["reason"]
+            game_uid = session["account_id"]
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
+                accepted_by = interaction.user
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
+                embeds = [r_profile, add_case, reason_embed]
+                #
+                vote_channel = bot.get_channel(VOTE_CHANNEL)
+                agree_users = []
+                disagree_users = []
+                links_proofs_embeds = image_links_to_embeds(r_profile_list[2])
+                proofs_embeds = image_links_to_embeds(add_case_list[7])
+                add_case_list = [add_case_list]
+                new_report_message = await vote_channel.send(content=f"Appeal on `{game_uid}`")
+                new_report_thread = await new_report_message.create_thread(name=f"{game_uid}")
+                await new_report_thread.send(f"<@&{ticket_ping}>")
+                vote_msg = await new_report_thread.send(
+                    content=f"Appeal accepted by <@{accepted_by.id}>.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    embeds=embeds, view=AccountVoteView())
+                vote_channel_id = vote_msg.channel.id
+                vote_message_id = vote_msg.id
+                old_session = inprogresscol.find_one({"account_id": game_uid})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "account_id": game_uid,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "reason": reason,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
+                await new_report_thread.send(content=f"Links Proofs for `{game_uid}`", embeds=links_proofs_embeds)
+                await new_report_thread.send(content=f"Proofs for `{game_uid}`", embeds=proofs_embeds)
+                await old_message_edit_queue.put(
+                    (message, {"content": "Appeal has been submitted for voting.", "embeds": embeds, "view": None}))
+            else:
+                await interaction.followup.send("You do not have permission to accept the report for voting.",
+                                                ephemeral=True)
+class AddLinksAppealModal(discord.ui.Modal, title="Add Links"):
+    links = discord.ui.TextInput(label="Add Links", placeholder="List links here and leave a newline between game UIDs.",
+                                required=True, style=discord.TextStyle.long)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            reason = session["reason"]
+            game_uid = session["account_id"]
+            #
+            original_links = r_profile_list[0] if r_profile_list[0] else []
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            links_input = self.links.value
+            links_list = get_game_uid_list(links_input)
+            valid_links = []
+            for link in links_list:
+                if link not in valid_links and link not in original_links and link != game_uid:
+                    valid_links.append(link)
+            if len(valid_links) != 0:
+                r_profile_list[0] = original_links + valid_links
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"r_profile_list": r_profile_list}}
+            )
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case, reason_embed]
+            await message.edit(embeds=embeds, view=AccountAppealView())
+class RemoveLinksAppealModal(discord.ui.Modal, title="Remove Links"):
+    links = discord.ui.TextInput(label="Remove Links", placeholder="List links here and leave a newline between game UIDs.",
+                                required=True, style=discord.TextStyle.long)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            reason = session["reason"]
+            game_uid = session["account_id"]
+            #
+            original_links = r_profile_list[0] if r_profile_list[0] else []
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            links_input = self.links.value
+            links_list = get_game_uid_list(links_input)
+            valid_links = []
+            for link in links_list:
+                if link not in valid_links and link in original_links and link != game_uid:
+                    valid_links.append(link)
+            if len(valid_links) != 0:
+                remaining_links = [element for element in original_links if element not in set(valid_links)]
+                if len(remaining_links) != 0:
+                    r_profile_list[0] = remaining_links
+                else:
+                    r_profile_list[0] = []
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"r_profile_list": r_profile_list}}
+            )
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case, reason_embed]
+            await message.edit(embeds=embeds, view=AccountAppealView())
+class AccountAppealReasonModal(discord.ui.Modal, title="Reason"):
+    reason_input = discord.ui.TextInput(label="Reason", placeholder="Please explain the appeal you have made.",
+                                        required=True, style=discord.TextStyle.long)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            reason = str(self.reason_input.value)
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"reason": reason}}
+            )
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case, reason_embed]
+            await message.edit(embeds=embeds, view=AccountAppealView())
+
+
+# account add report
+class AddReportLinksView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportlinks:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportAccountTagsView())
+
+    @discord.ui.button(label="Add Links", style=discord.ButtonStyle.green, custom_id="addreportlinks:addlinks")
+    async def add_links_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            #
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(AddLinksModal())
+
+    @discord.ui.button(label="Remove Links", style=discord.ButtonStyle.red, custom_id="addreportlinks:removelinks")
+    async def remove_links_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            #
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(RemoveLinksModal())
+
+    @discord.ui.button(label="Add Links Proofs", style=discord.ButtonStyle.green, custom_id="addreportlinks:addlinksproofs")
+    async def add_links_proofs_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            #
+            if requested_by == interaction.user.id:
+                image_links = []
+                original_image_links = r_profile_list[2].copy()
+                await interaction.response.send_message(
+                    f"Please send the images you would like to upload (max {10 - len(r_profile_list[2])}).",
+                    ephemeral=True)
+
+                # Wait for a follow-up message from the user in the same channel
+                def check(m):
+                    # Check if the message is from the same user, in the same channel, and has an attachment
+                    return m.author == interaction.user and m.channel == interaction.channel
+
+                try:
+                    msg = await bot.wait_for('message', check=check, timeout=120.0)
+                except asyncio.TimeoutError:
+                    await interaction.followup.send("You took too long to upload an image.", ephemeral=True)
+                    return
+                if msg.attachments:
+                    for attachment in msg.attachments:
+                        # Ensure the attachment is an image (optional check)
+                        if attachment.content_type and attachment.content_type.startswith('image/'):
+                            try:
+                                # 1. Download the file data using aiohttp
+                                async with aiohttp.ClientSession() as http_session:
+                                    async with http_session.get(attachment.url) as resp:
+                                        # For this example, we just send back the image URL and filename
+                                        data = io.BytesIO(await resp.read())
+                                        file = discord.File(data, filename=attachment.filename)
+                                        channel_to_send = bot.get_channel(PROOFS_CHANNEL)
+                                        sent_message = await channel_to_send.send(file=file)
+                                        if sent_message.attachments:
+                                            new_image_url = sent_message.attachments[0].url
+                                            image_links.append(new_image_url)
+                                            r_profile_list[2].append(new_image_url)
+                            except Exception:
+                                await msg.channel.send(f"An error occurred with file {attachment.filename}")
+                if len(r_profile_list[2]) > 10:
+                    await interaction.followup.send(
+                        f"There are a total of {len(r_profile_list[2])} images, exceeding the max limit of 10. Please try again.")
+                    r_profile_list[2] = original_image_links
+                else:
+                    #
+                    inprogresscol.update_one(
+                        {"_id": interaction.message.id},
+                        {"$set": {"r_profile_list": r_profile_list}}
+                    )
+                    #
+                    image_embeds = image_links_to_embeds(image_links)
+                    await interaction.followup.send(f"Images received from {interaction.user.mention}.",
+                                                    embeds=image_embeds)
+
+    @discord.ui.button(label="Remove Links Proofs", style=discord.ButtonStyle.red, custom_id="addreportlinks:removelinksproofs")
+    async def remove_links_proofs_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            #
+            if requested_by == interaction.user.id:
+                await interaction.response.send_message(
+                    f"Please list image(s) you would like to remove, from 1 to {len(r_profile_list[2])}, with a space between each number.",
+                    ephemeral=True)
+
+                # Wait for a follow-up message from the user in the same channel
+                def check(m):
+                    # Check if the message is from the same user, in the same channel
+                    return m.author == interaction.user and m.channel == interaction.channel
+
+                try:
+                    msg = await bot.wait_for('message', check=check, timeout=120.0)
+                except asyncio.TimeoutError:
+                    await interaction.followup.send("You took too long to respond.", ephemeral=True)
+                    return
+                try:
+                    to_remove = msg.content.split()
+                    indices_to_remove = []
+                    for i in to_remove:
+                        indices_to_remove.append(int(i) - 1)
+                    indices_to_remove = set(indices_to_remove)
+                except Exception:
+                    await interaction.followup.send("Invalid response. Please try again.", ephemeral=True)
+                else:
+                    images_removed = []
+                    for i in indices_to_remove:
+                        if 0 <= i < len(r_profile_list[2]):
+                            images_removed.append(r_profile_list[2][i])
+                    r_profile_list[2] = [value for index, value in enumerate(r_profile_list[2]) if
+                                         index not in indices_to_remove]
+                    #
+                    inprogresscol.update_one(
+                        {"_id": interaction.message.id},
+                        {"$set": {"r_profile_list": r_profile_list}}
+                    )
+                    #
+                    image_embeds = image_links_to_embeds(images_removed)
+                    await interaction.followup.send(f"Images removed by {interaction.user.mention}.",
+                                                    embeds=image_embeds)
+
+    @discord.ui.button(label="Show Links Proofs", style=discord.ButtonStyle.grey, custom_id="addreportlinks:showlinksproofs")
+    async def show_links_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            game_uid = session["account_id"]
+            #
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                image_embeds = image_links_to_embeds(r_profile_list[2])
+                await interaction.followup.send(f"Links Proofs for `{game_uid}`",
+                                                embeds=image_embeds, ephemeral=True)
+class AddLinksModal(discord.ui.Modal, title="Add Links"):
+    links = discord.ui.TextInput(label="Add Links", placeholder="List links here and leave a newline between game UIDs.",
+                                required=True, style=discord.TextStyle.long)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            original_links = r_profile_list[0] if r_profile_list[0] else []
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            links_input = self.links.value
+            links_list = get_game_uid_list(links_input)
+            valid_links = []
+            for link in links_list:
+                if link not in valid_links and link not in original_links and link != game_uid:
+                    valid_links.append(link)
+            if len(valid_links) != 0:
+                r_profile_list[0] = original_links + valid_links
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"r_profile_list": r_profile_list}}
+            )
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await message.edit(embeds=embeds, view=AddReportLinksView())
+class RemoveLinksModal(discord.ui.Modal, title="Remove Links"):
+    links = discord.ui.TextInput(label="Remove Links", placeholder="List links here and leave a newline between game UIDs.",
+                                required=True, style=discord.TextStyle.long)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            original_links = r_profile_list[0] if r_profile_list[0] else []
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            links_input = self.links.value
+            links_list = get_game_uid_list(links_input)
+            valid_links = []
+            for link in links_list:
+                if link not in valid_links and link in original_links and link != game_uid:
+                    valid_links.append(link)
+            if len(valid_links) != 0:
+                remaining_links = [element for element in original_links if element not in set(valid_links)]
+                if len(remaining_links) != 0:
+                    r_profile_list[0] = remaining_links
+                else:
+                    r_profile_list[0] = []
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"r_profile_list": r_profile_list}}
+            )
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await message.edit(embeds=embeds, view=AddReportLinksView())
+
+class AddReportAccountTagsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportaccounttags:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportLinksView())
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportaccounttags:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportRelatedUsersView())
+
+    @discord.ui.select(options=account_tag_options, placeholder="Select Tag(s)...", custom_id="addreportaccounttags:select",
+                       max_values=len(account_tag_options))
+    async def select_callback(self, interaction, select):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id:
+                sorted_tags = sort_account_tags(self.select_callback.values)
+                case_title = sorted_tags[0]
+                tags = selected_string(sorted_tags)
+                add_case_list[2] = tags
+                #
+                account_query = {"_id": str(game_uid)}
+                account_profile = accountscol.find_one(account_query)
+                old_r_profile_list = account_profile["r_profile_list"]
+                #
+                existing_tags_list = old_r_profile_list[1].split(", ")
+                existing_tags_list.insert(0, title)
+                for tag in sorted_tags:
+                    if tag not in existing_tags_list:
+                        existing_tags_list.append(tag)
+                sorted_tags = sort_account_tags(existing_tags_list)
+                #
+                if "Recovered Account" in tags:
+                    title = "Recovered Account"
+                    all_other_tags = selected_string([tag for tag in sorted_tags if tag != "Recovered Account"])
+                else:
+                    title = sorted_tags[0]
+                    all_other_tags = selected_string(sorted_tags[1:])
+                r_profile_list[1] = all_other_tags
+                #
+                inprogresscol.update_one(
+                    {"_id": interaction.message.id},
+                    {"$set": {
+                        "r_profile_list": r_profile_list,
+                        "add_case_list": add_case_list,
+                        "title": title,
+                        "case_title": case_title, }
+                    })
+                #
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds)
+
+class AddReportRelatedUsersView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportrelatedusers:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportAccountTagsView())
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportrelatedusers:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportAccountReasonView())
+    @discord.ui.button(
+        label="Related Users",
+        style=discord.ButtonStyle.green,
+        custom_id="relatedusers:input"
+    )
+    async def related_users_button(self, interaction, button):
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session and session["requested_by"] == interaction.user.id:
+            await interaction.response.send_modal(AddReportRelatedUsersModal())
+
+
+class AddReportRelatedUsersModal(
+    discord.ui.Modal,
+    title="Related Users"
+):
+    related_users = discord.ui.TextInput(
+        label="Related Users",
+        placeholder="List user IDs separated by spaces.",
+        required=True,
+        style=discord.TextStyle.paragraph
+    )
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            thread = await bot.fetch_channel(session["channel_id"])
+            message = await thread.fetch_message(interaction.message.id)
+            ids = self.related_users.value.split()
+            valid_users = []
+            for id in ids:
+                try:
+                    fetched = await bot.fetch_user(int(id))
+                except Exception:
+                    continue
+                if fetched.id not in valid_users:
+                    valid_users.append(fetched.id)
+            r_profile_list = session["r_profile_list"]
+            if len(valid_users):
+                add_case_list[3] = related_users_string(valid_users)
+            else:
+                add_case_list[3] = ""
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"add_case_list": add_case_list}}
+            )
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await message.edit(embeds=embeds, view=AddReportRelatedUsersView())
+
+class AddReportAccountReasonView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportaccountreason:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportRelatedUsersView())
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="addreportaccountreason:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportAccountContributorView())
+
+    @discord.ui.button(label="Reason", style=discord.ButtonStyle.green, custom_id="addreportaccountreason:input")
+    async def reason_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            #
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(AddReportAccountReasonModal())
+class AddReportAccountReasonModal(discord.ui.Modal, title="Reason"):
+    reason = discord.ui.TextInput(label="Reason", placeholder="Input reason here.", required=True,
+                                  style=discord.TextStyle.long)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            reason = re.sub(r"\s+", " ", self.reason.value)
+            add_case_list[3] = reason
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"add_case_list": add_case_list}},
+            )
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await message.edit(embeds=embeds, view=AddReportAccountReasonView())
+
+class AddReportAccountContributorView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey,
+                       custom_id="addreportaccountcontributor:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportAccountReasonView())
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey,
+                       custom_id="addreportaccountcontributor:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportAccountProofsView())
+
+    @discord.ui.button(label="Contributor", style=discord.ButtonStyle.green, custom_id="addreportaccountcontributor:input")
+    async def contributor_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            #
+            if requested_by == interaction.user.id:
+                await interaction.response.send_modal(AddReportAccountContributorModal())
+class AddReportAccountContributorModal(discord.ui.Modal, title="Contributor"):
+    contributor = discord.ui.TextInput(label="Contributor",
+                                       placeholder="Account ID / n if Anonymous.", required=True,
+                                       style=discord.TextStyle.short)
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def on_submit(self, interaction):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            contributor_input = self.contributor.value
+            if contributor_input.lower() == "n":
+                add_case_list[4] = "Anonymous"
+            else:
+                try:
+                    contributor_id = await bot.fetch_user(int(contributor_input))
+                except Exception:
+                    add_case_list[4] = ""
+                else:
+                    add_case_list[4] = f"<@{contributor_id.id}>"
+            #
+            inprogresscol.update_one(
+                {"_id": interaction.message.id},
+                {"$set": {"add_case_list": add_case_list}},
+            )
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            add_case = format_account_add_case(add_case_list, case_title)
+            embeds = [r_profile, add_case]
+            await message.edit(embeds=embeds,
+                               view=AddReportAccountContributorView())
+
+class AddReportAccountProofsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="addreportaccountproofs:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await message.edit(embeds=embeds, view=AddReportAccountContributorView())
+
+    @discord.ui.button(label="Add Proofs", style=discord.ButtonStyle.green, custom_id="addreportaccountproofs:input")
+    async def proofs_button(self, interaction, button):
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            add_case_list = session["add_case_list"]
+            #
+            if requested_by == interaction.user.id:
+                image_links = []
+                add_case_list[7] = []
+                await interaction.response.send_message(
+                    "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
+                    ephemeral=True)
+
+                def check(m):
+                    return m.author == interaction.user and m.channel == interaction.channel
+
+                try:
+                    msg = await bot.wait_for('message', check=check, timeout=120.0)
+                except asyncio.TimeoutError:
+                    await interaction.followup.send("You took too long to upload an image.", ephemeral=True)
+                    return
+                if msg.attachments:
+                    for attachment in msg.attachments:
+                        # Ensure the attachment is an image (optional check)
+                        if attachment.content_type and attachment.content_type.startswith('image/'):
+                            try:
+                                # 1. Download the file data using aiohttp
+                                async with aiohttp.ClientSession() as http_session:
+                                    async with http_session.get(attachment.url) as resp:
+                                        # For this example, we just send back the image URL and filename
+                                        data = io.BytesIO(await resp.read())
+                                        file = discord.File(data, filename=attachment.filename)
+                                        channel_to_send = bot.get_channel(PROOFS_CHANNEL)
+                                        sent_message = await channel_to_send.send(file=file)
+                                        if sent_message.attachments:
+                                            new_image_url = sent_message.attachments[0].url
+                                            image_links.append(new_image_url)
+                                            add_case_list[7].append(new_image_url)
+                            except Exception:
+                                await msg.channel.send(f"An error occurred with file {attachment.filename}")
+                #
+                inprogresscol.update_one(
+                    {"_id": interaction.message.id},
+                    {"$set": {"add_case_list": add_case_list}},
+                )
+                #
+                image_embeds = image_links_to_embeds(image_links)
+                await interaction.followup.send(f"Images received from {interaction.user.mention}.",
+                                                embeds=image_embeds)
+
+    @discord.ui.button(label="Show Proofs", style=discord.ButtonStyle.grey, custom_id="addreportaccountproofs:showproofs")
+    async def show_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            add_case_list = session["add_case_list"]
+            game_uid = session["account_id"]
+            #
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                image_embeds = image_links_to_embeds(add_case_list[7])
+                await interaction.followup.send(f"Proofs for `{game_uid}`",
+                                                embeds=image_embeds, ephemeral=True)
+
+    @discord.ui.button(label="Show Links Proofs", style=discord.ButtonStyle.grey, custom_id="addreportaccountproofs:showlinksproofs")
+    async def show_links_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            r_profile_list = session["r_profile_list"]
+            game_uid = session["account_id"]
+            #
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                image_embeds = image_links_to_embeds(r_profile_list[2])
+                await interaction.followup.send(f"Links Proofs for `{game_uid}`",
+                                                embeds=image_embeds, ephemeral=True)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.grey, custom_id="addreportaccountproofs:cancel")
+    async def cancel_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            #
+            inprogresscol.delete_one({"_id": interaction.message.id})
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if requested_by == interaction.user.id or is_sr(interaction.user):
+                await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
+
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="addreportaccountproofs:accept")
+    async def accept_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = interaction.message.id
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            game_uid = session["account_id"]
+            #
+            thread = await bot.fetch_channel(channel_id)
+            message = await thread.fetch_message(message_id)
+            if is_sr(interaction.user) and interaction.user.id != requested_by:
+                accepted_by = interaction.user
+                add_case_list[6] = f"<@{interaction.user.id}>"
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                #
+                vote_channel = bot.get_channel(VOTE_CHANNEL)
+                agree_users = []
+                disagree_users = []
+                links_proofs_embeds = image_links_to_embeds(r_profile_list[2])
+                proofs_embeds = image_links_to_embeds(add_case_list[7])
+                new_report_message = await vote_channel.send(content=f"Added report on `{game_uid}`")
+                new_report_thread = await new_report_message.create_thread(name=f"{game_uid}")
+                await new_report_thread.send(f"<@&{ticket_ping}>")
+                vote_msg = await new_report_thread.send(
+                    content=f"Report accepted by {accepted_by.mention}.\nLink to thread: <#{channel_id}>\n\nAgree: 0\nDisagree: 0",
+                    embeds=embeds, view=AccountVoteView())
+                vote_channel_id = vote_msg.channel.id
+                vote_message_id = vote_msg.id
+                old_session = inprogresscol.find_one({"account_id": game_uid})
+                if old_session:
+                    inprogresscol.delete_one({"_id": old_session["_id"]})
+                inprogresscol.insert_one({
+                    "_id": vote_message_id,
+                    "account_id": game_uid,
+                    "requested_by": requested_by,
+                    "channel_id": channel_id,
+                    "message_id": interaction.message.id,
+                    "r_profile_list": r_profile_list,
+                    "add_case_list": add_case_list,
+                    "title": title,
+                    "case_title": case_title,
+                    "vote_channel_id": vote_channel_id,
+                    "accepted_by": accepted_by.id,
+                    "agree_users": agree_users,
+                    "disagree_users": disagree_users,
+                })
+                await new_report_thread.send(content=f"Links Proofs for `{game_uid}`", embeds=links_proofs_embeds)
+                await new_report_thread.send(content=f"Proofs for `{game_uid}`", embeds=proofs_embeds)
+                await old_message_edit_queue.put(
+                    (message, {"content": "Report has been submitted for voting.", "embeds": embeds, "view": None}))
+            else:
+                await interaction.followup.send("You do not have permission to accept the report for voting.",
+                                                ephemeral=True)
+
+
+# user voting
+class AccountVoteView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Agree", style=discord.ButtonStyle.green, custom_id="accountvote:agree")
+    async def agree_button(self, interaction, button):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = session["message_id"]
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            accepted_by = session["accepted_by"]
+            reason = session.get("reason")
+            game_uid = session["account_id"]
+            agree_users, disagree_users = await handle_vote(interaction, session, "agree")
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            #
+            if len(agree_users) >= 8 and len(agree_users) > len(disagree_users):
+                account_query = {"_id": game_uid}
+                account_profile = accountscol.find_one(account_query)
+                if account_profile:  # if editing existing reported user
+                    old_r_profile_list = account_profile["r_profile_list"]
+                    cases = []
+                    no_of_cases = len(account_profile) - 2
+                    for i in range(1, no_of_cases + 1):
+                        cases.append(account_profile[str(i)])
+                    #
+                    if old_r_profile_list[0] != r_profile_list[0]:  # comparing links
+                        old_links_list = old_r_profile_list[0]
+                        new_links_list = r_profile_list[0]
+                        added_links_list = set(new_links_list) - set(old_links_list)
+                        removed_links_list = set(old_links_list) - set(new_links_list)
+                        for link in added_links_list:
+                            new_account = {"_id": str(link), "main": game_uid}
+                            accountscol.insert_one(new_account)
+                        for link in removed_links_list:
+                            accountscol.delete_one({"_id": link})
+                        update_operation = {'$set': {"r_profile_list": r_profile_list}}
+                        accountscol.update_one(account_query, update_operation)
+                    if not add_case_list:  # only links edited
+                        tags_strings = []
+                        all_tags_list = []
+                        for case in cases:
+                            tags_strings.append(case[2])
+                        for tags_string in tags_strings:
+                            tags_list = tags_string.split(", ")
+                            for tag in tags_list:
+                                all_tags_list.append(tag)
+                        all_tags_list = sort_account_tags(all_tags_list)
+                        title = all_tags_list[0]
+                        r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                        account_reports_channel = bot.get_channel(ACCOUNT_REPORTS_CHANNEL)
+                        await account_reports_channel.send(content=f"<@&{updated_account_report_ping}>\nLinks edited for `{game_uid}`",
+                                                        embed=r_profile)
+                        reason_embed = discord.Embed(title="Reason", description=reason)
+                        await account_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "embeds": [r_profile], "view": None}))
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
+                        await bot.get_channel(channel_id).send(
+                            f"Report on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
+                    elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
+                        add_case_list = add_case_list[0]
+                        appeal_case_number = next((k for k, v in account_profile.items() if v == add_case_list), None)
+                        query_filter = {"_id": game_uid}
+                        update_operation = {"$unset": {appeal_case_number: ""}}
+                        accountscol.update_one(query_filter, update_operation)
+                        #
+                        account_query = {"_id": game_uid}
+                        account_profile = accountscol.find_one(account_query)
+                        links = r_profile_list[0] if r_profile_list[0] else []
+                        if len(account_profile) == 2:
+                            accountscol.delete_one(account_query)
+                            for link in links:
+                                account_query = {"_id": link}
+                                accountscol.delete_one(account_query)
+                        else:
+                            no_of_cases = len(account_profile) - 2
+                            for i in range(int(appeal_case_number), no_of_cases + 1):
+                                account_profile[appeal_case_number] = account_profile.pop(str(int(appeal_case_number) + 1))
+                            cases = []
+                            for i in range(1, no_of_cases + 1):
+                                cases.append(account_profile[str(i)])
+                            latest_tags = add_case_list[2].split(", ")
+                            all_tags_list = []
+                            for case in cases:
+                                all_tags_list.extend(case[2].split(", "))
+                            all_tags_list = sort_account_tags(all_tags_list)
+                            if "Recovered Account" in latest_tags:
+                                title = "Recovered Account"
+                                all_other_tags = selected_string([tag for tag in all_tags_list if tag != "Recovered Account"])
+                            else:
+                                title = all_tags_list[0]
+                                all_other_tags = selected_string(all_tags_list[1:])
+                            r_profile_list = account_profile["r_profile_list"]
+                            r_profile_list[1] = all_other_tags
+                            account_profile["r_profile_list"] = r_profile_list
+                            query_filter = {"_id": game_uid}
+                            accountscol.replace_one(query_filter, account_profile)
+                        #
+                        r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                        add_case = format_account_add_case(add_case_list, case_title)
+                        reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
+                        embeds = [r_profile, add_case]
+                        #
+                        account_reports_channel = bot.get_channel(ACCOUNT_REPORTS_CHANNEL)
+                        await account_reports_channel.send(content=f"<@&{appealed_account_report_ping}>\nAppeal on `{game_uid}`",
+                                                        embeds=embeds)
+                        await account_reports_channel.send(content=f"Reason for appeal", embed=reason_embed)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.",
+                            "view": None}))
+                        await bot.get_channel(channel_id).send(
+                            f"Appeal on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
+                    else:  # new case exists
+                        #
+                        r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                        add_case = format_account_add_case(add_case_list, case_title)
+                        embeds = [r_profile, add_case]
+
+                        query_filter = {"_id": game_uid}
+                        update_operation = {'$set': {"r_profile_list": r_profile_list}}
+                        serverscol.update_one(query_filter, update_operation)
+                        update_operation = {'$set': {str(no_of_cases + 1): add_case_list}}
+                        accountscol.update_one(query_filter, update_operation)
+
+                        account_reports_channel = bot.get_channel(ACCOUNT_REPORTS_CHANNEL)
+                        await account_reports_channel.send(content=f"<@&{updated_account_report_ping}>\nAdded report on `{game_uid}`",
+                                                        embeds=embeds)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
+                        await bot.get_channel(channel_id).send(
+                            f"Report on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
+                else:  # if new reported account
+                    r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                    add_case = format_account_add_case(add_case_list, case_title)
+                    embeds = [r_profile, add_case]
+                    new_account = {"_id": game_uid, "r_profile_list": r_profile_list,
+                                "1": add_case_list}
+                    accountscol.insert_one(new_account)
+                    links_list = r_profile_list[0] if r_profile_list[0] else []
+                    for link in links_list:
+                        new_account = {"_id": str(link), "main": game_uid}
+                        accountscol.insert_one(new_account)
+                    account_reports_channel = bot.get_channel(ACCOUNT_REPORTS_CHANNEL)
+                    await account_reports_channel.send(content=f"<@&{new_account_report_ping}>\nNew report on `{game_uid}`",
+                                                    embeds=embeds)
+                    await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                        "view": None, "embeds": embeds}))
+                    thread = await bot.fetch_channel(channel_id)
+                    message = await thread.fetch_message(message_id)
+                    await old_message_edit_queue.put((message, {
+                        "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                        "view": None}))
+                    await bot.get_channel(channel_id).send(
+                        f"Report on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
+                    inprogresscol.delete_one({"_id": interaction.message.id})
+                try:
+                    voters = agree_users + disagree_users
+                    for voter in voters:
+                        voter_query = {"_id": str(voter)}
+                        voter_profile = trusteduserscol.find_one(voter_query)
+                        if voter_profile:
+                            trusteduserscol.update_one(
+                                voter_query,
+                                {"$inc": {"votes": 1}}
+                            )
+
+                    staff_query = {"_id": str(requested_by)}
+                    if trusteduserscol.find_one(staff_query):
+                        trusteduserscol.update_one(
+                            staff_query,
+                            {"$inc": {"reports": 1}}
+                        )
+                    if staffweeklycol.find_one(staff_query):
+                        staffweeklycol.update_one(
+                            staff_query,
+                            {"$inc": {"weekly_reports": 1}}
+                        )
+                    sr_query = {"_id": str(accepted_by)}
+                    if trusteduserscol.find_one(sr_query):
+                        trusteduserscol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"reviews": 1}}
+                        )
+                    if staffweeklycol.find_one(sr_query):
+                        staffweeklycol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"weekly_reviews": 1}}
+                        )
+                except Exception as e:
+                    print(f"{e}")
+                current_name = interaction.channel.name
+                new_name = current_name if current_name.startswith("p-") else f"p-{current_name}"
+                await asyncio.sleep(2)
+                await interaction.channel.edit(name=new_name, archived=True, locked=True)
+                return
+            #
+            if not add_case_list:  # only links edited
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": [r_profile], "view": AccountVoteView()}))
+            elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
+                add_case_list = add_case_list[0]
+                add_case = format_account_add_case(add_case_list, case_title)
+                reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
+                embeds = [r_profile, add_case, reason_embed]
+                await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": AccountVoteView()}))
+            else:  # new case exists
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": AccountVoteView()}))
+
+    @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="accountvote:disagree")
+    async def disagree_button(self, interaction, button):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = session["message_id"]
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            accepted_by = session["accepted_by"]
+            reason = session.get("reason")
+            game_uid = session["account_id"]
+            agree_users, disagree_users = await handle_vote(interaction, session, "disagree")
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            #
+            if len(disagree_users) >= 12:
+                account_query = {"_id": game_uid}
+                account_profile = accountscol.find_one(account_query)
+                if account_profile:  # if editing existing reported account
+                    if not add_case_list:  # only links edited
+                        no_of_cases = len(account_profile) - 2
+                        cases = []
+                        for i in range(1, no_of_cases + 1):
+                            cases.append(account_profile[str(i)])
+                        latest_tags = add_case_list[2].split(", ")
+                        all_tags_list = []
+                        for case in cases:
+                            all_tags_list.extend(case[2].split(", "))
+                        all_tags_list = sort_account_tags(all_tags_list)
+                        if "Recovered Account" in latest_tags:
+                            title = "Recovered Account"
+                        else:
+                            title = all_tags_list[0]
+                        r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "embeds": [r_profile], "view": None}))
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
+                        await bot.get_channel(channel_id).send(
+                            f"Report on `{game_uid}` has been rejected. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
+
+                    elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
+                        add_case_list = add_case_list[0]
+                        r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                        add_case = format_account_add_case(add_case_list, case_title)
+                        embeds = [r_profile, add_case]
+                        #
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Appeal has been rejected.** Appeal accepted by <@{accepted_by}>.",
+                            "view": None}))
+                        await bot.get_channel(channel_id).send(
+                            f"Appeal on `{game_uid}` has been rejected. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
+
+                    else:  # new case exists
+                        r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                        add_case = format_account_add_case(add_case_list, case_title)
+                        embeds = [r_profile, add_case]
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
+                        await bot.get_channel(channel_id).send(
+                            f"Report on `{game_uid}` has been rejected. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
+                else:  # if new reported account
+                    r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                    add_case = format_account_add_case(add_case_list, case_title)
+                    embeds = [r_profile, add_case]
+                    await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                        "view": None, "embeds": embeds}))
+                    thread = await bot.fetch_channel(channel_id)
+                    message = await thread.fetch_message(message_id)
+                    await old_message_edit_queue.put((message, {
+                        "content": f"**Report has been rejected.** Report accepted by <@{accepted_by}>.",
+                        "view": None}))
+                    await bot.get_channel(channel_id).send(
+                        f"Report on `{game_uid}` has been rejected. <@{requested_by}> <@{accepted_by}>")
+                    inprogresscol.delete_one({"_id": interaction.message.id})
+                try:
+                    voters = agree_users + disagree_users
+                    for voter in voters:
+                        voter_query = {"_id": str(voter)}
+                        voter_profile = trusteduserscol.find_one(voter_query)
+                        if voter_profile:
+                            trusteduserscol.update_one(
+                                voter_query,
+                                {"$inc": {"votes": 1}}
+                            )
+                except Exception as e:
+                    print(f"{e}")
+                current_name = interaction.channel.name
+                new_name = current_name if current_name.startswith("r-") else f"r-{current_name}"
+                await asyncio.sleep(2)
+                await interaction.channel.edit(name=new_name, archived=True, locked=True)
+                return
+            if not add_case_list:  # only links edited
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": [r_profile], "view": AccountVoteView()}))
+            elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
+                add_case_list = add_case_list[0]
+                add_case = format_account_add_case(add_case_list, case_title)
+                reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
+                embeds = [r_profile, add_case, reason_embed]
+                await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": AccountVoteView()}))
+            else:  # new case exists
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": AccountVoteView()}))
+
+    @discord.ui.button(label="Remove Vote", style=discord.ButtonStyle.primary, custom_id="accountvote:removevote")
+    async def remove_vote_button(self, interaction, button):
+        await interaction.response.defer()
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            channel_id = session["channel_id"]
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            accepted_by = session["accepted_by"]
+            reason = session.get("reason")
+            game_uid = session["account_id"]
+            agree_users, disagree_users = await handle_vote(interaction, session, "remove")
+            #
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            if not add_case_list:
+                reason_embed = discord.Embed(title="Reason", description=reason)
+                embeds = [r_profile, reason_embed]
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": AccountVoteView()}))
+            elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
+                add_case_list = add_case_list[0]
+                add_case = format_account_add_case(add_case_list, case_title)
+                reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
+                embeds = [r_profile, add_case, reason_embed]
+                await old_message_edit_queue.put((interaction.message, {"content": f"Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": AccountVoteView()}))
+            else:
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds = [r_profile, add_case]
+                await old_message_edit_queue.put((interaction.message, {"content": f"Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                    "embeds": embeds, "view": AccountVoteView()}))
+
+    @discord.ui.button(label="Publish", style=discord.ButtonStyle.grey, custom_id="accountvote:publish")
+    async def publish_button(self, interaction, button):
+        await interaction.response.defer(thinking=True)
+        session = inprogresscol.find_one({"_id": interaction.message.id})
+        if session:
+            requested_by = session["requested_by"]
+            channel_id = session["channel_id"]
+            message_id = session["message_id"]
+            r_profile_list = session["r_profile_list"]
+            add_case_list = session["add_case_list"]
+            title = session["title"]
+            case_title = session["case_title"]
+            agree_users = session["agree_users"]
+            disagree_users = session["disagree_users"]
+            reason = session.get("reason")
+            game_uid = session["account_id"]
+            o5_check = get(interaction.user.guild.roles, id=o5_role) in interaction.user.roles and len(
+                agree_users) >= 1 and len(agree_users) > len(disagree_users)
+            sr_check = is_sr(interaction.user) and interaction.user.id != requested_by and len(
+                agree_users) >= 5 and len(agree_users) > len(disagree_users)
+            if o5_check or sr_check:
+                accepted_by = interaction.user.id
+                account_query = {"_id": game_uid}
+                account_profile = accountscol.find_one(account_query)
+                if account_profile:  # if editing existing reported user
+                    old_r_profile_list = account_profile["r_profile_list"]
+                    cases = []
+                    no_of_cases = len(account_profile) - 2
+                    for i in range(1, no_of_cases + 1):
+                        cases.append(account_profile[str(i)])
+                    #
+                    if old_r_profile_list[0] != r_profile_list[0]:  # comparing links
+                        old_links_list = old_r_profile_list[0]
+                        new_links_list = r_profile_list[0]
+                        added_links_list = set(new_links_list) - set(old_links_list)
+                        removed_links_list = set(old_links_list) - set(new_links_list)
+                        for link in added_links_list:
+                            new_account = {"_id": str(link), "main": game_uid}
+                            accountscol.insert_one(new_account)
+                        for link in removed_links_list:
+                            accountscol.delete_one({"_id": link})
+                        update_operation = {'$set': {"r_profile_list": r_profile_list}}
+                        accountscol.update_one(account_query, update_operation)
+                    if not add_case_list:  # only links edited
+                        tags_strings = []
+                        all_tags_list = []
+                        for case in cases:
+                            tags_strings.append(case[2])
+                        for tags_string in tags_strings:
+                            tags_list = tags_string.split(", ")
+                            for tag in tags_list:
+                                all_tags_list.append(tag)
+                        all_tags_list = sort_account_tags(all_tags_list)
+                        title = all_tags_list[0]
+                        r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                        account_reports_channel = bot.get_channel(ACCOUNT_REPORTS_CHANNEL)
+                        await account_reports_channel.send(content=f"<@&{updated_account_report_ping}>\nLinks edited for `{game_uid}`",
+                                                        embed=r_profile)
+                        reason_embed = discord.Embed(title="Reason", description=reason)
+                        await account_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "embeds": [r_profile], "view": None}))
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
+                        await bot.get_channel(channel_id).send(
+                            f"Report on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
+                    elif len(add_case_list) == 1:  # [[add_case_list]] case to appeal
+                        add_case_list = add_case_list[0]
+                        appeal_case_number = next((k for k, v in account_profile.items() if v == add_case_list), None)
+                        query_filter = {"_id": game_uid}
+                        update_operation = {"$unset": {appeal_case_number: ""}}
+                        accountscol.update_one(query_filter, update_operation)
+                        #
+                        account_query = {"_id": game_uid}
+                        account_profile = accountscol.find_one(account_query)
+                        links = r_profile_list[0] if r_profile_list[0] else []
+                        if len(account_profile) == 2:
+                            accountscol.delete_one(account_query)
+                            for link in links:
+                                account_query = {"_id": link}
+                                accountscol.delete_one(account_query)
+                        else:
+                            no_of_cases = len(account_profile) - 2
+                            for i in range(int(appeal_case_number), no_of_cases + 1):
+                                account_profile[appeal_case_number] = account_profile.pop(str(int(appeal_case_number) + 1))
+                            cases = []
+                            for i in range(1, no_of_cases + 1):
+                                cases.append(account_profile[str(i)])
+                            latest_tags = add_case_list[2].split(", ")
+                            all_tags_list = []
+                            for case in cases:
+                                all_tags_list.extend(case[2].split(", "))
+                            all_tags_list = sort_account_tags(all_tags_list)
+                            if "Recovered Account" in latest_tags:
+                                title = "Recovered Account"
+                                all_other_tags = selected_string([tag for tag in all_tags_list if tag != "Recovered Account"])
+                            else:
+                                title = all_tags_list[0]
+                                all_other_tags = selected_string(all_tags_list[1:])
+                            r_profile_list = account_profile["r_profile_list"]
+                            r_profile_list[1] = all_other_tags
+                            account_profile["r_profile_list"] = r_profile_list
+                            query_filter = {"_id": game_uid}
+                            accountscol.replace_one(query_filter, account_profile)
+                        #
+                        r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                        add_case = format_account_add_case(add_case_list, case_title)
+                        reason_embed = discord.Embed(title="Reason", colour=0x1DCCA9, description=reason)
+                        embeds = [r_profile, add_case]
+                        #
+                        account_reports_channel = bot.get_channel(ACCOUNT_REPORTS_CHANNEL)
+                        await account_reports_channel.send(content=f"<@&{appealed_account_report_ping}>\nAppeal on `{game_uid}`",
+                                                        embeds=embeds)
+                        await account_reports_channel.send(content=f"Reason for appeal", embed=reason_embed)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Appeal has been published.** Appeal accepted by <@{accepted_by}>.",
+                            "view": None}))
+                        await bot.get_channel(channel_id).send(
+                            f"Appeal on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
+                    else:  # new case exists
+                        add_case_list[6] = f"{interaction.user.mention}"
+                        inprogresscol.update_one(
+                            {"_id": interaction.message.id},
+                            {"$set": {"add_case_list": add_case_list}},
+                        )
+                        #
+                        r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                        add_case = format_account_add_case(add_case_list, case_title)
+                        embeds = [r_profile, add_case]
+
+                        query_filter = {"_id": game_uid}
+                        update_operation = {'$set': {"r_profile_list": r_profile_list}}
+                        accountscol.update_one(query_filter, update_operation)
+                        update_operation = {'$set': {str(no_of_cases + 1): add_case_list}}
+                        accountscol.update_one(query_filter, update_operation)
+
+                        account_reports_channel = bot.get_channel(ACCOUNT_REPORTS_CHANNEL)
+                        await account_reports_channel.send(content=f"<@&{updated_account_report_ping}>\nAdded report on `{game_uid}`",
+                                                        embeds=embeds)
+                        await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                            "view": None, "embeds": embeds}))
+                        thread = await bot.fetch_channel(channel_id)
+                        message = await thread.fetch_message(message_id)
+                        await old_message_edit_queue.put((message, {
+                            "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                            "view": None}))
+                        await bot.get_channel(channel_id).send(
+                            f"Report on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
+                        inprogresscol.delete_one({"_id": interaction.message.id})
+                else:  # if new reported account
+                    add_case_list[6] = interaction.user.mention
+                    inprogresscol.update_one(
+                        {"_id": interaction.message.id},
+                        {"$set": {"add_case_list": add_case_list}},
+                    )
+                    #
+                    r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                    add_case = format_account_add_case(add_case_list, case_title)
+                    embeds = [r_profile, add_case]
+                    new_account = {"_id": game_uid, "r_profile_list": r_profile_list,
+                                "1": add_case_list}
+                    accountscol.insert_one(new_account)
+                    links_list = r_profile_list[0] if r_profile_list[0] else []
+                    for link in links_list:
+                        accountscol.update_one(
+                            {"_id": str(link)},
+                            {"$set": {"main": game_uid}},
+                            upsert=True
+                        )
+                    account_reports_channel = bot.get_channel(ACCOUNT_REPORTS_CHANNEL)
+                    await account_reports_channel.send(content=f"<@&{new_account_report_ping}>\nNew report on `{game_uid}`",
+                                                    embeds=embeds)
+                    await old_message_edit_queue.put((interaction.message, {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.\nLink to thread: <#{channel_id}>\n\nAgree: {len(agree_users)}\nDisagree: {len(disagree_users)}",
+                        "view": None, "embeds": embeds}))
+                    thread = await bot.fetch_channel(channel_id)
+                    message = await thread.fetch_message(message_id)
+                    await old_message_edit_queue.put((message, {
+                        "content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
+                        "view": None}))
+                    await bot.get_channel(channel_id).send(
+                        f"Report on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
+                    inprogresscol.delete_one({"_id": interaction.message.id})
+                try:
+                    voters = agree_users + disagree_users
+                    for voter in voters:
+                        voter_query = {"_id": str(voter)}
+                        voter_profile = trusteduserscol.find_one(voter_query)
+                        if voter_profile:
+                            trusteduserscol.update_one(
+                                voter_query,
+                                {"$inc": {"votes": 1}}
+                            )
+
+                    staff_query = {"_id": str(requested_by)}
+                    if trusteduserscol.find_one(staff_query):
+                        trusteduserscol.update_one(
+                            staff_query,
+                            {"$inc": {"reports": 1}}
+                        )
+                    if staffweeklycol.find_one(staff_query):
+                        staffweeklycol.update_one(
+                            staff_query,
+                            {"$inc": {"weekly_reports": 1}}
+                        )
+
+                    sr_query = {"_id": str(accepted_by)}
+                    if trusteduserscol.find_one(sr_query):
+                        trusteduserscol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"reviews": 1}}
+                        )
+                    if staffweeklycol.find_one(sr_query):
+                        staffweeklycol.update_one(
+                            {"_id": str(accepted_by)},
+                            {"$inc": {"weekly_reviews": 1}}
+                        )
+                except Exception as e:
+                    print(f"{e}")
+                current_name = interaction.channel.name
+                new_name = current_name if current_name.startswith("p-") else f"p-{current_name}"
+                await asyncio.sleep(2)
+                await interaction.channel.edit(name=new_name, archived=True, locked=True)
+            else:
+                await interaction.followup.send("You do not have permission to publish the report.", ephemeral=True)
+
+
 edit = app_commands.Group(name="edit", description="Edit.")
 bot.tree.add_command(edit)
 
@@ -7905,7 +11623,7 @@ async def trusted_remove(interaction: discord.Interaction, server: str):
 @bot.command()
 async def sync(ctx: commands.Context):
     await bot.tree.sync()
-    reports_count = userscol.count_documents({}) + serverscol.count_documents({})
+    reports_count = userscol.count_documents({}) + serverscol.count_documents({}) + accountscol.count_documents({})
     await bot.change_presence(status=discord.Status.dnd,
                               activity=discord.Activity(
                                   type=discord.ActivityType.watching,
