@@ -807,8 +807,7 @@ async def mc(ctx, *, to_check: str = None):
 @bot.command(name="c", help="Checks a user or server.")
 async def c(ctx, *, to_check: str = None):
     requested_by = ctx.author
-
-    to_check = to_check.strip()
+    if to_check: to_check = to_check.strip()
     if " " in to_check:
         match = re.match(r"(.+?)\s+(\S+)$", to_check)
         if match:
