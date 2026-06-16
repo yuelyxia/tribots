@@ -1016,12 +1016,16 @@ class ClosingView(discord.ui.View):
 - new report
   - `new report on 𝐢𝐝 as 𝐭𝐚𝐠`
   - `new report on 𝐢𝐝 (alt 𝐢𝐝) as 𝐭𝐚𝐠, 𝐭𝐚𝐠`
+  - `new report on 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 as 𝐭𝐚𝐠`
+  - `new report on 𝐠𝐚𝐦𝐞 𝐮𝐢𝐝 as 𝐭𝐚𝐠`
 - added report
   - `added report on 𝐢𝐝 as 𝐭𝐚𝐠`
 - edited alts only
   - `edited alts for 𝐢𝐝 - added 𝐢𝐝 𝐢𝐝, removed 𝐢𝐝`
 - edited server owner
   - `server owner edited for 𝐢𝐝`
+- edited links only
+  - `edited links for 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 - added 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝, removed 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝`
 - insufficient proof
   - `no report on 𝐢𝐝 // insufficient proof`
 - deleted user

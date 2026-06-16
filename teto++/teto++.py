@@ -21,6 +21,7 @@ client = pymongo.MongoClient(CLIENT)
 db = client["database"]
 userscol = db["users"]
 serverscol = db["servers"]
+accountscol = db["accounts"]
 trusteduserscol = db["trusted_users"]
 trustedserverscol = db["trusted_servers"]
 
@@ -46,6 +47,9 @@ yellow_tags = ["Suspect", "Service Ban", "Unprofessional MM", "Unprofessional Pi
 
 red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "Fake Event Server"]
 yellow_server_tags = ["Suspect Server"]
+
+red_account_tags = ["Scammed Account", "Leeched Account"]
+yellow_account_tags = ["Under Investigation", "Advertised by Scammer"]
 
 # formatting functions
 
@@ -304,6 +308,177 @@ def format_server_add_case(add_case_list, case_title):
     return add_case
 
 
+def format_game(game):
+    if game.lower() in ["genshin", "gi", "genshin impact"]:
+        game = "Genshin Impact"
+    elif game.lower() in ["hsr", "honkai star rail", "honkai: star rail"]:
+        game = "Honkai: Star Rail"
+    elif game.lower() in ["wuwa", "wuthering waves"]:
+        game = "Wuthering Waves"
+    elif game.lower() in ["rblx", "roblox"]:
+        game = "Roblox"
+    elif game.lower() in ["zzz", "zenless zone zero"]:
+        game = "Zenless Zone Zero"
+    elif game.lower() in ["hi3", "honkai impact 3rd", "honkai impact"]:
+        game = "Honkai Impact 3rd"
+    elif game.lower() in ["project sekai", "prsk", "pjsk", "project sekai: colorful stage", "project sekai: colourful stage", "project sekai colorful stage", "project sekai colourful stage", "colorful stage", "colourful stage", "colorfulstage", "colourfulstage"]:
+        game = "Project Sekai"
+    elif game.lower() in ["crk", "cookie run kingdom", "cookie run: kingdom"]:
+        game = "Cookie Run: Kingdom"
+    elif game.lower() in ["idv", "identity v"]:
+        game = "Identity V"
+    elif game.lower() in ["valorant"]:
+        game = "Valorant"
+    else:
+        return None
+    return game
+def get_game_icon(game):
+    game = format_game(game)
+    if game == "Genshin Impact":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516025983076143174/genshin.png?ex=6a3124b8&is=6a2fd338&hm=5d671a96d68705e20bd54d9bd833497d9077cec2149d412eb9580ac943d4ebd6&=&format=webp&quality=lossless&width=1024&height=1024"
+    elif game == "Honkai: Star Rail":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516026005532446741/hsr.jpg?ex=6a3124be&is=6a2fd33e&hm=9678434ab7eaebc8fc09f9f3c336d95bd0f5cab888f7c36a58b31506a873f292&=&format=webp&width=1580&height=1580"
+    elif game == "Wuthering Waves":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516026232121069648/image.png?ex=6a3124f4&is=6a2fd374&hm=e6fd4759dd08d9fbdd8cb469219e887b284e20bb51ba5b43408c7bf2962f02ed&=&format=webp&quality=lossless&width=1580&height=1580"
+    elif game == "Roblox":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516270091681927218/500px-Roblox_28202529_28App_Icon29.svg.png?ex=6a320810&is=6a30b690&hm=bd89b113f822cdae762c07bfbd5692447bdcd13de4fe1ea3bd10e3a35bcba2c4&=&format=webp&quality=lossless&width=1000&height=1000"
+    elif game == "Zenless Zone Zero":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516027356777680926/image.png?ex=6a312600&is=6a2fd480&hm=2e375ceeb0a0dd8caec476d8ea106334dd6dcc9db99bbbe46cbdd5990fe169d0&=&format=webp&quality=lossless&width=700&height=700"
+    elif game == "Honkai Impact 3rd":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516027382153089054/rKiMpbQqkg-LUolGjtRvi3T-SEVL30hY_2A1PWK0jagN380TUXj0SHQu9fkmiDdEAtA_J4SHW8p_czxpAAbyYw.png?ex=6a312606&is=6a2fd486&hm=f9b5d4a6ebace2e076fdfff5f9da349b5799444476d65908cfcab8c37704d7b5&=&format=webp&quality=lossless&width=1024&height=1024"
+    elif game == "Project Sekai":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516270868807024691/pdv4ajv4O-ow2BVpWopiMy9XSHXTJSEzi1gjTeD-mg4V3bkM6dmu8qJv_-Poupg5mQ6wNXlhJRuXaH-8SE91.png?ex=6a3208ca&is=6a30b74a&hm=49f291eab7537e755e6b42023bf0dd7d64593fcd48e9382fb541ba78448774c5&=&format=webp&quality=lossless&width=1024&height=1024"
+    elif game == "Cookie Run: Kingdom":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516269434442874980/J1zzZf_Clyg51sikuBbfTMD_sGVK64Ki5vyVtn3MmkUUzQ-AxKWq2-WuVDnpkrpai6Icun3wXspttadNAxy4djI.png?ex=6a320774&is=6a30b5f4&hm=3f007a0828065da94c7b449d6ae2a1132a1c6f907cd86b32ef5e5255664eb7a5&=&format=webp&quality=lossless&width=700&height=700"
+    elif game == "Identity V":
+        icon = "https://media.discordapp.net/attachments/1455055877034868769/1516027416198516797/gP6SK4EnELXuvGQWstDib8kmu7IS_TtyxRPfATilagj1PFW7zDfbiU8qn5vaPEju5OUB_NwuaN8qtFZVpPUbng.png?ex=6a31260e&is=6a2fd48e&hm=0a51cab196a17826e467e8730f8460d66a32cd6c2dd8efa230fec7ef1dd5adb9&=&format=webp&quality=lossless&width=700&height=700"
+    else:
+        return None
+    return icon
+
+def default_account_profile(game_uid):
+    profile = discord.Embed()
+    game, uid = game_uid.split("ㆍ")
+    icon = get_game_icon(game)
+    if icon: profile.set_thumbnail(url=f"{icon}")
+    profile.description = f"**{game}**ㆍ`{uid}`"
+    profile.set_footer(text="✦　This account is unreported or invalid.")
+    return profile
+def reported_account_profile(game_uid, account_profile):
+    r_profile_list = account_profile["r_profile_list"]
+    no_of_cases = len(account_profile) - 2
+    #
+    cases = []
+    for i in range(1, no_of_cases + 1):
+        cases.append(account_profile[str(i)])
+    latest_case = cases[-1]
+    latest_tags = latest_case[2].split(", ")
+    all_tags_list = []
+    for case in cases:
+        all_tags_list.extend(case[2].split(", "))
+    all_tags_list = sort_account_tags(all_tags_list)
+    if "Recovered Account" in latest_tags:
+        title = "Recovered Account"
+    else:
+        title = all_tags_list[0]
+    #
+    newest_case_tags = cases[-1][2].split(", ")
+    newest_case_title = newest_case_tags[0]
+    r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+    add_case = format_account_add_case(cases[-1], newest_case_title)
+    add_case.set_footer(text=f"Page {len(cases)} of {no_of_cases}")
+    embeds = [r_profile, add_case]
+    return embeds
+def sort_account_tags(tags):
+    sorted_tags = []
+    for tag_to_find in red_account_tags:
+        for i in range(0, len(tags)):
+            tag = tags[i]
+            if tag == tag_to_find:
+                sorted_tags.append(tag)
+    for tag_to_find in yellow_account_tags:
+        for i in range(0, len(tags)):
+            tag = tags[i]
+            if tag == tag_to_find:
+                sorted_tags.append(tag)
+    for i in range(0, len(tags)):
+        tag = tags[i]
+        if tag == "Recovered Account":
+            sorted_tags.append(tag)
+    return sorted_tags
+def format_account_r_profile(game_uid, r_profile_list, title):
+    if title == "Recovered Account":
+        r_profile = discord.Embed(colour=0x1DCCA9)
+        colour = "\u001b[1;32m"
+    elif title in red_account_tags:
+        r_profile = discord.Embed(colour=0xFF0045)
+        colour = "\u001b[1;31m"
+    elif title in yellow_account_tags:
+        r_profile = discord.Embed(colour=0xFFD643)
+        colour = "\u001b[1;33m"
+    else:
+        r_profile = discord.Embed()
+        colour = "\u001b[0m"
+    game, uid = game_uid.split("ㆍ")
+    icon = get_game_icon(game)
+    if icon: r_profile.set_thumbnail(url=f"{icon}")
+    r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
+    r_profile.description += f"**{game}**\n`{uid}`"
+    links = []
+    for link in r_profile_list[0]:
+        game, uid = link.split("ㆍ")
+        links.append(f"{game}ㆍ`{uid}`")
+    r_profile.description += f"\n**Linked Account(s)**\n{"\n".join(links) or "None"}"
+    r_profile.description += f"\n**Other Tag(s)** – {r_profile_list[1] or "None"}"
+    return r_profile
+def format_account_add_case(add_case_list, case_title):
+    if case_title == "Recovered Account":
+        add_case = discord.Embed(colour=0x1DCCA9)
+    elif case_title in red_account_tags:
+        add_case = discord.Embed(colour=0xFF0045)
+    elif case_title in yellow_account_tags:
+        add_case = discord.Embed(colour=0xFFD643)
+    else:
+        add_case = discord.Embed()
+    if add_case_list:
+        add_case.description = f"**{add_case_list[2] or "TBC"}**\n"
+        add_case.description += "-# **Date Added** – " + add_case_list[0]
+        add_case.description += f"\n-# **Related User(s)** – {add_case_list[1] or "None"}"
+        add_case.description += f"\n\n**Reason** – {add_case_list[3]}\n\u200b"
+        add_case.description += f"\n-# **Contributor** – {add_case_list[4]}\n-# **TRI Staff** – {add_case_list[5]}\n-# **Accepted by** – {add_case_list[6]}"
+    return add_case
+def format_game_uid(game, uid):
+    game = format_game(game)
+    if uid.lower().startswith("eu/na") or uid.lower().startswith("euna"):
+        uid = uid.lower().replace("eu/na", "EU/NA").replace("euna", "EU/NA")
+    elif uid.lower().startswith("asia"):
+        uid = uid.lower().replace("asia", "Asia")
+    elif uid.lower().startswith("jp"):
+        uid = uid.lower().replace("jp", "JP")
+    elif uid.lower().startswith("en"):
+        uid = uid.lower().replace("en", "EN")
+    elif uid.lower().startswith("tw"):
+        uid = uid.lower().replace("tw", "TW")
+    elif uid.lower().startswith("kr"):
+        uid = uid.lower().replace("kr", "KR")
+    game_uid = f"{game}ㆍ{uid}"
+    return game_uid
+def get_game_uid_list(text):
+    unique_game_uids = set()
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        match = re.match(r"(.+?)\s+(\S+)$", line)
+        if match:
+            raw_game = match.group(1).strip()
+            raw_uid = match.group(2).strip()
+            formatted_result = format_game_uid(raw_game, raw_uid)
+            if formatted_result:
+                unique_game_uids.add(formatted_result)
+    game_uid_list = list(unique_game_uids)
+    return game_uid_list
+
 class UnknownGuild:
     icon=None
     banner=None
@@ -335,123 +510,46 @@ async def c(ctx, *, to_check: str = None):
     if ctx.guild.id == TRI_Archive:
         return
     requested_by = ctx.author
-    if to_check == None:
-        user = ctx.author
-        user_id = user.id
-        user_query = {"_id": str(user_id)}
-        trusteduser_profile = trusteduserscol.find_one(user_query)
-        if trusteduser_profile and not (
-                trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and trusteduser_profile[
-                    "trader"] == 0):
-            trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
-            await ctx.reply("User is trusted.", embed=trusted_embed)
-        #
-        else:
-            user_profile = userscol.find_one(user_query)
-            if user_profile:
-                if len(user_profile) == 2:
-                    main = user_profile['main']
-                    user_query = {"_id": main}
-                    main_user_profile = userscol.find_one(user_query)
-                    main_user = await bot.fetch_user(int(main))
-                    #
-                    await ctx.reply(f"User `{user.id}` is reported as alt of `{main}`.",
-                                        embeds=reported_user_profile(main_user, main_user_profile),
-                                        view=ReportedUserView(main_user, main_user_profile, requested_by,
-                                                              len(main_user_profile) - 2))
-                #
+    to_check = to_check.strip()
+    if " " in to_check:
+        match = re.match(r"(.+?)\s+(\S+)$", to_check)
+        if match:
+            game = match.group(1).strip()
+            uid = match.group(2).strip()
+            game_uid = format_game_uid(game, uid)
+            account_query = {"_id": str(game_uid)}
+            account_profile = accountscol.find_one(account_query)
+            if account_profile:
+                if len(account_profile) == 2:
+                    main = account_profile['main']
+                    account_query = {"_id": main}
+                    main_profile = accountscol.find_one(account_query)
+                    await ctx.reply(
+                            f"Account `{game_uid}` is linked to `{main}`.",
+                            embeds=reported_account_profile(main, main_profile),
+                            view=ReportedAccountView(main, main_profile, requested_by,
+                                                     len(main_profile) - 2))
                 else:
-                    await ctx.reply(f"User is reported.",
-                                        embeds=reported_user_profile(user, user_profile),
-                                        view=ReportedUserView(user, user_profile, requested_by, len(user_profile) - 2))
+                    await ctx.reply(f"Account is reported.",
+                                    embeds=reported_account_profile(game_uid, account_profile),
+                                    view=ReportedAccountView(game_uid, account_profile, requested_by,
+                                                             len(account_profile) - 2))
             #
             else:
-                profile = default_user_profile(user)
+                profile = default_account_profile(game_uid)
                 await ctx.reply(embed=profile, view=MemberView())
-
     else:
-        try:
-            if int(to_check.strip('<@>')) in tri_bots:
-                user = await bot.fetch_user(int(to_check.strip('<@>')))
-                profile = discord.Embed(colour=0xffffff)
-                profile.set_thumbnail(url=f"{user.display_avatar.url}")
-                profile.description = f"{user.mention} {user.name}\n`{user.id}`"
-                profile.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
-                if user.id == 1450073025818136598:
-                    profile.description += "\n**TETO** ┈ report bot for `/tri`"
-                elif user.id == 1457249982104211467:
-                    profile.description += "\n**TETO++** ┈ user check bot for `/tri`"
-                elif user.id == 1457382953293320304:
-                    profile.description += "\n**NERU** ┈ alts check bot for `/tri`"
-                elif user.id == 1457309787044839477:
-                    profile.description += "\n**MIKU** ┈ tickets bot for `/tri`"
-                profile.set_footer(text="✦　TRI bot")
-                await ctx.reply(embed=profile)
-                return
-        except Exception: pass
-        try:
-            user = await bot.fetch_user(int(to_check.strip('<@>')))
-        except discord.NotFound:
-            server_query = {"_id": to_check.strip('<@>')}
-            trustedserver_profile = trustedserverscol.find_one(server_query)
-            if trustedserver_profile:
-                trusted_embed = format_trustedserver_profile(UnknownGuild(int(to_check.strip('<@>'))))
-                await ctx.reply("Server is trusted.", embed=trusted_embed)
-            else:
-                server_profile = serverscol.find_one(server_query)
-                if server_profile:  # reported server
-                    await ctx.reply(f"Server is reported.",
-                                    embeds=reported_server_profile(UnknownGuild(int(to_check.strip('<@>'))),
-                                                                   server_profile),
-                                    view=ReportedServerView(UnknownGuild(int(to_check.strip('<@>'))), server_profile,
-                                                            requested_by,
-                                                            len(server_profile) - 2))
-                else:  # unreported server
-                    await ctx.reply(
-                        "Please provide a valid user ID. To check servers, please provide a valid invite link.")
-
-        except discord.HTTPException as e:
-            await ctx.send(f"An error occurred: {e}")
-        except ValueError:
-            try:
-                invite = await bot.fetch_invite(to_check)
-            except discord.NotFound:
-                await ctx.send("The invite link is **invalid** or **expired**.")
-            except discord.Forbidden:
-                await ctx.send("Unable to access details of invite.")
-            except Exception as e:
-                await ctx.send(f"An error occurred: {e}")
-            else:
-                guild = invite.guild
-                guild_id = invite.guild.id
-                server_query = {"_id": str(guild_id)}
-                trustedserver_profile = trustedserverscol.find_one(server_query)
-                if trustedserver_profile:
-                    trusted_embed = format_trustedserver_profile(guild)
-                    await ctx.reply("Server is trusted.", embed=trusted_embed)
-                else:
-                    server_profile = serverscol.find_one(server_query)
-                    if server_profile:  # reported server
-                        #
-                        await ctx.reply(f"Server is reported.",
-                                            embeds=reported_server_profile(guild, server_profile),
-                                            view=ReportedServerView(guild, server_profile, requested_by,
-                                                                  len(server_profile) - 2))
-                    else:  # unreported server
-                        profile = default_server_profile(guild)
-                        #
-                        await ctx.reply(embed=profile, view=MemberView())
-        #
-        else:
+        if to_check == None:
+            user = ctx.author
             user_id = user.id
             user_query = {"_id": str(user_id)}
             trusteduser_profile = trusteduserscol.find_one(user_query)
             if trusteduser_profile and not (
-                    trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
-                    trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and trusteduser_profile[
+                    trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and trusteduser_profile[
                         "trader"] == 0):
                 trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
                 await ctx.reply("User is trusted.", embed=trusted_embed)
+            #
             else:
                 user_profile = userscol.find_one(user_query)
                 if user_profile:
@@ -461,20 +559,126 @@ async def c(ctx, *, to_check: str = None):
                         main_user_profile = userscol.find_one(user_query)
                         main_user = await bot.fetch_user(int(main))
                         #
-                        await ctx.reply(
-                                f"User `{user.id}` is reported as alt of `{main}`.",
-                                embeds=reported_user_profile(main_user, main_user_profile),
-                                view=ReportedUserView(main_user, main_user_profile, requested_by,
-                                                      len(main_user_profile) - 2))
+                        await ctx.reply(f"User `{user.id}` is reported as alt of `{main}`.",
+                                            embeds=reported_user_profile(main_user, main_user_profile),
+                                            view=ReportedUserView(main_user, main_user_profile, requested_by,
+                                                                  len(main_user_profile) - 2))
+                    #
                     else:
                         await ctx.reply(f"User is reported.",
                                             embeds=reported_user_profile(user, user_profile),
-                                            view=ReportedUserView(user, user_profile, requested_by,
-                                                                  len(user_profile) - 2))
+                                            view=ReportedUserView(user, user_profile, requested_by, len(user_profile) - 2))
                 #
                 else:
                     profile = default_user_profile(user)
                     await ctx.reply(embed=profile, view=MemberView())
+
+        else:
+            try:
+                if int(to_check.strip('<@>')) in tri_bots:
+                    user = await bot.fetch_user(int(to_check.strip('<@>')))
+                    profile = discord.Embed(colour=0xffffff)
+                    profile.set_thumbnail(url=f"{user.display_avatar.url}")
+                    profile.description = f"{user.mention} {user.name}\n`{user.id}`"
+                    profile.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
+                    if user.id == 1450073025818136598:
+                        profile.description += "\n**TETO** ┈ report bot for `/tri`"
+                    elif user.id == 1457249982104211467:
+                        profile.description += "\n**TETO++** ┈ user check bot for `/tri`"
+                    elif user.id == 1457382953293320304:
+                        profile.description += "\n**NERU** ┈ alts check bot for `/tri`"
+                    elif user.id == 1457309787044839477:
+                        profile.description += "\n**MIKU** ┈ tickets bot for `/tri`"
+                    profile.set_footer(text="✦　TRI bot")
+                    await ctx.reply(embed=profile)
+                    return
+            except Exception: pass
+            try:
+                user = await bot.fetch_user(int(to_check.strip('<@>')))
+            except discord.NotFound:
+                server_query = {"_id": to_check.strip('<@>')}
+                trustedserver_profile = trustedserverscol.find_one(server_query)
+                if trustedserver_profile:
+                    trusted_embed = format_trustedserver_profile(UnknownGuild(int(to_check.strip('<@>'))))
+                    await ctx.reply("Server is trusted.", embed=trusted_embed)
+                else:
+                    server_profile = serverscol.find_one(server_query)
+                    if server_profile:  # reported server
+                        await ctx.reply(f"Server is reported.",
+                                        embeds=reported_server_profile(UnknownGuild(int(to_check.strip('<@>'))),
+                                                                       server_profile),
+                                        view=ReportedServerView(UnknownGuild(int(to_check.strip('<@>'))), server_profile,
+                                                                requested_by,
+                                                                len(server_profile) - 2))
+                    else:  # unreported server
+                        await ctx.reply(
+                            "Please provide a valid user ID. To check servers, please provide a valid invite link.")
+
+            except discord.HTTPException as e:
+                await ctx.send(f"An error occurred: {e}")
+            except ValueError:
+                try:
+                    invite = await bot.fetch_invite(to_check)
+                except discord.NotFound:
+                    await ctx.send("The invite link is **invalid** or **expired**.")
+                except discord.Forbidden:
+                    await ctx.send("Unable to access details of invite.")
+                except Exception as e:
+                    await ctx.send(f"An error occurred: {e}")
+                else:
+                    guild = invite.guild
+                    guild_id = invite.guild.id
+                    server_query = {"_id": str(guild_id)}
+                    trustedserver_profile = trustedserverscol.find_one(server_query)
+                    if trustedserver_profile:
+                        trusted_embed = format_trustedserver_profile(guild)
+                        await ctx.reply("Server is trusted.", embed=trusted_embed)
+                    else:
+                        server_profile = serverscol.find_one(server_query)
+                        if server_profile:  # reported server
+                            #
+                            await ctx.reply(f"Server is reported.",
+                                                embeds=reported_server_profile(guild, server_profile),
+                                                view=ReportedServerView(guild, server_profile, requested_by,
+                                                                      len(server_profile) - 2))
+                        else:  # unreported server
+                            profile = default_server_profile(guild)
+                            #
+                            await ctx.reply(embed=profile, view=MemberView())
+            #
+            else:
+                user_id = user.id
+                user_query = {"_id": str(user_id)}
+                trusteduser_profile = trusteduserscol.find_one(user_query)
+                if trusteduser_profile and not (
+                        trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
+                        trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and trusteduser_profile[
+                            "trader"] == 0):
+                    trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
+                    await ctx.reply("User is trusted.", embed=trusted_embed)
+                else:
+                    user_profile = userscol.find_one(user_query)
+                    if user_profile:
+                        if len(user_profile) == 2:
+                            main = user_profile['main']
+                            user_query = {"_id": main}
+                            main_user_profile = userscol.find_one(user_query)
+                            main_user = await bot.fetch_user(int(main))
+                            #
+                            await ctx.reply(
+                                    f"User `{user.id}` is reported as alt of `{main}`.",
+                                    embeds=reported_user_profile(main_user, main_user_profile),
+                                    view=ReportedUserView(main_user, main_user_profile, requested_by,
+                                                          len(main_user_profile) - 2))
+                        else:
+                            await ctx.reply(f"User is reported.",
+                                                embeds=reported_user_profile(user, user_profile),
+                                                view=ReportedUserView(user, user_profile, requested_by,
+                                                                      len(user_profile) - 2))
+                    #
+                    else:
+                        profile = default_user_profile(user)
+                        await ctx.reply(embed=profile, view=MemberView())
 
 @bot.command(name="mc", help="Checks a list of users (max 100), leave a space between users.")
 async def mc(ctx, *, to_check: str = None):
@@ -816,6 +1020,131 @@ class ReportedServerView(discord.ui.View):
         image_links = cases[current_case - 1][6]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{guild.id}`", embeds=image_embeds, ephemeral=True)
+
+# reported account
+class ReportedAccountView(discord.ui.View):
+    def __init__(self, game_uid, account_profile, requested_by, current_case):
+        super().__init__(timeout=1440)
+        self.game_uid = game_uid
+        self.account_profile = account_profile
+        self.requested_by = requested_by
+        self.current_case = current_case
+
+    @discord.ui.button(emoji="<:leftarrow:1458096658062770176>", style=discord.ButtonStyle.grey, custom_id="reportedaccount:prev")
+    async def prev_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        requested_by = self.requested_by
+        current_case = self.current_case
+        #
+        no_of_cases = len(account_profile) - 2
+        if requested_by == interaction.user:
+            r_profile_list = account_profile["r_profile_list"]
+            cases = []
+            for i in range(1, no_of_cases + 1):
+                cases.append(account_profile[str(i)])
+            latest_case = cases[-1]
+            latest_tags = latest_case[2].split(", ")
+            all_tags_list = []
+            for case in cases:
+                all_tags_list.extend(case[2].split(", "))
+            all_tags_list = sort_account_tags(all_tags_list)
+            if "Recovered Account" in latest_tags:
+                title = "Recovered Account"
+            else:
+                title = all_tags_list[0]
+            if current_case != 1:
+                prev_index = current_case - 2
+                try:
+                    prev_case_tags = cases[prev_index][2].split(", ")
+                except Exception:
+                    pass
+                else:
+                    prev_case_title = prev_case_tags[0]
+                    r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                    add_case = format_account_add_case(cases[prev_index], prev_case_title)
+                    #
+                    current_case -= 1
+                    self.current_case = current_case
+                    add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
+                    embeds = [r_profile, add_case]
+                    await interaction.edit_original_response(content="Account is reported.", embeds=embeds,
+                                                             view=ReportedAccountView(game_uid, account_profile, requested_by,
+                                                                                   current_case))
+
+    @discord.ui.button(emoji="<:rightarrow:1458096774521553038>", style=discord.ButtonStyle.grey, custom_id="reportedaccount:next")
+    async def next_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        requested_by = self.requested_by
+        current_case = self.current_case
+        #
+        no_of_cases = len(account_profile) - 2
+        if requested_by == interaction.user:
+            r_profile_list = account_profile["r_profile_list"]
+            cases = []
+            for i in range(1, no_of_cases + 1):
+                cases.append(account_profile[str(i)])
+            latest_case = cases[-1]
+            latest_tags = latest_case[2].split(", ")
+            all_tags_list = []
+            for case in cases:
+                all_tags_list.extend(case[2].split(", "))
+            all_tags_list = sort_account_tags(all_tags_list)
+            if "Recovered Account" in latest_tags:
+                title = "Recovered Account"
+            else:
+                title = all_tags_list[0]
+            next_index = current_case
+            try:
+                next_case_tags = cases[next_index][2].split(", ")
+            except Exception:
+                pass
+            else:
+                next_case_title = next_case_tags[0]
+                r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+                add_case = format_account_add_case(cases[next_index], next_case_title)
+                #
+                current_case += 1
+                self.current_case = current_case
+                add_case.set_footer(text=f"Page {current_case} of {no_of_cases}")
+                embeds = [r_profile, add_case]
+                await interaction.edit_original_response(content="Account is reported.", embeds=embeds,
+                                                         view=ReportedAccountView(game_uid, account_profile, requested_by,
+                                                                               current_case))
+
+    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reportedaccount:proofs")
+    async def proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        current_case = self.current_case
+        #
+        no_of_cases = len(account_profile) - 2
+        cases = []
+        for i in range(1, no_of_cases + 1):
+            cases.append(account_profile[str(i)])
+        image_links = cases[current_case - 1][7]
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
+
+
+    @discord.ui.button(label="𝘭𝘪𝘯𝘬𝘴 𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reportedaccount:linksproofs")
+    async def links_proofs_button(self, interaction, button):
+        await interaction.response.defer()
+        #
+        game_uid = self.game_uid
+        account_profile = self.account_profile
+        #
+        r_profile_list = account_profile["r_profile_list"]
+        image_links = r_profile_list[2]
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Links Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
 
 class MemberView(discord.ui.View):
     def __init__(self):
