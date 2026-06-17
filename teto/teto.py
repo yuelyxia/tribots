@@ -808,7 +808,7 @@ async def mc(ctx, *, to_check: str = None):
 async def c(ctx, *, to_check: str = None):
     requested_by = ctx.author
     if to_check: to_check = to_check.strip()
-    if " " in to_check:
+    if to_check and " " in to_check:
         match = re.match(r"(.+?)\s+(\S+)$", to_check)
         if match:
             game_input = match.group(1).strip()
