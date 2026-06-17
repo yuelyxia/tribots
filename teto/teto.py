@@ -7810,9 +7810,6 @@ class RelatedUsersModal(
         await interaction.response.defer()
         session = inprogresscol.find_one({"_id": interaction.message.id})
         if session:
-            channel_id = session["channel_id"]
-            message_id = interaction.message.id
-            r_profile_list = session["r_profile_list"]
             add_case_list = session["add_case_list"]
             title = session["title"]
             case_title = session["case_title"]
@@ -7830,9 +7827,9 @@ class RelatedUsersModal(
                     valid_users.append(fetched.id)
             r_profile_list = session["r_profile_list"]
             if len(valid_users):
-                add_case_list[3] = related_users_string(valid_users)
+                add_case_list[1] = related_users_string(valid_users)
             else:
-                add_case_list[3] = ""
+                add_case_list[1] = ""
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
                 {"$set": {"add_case_list": add_case_list}}
@@ -9729,9 +9726,9 @@ class AddReportRelatedUsersModal(
                     valid_users.append(fetched.id)
             r_profile_list = session["r_profile_list"]
             if len(valid_users):
-                add_case_list[3] = related_users_string(valid_users)
+                add_case_list[1] = related_users_string(valid_users)
             else:
-                add_case_list[3] = ""
+                add_case_list[1] = ""
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
                 {"$set": {"add_case_list": add_case_list}}
