@@ -9679,7 +9679,7 @@ class AddReportRelatedUsersView(discord.ui.View):
     @discord.ui.button(
         label="Related Users",
         style=discord.ButtonStyle.green,
-        custom_id="relatedusers:input"
+        custom_id="addreportrelatedusers:input"
     )
     async def related_users_button(self, interaction, button):
         session = inprogresscol.find_one({"_id": interaction.message.id})
