@@ -89,6 +89,19 @@ banned_words = ["backshot", "blackie", "blowjob", "boob", "boobies", "boobs", "b
 
 @bot.event
 async def on_message(message):
+    if message.author.id == 1325579039888511056:
+        if message.embeds:
+            target_value = None
+            for embed in message.embeds:
+                for field in embed.fields:
+                    if field.name == "ㆍㆍWho are you reporting?":
+                        target_value = field.value
+                        break
+                if target_value is not None:
+                    break
+            if target_value is not None:
+                result = discord.Embed(colour=0xffffff, description=f"`{target_value}`")
+                await message.channel.send(embed=result)
     if message.channel.id == CMDS_CHANNEL:
         if message.author.bot:
             return
