@@ -10765,15 +10765,15 @@ bot.tree.add_command(edit)
 
 @edit.command(name="report", description="Edit an ongoing report.")
 @app_commands.describe(
-    id="User ID or Guild ID",
+    id="User ID, Guild ID or GameㆍUID",
     alts="New Alt(s) (user only).",
     alts_proofs="Input anything. Note this overrides ALL alts proofs.",
     owner="New Owner (server only).",
-    links="New Link(s) (accounts only). Separate with newlines or `\\n`",
+    links="New Link(s) (account only). Separate with newlines or `\\n`",
     links_proofs="Input anything. Note this overrides ALL links proofs.",
     tags="New Tag(s).",
     games="New Game(s).",
-    related_users="Related User(s).",
+    related_users="Related User(s) (account only).",
     reason="New Reason.",
     contributor="New Contributor.",
     proofs="Input anything."
@@ -10783,10 +10783,8 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
     if sum(bool(x) for x in [alts_proofs, links_proofs, proofs]) >= 2:
         return await interaction.followup.send(
             "Please edit only one of the following at a time: alts proofs, links proofs, or proofs.", ephemeral=True)
-    try: id = int(id)
-    except: return await interaction.followup.send("Please input a valid ID.", ephemeral=True)
     session = inprogresscol.find_one({
-        "$or": [{"user_id": id}, {"guild_id": id}, {"account_id": id}]
+        "$or": [{"user_id": int(id)}, {"guild_id": int(id)}, {"account_id": id}]
     })
     if not session:
         return await interaction.followup.send("Unable to find ongoing report.", ephemeral=True)
