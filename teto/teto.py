@@ -403,7 +403,7 @@ def get_game_icon(game):
 
 def default_account_profile(game_uid):
     profile = discord.Embed()
-    game, uid = game_uid.split("ㆍ")
+    game, uid = game_uid.split("ㆍ", 1)
     icon = get_game_icon(game)
     if icon: profile.set_thumbnail(url=f"{icon}")
     profile.description = f"**{game}**ㆍ`{uid}`"
@@ -464,7 +464,7 @@ def format_account_r_profile(game_uid, r_profile_list, title):
     else:
         r_profile = discord.Embed()
         colour = "\u001b[0m"
-    game, uid = game_uid.split("ㆍ")
+    game, uid = game_uid.split("ㆍ", 1)
     icon = get_game_icon(game)
     if icon: r_profile.set_thumbnail(url=f"{icon}")
     r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
