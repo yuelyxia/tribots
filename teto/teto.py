@@ -4405,7 +4405,7 @@ class UserVoteView(discord.ui.View):
 
                         query_filter = {"_id": str(user.id)}
                         update_operation = {'$set': {"r_profile_list": r_profile_list}}
-                        serverscol.update_one(query_filter, update_operation)
+                        userscol.update_one(query_filter, update_operation)
                         update_operation = {'$set': {str(no_of_cases + 1): add_case_list}}
                         userscol.update_one(query_filter, update_operation)
 
@@ -4713,8 +4713,10 @@ class UserVoteView(discord.ui.View):
                             new_user = {"_id": str(alt), "main": str(user.id)}
                             try:
                                 userscol.insert_one(new_user)
-                            except pymongo.errors.DuplicateKeyError:
-                                pass
+                            except DuplicateKeyError:
+                                existing = userscol.find_one({"_id": str(alt)})
+                                if existing and "r_profile_list" in existing:
+                                    await interaction.channel.send(f"User `{user.id}` was reported with alt `{alt}` which already exists as a reported user. <@&{sr_ping}> Separate reports detected, use /merge to merge them.")
                         for alt in removed_alts_list:
                             userscol.delete_one({"_id": alt})
                         update_operation = {'$set': {"r_profile_list": r_profile_list}}
@@ -4853,8 +4855,11 @@ class UserVoteView(discord.ui.View):
                         new_user = {"_id": str(alt), "main": str(user.id)}
                         try:
                             userscol.insert_one(new_user)
-                        except pymongo.errors.DuplicateKeyError:
-                            pass
+                        except DuplicateKeyError:
+                            existing = userscol.find_one({"_id": str(alt)})
+                            if existing and "r_profile_list" in existing:
+                                await interaction.channel.send(
+                                    f"User `{user.id}` was reported with alt `{alt}` which already exists as a reported user. <@&{sr_ping}> Separate reports detected, use /merge to merge them.")
                     user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
                     await user_reports_channel.send(content=f"<@&{new_user_report_ping}>\nNew report on `{user.id}`",
                                                     embeds=embeds)
@@ -10275,7 +10280,7 @@ class AccountVoteView(discord.ui.View):
 
                         query_filter = {"_id": game_uid}
                         update_operation = {'$set': {"r_profile_list": r_profile_list}}
-                        serverscol.update_one(query_filter, update_operation)
+                        accountscol.update_one(query_filter, update_operation)
                         update_operation = {'$set': {str(no_of_cases + 1): add_case_list}}
                         accountscol.update_one(query_filter, update_operation)
 
