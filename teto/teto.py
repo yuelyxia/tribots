@@ -4302,8 +4302,11 @@ class UserVoteView(discord.ui.View):
                         added_alts_list = set(new_alts_list) - set(old_alts_list)
                         removed_alts_list = set(old_alts_list) - set(new_alts_list)
                         for alt in added_alts_list:
-                            new_user = {"_id": str(alt), "main": str(user.id)}
-                            userscol.insert_one(new_user)
+                            userscol.update_one(
+                                {"_id": str(alt)},
+                                {"$set": {"main": str(user.id)}},
+                                upsert=True
+                            )
                         for alt in removed_alts_list:
                             userscol.delete_one({"_id": alt})
                         update_operation = {'$set': {"r_profile_list": r_profile_list}}
@@ -4428,8 +4431,11 @@ class UserVoteView(discord.ui.View):
                     userscol.insert_one(new_user)
                     alts_list = r_profile_list[0].strip("`").split() if r_profile_list[0] else []
                     for alt in alts_list:
-                        new_user = {"_id": str(alt), "main": str(user.id)}
-                        userscol.insert_one(new_user)
+                        userscol.update_one(
+                            {"_id": str(alt)},
+                            {"$set": {"main": str(user.id)}},
+                            upsert=True
+                        )
                     user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
                     await user_reports_channel.send(content=f"<@&{new_user_report_ping}>\nNew report on `{user.id}`",
                                                     embeds=embeds)
@@ -4704,8 +4710,11 @@ class UserVoteView(discord.ui.View):
                         added_alts_list = set(new_alts_list) - set(old_alts_list)
                         removed_alts_list = set(old_alts_list) - set(new_alts_list)
                         for alt in added_alts_list:
-                            new_user = {"_id": str(alt), "main": str(user.id)}
-                            userscol.insert_one(new_user)
+                            userscol.update_one(
+                                {"_id": str(alt)},
+                                {"$set": {"main": str(user.id)}},
+                                upsert=True
+                            )
                         for alt in removed_alts_list:
                             userscol.delete_one({"_id": alt})
                         update_operation = {'$set': {"r_profile_list": r_profile_list}}
