@@ -11365,13 +11365,15 @@ async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
     if main.strip("<@>") != alt.strip("<@>"):
         try:
             main = await bot.fetch_user(int(main.strip("<@>")))
+            main_id = main.id
             alt = await bot.fetch_user(int(alt.strip("<@>")))
+            alt_id = alt.id
         except discord.NotFound:
             await interaction.response.send_message(f"Please provide valid User IDs.", ephemeral=True)
         else:
-            main_query = {"_id": str(main.id)}
+            main_query = {"_id": str(main_id)}
             main_profile = userscol.find_one(main_query)
-            alt_query = {"_id": str(alt.id)}
+            alt_query = {"_id": str(alt_id)}
             alt_profile = userscol.find_one(alt_query)
             if main_profile and alt_profile:
                 r_profile_list1 = main_profile["r_profile_list"]
@@ -11379,7 +11381,7 @@ async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
                 main_alts = r_profile_list1[0].strip("`").split()
                 alt_alts = r_profile_list2[0].strip("`").split()
                 all_alts = main_alts + alt_alts
-                all_alts.append(str(alt.id))
+                all_alts.append(str(alt_id))
                 if len(all_alts) != 0:
                     merged_alts_string = alts_string(all_alts)
                 else: merged_alts_string = ""
@@ -11419,25 +11421,23 @@ async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
                 merged_cases.sort(key=lambda x: int(x[0][3:13]))
                 #
                 merged_profile = {
-                    "_id": str(main.id),
+                    "_id": str(main_id),
                     "r_profile_list": merged_r_profile_list,
                 }
                 i=0
                 for case in merged_cases:
                     i+=1
                     merged_profile[str(i)] = case
-                for alt in alt_alts:
-                    alts_query = {"_id": alt}
-                    alt_profile = {"_id": alt, "main": str(main.id)}
+                for alt_alt in alt_alts:
+                    alts_query = {"_id": alt_alt}
+                    alt_profile = {"_id": alt_alt, "main": str(main_id)}
                     userscol.replace_one(alts_query, alt_profile)
-                new_alt_profile = {"_id": str(alt.id), "main": str(main.id)}
-                userscol.replace_one(alt_query, new_alt_profile)
                 userscol.replace_one(main_query, merged_profile)
-                await interaction.response.send_message(f"`{alt.id}` successfully merged into `{main.id}`.")
+                await interaction.response.send_message(f"`{alt_id}` successfully merged into `{main_id}`.")
             elif main_profile:
-                await interaction.response.send_message(f"Report on `{alt.id}` not found.")
+                await interaction.response.send_message(f"Report on `{alt_id}` not found.")
             elif alt_profile:
-                await interaction.response.send_message(f"Report on `{main.id}` not found.")
+                await interaction.response.send_message(f"Report on `{main_id}` not found.")
             else:
                 await interaction.response.send_message(f"Neither user reported.")
 
