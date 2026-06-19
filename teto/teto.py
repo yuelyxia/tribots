@@ -10868,6 +10868,9 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         if is_user_report:
             r_profile_list[2] = image_links
             edited_fields.append(f"alts proofs　–　{len(image_links)} uploaded")
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Images received from {interaction.user.mention}.",
+                                        embeds=image_embeds, ephemeral=False)
     if owner and is_server_report:
         try:
             owner_user = await bot.fetch_user(int(owner.strip("<@>")))
@@ -10910,6 +10913,9 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         if is_account_report:
             r_profile_list[2] = image_links
             edited_fields.append(f"links proofs　–　{len(image_links)} uploaded")
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Images received from {interaction.user.mention}.",
+                                        embeds=image_embeds, ephemeral=False)
     if tags:
         tag_list = [x.strip().title() for x in tags.split(",") if x.strip()]
         if is_user_report:
@@ -11402,7 +11408,6 @@ async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
                 cases2 = []
                 for i in range(1, no_of_cases2 + 1):
                     cases2.append(alt_profile[str(i)])
-                tags_strings1 = []
                 tags_strings2 = []
                 for case in cases2:
                     tags_strings2.append(case[2])
