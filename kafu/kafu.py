@@ -1277,38 +1277,26 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
             user_id = user.id
             member = interaction.guild.get_member(int(user_id))
             if not member: return
-            if category == "staff":
-                if not interaction.user.guild_permissions.manage_roles:
-                    await interaction.followup.send(f"Unauthorised.", ephemeral=True)
-                    return
-                if str(user_id) in server_info.get("staff", {}):
-                    if timeframe == "monthly":
-                        server_info["staff"][str(user_id)]["monthly"] = int(value)
-                    if timeframe == "alltime":
-                        server_info["staff"][str(user_id)]["alltime"] = int(value)
-            if category == "mm":
-                if str(user_id) in server_info.get("mm", {}):
-                    if timeframe == "monthly":
-                        server_info["mm"][str(user_id)]["monthly"] = int(value)
-                    if timeframe == "alltime":
-                        server_info["mm"][str(user_id)]["alltime"] = int(value)
-            if category == "pilot":
-                if str(user_id) in server_info.get("pilot", {}):
-                    if timeframe == "monthly":
-                        server_info["pilot"][str(user_id)]["monthly"] = int(value)
-                    if timeframe == "alltime":
-                        server_info["pilot"][str(user_id)]["alltime"] = int(value)
+            if not interaction.user.guild_permissions.manage_roles:
+                await interaction.followup.send(f"Unauthorised.", ephemeral=True)
+                return
             if category == "tickets":
-                if not interaction.user.guild_permissions.manage_roles:
-                    await interaction.followup.send(f"Unauthorised.", ephemeral=True)
-                    return
-                if str(user_id) in server_info.get("staff", {}):
-                    if timeframe == "monthly":
-                        server_info["staff"][str(user_id)]["monthly_tickets"] = int(value)
-                    if timeframe == "alltime":
-                        server_info["staff"][str(user_id)]["tickets"] = int(value)
-            servers.replace_one(server_query, server_info)
-            await interaction.followup.send(f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
+                field_name = "tickets" if timeframe == "alltime" else "monthly_tickets"
+                db_path = f"staff.{user_id}.{field_name}"
+                check_path = f"staff.{user_id}"
+            else:
+                db_path = f"{category}.{user_id}.{timeframe}"
+                check_path = f"{category}.{user_id}"
+            result = servers.update_one(
+                {
+                    "_id": str(guild_id),
+                    check_path: {"$exists": True}
+                },
+                {"$set": {db_path: int(value)}}
+            )
+            if result.modified_count > 0:
+                await interaction.followup.send(
+                    f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
 
 @settings.command(name="vouchserver", description="Set your vouch server invite.")
 @app_commands.describe(invite="Invite link to your vouch server.")

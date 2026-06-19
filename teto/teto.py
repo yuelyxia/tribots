@@ -10780,14 +10780,14 @@ bot.tree.add_command(edit)
 @edit.command(name="report", description="Edit an ongoing report.")
 @app_commands.describe(
     id="User ID, Guild ID or GameㆍUID",
-    alts="New Alt(s) (user only).",
+    alts="New Alt(s) (user report only).",
     alts_proofs="Input anything. Note this overrides ALL alts proofs.",
-    owner="New Owner (server only).",
-    links="New Link(s) (account only). Separate with newlines or `\\n`",
+    owner="New Owner (server report only).",
+    links="New Link(s) (account report only). Separate with newlines or `\\n`",
     links_proofs="Input anything. Note this overrides ALL links proofs.",
     tags="New Tag(s).",
     games="New Game(s).",
-    related_users="Related User(s) (account only).",
+    related_users="Related User(s) (account report only).",
     reason="New Reason.",
     contributor="New Contributor.",
     proofs="Input anything."
