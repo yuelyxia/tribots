@@ -1256,47 +1256,45 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
     if not is_int(value):
         await interaction.followup.send("Please input a valid integer value.", ephemeral=True)
         return
-    guild_id = interaction.guild.id
-    server_query = {"_id": str(guild_id)}
-    server_info = servers.find_one_and_update(
-        {"_id": str(interaction.guild.id)},
-        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
-        upsert=True,
-        return_document=True
-    )
-    if not server_info.get("staff_role"):
-        await interaction.followup.send("**staff role** has not been set up for this server.", ephemeral=True)
+    if not interaction.user.guild_permissions.manage_roles:
+        await interaction.followup.send(f"Unauthorised.", ephemeral=True)
         return
-    staff_role = server_info.get("staff_role")
-    if get(interaction.user.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in interaction.user.roles:
-        try:
-            user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
-        except Exception:
-            await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
+    guild_id = interaction.guild.id
+    try:
+        user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
+    except Exception:
+        await interaction.followup.send(f"Please enter a valid user ID.", ephemeral=True)
+    else:
+        user_id = user.id
+        member = interaction.guild.get_member(int(user_id))
+        if not member: return
+        if category == "tickets":
+            field_name = "tickets" if timeframe == "alltime" else "monthly_tickets"
+            db_path = f"staff.{user_id}.{field_name}"
+            check_path = f"staff.{user_id}"
+        elif category == "pilot":
+            db_path = f"pilots.{user_id}.{timeframe}"
+            check_path = f"pilots.{user_id}"
+        elif category == "mm":
+            db_path = f"mms.{user_id}.{timeframe}"
+            check_path = f"mms.{user_id}"
         else:
-            user_id = user.id
-            member = interaction.guild.get_member(int(user_id))
-            if not member: return
-            if not interaction.user.guild_permissions.manage_roles:
-                await interaction.followup.send(f"Unauthorised.", ephemeral=True)
-                return
-            if category == "tickets":
-                field_name = "tickets" if timeframe == "alltime" else "monthly_tickets"
-                db_path = f"staff.{user_id}.{field_name}"
-                check_path = f"staff.{user_id}"
-            else:
-                db_path = f"{category}.{user_id}.{timeframe}"
-                check_path = f"{category}.{user_id}"
-            result = servers.update_one(
-                {
-                    "_id": str(guild_id),
-                    check_path: {"$exists": True}
-                },
-                {"$set": {db_path: int(value)}}
-            )
-            if result.modified_count > 0:
-                await interaction.followup.send(
-                    f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
+            db_path = f"{category}.{user_id}.{timeframe}"
+            check_path = f"{category}.{user_id}"
+        result = servers.update_one(
+            {
+                "_id": str(guild_id),
+                check_path: {"$exists": True}
+            },
+            {"$set": {db_path: int(value)}}
+        )
+        if result.modified_count > 0:
+            await interaction.followup.send(
+                f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
+        else:
+            await interaction.followup.send(
+                f"`{user_id}` is not appointed as **{category}**.",
+                ephemeral=True)
 
 @settings.command(name="vouchserver", description="Set your vouch server invite.")
 @app_commands.describe(invite="Invite link to your vouch server.")
