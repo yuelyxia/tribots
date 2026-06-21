@@ -118,6 +118,8 @@ async def on_message(message: discord.Message):
                             for alt in old_alts1:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    continue
                                 alt_info["alts"] += old_alts2
                                 alt_info["alts"].append(alt2_id)
                                 alt_info["proofs"] += old_proofs2
@@ -126,6 +128,8 @@ async def on_message(message: discord.Message):
                             for alt in old_alts2:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    continue
                                 alt_info["alts"] += old_alts1
                                 alt_info["alts"].append(alt1_id)
                                 alt_info["proofs"] += old_proofs1
@@ -183,6 +187,8 @@ async def on_message(message: discord.Message):
                         for alt in old_alts1:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                continue
                             alt_info["alts"].append(alt2_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -233,6 +239,8 @@ async def on_message(message: discord.Message):
                         for alt in old_alts2:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                continue
                             alt_info["alts"].append(alt1_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -534,6 +542,8 @@ async def import_recent(interaction: discord.Interaction):
                             for alt in old_alts1:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    continue
                                 alt_info["alts"] += old_alts2
                                 alt_info["alts"].append(alt2_id)
                                 alt_info["proofs"] += old_proofs2
@@ -542,6 +552,8 @@ async def import_recent(interaction: discord.Interaction):
                             for alt in old_alts2:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    continue
                                 alt_info["alts"] += old_alts1
                                 alt_info["alts"].append(alt1_id)
                                 alt_info["proofs"] += old_proofs1
@@ -609,6 +621,8 @@ async def import_recent(interaction: discord.Interaction):
                         for alt in old_alts1:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                continue
                             alt_info["alts"].append(alt2_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -667,6 +681,8 @@ async def import_recent(interaction: discord.Interaction):
                         for alt in old_alts2:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                continue
                             alt_info["alts"].append(alt1_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -835,6 +851,8 @@ async def import_all(interaction: discord.Interaction):
                             for alt in old_alts1:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    continue
                                 alt_info["alts"] += old_alts2
                                 alt_info["alts"].append(alt2_id)
                                 alt_info["proofs"] += old_proofs2
@@ -843,6 +861,8 @@ async def import_all(interaction: discord.Interaction):
                             for alt in old_alts2:
                                 alt_query = {"_id": alt}
                                 alt_info = altscol.find_one(alt_query)
+                                if not alt_info:
+                                    continue
                                 alt_info["alts"] += old_alts1
                                 alt_info["alts"].append(alt1_id)
                                 alt_info["proofs"] += old_proofs1
@@ -910,6 +930,8 @@ async def import_all(interaction: discord.Interaction):
                         for alt in old_alts1:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                continue
                             alt_info["alts"].append(alt2_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -968,6 +990,8 @@ async def import_all(interaction: discord.Interaction):
                         for alt in old_alts2:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                continue
                             alt_info["alts"].append(alt1_id)
                             alt_info["proofs"].append(proof)
                             altscol.replace_one(alt_query, alt_info)
@@ -1100,7 +1124,7 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
         return sent.attachments[0].url if sent.attachments else None
     url = await upload_attachment(image)
     if not url:
-        return await interaction.followup.send("Please provide a valid image.")
+        return await interaction.followup.send("Please provide a valid image.", ephemeral=True)
     proof = f"{url} – added by {interaction.user.mention}"
     if user1.strip("<@>") != user2.strip("<@>"):
         try:
@@ -1118,7 +1142,7 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
             if alt1_info: # alt 1 logged
                 if alt2_info: # alt 2 also logged
                     if alt1_id in alt2_info["alts"] and alt2_id in alt1_info["alts"]: # check if already exists
-                        await interaction.followup.send(f"`{alt1_id}` and `{alt2_id}` have already been logged.", ephemeral=True)
+                        return await interaction.followup.send(f"`{alt1_id}` and `{alt2_id}` have already been logged.", ephemeral=True)
                     else:
                         old_alts1 = alt1_info["alts"].copy()
                         old_alts2 = alt2_info["alts"].copy()
@@ -1127,6 +1151,8 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                         for alt in old_alts1:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                continue
                             alt_info["alts"] += old_alts2
                             alt_info["alts"].append(alt2_id)
                             alt_info["proofs"] += old_proofs2
@@ -1135,6 +1161,8 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                         for alt in old_alts2:
                             alt_query = {"_id": alt}
                             alt_info = altscol.find_one(alt_query)
+                            if not alt_info:
+                                continue
                             alt_info["alts"] += old_alts1
                             alt_info["alts"].append(alt1_id)
                             alt_info["proofs"] += old_proofs1
@@ -1212,6 +1240,8 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                     for alt in old_alts2:
                         alt_query = {"_id": alt}
                         alt_info = altscol.find_one(alt_query)
+                        if not alt_info:
+                            continue
                         alt_info["alts"].append(alt1_id)
                         alt_info["proofs"].append(proof)
                         altscol.replace_one(alt_query, alt_info)
@@ -1265,6 +1295,238 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
                             f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
                     else:  # none reported
                         await interaction.followup.send(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+
+@alts.command(name="massadd", description="Adds multiple alts to a main user.")
+@app_commands.describe(main="Main", alts="Alts, leave a space between IDs.", image="Image")
+@app_commands.checks.has_role(adm_role)
+async def alts_massadd(interaction: discord.Interaction, main: str, alts: str, image: discord.Attachment):
+    await interaction.response.defer(ephemeral=True)
+    if interaction.channel.id != NERU_LOGS:
+        return await interaction.followup.send("This command can only be used in the NERU logs channel.",
+                                               ephemeral=True)
+    neru_logs_channel = bot.get_channel(NERU_LOGS)
+    def clean_id(u: str):
+        return u.strip("<@!>")
+    main_id = clean_id(main)
+    raw_alts = alts.split()
+
+    async def upload_attachment(att):
+        if not att:
+            return None
+        if not att.content_type.startswith("image/"):
+            return None
+        channel = bot.get_channel(PROOFS_CHANNEL)
+        sent = await channel.send(file=await att.to_file())
+        return sent.attachments[0].url if sent.attachments else None
+    url = await upload_attachment(image)
+    if not url:
+        return await interaction.followup.send("Please provide a valid image.", ephemeral=True)
+    proof = f"{url} – added by {interaction.user.mention}"
+
+    if not main_id.isdigit():
+        return await interaction.followup.send("Invalid main ID.", ephemeral=True)
+    try:
+        await bot.fetch_user(int(main_id))
+    except discord.NotFound:
+        return await interaction.followup.send("Main user not found.", ephemeral=True)
+
+    valid_alts = []
+    invalid_alts = []
+    for uid in raw_alts:
+        cid = clean_id(uid)
+        if not cid.isdigit():
+            invalid_alts.append(uid)
+            continue
+        try:
+            await bot.fetch_user(int(cid))
+            if cid != main_id and cid not in valid_alts:
+                valid_alts.append(cid)
+        except discord.NotFound:
+            invalid_alts.append(cid)
+    if not valid_alts:
+        return await interaction.followup.send("No valid alt IDs provided.", ephemeral=True)
+
+    linked = 0
+    for alt_id in valid_alts:
+        if alt_id == main_id:
+            continue
+        alt1_id = main_id
+        alt2_id = alt_id
+        alt1_query = {"_id": alt1_id}
+        alt1_info = altscol.find_one(alt1_query)
+        alt2_query = {"_id": alt2_id}
+        alt2_info = altscol.find_one(alt2_query)
+        if alt1_info:  # alt 1 logged
+            if alt2_info:  # alt 2 also logged
+                if alt1_id in alt2_info["alts"] and alt2_id in alt1_info["alts"]:  # check if already exists
+                    await neru_logs_channel.send(f"`{alt1_id}` and `{alt2_id}` have already been logged.")
+                    continue
+                else:
+                    old_alts1 = alt1_info["alts"].copy()
+                    old_alts2 = alt2_info["alts"].copy()
+                    old_proofs1 = alt1_info["proofs"].copy()
+                    old_proofs2 = alt2_info["proofs"].copy()
+                    for alt in old_alts1:
+                        alt_query = {"_id": alt}
+                        alt_info = altscol.find_one(alt_query)
+                        if not alt_info:
+                            continue
+                        alt_info["alts"] += old_alts2
+                        alt_info["alts"].append(alt2_id)
+                        alt_info["proofs"] += old_proofs2
+                        alt_info["proofs"].append(proof)
+                        altscol.replace_one(alt_query, alt_info)
+                    for alt in old_alts2:
+                        alt_query = {"_id": alt}
+                        alt_info = altscol.find_one(alt_query)
+                        if not alt_info:
+                            continue
+                        alt_info["alts"] += old_alts1
+                        alt_info["alts"].append(alt1_id)
+                        alt_info["proofs"] += old_proofs1
+                        alt_info["proofs"].append(proof)
+                        altscol.replace_one(alt_query, alt_info)
+                    alt1_info["alts"] += old_alts2
+                    alt1_info["alts"].append(alt2_id)
+                    alt1_info["proofs"] += old_proofs2
+                    alt1_info["proofs"].append(proof)
+                    alt2_info["alts"] += old_alts1
+                    alt2_info["alts"].append(alt1_id)
+                    alt2_info["proofs"] += old_proofs1
+                    alt2_info["proofs"].append(proof)
+                    altscol.replace_one(alt1_query, alt1_info)
+                    altscol.replace_one(alt2_query, alt2_info)
+                    user1_query = {"_id": alt1_id}
+                    user1_profile = userscol.find_one(user1_query)
+                    user2_query = {"_id": alt2_id}
+                    user2_profile = userscol.find_one(user2_query)
+                    if user1_profile and user2_profile and len(user1_profile or "") > 2 and len(
+                            user2_profile or "") > 2:
+                        await neru_logs_channel.send(
+                            f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
+                    elif user1_profile and len(
+                            user1_profile) > 2 and not user2_profile:  # user 1 reported, user 2 not reported
+                        await neru_logs_channel.send(
+                            f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
+                    elif user2_profile and len(
+                            user2_profile) > 2 and not user1_profile:  # user 2 reported, user 1 not reported
+                        await neru_logs_channel.send(
+                            f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
+                    else:  # none reported
+                        await neru_logs_channel.send(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+                    linked += 1
+            else:  # alt 2 not logged
+                old_alts1 = alt1_info["alts"].copy()
+                old_proofs1 = alt1_info["proofs"].copy()
+                alt2_info = {"_id": alt2_id, "alts": old_alts1, "proofs": []}
+                alt2_info["alts"].append(alt1_id)
+                alt2_info["proofs"] = old_proofs1
+                alt2_info["proofs"].append(proof)
+                for alt in old_alts1:
+                    alt_query = {"_id": alt}
+                    alt_info = altscol.find_one(alt_query)
+                    if not alt_info:
+                        continue
+                    alt_info["alts"].append(alt2_id)
+                    alt_info["proofs"].append(proof)
+                    altscol.replace_one(alt_query, alt_info)
+                alt1_info["alts"].append(alt2_id)
+                alt1_info["proofs"].append(proof)
+                altscol.replace_one(alt1_query, alt1_info)
+                altscol.insert_one(alt2_info)
+                user1_query = {"_id": alt1_id}
+                user1_profile = userscol.find_one(user1_query)
+                user2_query = {"_id": alt2_id}
+                user2_profile = userscol.find_one(user2_query)
+                if user1_profile and user2_profile and len(user1_profile or "") > 2 and len(user2_profile or "") > 2:
+                    await neru_logs_channel.send(
+                        f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
+                elif user1_profile and len(
+                        user1_profile) > 2 and not user2_profile:  # user 1 reported, user 2 not reported
+                    await neru_logs_channel.send(
+                        f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
+                elif user2_profile and len(
+                        user2_profile) > 2 and not user1_profile:  # user 2 reported, user 1 not reported
+                    await neru_logs_channel.send(
+                        f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
+                else:  # none reported
+                    await neru_logs_channel.send(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+                linked += 1
+        else:  # alt 1 not logged
+            if alt2_info:  # but alt 2 logged
+                old_alts2 = alt2_info["alts"].copy()
+                old_proofs2 = alt2_info["proofs"].copy()
+                alt1_info = {"_id": alt1_id, "alts": old_alts2, "proofs": []}
+                alt1_info["alts"].append(alt2_id)
+                alt1_info["proofs"] = old_proofs2
+                alt1_info["proofs"].append(proof)
+                for alt in old_alts2:
+                    alt_query = {"_id": alt}
+                    alt_info = altscol.find_one(alt_query)
+                    if not alt_info:
+                        continue
+                    alt_info["alts"].append(alt1_id)
+                    alt_info["proofs"].append(proof)
+                    altscol.replace_one(alt_query, alt_info)
+                alt2_info["alts"].append(alt1_id)
+                alt2_info["proofs"].append(proof)
+                altscol.replace_one(alt2_query, alt2_info)
+                altscol.insert_one(alt1_info)
+                user1_query = {"_id": alt1_id}
+                user1_profile = userscol.find_one(user1_query)
+                user2_query = {"_id": alt2_id}
+                user2_profile = userscol.find_one(user2_query)
+                if user1_profile and user2_profile and len(user1_profile or "") > 2 and len(user2_profile or "") > 2:
+                    await neru_logs_channel.send(
+                        f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
+                elif user1_profile and len(
+                        user1_profile) > 2 and not user2_profile:  # user 1 reported, user 2 not reported
+                    await neru_logs_channel.send(
+                        f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
+                elif user2_profile and len(
+                        user2_profile) > 2 and not user1_profile:  # user 2 reported, user 1 not reported
+                    await neru_logs_channel.send(
+                        f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
+                else:  # none reported
+                    await neru_logs_channel.send(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+                linked += 1
+            else:  # both alts not logged
+                alt1_info = {
+                    "_id": alt1_id,
+                    "alts": [alt2_id],
+                    "proofs": [proof]
+                }
+                alt2_info = {
+                    "_id": alt2_id,
+                    "alts": [alt1_id],
+                    "proofs": [proof]
+                }
+                #
+                altscol.insert_one(alt1_info)
+                altscol.insert_one(alt2_info)
+                #
+                user1_query = {"_id": alt1_id}
+                user1_profile = userscol.find_one(user1_query)
+                user2_query = {"_id": alt2_id}
+                user2_profile = userscol.find_one(user2_query)
+                if user1_profile and user2_profile and len(user1_profile or "") > 2 and len(user2_profile or "") > 2:
+                    await neru_logs_channel.send(
+                        f"`{alt1_id}` and `{alt2_id}` have been added as alts. Separate reports detected, use /merge to merge them.")
+                elif user1_profile and len(
+                        user1_profile) > 2 and not user2_profile:  # user 1 reported, user 2 not reported
+                    await neru_logs_channel.send(
+                        f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt1_id}` is reported but not `{alt2_id}`. Please update the report accordingly.")
+                elif user2_profile and len(
+                        user2_profile) > 2 and not user1_profile:  # user 2 reported, user 1 not reported
+                    await neru_logs_channel.send(
+                        f"`{alt1_id}` and `{alt2_id}` have been added as alts. `{alt2_id}` is reported but not `{alt1_id}`. Please update the report accordingly.")
+                else:  # none reported
+                    await neru_logs_channel.send(f"`{alt1_id}` and `{alt2_id}` have been added as alts.")
+                linked += 1
+    await interaction.followup.send(
+        f"Mass add successful.\nLinked **{linked}** alts to main `{main_id}`.\nInvalid: {f"`{' '.join(invalid_alts)}`" if invalid_alts else "None"}",
+        ephemeral=True
+    )
 
 @alts.command(name="remove", description="Removes a pair of users as alts.")
 @app_commands.describe(user1="User 1", user2="User 2")
