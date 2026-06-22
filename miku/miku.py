@@ -12,6 +12,7 @@ import asyncio
 import re
 
 import datetime
+import time
 
 import discord
 from discord import app_commands
@@ -32,6 +33,8 @@ trusteduserscol = db["trusted_users"]
 trustedserverscol = db["trusted_servers"]
 staffweeklycol = db["staff_weekly"]
 filescol = db["files"]
+kafu = client["kafu"]
+reminders = kafu["reminders"]
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
@@ -82,8 +85,7 @@ professional_mm_role = 1435205320300302396
 
 tethys = 1434471275723493388
 
-
-banned_words = ["backshot", "blackie", "blowjob", "boob", "boobies", "boobs", "breedable", "ching chong", "clit", "cock", "cunt", "dick", "dih", "dihh", "facist", "faggot", "fatass", "footjob", "gooner", "gooning", "hanime", "hentai", "hitler", "kill yourself", "kys", "masturbate", "ngger", "ngro", "nazi", "ngga", "nigga", "nigger", "nigro", "penis", "pervert", "porn", "prostitute", "rape", "retard", "retarted", "schlong", "semen", "shlong", "skibidi", "sperm", "suicide", "testes", "testicle", "testis", "tranny", "vagina", "whitey", "whore"]
+banned_words = os.getenv("banned_words").split(",")
 
 # events
 
@@ -140,7 +142,10 @@ async def on_ready():
     bot.add_view(TagsView())
     bot.add_view(FileView())
     bot.add_view(TRLogView())
-    weekly_quota.start()
+    if not reminder_loop.is_running():
+        reminder_loop.start()
+    if not weekly_quota.is_running():
+        weekly_quota.start()
     await bot.tree.sync()
 
 # loop tasks
@@ -192,6 +197,33 @@ def apply_break(quota, member):
     if get(member.guild.roles, id=half_break) in member.roles:
         return max(1, quota // 2)
     return quota
+
+@tasks.loop(minutes=1)
+async def reminder_loop():
+    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+    for reminder in reminders.find():
+        thread_id = reminder["thread_id"]
+        channel = bot.get_channel(thread_id)
+        if not channel:
+            continue
+        remaining = reminder["end_time"] - now
+        if remaining <= 0:
+            try:
+                await channel.edit(name=reminder["base_name"])
+                await channel.send(
+                    f"<@{reminder["user_id"]}> time’s up."
+                )
+            except:
+                pass
+            reminders.delete_one({"thread_id": thread_id})
+            continue
+        hours_left = max(1, int((remaining + 3599) // 3600))
+        expected_name = (f"{reminder["base_name"]} - {hours_left}h")
+        if channel.name != expected_name:
+            try:
+                await channel.edit(name=expected_name)
+            except:
+                pass
 
 @tasks.loop(time=datetime.time(hour=0, minute=0))
 async def weekly_quota():
@@ -1014,7 +1046,7 @@ async def cl(ctx, *, string: str = None):
 - ping sr+　┈　`,sr`
 - see format for closing statements using the dropdown below.
 - please merge identical reasons.
-- for mass reports, you may wish to use `,pr` after reports are published to retrieve IDs easily.
+- for mass reports, you may wish to use `,pr` after reports are published to retrieve ids easily.
         """), view=ClosingView())
 
 class ClosingView(discord.ui.View):
@@ -1121,6 +1153,44 @@ async def ban(ctx):
     elif ctx.guild.id == tethys:
         await ctx.reply(f"<@&{tethys_ban_perms}>")
 
+@bot.command(name="rm")
+async def rm(ctx, hours: int):
+    if isinstance(ctx.channel, discord.Thread):
+        if ctx.channel.parent_id != TICKET_CHANNEL:
+            return
+    else:
+        await ctx.send("This command can only be used in a thread.")
+    if hours < 1:
+        return await ctx.reply("Hours must be at least 1.")
+    thread = ctx.channel
+    base_name = thread.name.rsplit(" - ", 1)[0]
+    await thread.edit(name=f"{base_name} - {hours}h")
+    reminders.update_one(
+        {"thread_id": thread.id},
+        {
+            "$set": {
+                "thread_id": thread.id,
+                "user_id": ctx.author.id,
+                "end_time": (
+                    datetime.datetime.now(datetime.timezone.utc)
+                    + datetime.timedelta(hours=hours)
+                ).timestamp(),
+                "base_name": base_name
+            }
+        },
+        upsert=True
+    )
+    await ctx.reply(f"Reminder set for {hours}h.")
+
+@rm.error
+async def rm_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        retry_at = int(time.time() + error.retry_after)
+        return await ctx.send(
+            f"This command is on cooldown. Retry <t:{retry_at}:R>."
+        )
+    raise error
+
 @bot.command(name="rn")
 @commands.cooldown(2, 600, commands.BucketType.channel)
 @commands.has_any_role(staff_role, tethys_staff_role)
@@ -1137,8 +1207,10 @@ async def rn(ctx, *, new_name: str):
 @rn.error
 async def rn_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
-        remaining = error.retry_after  # cooldown time in seconds
-        return await ctx.send(f"This command is on cooldown. Retry in {round(remaining)} seconds.")
+        retry_at = int(time.time() + error.retry_after)
+        return await ctx.send(
+            f"This command is on cooldown. Retry <t:{retry_at}:R>."
+        )
     raise error
 
 @bot.command(name='fm', help="Sends a jump url to the first message in the thread.")
