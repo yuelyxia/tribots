@@ -198,7 +198,7 @@ def apply_break(quota, member):
         return max(1, quota // 2)
     return quota
 
-@tasks.loop(minutes=1)
+@tasks.loop(minutes=10)
 async def reminder_loop():
     now = datetime.datetime.now(datetime.timezone.utc).timestamp()
     for reminder in reminders.find():
@@ -1163,7 +1163,7 @@ async def rm(ctx, hours: int):
     if hours < 1:
         return await ctx.reply("Hours must be at least 1.")
     thread = ctx.channel
-    base_name = thread.name.rsplit(" - ", 1)[0]
+    base_name = (thread.name.rsplit(" - ", 1)[0]).replace("on hold", "").strip()
     await thread.edit(name=f"{base_name} - {hours}h")
     reminders.update_one(
         {"thread_id": thread.id},
