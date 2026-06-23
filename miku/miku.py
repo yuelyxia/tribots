@@ -218,7 +218,7 @@ async def reminder_loop():
             reminders.delete_one({"thread_id": thread_id})
             continue
         hours_left = max(1, int((remaining + 3599) // 3600))
-        expected_name = (f"{reminder["base_name"]} - {hours_left}h")
+        expected_name = f"{reminder["base_name"]} - {hours_left}h"
         if channel.name != expected_name:
             try:
                 await channel.edit(name=expected_name)
@@ -1160,9 +1160,33 @@ async def rm(ctx, hours: int):
             return
     else:
         await ctx.send("This command can only be used in a thread.")
-    if hours < 1:
-        return await ctx.reply("Hours must be at least 1.")
     thread = ctx.channel
+    if not hours:
+        reminder = reminders.find_one({"thread_id": thread.id})
+        if reminder:
+            now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+            remaining = reminder["end_time"] - now
+            hours_left = max(1, int((remaining + 3599) // 3600))
+            expected_name = f"{reminder["base_name"]} - {hours_left}h"
+            if thread.name != expected_name:
+                try:
+                    await thread.edit(name=expected_name)
+                except:
+                    pass
+    if hours < 0:
+        return await ctx.reply("Hours must be at least 0.")
+    elif hours < 1:
+        reminder = reminders.find_one({"thread_id": thread.id})
+        if reminder:
+            base_name = reminder["base_name"]
+            if thread.name != base_name:
+                try:
+                    await thread.edit(name=base_name)
+                except:
+                    pass
+            reminders.delete_one({"thread_id": thread.id})
+            await ctx.reply(f"Reminder deleted.")
+        return
     base_name = (thread.name.rsplit(" - ", 1)[0]).replace("on hold", "").strip()
     await thread.edit(name=f"{base_name} - {hours}h")
     reminders.update_one(
