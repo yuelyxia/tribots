@@ -84,7 +84,7 @@ red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "F
 yellow_server_tags = ["Suspect Server"]
 
 red_account_tags = ["Scammed Account", "Leeched Account"]
-yellow_account_tags = ["Under Investigation", "Advertised by Scammer"]
+yellow_account_tags = ["Suspicious Account", "Advertised by Scammer"]
 
 games_list = ["Genshin Impact", "Honkai: Star Rail", "Wuthering Waves", "Roblox", "Zenless Zone Zero", "Honkai Impact 3rd", "Project Sekai", "Cookie Run: Kingdom", "Identity V", "Valorant", "Others", "N/A"]
 
@@ -165,31 +165,26 @@ def reported_server_profile(guild, server_profile):
 
 def sort_user_tags(tags):
     sorted_tags = []
-    for i in range(0, len(tags)):
-        tag = tags[i]
+    for tag in tags:
         if tag == "Ex-offender":
             sorted_tags.append(tag)
     for tag_to_find in red_tags:
-        for i in range(0, len(tags)):
-            tag = tags[i]
+        for tag in tags:
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     for tag_to_find in yellow_tags:
-        for i in range(0, len(tags)):
-            tag = tags[i]
+        for tag in tags:
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     return sorted_tags
 def sort_server_tags(tags):
     sorted_tags = []
     for tag_to_find in red_server_tags:
-        for i in range(0, len(tags)):
-            tag = tags[i]
+        for tag in tags:
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     for tag_to_find in yellow_server_tags:
-        for i in range(0, len(tags)):
-            tag = tags[i]
+        for tag in tags:
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     return sorted_tags
@@ -437,17 +432,14 @@ def reported_account_profile(game_uid, account_profile):
 def sort_account_tags(tags):
     sorted_tags = []
     for tag_to_find in red_account_tags:
-        for i in range(0, len(tags)):
-            tag = tags[i]
+        for tag in tags:
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     for tag_to_find in yellow_account_tags:
-        for i in range(0, len(tags)):
-            tag = tags[i]
+        for tag in tags:
             if tag == tag_to_find:
                 sorted_tags.append(tag)
-    for i in range(0, len(tags)):
-        tag = tags[i]
+    for tag in tags:
         if tag == "Recovered Account":
             sorted_tags.append(tag)
     return sorted_tags
@@ -580,7 +572,7 @@ server_tags_options = [
 account_tag_options = [
     discord.SelectOption(label="Scammed Account", value="Scammed Account"),
     discord.SelectOption(label="Leeched Account", value="Leeched Account"),
-    discord.SelectOption(label="Under Investigation", value="Under Investigation"),
+    discord.SelectOption(label="Suspicious Account", value="Suspicious Account"),
     discord.SelectOption(label="Advertised by Scammer", value="Advertised by Scammer"),
     discord.SelectOption(label="Recovered Account", value="Recovered Account"),
 ]
