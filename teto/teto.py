@@ -579,7 +579,7 @@ account_tag_options = [
 
 @tasks.loop(hours=1.0)
 async def update_reports_count():
-    reports_count = userscol.count_documents({}) + serverscol.count_documents({})
+    reports_count = userscol.count_documents({}) + serverscol.count_documents({}) + accountscol.count_documents({})
     await bot.change_presence(status=discord.Status.dnd,
                               activity=discord.Activity(
                                   type=discord.ActivityType.watching,
