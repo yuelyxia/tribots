@@ -2248,6 +2248,58 @@ async def create_trlog(interaction: discord.Interaction):
 tickets = app_commands.Group(name="tickets", description="Add/remove users to/from ticket threads.")
 bot.tree.add_command(tickets)
 
+@tickets.command(name="find", description="Finds all tickets with name containing the text.")
+@app_commands.describe(text="Text to find", type="Active (Default) / All / Archived")
+@app_commands.checks.has_any_role(ticket_ping, sr_ping, adm_ping)
+async def tickets_find(interaction: discord.Interaction, text: str, type: Literal["Active", "All", "Archived"]="Active"):
+    await interaction.response.defer()
+    guild = interaction.guild
+    ticket_channel = guild.get_channel(TICKET_CHANNEL)
+    text_lower = text.lower()
+    matching_threads = []
+    try:
+        if type == "All" or type == "Active":
+            for thread in ticket_channel.threads:
+                if text_lower in thread.name.lower():
+                    matching_threads.append(f"{thread.mention}")
+        if type == "All" or type == "Archived":
+            async for thread in ticket_channel.archived_threads(limit=None):
+                if text_lower in thread.name.lower():
+                    matching_threads.append(f"{thread.mention}")
+    except Exception as e:
+        await interaction.followup.send(f"An error occurred: {e}")
+        return
+    if not matching_threads:
+        await interaction.followup.send(f"No tickets found containing `{text}`.")
+        return
+    chunks = []
+    current_chunk = ""
+    embeds = []
+    for thread_str in matching_threads:
+        if len(current_chunk) + len(thread_str) + 1 > 3900:
+            chunks.append(current_chunk)
+            current_chunk = thread_str
+        else:
+            if current_chunk:
+                current_chunk += "\n" + thread_str
+            else:
+                current_chunk = thread_str
+    if current_chunk:
+        chunks.append(current_chunk)
+    for i, chunk in enumerate(chunks):
+        embed = discord.Embed(
+            title=f"Ticket search results for `{text}`",
+            description=chunk,
+            color=0xffffff
+        )
+        embed.set_footer(
+            text=f"Page {i + 1} of {len(chunks)}　–　{len(matching_threads)} ticket(s) found")
+        embeds.append(embed)
+    if embeds:
+        for i in range(0, len(embeds), 10):
+            batch = embeds[i:i + 10]
+            await interaction.followup.send(embeds=batch)
+
 @tickets.command(name="add", description="Add a user or role to all active ticket threads.")
 @app_commands.describe(target="User or Role ID / mention")
 @app_commands.checks.has_role(adm_ping)
