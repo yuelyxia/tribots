@@ -1148,16 +1148,19 @@ class ClosingView(discord.ui.View):
         if self.select_callback.values[0] == "sr+":
             await interaction.response.send_message(embed=discord.Embed(description="""
 - rename ticket
-  - `,rn 𝐧𝐚𝐦𝐞 tbc 𝐬𝐫 𝐧𝐚𝐦𝐞`
-- check active reports and give feedback
+  - `,rn 𝐧𝐚𝐦𝐞 tbc (𝐬𝐫 𝐧𝐚𝐦𝐞)`
+- check active reports and give feedback. set a reminder for 3h to reping reporter if needed.
   - `,ar`
+  - `,rm 3`
 - if done correctly, accept reports for voting in order.
-- check reports in voting
+- check reports in voting. set a reminder for 6h to check if reports can be published.
   - `,vr`
-- wait until 5 agree votes before you can publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
+  - `,rm 6`
+- requires 5 agree votes to publish. 8 agree votes = auto-publish, 12 disagree votes = auto-reject.
 - check published reports
-  - `,pr` and `,c 𝐢𝐝` or `,mc 𝐢𝐝 𝐢𝐝 𝐢𝐝`
-- ask reporter for closing
+  - `,pr`
+  - `,c 𝐢𝐝` or `,mc 𝐢𝐝 𝐢𝐝 𝐢𝐝`
+- obtain closing from top of ticket (use `,fm`). ask reporter for closing if not provided.
 - `,close` to give ticket credit(s)
 - `/close` or click the `Close with Reason` button to close the ticket; input closing as the reason.
 """), ephemeral=True)
