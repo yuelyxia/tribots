@@ -96,14 +96,15 @@ async def on_message(message):
             target_value = None
             for embed in message.embeds:
                 for field in embed.fields:
-                    if field.name == "ㆍㆍWho are you reporting?":
+                    if field.name == "ㆍㆍWho are you reporting?" or field.name == "ㆍㆍWho are you appealing?":
                         target_value = field.value
                         break
                 if target_value is not None:
                     break
             if target_value is not None:
                 result = discord.Embed(colour=0xffffff, description=f"`{target_value}`")
-                await message.channel.send(embed=result)
+                result.add_field(name="Closing", value="", inline=False)
+                await message.channel.send(embed=result, view=InputClosingView())
     if message.channel.id == CMDS_CHANNEL:
         if message.author.bot:
             return
@@ -111,6 +112,37 @@ async def on_message(message):
             try: await message.delete()
             except Exception: pass
     await bot.process_commands(message)
+
+class InputClosingView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Closing", style=discord.ButtonStyle.grey, custom_id="inputclosing_edit")
+    async def edit_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(InputClosingModal(interaction.message))
+
+class InputClosingModal(discord.ui.Modal, title="Closing"):
+    closing = discord.ui.TextInput(label="Closing", required=False, style=discord.TextStyle.paragraph)
+    def __init__(self, message: discord.Message):
+        super().__init__()
+        self.message = message
+        embed = message.embeds[0]
+        current_closing = embed.fields[0].value.strip("`") or ""
+        self.closing.default = current_closing
+    async def on_submit(self, interaction: discord.Interaction):
+        embed = self.message.embeds[0]
+        embed.set_field_at(
+            0,
+            name="Closing",
+            value=f"`{self.closing.value}`" if self.closing.value.strip() else "",
+            inline=False
+        )
+        embed.set_footer(
+            text=f"Last edited by {interaction.user}",
+            icon_url=interaction.user.display_avatar.url
+        )
+        await self.message.edit(embed=embed, view=InputClosingView())
+        await interaction.response.send_message("Closing updated.", ephemeral=True)
 
 
 @bot.event
@@ -142,6 +174,7 @@ async def on_ready():
     bot.add_view(TagsView())
     bot.add_view(FileView())
     bot.add_view(TRLogView())
+    bot.add_view(InputClosingView())
     if not reminder_loop.is_running():
         reminder_loop.start()
     if not weekly_quota.is_running():
