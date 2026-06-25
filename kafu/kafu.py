@@ -1097,7 +1097,7 @@ class TicketCloseView(discord.ui.View):
 def user_info(user, staff_data=None, mm_data=None, pilot_data=None):
     profile = discord.Embed()
     profile.set_thumbnail(url=f"{user.display_avatar}")
-    profile.description = f"{user.name}\n`{user.id}`\n{user.mention}"
+    profile.description = f"{user.mention} `{user.name}`\n`{user.id}`"
     profile.description += f"\n**Account Created:** <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
     if staff_data is not None:
         profile.add_field(
