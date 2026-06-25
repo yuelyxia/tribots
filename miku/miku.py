@@ -173,7 +173,6 @@ async def on_ready():
     bot.add_view(ClosingView())
     bot.add_view(TagsView())
     bot.add_view(FileView())
-    bot.add_view(TRLogView())
     bot.add_view(InputClosingView())
     if not reminder_loop.is_running():
         reminder_loop.start()
@@ -2151,101 +2150,6 @@ async def create_file(interaction: discord.Interaction):
         await interaction.response.send_message("You cannot use this command in this channel.", ephemeral=True)
         return
     await interaction.response.send_modal(FileModal())
-
-
-class TRLogModal(discord.ui.Modal, title="Create TR Log"):
-    user_id = discord.ui.TextInput(label="User ID", placeholder="Enter the user ID", required=True)
-    async def on_submit(self, interaction: discord.Interaction):
-        try:
-            user = await bot.fetch_user(int(self.user_id.value))
-        except Exception:
-            await interaction.response.send_message("Invalid user ID.", ephemeral=True)
-            return
-        # Create public thread
-        thread = await interaction.channel.create_thread(name=str(user.id), type=discord.ChannelType.public_thread)
-        try:
-            starter_message = await interaction.channel.fetch_message(thread.id)
-            await starter_message.delete()
-        except Exception:
-            pass
-        await interaction.response.send_message(f"Log created for `{user.id}`.", ephemeral=True)
-        embed = discord.Embed(color=0xffffff)
-        embed.add_field(name="User ID", value=str(user.id), inline=True)
-        embed.add_field(name="User", value=f"{user.mention} ({user.name})", inline=True)
-        embed.add_field(name="Link to thread", value=thread.mention, inline=False)
-        msg = await interaction.channel.send(embed=embed)
-        thread_embed = discord.Embed(color=0xffffff)
-        thread_embed.add_field(name="User ID", value=str(user.id), inline=True)
-        thread_embed.add_field(name="Username", value=str(user.name), inline=True)
-        thread_embed.add_field(name="Report Tickets", value="", inline=False)
-        thread_embed.add_field(name="Mass Tickets", value="", inline=False)
-        thread_embed.add_field(name="Appeal Tickets", value="", inline=False)
-        thread_embed.add_field(name="Other Tickets", value="", inline=False)
-        thread_msg = await thread.send(embed=thread_embed, view=TRLogView())
-
-class TRLogView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-    @discord.ui.button(label="Edit", style=discord.ButtonStyle.grey, custom_id="trlog_edit")
-    async def edit_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(EditTRLogModal(interaction.message))
-
-class EditTRLogModal(discord.ui.Modal, title="Edit TR Log"):
-    reports = discord.ui.TextInput(label="Report Tickets", required=False, style=discord.TextStyle.paragraph)
-    masses = discord.ui.TextInput(label="Mass Tickets", required=False, style=discord.TextStyle.paragraph)
-    appeals = discord.ui.TextInput(label="Appeal Tickets", required=False, style=discord.TextStyle.paragraph)
-    others = discord.ui.TextInput(label="Other Tickets", required=False, style=discord.TextStyle.paragraph)
-    def __init__(self, message: discord.Message):
-        super().__init__()
-        self.message = message
-        embed = message.embeds[0]
-        current_reports = embed.fields[2].value or ""
-        current_masses = embed.fields[3].value or ""
-        current_appeals = embed.fields[4].value or ""
-        current_others = embed.fields[5].value or ""
-        self.reports.default = current_reports
-        self.masses.default = current_masses
-        self.appeals.default = current_appeals
-        self.others.default = current_others
-    async def on_submit(self, interaction: discord.Interaction):
-        embed = self.message.embeds[0]
-        embed.set_field_at(
-            2,
-            name="Report Tickets",
-            value=self.reports.value or "",
-            inline=False
-        )
-        embed.set_field_at(
-            3,
-            name="Mass Tickets",
-            value=self.masses.value or "",
-            inline=False
-        )
-        embed.set_field_at(
-            4,
-            name="Appeal Tickets",
-            value=self.appeals.value or "",
-            inline=False
-        )
-        embed.set_field_at(
-            5,
-            name="Other Tickets",
-            value=self.others.value or "",
-            inline=False
-        )
-        embed.set_footer(
-            text=f"Last edited by {interaction.user}",
-            icon_url=interaction.user.display_avatar.url
-        )
-        await self.message.edit(embed=embed, view=TRLogView())
-        await interaction.response.send_message("TR Log updated.", ephemeral=True)
-
-
-@create.command(name="trlog", description="Creates a tr log.")
-async def create_trlog(interaction: discord.Interaction):
-    if interaction.channel.id != 1513548750495154246:
-        return await interaction.response.send_message("You cannot use this command in this channel.", ephemeral=True)
-    await interaction.response.send_modal(TRLogModal())
 
 
 tickets = app_commands.Group(name="tickets", description="Add/remove users to/from ticket threads.")
