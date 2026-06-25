@@ -2263,7 +2263,7 @@ async def tickets_find(interaction: discord.Interaction, text: str, type: Litera
                 if text_lower in thread.name.lower():
                     matching_threads.append(f"{thread.mention}")
         if type == "All" or type == "Archived":
-            async for thread in ticket_channel.archived_threads(limit=None):
+            async for thread in ticket_channel.archived_threads(limit=None, private=True):
                 if text_lower in thread.name.lower():
                     matching_threads.append(f"{thread.mention}")
     except Exception as e:
