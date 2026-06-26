@@ -87,6 +87,12 @@ tethys = 1434471275723493388
 
 banned_words = os.getenv("banned_words").split(",")
 
+def is_sr(user):
+    return any(role.id in (sr_ping, adm_ping) for role in user.roles)
+
+def is_active_staff(user):
+    return any(role.id in (ticket_ping, adm_ping) for role in user.roles)
+
 # events
 
 @bot.event
@@ -119,7 +125,8 @@ class InputClosingView(discord.ui.View):
 
     @discord.ui.button(label="Closing", style=discord.ButtonStyle.grey, custom_id="inputclosing_edit")
     async def edit_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(InputClosingModal(interaction.message))
+        if is_active_staff(interaction.user):
+            await interaction.response.send_modal(InputClosingModal(interaction.message))
 
 class InputClosingModal(discord.ui.Modal, title="Closing"):
     closing = discord.ui.TextInput(label="Closing", required=False, style=discord.TextStyle.paragraph)
@@ -337,8 +344,7 @@ async def weekly_quota():
             staffweeklycol.replace_one({"_id": str(member.id)}, weekly_profile, upsert=True)
         weekly_reviews = int(weekly_profile.get("weekly_reviews", 0))
         weekly_reports = int(weekly_profile.get("weekly_reports", 0))
-        is_sr = any(role.id in (sr_ping, adm_ping) for role in member.roles)
-        if is_sr:
+        if is_sr(member):
             rq = config["sr_reports_quota"]
         else:
             rq = config["reports_quota"]
@@ -347,7 +353,7 @@ async def weekly_quota():
         weekly_profile.setdefault("reports_quota_list", [])
         weekly_profile["reports_quota_list"].append([weekly_reports, rq, rr])
         weekly_profile["reports_quota_list"] = weekly_profile["reports_quota_list"][-8:]
-        if is_sr:
+        if is_sr(member):
             vq = config["sr_reviews_quota"]
             vq = apply_break(vq, member)
             vr = ratio(weekly_reviews, vq)
@@ -366,7 +372,7 @@ async def weekly_quota():
                 await send_incomplete_quota_dm(member, weekly_reports, rq, rr)
         staffweeklycol.replace_one({"_id": staff_id}, weekly_profile, upsert=True)
         rratios = [x[2] for x in weekly_profile["reports_quota_list"] if x[2] != -1]
-        if is_sr:
+        if is_sr(member):
             vratios = [x[2] for x in weekly_profile["reviews_quota_list"] if x[2] != -1]
             ravg = sum(rratios) / len(rratios) if rratios else None
             vavg = sum(vratios) / len(vratios) if vratios else None
@@ -615,8 +621,7 @@ async def quota(ctx, member: discord.Member = None):
     profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
     embeds.append(profile)
     embed = discord.Embed(title="quota progress", colour=0xffffff, description="")
-    is_sr = any(role.id in (sr_ping, adm_ping) for role in member.roles)
-    if is_sr:
+    if is_sr(member):
         current_reviews = weekly_profile.get("weekly_reviews", 0)
         current_reviews_quota = (
             get_quota_config().get("sr_reviews_quota", 0)
@@ -631,7 +636,7 @@ async def quota(ctx, member: discord.Member = None):
         embed.description += f"\nreviews　–　**{current_reviews}** / {quota_display}　–　`{ratio_display}`"
         if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
     current_reports = weekly_profile.get("weekly_reports", 0)
-    if is_sr:
+    if is_sr(member):
         current_reports_quota = get_quota_config().get("sr_reports_quota", 0)
     else:
         current_reports_quota = get_quota_config().get("reports_quota", 0)
@@ -660,8 +665,7 @@ async def quota_history(ctx, member: discord.Member=None):
     profile.set_thumbnail(url=f"{member.display_avatar}")
     profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
     embeds.append(profile)
-    is_sr = any(role.id in (sr_ping, adm_ping) for role in member.roles)
-    if is_sr:
+    if is_sr(member):
         reviews_history = weekly_profile.get("reviews_quota_list", [])
         reviews_embed = discord.Embed(title="reviews quota history", colour=0xffffff)
         desc = ""
@@ -710,7 +714,7 @@ async def quota_history(ctx, member: discord.Member=None):
             f"\nWeek {i}　–　**{done}** / {quota_display}　–　`{ratio_display}`")
     reports_embed.description = desc
     current_reports = weekly_profile.get("weekly_reports", 0)
-    if is_sr:
+    if is_sr(member):
         current_reports_quota = (
             get_quota_config().get("sr_reports_quota", 0)
         )
@@ -761,8 +765,7 @@ async def bb(ctx, member: discord.Member=None):
     bal = weekly_profile.get("breakbal", 12)
     is_full = full_break_r in member.roles
     is_half = half_break_r in member.roles
-    is_sr = any(role.id in (sr_ping, adm_ping) for role in member.roles)
-    if is_sr:
+    if is_sr(member):
         sr_reviews_quota = get_quota_config().get("sr_reviews_quota", 0)
         sr_reports_quota = get_quota_config().get("sr_reports_quota", 0)
         sr_reviews_quota = apply_break(sr_reviews_quota, member)
