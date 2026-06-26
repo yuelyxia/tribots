@@ -7,3 +7,6 @@ discord.py[voice]
 gtts
 PyNaCl
 ffmpeg-python
+aiosqlite
+fastapi
+uvicorn

@@ -1,41 +1,44 @@
 #  yuelyxia  ©  2025 – 2026
 
-from dotenv import load_dotenv
-import os
-load_dotenv()
-
-import pymongo
-from pymongo import UpdateOne
-
-import io
-import aiohttp
-from asyncio import Lock
-import re
-from collections import defaultdict
-
-from zoneinfo import available_timezones, ZoneInfo
-
-from gtts import gTTS
-
-import datetime
-import time
+# standard libraries
 import asyncio
+import datetime
+import io
+import os
+import re
+import time
+import uuid
+from asyncio import Lock
+from collections import defaultdict
+from typing import Literal, Optional
+from zoneinfo import ZoneInfo, available_timezones
 
+# 3rd party libraries
+import aiohttp
 import discord
+import pymongo
 from discord import app_commands
 from discord.ext import commands, tasks
 from discord.utils import get
+from dotenv import load_dotenv
+from gtts import gTTS
+from pymongo import UpdateOne
 
-from typing import Optional, Literal
+# local imports
+from database.database import Database
 
-import uuid
+# environment
+load_dotenv()
+
+db = Database()
 
 TOKEN = os.getenv("TOKEN")
 CLIENT = os.getenv("CLIENT")
 
-# mongodb info
+# mongodb
 client = pymongo.MongoClient(CLIENT)
 kafu = client["kafu"]
+
 tickets = kafu["tickets"]
 servers = kafu["servers"]
 timezones = kafu["timezones"]
@@ -45,48 +48,31 @@ votes = kafu["votes"]
 ticket_claims = kafu["ticket_claims"]
 afk = kafu["afk"]
 
+# ids
+
 TRI_Archive = 1371673839695826974
 Tethys = 1434471275723493388
 ticket_ping = 1449382692671193294
 sr_ping = 1375254710952661102
 KAFU = 1457009979817988241
 
-USERGUIDE = "https://docs.google.com/document/d/1Af_bHhXTjpJ9GkIPihmSQYibDVMYTFnUBhaA7DlQ29s/"
-
 yuelyxia = 1303291812282372137
 
+USERGUIDE = "https://docs.google.com/document/d/1Af_bHhXTjpJ9GkIPihmSQYibDVMYTFnUBhaA7DlQ29s/"
+
+TIMEZONES = sorted(available_timezones())
+
+# bot setup
 intents = discord.Intents.all()
 intents.voice_states = True
-bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
 
-voice_clients = {}
-active_text_channel = {}
-tts_queues = defaultdict(asyncio.Queue)
-tts_workers = {}
+bot = commands.Bot(
+    command_prefix=",",
+    help_command=None,
+    intents=intents
+)
 
-async def tts_worker(guild_id: int):
-    try:
-        while True:
-            vc = voice_clients.get(guild_id)
-            if not vc or not vc.is_connected():
-                await asyncio.sleep(1)
-                continue
-            try:
-                text, lang = await asyncio.wait_for(
-                    tts_queues[guild_id].get(),
-                    timeout=15
-                )
-            except asyncio.TimeoutError:
-                continue
-            try:
-                await play_tts(vc, text, lang)
-            except Exception as e:
-                print(f"TTS playback error: {e}")
-    except asyncio.CancelledError:
-        return
-    except Exception as e:
-        print(f"TTS worker fatal error: {e}")
-
+# on ready
 @bot.event
 async def on_ready():
     bot.add_view(TRITicketView())
@@ -96,17 +82,20 @@ async def on_ready():
     bot.add_view(MMView())
     bot.add_view(MMFormsView())
     bot.add_view(MMRisksView())
+
     quota_check.start()
     customrole_expiry_loop.start()
     vote_auto_close_loop.start()
     vote_cleanup_loop.start()
     ticket_claim_cleanup_loop.start()
+
+    await db.initialise()
+
     if not hasattr(bot, "queue_started"):
         bot.loop.create_task(message_update_worker())
         bot.queue_started = True
-    await bot.tree.sync()
 
-TIMEZONES = sorted(available_timezones())
+    await bot.tree.sync()
 
 guild_locks = {}
 def get_lock(guild_id):
@@ -134,6 +123,33 @@ async def help(interaction: discord.Interaction):
     await interaction.response.send_message(f"KAFU user guide [here]({USERGUIDE})")
 
 # voice
+voice_clients = {}
+active_text_channel = {}
+tts_queues = defaultdict(asyncio.Queue)
+tts_workers = {}
+
+async def tts_worker(guild_id: int):
+    try:
+        while True:
+            vc = voice_clients.get(guild_id)
+            if not vc or not vc.is_connected():
+                await asyncio.sleep(1)
+                continue
+            try:
+                text, lang = await asyncio.wait_for(
+                    tts_queues[guild_id].get(),
+                    timeout=15
+                )
+            except asyncio.TimeoutError:
+                continue
+            try:
+                await play_tts(vc, text, lang)
+            except Exception as e:
+                print(f"TTS playback error: {e}")
+    except asyncio.CancelledError:
+        return
+    except Exception as e:
+        print(f"TTS worker fatal error: {e}")
 
 async def play_tts(vc: discord.VoiceClient, text: str, lang: str = "en"):
     filename = f"tts_{uuid.uuid4().hex}.mp3"
