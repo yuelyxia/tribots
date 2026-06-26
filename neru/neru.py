@@ -49,7 +49,7 @@ def alts_string(alts_list):
     return string
 def default_no_alts(user):
     profile = discord.Embed(colour=0xffffff)
-    profile.description = f"{user.mention} {user.display_name}\n`{user.name}`\n`{user.id}`\n\n"
+    profile.description = f"{user.display_name}\n`{user.name}` {user.mention}\n`{user.id}`\n\n"
     profile.description += f"<:whitecross:1462774085737119828>　No alts logged for this user."
     return profile
 
@@ -430,7 +430,7 @@ async def a(ctx, *, to_check: str = None):
         lines_with_server.append(f"ㆍ　`{alt}` – {proof_with_server}")
     LIMIT = 3900
     GLOBAL_LIMIT = 5800
-    header = f"{user.mention} {user.display_name}\n`{user.name}`\n`{user.id}`\n\n<a:whitealert:1496542298908000257>　**Alt(s)**\n"
+    header = f"{user.display_name}\n`{user.name}` {user.mention}\n`{user.id}`\n\n<a:whitealert:1496542298908000257>　**Alt(s)**\n"
     def calculate_total_chars(lines_list):
         total_embed_chars = 0
         current_chunk = []

@@ -56,7 +56,7 @@ yellow_account_tags = ["Under Investigation", "Advertised by Scammer"]
 def default_user_profile(user):
     profile = discord.Embed()
     profile.set_thumbnail(url=f"{user.display_avatar}")
-    profile.description = f"{user.mention} {user.display_name}\n`{user.name}`\n`{user.id}`"
+    profile.description = f"{user.display_name}\n`{user.name}` {user.mention}\n`{user.id}`"
     profile.description += f"\n-# **Account Created** – <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     profile.set_footer(text="✦　This user is unreported.")
     return profile
@@ -172,7 +172,7 @@ def format_trusteduser_profile(user, trusteduser_profile):
     else:
         trusted_embed = discord.Embed(title="Trusted User", colour=0x9279b5)
     trusted_embed.set_thumbnail(url=f"{user.display_avatar}")
-    trusted_embed.description = f"{user.mention} {user.display_name}\n`{user.name}`\n`{user.id}`"
+    trusted_embed.description = f"{user.display_name}\n`{user.name}` {user.mention}\n`{user.id}`"
     trusted_embed.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     trusted_embed.set_footer(text="✦　This user is trusted.")
     if trusteduser_profile["staff"] == 1:
@@ -204,7 +204,7 @@ def format_user_r_profile(user, r_profile_list, title):
         colour = "\u001b[0m"
     r_profile.set_thumbnail(url=f"{user.display_avatar}")
     r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
-    r_profile.description += f"{user.mention} {user.display_name}\n`{user.name}`\n`{user.id}`"
+    r_profile.description += f"{user.display_name}\n`{user.name}` {user.mention}\n`{user.id}`"
     r_profile.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
     r_profile.description += f"\n**Alt(s)** – {r_profile_list[0] or "None"}"
     r_profile.description += f"\n**Other Tag(s)** – {r_profile_list[1] or "None"}"
@@ -582,7 +582,7 @@ async def c(ctx, *, to_check: str = None):
                     user = await bot.fetch_user(int(to_check.strip('<@>')))
                     profile = discord.Embed(colour=0xffffff)
                     profile.set_thumbnail(url=f"{user.display_avatar.url}")
-                    profile.description = f"{user.mention} {user.display_name}\n`{user.name}`\n`{user.id}`{user.mention} {user.display_name}\n`{user.name}`\n`{user.id}`"
+                    profile.description = f"{user.display_name}\n`{user.name}` {user.mention}\n`{user.id}`"
                     profile.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
                     if user.id == 1450073025818136598:
                         profile.description += "\n**TETO** ┈ report bot for `/tri`"
