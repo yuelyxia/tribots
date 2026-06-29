@@ -2189,11 +2189,14 @@ async def tickets_find(interaction: discord.Interaction, text: str,
     chunks = []
     current_chunk = ""
     for thread_str in matching_threads:
-        if len(current_chunk) + len(thread_str) + 1 > 3000:
+        if len(current_chunk) + len(thread_str) + 1 > 1500:
             chunks.append(current_chunk)
             current_chunk = thread_str
         else:
-            current_chunk = f"{current_chunk}\n{thread_str}" if current_chunk else thread_str
+            if current_chunk:
+                current_chunk += "\n" + thread_str
+            else:
+                current_chunk = thread_str
     if current_chunk:
         chunks.append(current_chunk)
     embeds = []
@@ -2203,11 +2206,12 @@ async def tickets_find(interaction: discord.Interaction, text: str,
             description=chunk,
             color=0xffffff
         )
-        embed.set_footer(text=f"Page {i + 1} of {len(chunks)} • {len(matching_threads)} ticket(s) found")
+        embed.set_footer(
+            text=f"Page {i + 1} of {len(chunks)} – {len(matching_threads)} ticket(s) found"
+        )
         embeds.append(embed)
-    for i in range(0, len(embeds), 10):
-        batch = embeds[i:i + 10]
-        await interaction.followup.send(embeds=batch)
+    for embed in embeds:
+        await interaction.followup.send(embed=embed)
 
 @tickets.command(name="add", description="Add a user or role to all active ticket threads.")
 @app_commands.describe(target="User or Role ID / mention")
