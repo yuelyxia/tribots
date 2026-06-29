@@ -334,21 +334,25 @@ async def on_message(message: discord.Message):
 async def ma(ctx, *, to_check: str = None):
     if to_check != None:
         users = to_check.split()
-        if len(users) > 100:
-            return await ctx.reply("Exceeded 100 users.")
-        estimated_seconds = round(len(users) * 0.35, 1)
-        status_message = await ctx.reply(f"Checking **{len(users)}** users.\nEstimated time: **~{estimated_seconds}s**")
         valid_users = []
         invalid_users = []
         for raw_user in users:
+            user_id = re.sub(r"\D", "", raw_user)
+            if not (17 <= len(user_id) <= 20):
+                continue
             try:
-                user_id = int(re.sub(r"\D", "", raw_user))
-                fetched_user = await bot.fetch_user(user_id)
-            except:
+                fetched_user = await bot.fetch_user(int(user_id))
+            except discord.NotFound:
                 invalid_users.append(raw_user)
+            except discord.HTTPException:
+                continue
             else:
                 if fetched_user not in valid_users:
                     valid_users.append(fetched_user)
+        if len(valid_users) + len(invalid_users) > 100:
+            return await ctx.reply("Exceeded 100 users.")
+        estimated_seconds = round(len(valid_users) * 0.35, 1)
+        status_message = await ctx.reply(f"Checking **{len(valid_users)}** users.\nEstimated time: **~{estimated_seconds}s**")
         if not valid_users:
             await status_message.delete()
             return await ctx.reply("No valid user IDs provided.")
@@ -362,33 +366,17 @@ async def ma(ctx, *, to_check: str = None):
                 continue
             else:
                 alts_count = len(alts_info.get("alts", []))
-                if alts_count > 0:
-                    lines.append(f"**{user.mention} `{user.id}` – {alts_count} alt(s)**")
-                    continue
+                lines.append(f"**{user.mention} `{user.id}` – {alts_count} alt(s)**")
         line_groups = [lines[i:i + 25] for i in range(0, len(lines), 25)][:10]
         for group in line_groups:
             embed = discord.Embed(description="\n".join(group))
             embeds.append(embed)
         if invalid_users:
             invalid_users_grouped = [invalid_users[i:i + 25] for i in range(0, len(invalid_users), 25)]
-            if len(invalid_users) <= 50:
-                for group in invalid_users_grouped:
-                    description = ""
-                    for user in group:
-                        description += f"\n`{user}` is invalid.\n"
-                    invalid_embed = discord.Embed(description=description)
-                    embeds.append(invalid_embed)
-            elif len(invalid_users) > 50:
-                description = ""
-                for user in invalid_users_grouped[0]:
-                    description += f"\n`{user}` is invalid.\n"
-                invalid_embed = discord.Embed(description=description)
-                embeds.append(invalid_embed)
-                for user in invalid_users_grouped[1]:
-                    description += f"\n`{user}` is invalid.\n"
-                description += f"\nThere are more than 50 invalid users.\n"
-                invalid_embed = discord.Embed(description=description)
-                embeds.append(invalid_embed)
+            for group in invalid_users_grouped[:10 - len(embeds)]:
+                embeds.append(discord.Embed(
+                    description="\n".join(f"`{u}` is invalid." for u in group)
+                ))
         await status_message.edit(content=None, embeds=embeds)
 
 @bot.command(name="a", help="Checks a user for logged alts.")
@@ -412,6 +400,19 @@ async def a(ctx, *, to_check: str = None):
     lines_without_server = []
     for i, alt in enumerate(alts):
         base_proof = proofs[i] if i < len(proofs) else "No proof"
+        if isinstance(base_proof, dict):
+            try:
+                channel = bot.get_channel(base_proof["channel_id"])
+                if channel is None:
+                    channel = await bot.fetch_channel(base_proof["channel_id"])
+                message = await channel.fetch_message(base_proof["message_id"])
+                if message.attachments:
+                    url = message.attachments[0].proxy_url
+                    base_proof = f"{url} – added by <@{base_proof['added_by']}>"
+                else:
+                    base_proof = f"Proof unavailable – added by <@{base_proof['added_by']}>"
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                base_proof = f"Proof unavailable – added by <@{base_proof['added_by']}>"
         proof_with_server = base_proof
         if isinstance(base_proof, str) and base_proof.endswith(" – dc"):
             jump_url = base_proof[:-5]
@@ -1121,11 +1122,15 @@ async def alts_add(interaction: discord.Interaction, user1: str, user2: str, ima
             return None
         channel = bot.get_channel(PROOFS_CHANNEL)
         sent = await channel.send(file=await att.to_file())
-        return sent.attachments[0].url if sent.attachments else None
-    url = await upload_attachment(image)
-    if not url:
+        return sent.id if sent.attachments else None
+    sent_id = await upload_attachment(image)
+    if not sent_id:
         return await interaction.followup.send("Please provide a valid image.", ephemeral=True)
-    proof = f"{url} – added by {interaction.user.mention}"
+    proof = {
+        "channel_id": PROOFS_CHANNEL,
+        "message_id": sent_id,
+        "added_by": interaction.user.id
+    }
     if user1.strip("<@>") != user2.strip("<@>"):
         try:
             alt1 = await bot.fetch_user(int(user1.strip("<@>")))
@@ -1317,12 +1322,16 @@ async def alts_massadd(interaction: discord.Interaction, main: str, alts: str, i
             return None
         channel = bot.get_channel(PROOFS_CHANNEL)
         sent = await channel.send(file=await att.to_file())
-        return sent.attachments[0].url if sent.attachments else None
-    url = await upload_attachment(image)
-    if not url:
-        return await interaction.followup.send("Please provide a valid image.", ephemeral=True)
-    proof = f"{url} – added by {interaction.user.mention}"
+        return sent.id if sent.attachments else None
 
+    sent_id = await upload_attachment(image)
+    if not sent_id:
+        return await interaction.followup.send("Please provide a valid image.", ephemeral=True)
+    proof = {
+        "channel_id": PROOFS_CHANNEL,
+        "message_id": sent_id,
+        "added_by": interaction.user.id
+    }
     if not main_id.isdigit():
         return await interaction.followup.send("Invalid main ID.", ephemeral=True)
     try:
