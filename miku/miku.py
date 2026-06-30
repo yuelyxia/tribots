@@ -75,6 +75,8 @@ STAFF_ROLES = [ban_perms, files_access, defender, sr_of_the_month, sr_role, tsr_
 
 TRI_Archive = 1371673839695826974
 
+KAFU = 1457009979817988241
+
 #tethys roles info
 tethys_adm_role = 1435570385960833024
 tethys_staff_role = 1434809295953854475
@@ -97,20 +99,16 @@ def is_active_staff(user):
 
 @bot.event
 async def on_message(message):
-    if message.author.id == 1325579039888511056:
+    if message.author.id == KAFU:
         if message.embeds:
             target_value = None
             for embed in message.embeds:
-                for field in embed.fields:
-                    if field.name == "ㆍㆍWho are you reporting?" or field.name == "ㆍㆍWho are you appealing?":
-                        target_value = field.value
-                        break
-                if target_value is not None:
+                if "　。。。　ticket　　ೀ　" in embed.description:
+                    embed = discord.Embed(colour=0xffffff)
+                    embed.add_field(name="Closing", value="", inline=False)
+                    await message.channel.send(embed=embed, view=InputClosingView())
                     break
-            if target_value is not None:
-                result = discord.Embed(colour=0xffffff, description=f"`{target_value}`")
-                result.add_field(name="Closing", value="", inline=False)
-                await message.channel.send(embed=result, view=InputClosingView())
+
     if message.channel.id == CMDS_CHANNEL:
         if message.author.bot:
             return
@@ -290,15 +288,19 @@ async def weekly_quota():
     not_met_quota = []
     sr_demotion_list = []
     demotion_list = []
+
     total_reviews = 0
     total_reports = 0
+    total_closes = 0
+    total_tickets = 0
+
     o5_r = get(guild.roles, id=o5_role)
     adm_r = get(guild.roles, id=adm_role)
     sr_r = get(guild.roles, id=sr_role)
     rep_r = get(guild.roles, id=rep_role)
     tr_r = get(guild.roles, id=tr_role)
-    full_break_r = get(guild.roles, id=full_break)
-    half_break_r = get(guild.roles, id=half_break)
+    full_break_role = get(guild.roles, id=full_break)
+    half_break_role = get(guild.roles, id=half_break)
     def apply_breakbal(member, weekly_profile):
         bal = weekly_profile.get("breakbal", 12)
         if full_break_role in member.roles:
@@ -312,12 +314,16 @@ async def weekly_quota():
         if quota in (-1, 0):
             return -1 if quota == -1 else 1
         return round(min(done / quota, 1), 3)
+
     config = staffweeklycol.find_one({"_id": "global"}) or {
-        "reports_quota": 0,
-        "sr_reports_quota": 0,
-        "sr_reviews_quota": 0
+        "reports_quota": 1,
+        "tickets_quota": 1,
+        "sr_reports_quota": 1,
+        "sr_reviews_quota": 1,
+        "sr_tickets_quota": 1,
+        "sr_closes_quota": 1
     }
-    staff_members = set(o5_r.members + adm_r.members + sr_r.members + rep_r.members + tr_r.members + full_break_r.members + half_break_r.members)
+    staff_members = set(o5_r.members + adm_r.members + sr_r.members + rep_r.members + tr_r.members + full_break_role.members + half_break_role.members)
     for member in staff_members:
         staff_id = str(member.id)
         full_break_role = guild.get_role(full_break)
@@ -325,6 +331,7 @@ async def weekly_quota():
         ticket_ping_role = guild.get_role(ticket_ping)
         staff_profile = trusteduserscol.find_one({"_id": staff_id}) or {}
         weekly_profile = staffweeklycol.find_one({"_id": staff_id}) or {}
+
         weekly_profile["breakbal"] = apply_breakbal(member, weekly_profile)
         if weekly_profile["breakbal"] <= 0:
             remove_roles = []
@@ -344,109 +351,152 @@ async def weekly_quota():
             staffweeklycol.replace_one({"_id": str(member.id)}, weekly_profile, upsert=True)
         weekly_reviews = int(weekly_profile.get("weekly_reviews", 0))
         weekly_reports = int(weekly_profile.get("weekly_reports", 0))
+        weekly_closes = int(weekly_profile.get("weekly_closes", 0))
+        weekly_tickets = int(weekly_profile.get("weekly_tickets", 0))
         if is_sr(member):
-            rq = config["sr_reports_quota"]
+            rq = config.get("sr_reports_quota", 0)
+            tq = config.get("sr_tickets_quota", 0)
         else:
-            rq = config["reports_quota"]
+            rq = config.get("reports_quota", 0)
+            tq = config.get("tickets_quota", 0)
         rq = apply_break(rq, member)
+        tq = apply_break(tq, member)
         rr = ratio(weekly_reports, rq)
+        tr = ratio(weekly_tickets, tq)
         weekly_profile.setdefault("reports_quota_list", [])
         weekly_profile["reports_quota_list"].append([weekly_reports, rq, rr])
         weekly_profile["reports_quota_list"] = weekly_profile["reports_quota_list"][-8:]
+        weekly_profile.setdefault("tickets_quota_list", [])
+        weekly_profile["tickets_quota_list"].append([weekly_tickets, tq, tr])
+        weekly_profile["tickets_quota_list"] = weekly_profile["tickets_quota_list"][-8:]
+        effective_report_ticket_ratio = max(rr, tr)
         if is_sr(member):
-            vq = config["sr_reviews_quota"]
+            vq = config.get("sr_reviews_quota", 0)
+            cq = config.get("sr_closes_quota", 0)
             vq = apply_break(vq, member)
+            cq = apply_break(cq, member)
             vr = ratio(weekly_reviews, vq)
+            cr = ratio(weekly_closes, cq)
             weekly_profile.setdefault("reviews_quota_list", [])
             weekly_profile["reviews_quota_list"].append([weekly_reviews, vq, vr])
             weekly_profile["reviews_quota_list"] = weekly_profile["reviews_quota_list"][-8:]
-            if vq != -1 and vr != -1 and vr < 1:
-                sr_not_met_quota.append([staff_id, "reviews", weekly_reviews, vq, vr])
-                await send_incomplete_quota_dm(member, weekly_reviews, vq, vr, "reviews")
-            if rq != -1 and rr != -1 and rr < 1:
-                sr_not_met_quota.append([staff_id, "reports", weekly_reports, rq, rr])
-                await send_incomplete_quota_dm(member, weekly_reports, rq, rr, "reports")
+            weekly_profile.setdefault("closes_quota_list", [])
+            weekly_profile["closes_quota_list"].append([weekly_closes, cq, cr])
+            weekly_profile["closes_quota_list"] = weekly_profile["closes_quota_list"][-8:]
+            effective_review_close_ratio = max(vr, cr)
+            if effective_review_close_ratio != -1 and effective_review_close_ratio < 1:
+                if vr >= cr:
+                    sr_not_met_quota.append([staff_id, "reviews", weekly_reviews, vq, vr])
+                    await send_incomplete_quota_dm(member, weekly_reviews, vq, vr, "reviews")
+                else:
+                    sr_not_met_quota.append([staff_id, "closes", weekly_closes, cq, cr])
+                    await send_incomplete_quota_dm(member, weekly_closes, cq, cr, "closes")
+            if effective_report_ticket_ratio != -1 and effective_report_ticket_ratio < 1:
+                if rr >= tr:
+                    sr_not_met_quota.append([staff_id, "reports", weekly_reports, rq, rr])
+                    await send_incomplete_quota_dm(member, weekly_reports, rq, rr, "reports")
+                else:
+                    sr_not_met_quota.append([staff_id, "tickets", weekly_tickets, tq, tr])
+                    await send_incomplete_quota_dm(member, weekly_tickets, tq, tr, "tickets")
         else:
-            if rq != -1 and rr != -1 and rr < 1:
-                not_met_quota.append([staff_id, weekly_reports, rq, rr])
-                await send_incomplete_quota_dm(member, weekly_reports, rq, rr)
+            if effective_report_ticket_ratio != -1 and effective_report_ticket_ratio < 1:
+                if rr >= tr:
+                    not_met_quota.append([staff_id, weekly_reports, rq, rr])
+                    await send_incomplete_quota_dm(member, weekly_reports, rq, rr)
+                else:
+                    not_met_quota.append([staff_id, weekly_tickets, tq, tr])
+                    await send_incomplete_quota_dm(member, weekly_tickets, tq, tr)
         staffweeklycol.replace_one({"_id": staff_id}, weekly_profile, upsert=True)
         rratios = [x[2] for x in weekly_profile["reports_quota_list"] if x[2] != -1]
+        tratios = [x[2] for x in weekly_profile["tickets_quota_list"] if x[2] != -1]
+        best_report_ticket_ratios = []
+        for i in range(min(len(rratios), len(tratios))):
+            best_report_ticket_ratios.append(max(rratios[i], tratios[i]))
+        ravg = sum(best_report_ticket_ratios) / len(best_report_ticket_ratios) if best_report_ticket_ratios else None
         if is_sr(member):
             vratios = [x[2] for x in weekly_profile["reviews_quota_list"] if x[2] != -1]
-            ravg = sum(rratios) / len(rratios) if rratios else None
-            vavg = sum(vratios) / len(vratios) if vratios else None
-            if (ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 7) or (vavg is not None and vavg < 0.5 and len(weekly_profile.get("reviews_quota_list", [])) > 7):
-                sr_demotion_list.append([staff_id, round(ravg, 3), round(vavg, 3)])
-            if (ravg is not None and ravg < 0.8 and len(weekly_profile.get("reports_quota_list", [])) > 2) or (vavg is not None and vavg < 0.8 and len(weekly_profile.get("reviews_quota_list", [])) > 2):
-                member = guild.get_member(int(staff_id))
-                if member:
-                    await send_low_performance_dm(member, vavg, ravg)
-        else:
-            if rratios:
-                ravg = sum(rratios) / len(rratios)
-                if ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 7:
-                    demotion_list.append([staff_id, round(ravg, 3)])
-                if ravg is not None and ravg < 0.8 and len(weekly_profile.get("reports_quota_list", [])) > 2:
-                    member = guild.get_member(int(staff_id))
-                    if member:
-                        await send_low_performance_dm(member, ravg)
+            cratios = [x[2] for x in weekly_profile["closes_quota_list"] if x[2] != -1]
 
+            best_review_close_ratios = []
+            for i in range(min(len(vratios), len(cratios))):
+                best_review_close_ratios.append(max(vratios[i], cratios[i]))
+            vavg = sum(best_review_close_ratios) / len(best_review_close_ratios) if best_review_close_ratios else None
+            if (ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 7) or (
+                    vavg is not None and vavg < 0.5 and len(weekly_profile.get("reviews_quota_list", [])) > 7):
+                sr_demotion_list.append([staff_id, round(ravg or 0, 3), round(vavg or 0, 3)])
+            if (ravg is not None and ravg < 0.8 and len(weekly_profile.get("reports_quota_list", [])) > 2) or (
+                    vavg is not None and vavg < 0.8 and len(weekly_profile.get("reviews_quota_list", [])) > 2):
+                member_obj = guild.get_member(int(staff_id))
+                if member_obj:
+                    await send_low_performance_dm(member_obj, vavg or 0, ravg or 0)
+        else:
+            if ravg is not None and ravg < 0.5 and len(weekly_profile.get("reports_quota_list", [])) > 7:
+                demotion_list.append([staff_id, round(ravg, 3)])
+            if ravg is not None and ravg < 0.8 and len(weekly_profile.get("reports_quota_list", [])) > 2:
+                member_obj = guild.get_member(int(staff_id))
+                if member_obj:
+                    await send_low_performance_dm(member_obj, ravg)
         matched_role = None
         for role_id in reports_role_categories:
             if get(member.roles, id=role_id):
                 matched_role = role_id
                 break
-        if not matched_role:
-            continue
-        reports = staff_profile.get("reports", 0)
-        weekly_reports = weekly_profile.get("weekly_reports", 0)
-        reports_role_categories[matched_role][1].append((member, reports, weekly_reports))
-
+        if matched_role:
+            reports_total = staff_profile.get("reports", 0)
+            tickets_total = staff_profile.get("tickets", 0)
+            reports_role_categories[matched_role][1].append(
+                (member, reports_total, weekly_reports, tickets_total, weekly_tickets))
         matched_role = None
         for rid in reviews_role_categories:
             if get(member.roles, id=rid):
                 matched_role = rid
                 break
-        if not matched_role:
-            continue
-        reviews = staff_profile.get("reviews", 0)
-        weekly_reviews = weekly_profile.get("weekly_reviews", 0)
-        reviews_role_categories[matched_role][1].append((member, reviews, weekly_reviews))
+        if matched_role:
+            reviews_total = staff_profile.get("reviews", 0)
+            closes_total = staff_profile.get("closes", 0)
+            reviews_role_categories[matched_role][1].append(
+                (member, reviews_total, weekly_reviews, closes_total, weekly_closes))
 
-    # reviews
+    # closes/reviews
     embeds = []
     for role_id, (title, staff_list) in reviews_role_categories.items():
         embed = discord.Embed(colour=0xffffff)
         embed.description = f"**✦　　┈　　{title}**"
-        staff_list.sort(key=lambda x: x[2], reverse=True)
-        for i, (member, reviews, weekly_reviews) in enumerate(staff_list, start=1):
+        staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
+        for i, (member, reviews, weekly_reviews, closes, weekly_closes) in enumerate(staff_list, start=1):
             total_reviews += weekly_reviews
+            total_closes += weekly_closes
             embed.description += (
-                f"\n-# {i}ㆍ　"
-                f"{member.mention}　–　"
-                f"**{reviews}** all ㆍ **{weekly_reviews}** week")
+                f"\n-# {i}ㆍ{member.mention}"
+                f"\n-# _ _　closes　–　**{closes}** all ㆍ **{weekly_closes}** week"
+                f"\n-# _ _　reviews　–　**{reviews}** all ㆍ **{weekly_reviews}** week"
+            )
         embeds.append(embed)
     await lb_channel.send(f"## _ _　　　weekly leaderboards .ᐟ\n_ _　　　　　　||<@&{staff_role}>||")
-    await lb_channel.send("## _ _　　　reviews leaderboard", embeds=embeds)
-    # reports
+    await lb_channel.send("## _ _　　　sr+ leaderboard", embeds=embeds)
+
+    # tickets/reports
     embeds = []
     for role_id, (title, staff_list) in reports_role_categories.items():
         embed = discord.Embed(colour=0xffffff)
         embed.description = f"**✦　　┈　　{title}**"
-        # optional sorting
-        staff_list.sort(key=lambda x: x[2], reverse=True)
-        for i, (member, reports, weekly_reports) in enumerate(staff_list, start=1):
+        staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
+        for i, (member, reports, weekly_reports, tickets, weekly_tickets) in enumerate(staff_list, start=1):
             total_reports += weekly_reports
+            total_tickets += weekly_tickets
             embed.description += (
-                f"\n-# {i}ㆍ　"
-                f"{member.mention}　–　"
-                f"**{reports}** all ㆍ **{weekly_reports}** week")
+                f"\n-# {i}ㆍ{member.mention}"
+                f"\n-# _ _　tickets　–　**{tickets}** all ㆍ **{weekly_tickets}** week"
+                f"\n-# _ _　reports　–　**{reports}** all ㆍ **{weekly_reports}** week"
+            )
         embeds.append(embed)
-    await lb_channel.send("## _ _　　　reports leaderboard", embeds=embeds)
+    await lb_channel.send("## _ _　　　staff leaderboard", embeds=embeds)
+
     summary = discord.Embed(colour=0xffffff)
     summary.description = (
+        f"✦　　┈　　total closes　　┈　　**{total_closes}**\n"
         f"✦　　┈　　total reviews　　┈　　**{total_reviews}**\n"
+        f"✦　　┈　　total tickets　　┈　　**{total_tickets}**\n"
         f"✦　　┈　　total reports　　┈　　**{total_reports}**"
     )
     await lb_channel.send("## _ _　　　weekly summary", embed=summary)
@@ -462,10 +512,7 @@ async def weekly_quota():
         for user, qtype, done, quota, ratio in sorted(sr_not_met_quota, key=lambda x: x[4]):
             member = guild.get_member(int(user))
             mention = member.mention if member else f"`{user}`"
-            desc += (
-                f"\n-# ㆍ　{mention}　–　{qtype}: "
-                f"**{done}** / {quota}　({ratio:.2f})"
-            )
+            desc += f"\n-# ㆍ　{mention}　–　{qtype}: **{done}** / {quota}　({ratio:.2f})"
         sr_nmq_embed.description = desc[:4000]
     nmq_embed = discord.Embed(
         title="staff weekly quota summary",
@@ -478,10 +525,7 @@ async def weekly_quota():
         for user, done, quota, ratio in sorted(not_met_quota, key=lambda x: x[3]):
             member = guild.get_member(int(user))
             mention = member.mention if member else f"`{user}`"
-            desc += (
-                f"\n-# ㆍ　{mention}　–　**{done}** / {quota}　"
-                f"({ratio:.2f})"
-            )
+            desc += f"\n-# ㆍ　{mention}　–　**{done}** / {quota}　({ratio:.2f})"
         nmq_embed.description = desc[:4000]
     quota_channel = bot.get_channel(QUOTA_CHANNEL)
     await quota_channel.send(embed=sr_nmq_embed)
@@ -501,7 +545,7 @@ async def weekly_quota():
             await quota_channel.send(embed=sr_demotion_embed)
     if demotion_list:
         demotion_embed = discord.Embed(
-            title="Demotion Candidates",
+            title="demotion candidates",
             colour=0xE74C3C
         )
         desc = ""
@@ -515,7 +559,7 @@ async def weekly_quota():
 
     staffweeklycol.update_many(
         {},
-        {"$set": {"weekly_reports": 0, "weekly_reviews": 0}}
+        {"$set": {"weekly_reports": 0, "weekly_reviews": 0, "weekly_tickets": 0, "weekly_closes": 0}}
     )
 
 settings = app_commands.Group(name="set", description="Set.")
@@ -545,44 +589,48 @@ async def set_breakbal(interaction: discord.Interaction, user: str, value: float
         staffweeklycol.replace_one({"_id": str(user_id)}, profile, upsert=True)
         await interaction.followup.send(f"`{user_id}`’s break balance has been set to **{value}**.", ephemeral=True)
 
-@settings.command(name="quota", description="Set weekly report quota for staff")
-@app_commands.describe(quota="Weekly report quota")
-@app_commands.checks.has_role(adm_ping)
-async def set_quota(interaction: discord.Interaction, quota: int):
-    if quota < 0:
-        return await interaction.response.send_message("Quota must be at least 0.", ephemeral=True)
-    staffweeklycol.update_one(
-        {"_id": "global"},
-        {"$set": {"reports_quota": quota}},
-        upsert=True
-    )
-    await interaction.response.send_message(
-        f"Reporters report quota set to **{quota}**.",
-        ephemeral=True
-    )
 
-@settings.command(name="srquota", description="Set weekly quota for SR+")
-@app_commands.describe(quota="Weekly report quota", type="Reports/Reviews")
+@settings.command(name="quota", description="Set weekly quota for staff")
+@app_commands.describe(quota="Weekly quota", type="Reports/Tickets")
 @app_commands.checks.has_role(adm_ping)
-async def set_srquota(interaction: discord.Interaction, quota: int, type: Literal["reports", "reviews"]):
+async def set_quota(interaction: discord.Interaction, quota: int, type: Literal["reports", "tickets"]):
     if quota < 1:
-        return await interaction.response.send_message(
-            "Quota must be at least 1.",
-            ephemeral=True
-        )
+        return await interaction.response.send_message("Quota must be at least 1.", ephemeral=True)
     if type == "reports":
-        field = "sr_reports_quota"
-    elif type == "reviews":
-        field = "sr_reviews_quota"
+        field = "reports_quota"
+    elif type == "tickets":
+        field = "tickets_quota"
     staffweeklycol.update_one(
         {"_id": "global"},
         {"$set": {field: quota}},
         upsert=True
     )
     await interaction.response.send_message(
-        f"SR+ {type} quota set to **{quota}**.",
+        f"**staff** {type} quota set to **{quota}**.",
         ephemeral=True
     )
+
+@settings.command(name="srquota", description="Set weekly quota for sr+")
+@app_commands.describe(quota="Weekly quota", type="Reports/Reviews/Tickets/Closes")
+@app_commands.checks.has_role(adm_ping)
+async def set_srquota(interaction: discord.Interaction, quota: int,
+                      type: Literal["reports", "reviews", "tickets", "closes"]):
+    if quota < 1:
+        return await interaction.response.send_message("Quota must be at least 1.", ephemeral=True)
+    if type == "reports":
+        field = "sr_reports_quota"
+    elif type == "reviews":
+        field = "sr_reviews_quota"
+    elif type == "tickets":
+        field = "sr_tickets_quota"
+    elif type == "closes":
+        field = "sr_closes_quota"
+    staffweeklycol.update_one(
+        {"_id": "global"},
+        {"$set": {field: quota}},
+        upsert=True
+    )
+    await interaction.response.send_message(f"**sr+** {type} quota set to **{quota}**.", ephemeral=True)
 
 # text commands
 
@@ -622,10 +670,20 @@ async def quota(ctx, member: discord.Member = None):
     embeds.append(profile)
     embed = discord.Embed(title="quota progress", colour=0xffffff, description="")
     if is_sr(member):
-        current_reviews = weekly_profile.get("weekly_reviews", 0)
-        current_reviews_quota = (
-            get_quota_config().get("sr_reviews_quota", 0)
+        current_closes = weekly_profile.get("weekly_closes", 0)
+        current_closes_quota = get_quota_config().get("sr_closes_quota", 0)
+        current_closes_quota = apply_break(current_closes_quota, member)
+        current_closes_ratio = (
+            round(min(current_closes / current_closes_quota, 1), 2)
+            if current_closes_quota >= 0 else -1
         )
+        quota_display = "FULL BREAK" if current_closes_quota == -1 else str(current_closes_quota)
+        ratio_display = "N/A" if current_closes_ratio == -1 else f"{current_closes_ratio:.2f}"
+        embed.description += f"\ncloses　–　**{current_closes}** / {quota_display}　–　`{ratio_display}`"
+        if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
+    if is_sr(member):
+        current_reviews = weekly_profile.get("weekly_reviews", 0)
+        current_reviews_quota = (get_quota_config().get("sr_reviews_quota", 0))
         current_reviews_quota = apply_break(current_reviews_quota, member)
         current_reviews_ratio = (
             round(min(current_reviews / current_reviews_quota, 1), 2)
@@ -635,6 +693,18 @@ async def quota(ctx, member: discord.Member = None):
         ratio_display = "N/A" if current_reviews_ratio == -1 else f"{current_reviews_ratio:.2f}"
         embed.description += f"\nreviews　–　**{current_reviews}** / {quota_display}　–　`{ratio_display}`"
         if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
+    current_tickets = weekly_profile.get("tickets", 0)
+    if is_sr(member):
+        current_tickets_quota = get_quota_config().get("sr_tickets_quota", 0)
+    else:
+        current_tickets_quota = get_quota_config().get("tickets_quota", 0)
+    current_tickets_quota = apply_break(current_tickets_quota, member)
+    current_tickets_ratio = round(min(current_tickets / current_tickets_quota, 1),
+                                  2) if current_tickets_quota >= 0 else -1
+    quota_display = "FULL BREAK" if current_tickets_quota == -1 else str(current_tickets_quota)
+    ratio_display = "N/A" if current_tickets_ratio == -1 else f"{current_tickets_ratio:.2f}"
+    embed.description += f"\ntickets　–　**{current_tickets}** / {quota_display}　–　`{ratio_display}`"
+    if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
     current_reports = weekly_profile.get("weekly_reports", 0)
     if is_sr(member):
         current_reports_quota = get_quota_config().get("sr_reports_quota", 0)
@@ -666,83 +736,137 @@ async def quota_history(ctx, member: discord.Member=None):
     profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
     embeds.append(profile)
     if is_sr(member):
+        closes_history = weekly_profile.get("closes_quota_list", [])
         reviews_history = weekly_profile.get("reviews_quota_list", [])
-        reviews_embed = discord.Embed(title="reviews quota history", colour=0xffffff)
+        cr_embed = discord.Embed(title="closes & reviews history", colour=0xffffff)
         desc = ""
-        for i, entry in enumerate(reviews_history[-7:], start=1):
-            done, quota, ratio = entry
-            quota_display = "FULL BREAK" if quota == -1 else str(quota)
-            ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
+        max_weeks = max(len(closes_history), len(reviews_history))
+        start_idx = max(0, max_weeks - 7)
+
+        for idx in range(start_idx, max_weeks):
+            week_num = (idx - start_idx) + 1
+            if idx < len(closes_history):
+                c_done, c_quota, c_ratio = closes_history[idx]
+                c_q_disp = "FULL BREAK" if c_quota == -1 else str(c_quota)
+                c_r_disp = "N/A" if c_ratio == -1 else f"{c_ratio:.2f}"
+            else:
+                c_done, c_q_disp, c_r_disp = 0, "0", "0.00"
+            if idx < len(reviews_history):
+                r_done, r_quota, r_ratio = reviews_history[idx]
+                r_q_disp = "FULL BREAK" if r_quota == -1 else str(r_quota)
+                r_r_disp = "N/A" if r_ratio == -1 else f"{r_ratio:.2f}"
+            else:
+                r_done, r_q_disp, r_r_disp = 0, "0", "0.00"
             desc += (
-                f"\nWeek {i}　–　**{done}** / {quota_display}　–　`{ratio_display}`")
-        reviews_embed.description = desc
+                f"\n**Week {week_num}**"
+                f"\n-# _ _ closes　–　**{c_done}** / {c_q_disp}　–　`{c_r_disp}`"
+                f"\n-# _ _ reviews　–　**{r_done}** / {r_q_disp}　–　`{r_r_disp}`"
+            )
+        cr_embed.description = desc
+        current_closes = weekly_profile.get("closes", 0)
+        current_closes_quota = apply_break(get_quota_config().get("sr_closes_quota", 0), member)
+        current_closes_ratio = round(min(current_closes / current_closes_quota, 1),
+                                     2) if current_closes_quota >= 0 else -1
+        c_q_now = "FULL BREAK" if current_closes_quota == -1 else str(current_closes_quota)
+        c_r_now = "N/A" if current_closes_ratio == -1 else f"{current_closes_ratio:.2f}"
         current_reviews = weekly_profile.get("weekly_reviews", 0)
-        current_reviews_quota = (
-            get_quota_config().get("sr_reviews_quota", 0)
+        current_reviews_quota = apply_break(get_quota_config().get("sr_reviews_quota", 0), member)
+        current_reviews_ratio = round(min(current_reviews / current_reviews_quota, 1),
+                                      2) if current_reviews_quota >= 0 else -1
+        r_q_now = "FULL BREAK" if current_reviews_quota == -1 else str(current_reviews_quota)
+        r_r_now = "N/A" if current_reviews_ratio == -1 else f"{current_reviews_ratio:.2f}"
+
+        cr_embed.description += (
+            f"\n**Current Week**"
+            f"\n-# _ _ closes　–　**{current_closes}** / {c_q_now}　–　`{c_r_now}`"
+            f"\n-# _ _ reviews　–　**{current_reviews}** / {r_q_now}　–　`{r_r_now}`"
         )
-        current_reviews_quota = apply_break(current_reviews_quota, member)
-        current_reviews_ratio = (
-            round(min(current_reviews / current_reviews_quota, 1), 2)
-            if current_reviews_quota >= 0 else -1
-        )
-        quota_display = "FULL BREAK" if current_reviews_quota == -1 else str(current_reviews_quota)
-        ratio_display = "N/A" if current_reviews_ratio == -1 else f"{current_reviews_ratio:.2f}"
-        reviews_embed.description+= f"\nCurrent Week　–　**{current_reviews}** / {quota_display}　–　`{ratio_display}`"
-        historical_reviews_ratios = [
-            x[2]
-            for x in reviews_history[-7:]
-            if x[2] != -1
-        ]
-        if current_reviews_ratio != -1:
-            historical_reviews_ratios.append(current_reviews_ratio)
-        overall_reviews_ratio = (
-            round(sum(historical_reviews_ratios) / len(historical_reviews_ratios), 3)
-            if historical_reviews_ratios else 0
-        )
-        reviews_embed.description+=f"\n\n**Overall Ratio**　ㆍ　`{overall_reviews_ratio:.2f}`"
-        embeds.append(reviews_embed)
+        hist_c_ratios = [x[2] for x in closes_history[-7:] if x[2] != -1]
+        if current_closes_ratio != -1: hist_c_ratios.append(current_closes_ratio)
+        ovr_c = round(sum(hist_c_ratios) / len(hist_c_ratios), 3) if hist_c_ratios else 0
+        hist_r_ratios = [x[2] for x in reviews_history[-7:] if x[2] != -1]
+        if current_reviews_ratio != -1: hist_r_ratios.append(current_reviews_ratio)
+        ovr_r = round(sum(hist_r_ratios) / len(hist_r_ratios), 3) if hist_r_ratios else 0
+        cr_embed.description += f"\n\n**Overall Closes Ratio**　ㆍ　`{ovr_c:.2f}`\n**Overall Reviews Ratio**　ㆍ　`{ovr_r:.2f}`"
+
+        best_cr_ratios = []
+        weeks_to_check = min(7, max(len(closes_history), len(reviews_history)))
+        for i in range(1, weeks_to_check + 1):
+            c_ratio = closes_history[-i][2] if i <= len(closes_history) else -1
+            r_ratio = reviews_history[-i][2] if i <= len(reviews_history) else -1
+            if c_ratio != -1 or r_ratio != -1:
+                best_cr_ratios.append(max(c_ratio, r_ratio))
+        if current_closes_ratio != -1 or current_reviews_ratio != -1:
+            best_cr_ratios.append(max(current_closes_ratio, current_reviews_ratio))
+        ovr_performance = round(sum(best_cr_ratios) / len(best_cr_ratios), 3) if best_cr_ratios else 0
+        cr_embed.description += f"\n**Overall Ratio**　ㆍ　`{ovr_performance:.2f}`"
+        embeds.append(cr_embed)
+    tickets_history = weekly_profile.get("tickets_quota_list", [])
     reports_history = weekly_profile.get("reports_quota_list", [])
-    reports_embed = discord.Embed(
-        title="reports quota history", colour=0xffffff
-    )
+
+    tr_embed = discord.Embed(title="tickets & reports history", colour=0xffffff)
     desc = ""
-    for i, entry in enumerate(reports_history[-7:], start=1):
-        done, quota, ratio = entry
-        quota_display = "FULL BREAK" if quota == -1 else str(quota)
-        ratio_display = "N/A" if ratio == -1 else f"{ratio:.2f}"
+    max_weeks = max(len(tickets_history), len(reports_history))
+    start_idx = max(0, max_weeks - 7)
+    for idx in range(start_idx, max_weeks):
+        week_num = (idx - start_idx) + 1
+        if idx < len(tickets_history):
+            t_done, t_quota, t_ratio = tickets_history[idx]
+            t_q_disp = "FULL BREAK" if t_quota == -1 else str(t_quota)
+            t_r_disp = "N/A" if t_ratio == -1 else f"{t_ratio:.2f}"
+        else:
+            t_done, t_q_disp, t_r_disp = 0, "0", "0.00"
+        if idx < len(reports_history):
+            rep_done, rep_quota, rep_ratio = reports_history[idx]
+            rep_q_disp = "FULL BREAK" if rep_quota == -1 else str(rep_quota)
+            rep_r_disp = "N/A" if rep_ratio == -1 else f"{rep_ratio:.2f}"
+        else:
+            rep_done, rep_q_disp, rep_r_disp = 0, "0", "0.00"
         desc += (
-            f"\nWeek {i}　–　**{done}** / {quota_display}　–　`{ratio_display}`")
-    reports_embed.description = desc
+            f"\n**Week {week_num}**"
+            f"\n-# _ _ tickets　–　**{t_done}** / {t_q_disp}　–　`{t_r_disp}`"
+            f"\n-# _ _ reports　–　**{rep_done}** / {rep_q_disp}　–　`{rep_r_disp}`"
+        )
+    tr_embed.description = desc
+    current_tickets = weekly_profile.get("tickets", 0)
+    t_quota_val = get_quota_config().get("sr_tickets_quota" if is_sr(member) else "tickets_quota", 0)
+    current_tickets_quota = apply_break(t_quota_val, member)
+    current_tickets_ratio = round(min(current_tickets / current_tickets_quota, 1),
+                                  2) if current_tickets_quota >= 0 else -1
+    t_q_now = "FULL BREAK" if current_tickets_quota == -1 else str(current_tickets_quota)
+    t_r_now = "N/A" if current_tickets_ratio == -1 else f"{current_tickets_ratio:.2f}"
     current_reports = weekly_profile.get("weekly_reports", 0)
-    if is_sr(member):
-        current_reports_quota = (
-            get_quota_config().get("sr_reports_quota", 0)
-        )
-    else:
-        current_reports_quota = (
-            get_quota_config().get("reports_quota", 0)
-        )
-    current_reports_quota = apply_break(current_reports_quota, member)
-    current_reports_ratio = (
-        round(min(current_reports / current_reports_quota, 1), 2)
-        if current_reports_quota >= 0 else -1
+    rep_quota_val = get_quota_config().get("sr_reports_quota" if is_sr(member) else "reports_quota", 0)
+    current_reports_quota = apply_break(rep_quota_val, member)
+    current_reports_ratio = round(min(current_reports / current_reports_quota, 1),
+                                  2) if current_reports_quota >= 0 else -1
+    rep_q_now = "FULL BREAK" if current_reports_quota == -1 else str(current_reports_quota)
+    rep_r_now = "N/A" if current_reports_ratio == -1 else f"{current_reports_ratio:.2f}"
+    tr_embed.description += (
+        f"\n**Current Week**"
+        f"\n-# _ _ tickets　–　**{current_tickets}** / {t_q_now}　–　`{t_r_now}`"
+        f"\n-# _ _ reports　–　**{current_reports}** / {rep_q_now}　–　`{rep_r_now}`"
     )
-    quota_display = "FULL BREAK" if current_reports_quota == -1 else str(current_reports_quota)
-    ratio_display = "N/A" if current_reports_ratio == -1 else f"{current_reports_ratio:.2f}"
-    reports_embed.description += f"\nCurrent Week　–　**{current_reports}** / {quota_display}　–　`{ratio_display}`"
-    historical_reports_ratios = [
-        x[2]
-        for x in reports_history[-7:]
-        if x[2] != -1
-    ]
-    if current_reports_ratio != -1:
-        historical_reports_ratios.append(current_reports_ratio)
-    overall_reports_ratio = (
-        round(sum(historical_reports_ratios) / len(historical_reports_ratios), 3)
-        if historical_reports_ratios else 0
-    )
-    reports_embed.description+=f"\n\n**Overall Ratio**　ㆍ　`{overall_reports_ratio:.2f}`"
-    embeds.append(reports_embed)
+    hist_t_ratios = [x[2] for x in tickets_history[-7:] if x[2] != -1]
+    if current_tickets_ratio != -1: hist_t_ratios.append(current_tickets_ratio)
+    ovr_t = round(sum(hist_t_ratios) / len(hist_t_ratios), 3) if hist_t_ratios else 0
+    hist_rep_ratios = [x[2] for x in reports_history[-7:] if x[2] != -1]
+    if current_reports_ratio != -1: hist_rep_ratios.append(current_reports_ratio)
+    ovr_rep = round(sum(hist_rep_ratios) / len(hist_rep_ratios), 3) if hist_rep_ratios else 0
+
+    tr_embed.description += f"\n\n**Overall Tickets Ratio**　ㆍ　`{ovr_t:.2f}`\n**Overall Reports Ratio**　ㆍ　`{ovr_rep:.2f}`"
+    best_tr_ratios = []
+    weeks_to_check_tr = min(7, max(len(tickets_history), len(reports_history)))
+    for i in range(1, weeks_to_check_tr + 1):
+        t_ratio = tickets_history[-i][2] if i <= len(tickets_history) else -1
+        rep_ratio = reports_history[-i][2] if i <= len(reports_history) else -1
+        if t_ratio != -1 or rep_ratio != -1:
+            best_tr_ratios.append(max(t_ratio, rep_ratio))
+    if current_tickets_ratio != -1 or current_reports_ratio != -1:
+        best_tr_ratios.append(max(current_tickets_ratio, current_reports_ratio))
+    ovr_tr_performance = round(sum(best_tr_ratios) / len(best_tr_ratios), 3) if best_tr_ratios else 0
+    tr_embed.description += f"\n**Overall Ratio**　ㆍ　`{ovr_tr_performance:.2f}`"
+    embeds.append(tr_embed)
     await ctx.reply(embeds=embeds)
 
 @bot.command(name="bb")
@@ -760,11 +884,11 @@ async def bb(ctx, member: discord.Member=None):
     embeds.append(profile)
     staff_id = str(member.id)
     weekly_profile = staffweeklycol.find_one({"_id": staff_id}) or {}
-    full_break_r = ctx.guild.get_role(full_break)
-    half_break_r = ctx.guild.get_role(half_break)
+    full_break_role = ctx.guild.get_role(full_break)
+    half_break_role = ctx.guild.get_role(half_break)
     bal = weekly_profile.get("breakbal", 12)
-    is_full = full_break_r in member.roles
-    is_half = half_break_r in member.roles
+    is_full = full_break_role in member.roles
+    is_half = half_break_role in member.roles
     if is_sr(member):
         sr_reviews_quota = get_quota_config().get("sr_reviews_quota", 0)
         sr_reports_quota = get_quota_config().get("sr_reports_quota", 0)
@@ -841,8 +965,8 @@ async def help(ctx):
 `qh`　┈　Sends quota history for the past 8 weeks.
 `bb`　┈　Sends break balance.
 ### leaderboard
-`lb`　┈　Sends the current week’s reports leaderboard.
-`lbr`　┈　Sends the current week’s reviews leaderboard.
+`lb`　┈　Sends the current week’s staff leaderboard.
+`lbsr`　┈　Sends the current week’s sr+ leaderboard.
         """
         await ctx.send(embed=embed)
 
@@ -1288,7 +1412,8 @@ async def fm(ctx):
     else:
         await ctx.reply("This command can only be used in a thread.")
 
-@bot.command(name="lb", help="Sends the current week’s reports leaderboard.")
+
+@bot.command(name="lb", help="Sends the current week’s staff leaderboard.")
 @commands.has_any_role(staff_role)
 async def lb(ctx, *args):
     if args:
@@ -1322,24 +1447,30 @@ async def lb(ctx, *args):
         weekly_profile = weekly_map.get(staff_id, {})
         reports = staff_profile.get("reports", 0)
         weekly_reports = weekly_profile.get("weekly_reports", 0)
+        tickets = staff_profile.get("tickets", 0)
+        weekly_tickets = weekly_profile.get("weekly_tickets", 0)
         role_categories[matched_role][1].append(
-            (member, reports, weekly_reports)
+            (member, reports, weekly_reports, tickets, weekly_tickets)
         )
-    embed = discord.Embed(colour=0xffffff, description="")
+    all_embeds = []
     for role_id, (title, staff_list) in role_categories.items():
-        embed.description += f"\n\n**✦　　┈　　{title}**"
-        # optional sorting
-        staff_list.sort(key=lambda x: x[2], reverse=True)
-        for i, (member, reports, weekly_reports) in enumerate(staff_list, start=1):
+        if not staff_list:
+            continue
+        embed = discord.Embed(colour=0xffffff, description=f"\n\n**✦　　┈　　{title}**")
+        staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
+        for i, (member, reports, weekly_reports, tickets, weekly_tickets) in enumerate(staff_list, start=1):
             embed.description += (
-                f"\n-# {i}ㆍ　"
-                f"{member.mention}　–　"
-                f"**{reports}** all ㆍ **{weekly_reports}** week")
-    await ctx.reply("## _ _　　　reports leaderboard", embed=embed)
+                f"\n-# {i}ㆍ{member.mention}"
+                f"\n-# _ _　tickets　–　**{tickets}** all ㆍ **{weekly_tickets}** week"
+                f"\n-# _ _　reports　–　**{reports}** all ㆍ **{weekly_reports}** week"
+            )
+        all_embeds.append(embed)
+    if all_embeds:
+        await ctx.reply("## _ _　　　staff leaderboard", embeds=all_embeds)
 
-@bot.command(name="lbr", help="Sends the current week’s reviews leaderboard.")
+@bot.command(name="lbsr", help="Sends the current week’s sr+ leaderboard.")
 @commands.has_any_role(staff_role)
-async def lbr(ctx):
+async def lbsr(ctx):
     role_categories = {
         o5_role: ("overseers", []),
         adm_role: ("admins", []),
@@ -1367,20 +1498,27 @@ async def lbr(ctx):
         weekly_profile = weekly_map.get(staff_id, {})
         reviews = staff_profile.get("reviews", 0)
         weekly_reviews = weekly_profile.get("weekly_reviews", 0)
+        closes = staff_profile.get("closes", 0)
+        weekly_closes = weekly_profile.get("closes", 0)
         role_categories[matched_role][1].append(
-            (member, reviews, weekly_reviews)
+            (member, reviews, weekly_reviews, closes, weekly_closes)
         )
-    embed = discord.Embed(colour=0xffffff, description="")
-    for role_id, (title, staff_list) in role_categories.items():
-        embed.description += f"\n\n**✦　　┈　　{title}**"
-        staff_list.sort(key=lambda x: x[2], reverse=True)
-        for i, (member, reviews, weekly_reviews) in enumerate(staff_list, start=1):
-            embed.description += (
-                f"\n-# {i}ㆍ　"
-                f"{member.mention}　–　"
-                f"**{reviews}** all ㆍ **{weekly_reviews}** week")
-    await ctx.reply("## _ _　　　reviews leaderboard", embed=embed)
 
+    all_embeds = []
+    for role_id, (title, staff_list) in role_categories.items():
+        if not staff_list:
+            continue
+        embed = discord.Embed(colour=0xffffff, description=f"\n\n**✦　　┈　　{title}**")
+        staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
+        for i, (member, reviews, weekly_reviews, closes, weekly_closes) in enumerate(staff_list, start=1):
+            embed.description += (
+                f"\n-# {i}ㆍ{member.mention}"
+                f"\n-# _ _　closes　–　**{closes}** all ㆍ **{weekly_closes}** week"
+                f"\n-# _ _　reviews　–　**{reviews}** all ㆍ **{weekly_reviews}** week"
+            )
+        all_embeds.append(embed)
+    if all_embeds:
+        await ctx.reply("## _ _　　　sr+ leaderboard", embeds=all_embeds)
 
 @bot.tree.command(name="break", description="Toggle full or half break.")
 @app_commands.checks.has_role(staff_role)
