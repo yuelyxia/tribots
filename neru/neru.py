@@ -93,6 +93,7 @@ async def on_message(message: discord.Message):
                 alt2_id = match1.group(2)
             if alt1_id != alt2_id:
                 proof = f"{message.jump_url} – dc"
+                formatted_proof = proof
                 try:
                     parts = message.jump_url.split('/')
                     guild_id = int(parts[-3])
@@ -396,8 +397,7 @@ async def a(ctx, *, to_check: str = None):
         return
     alts = alts_info.get("alts", [])
     proofs = alts_info.get("proofs", [])
-    lines_with_server = []
-    lines_without_server = []
+    chosen_lines = []
     for i, alt in enumerate(alts):
         base_proof = proofs[i] if i < len(proofs) else "No proof"
         if isinstance(base_proof, dict):
@@ -426,28 +426,10 @@ async def a(ctx, *, to_check: str = None):
                 pass
         if isinstance(base_proof, str) and base_proof.endswith(">"):
             parts = base_proof.split(" – ")
-            proof_with_server = f"[image]({parts[0]}) – {parts[1]}" # not server but whatever
-        lines_without_server.append(f"ㆍ　`{alt}` – {base_proof}")
-        lines_with_server.append(f"ㆍ　`{alt}` – {proof_with_server}")
-    LIMIT = 3900
-    GLOBAL_LIMIT = 5800
-    header = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:whitealert:1496542298908000257>　**Alt(s)**\n"
-    def calculate_total_chars(lines_list):
-        total_embed_chars = 0
-        current_chunk = []
-        for line in lines_list:
-            if len(header) + len("\n".join(current_chunk + [line])) > LIMIT:
-                total_embed_chars += len(header) + len("\n".join(current_chunk))
-                current_chunk = [line]
-            else:
-                current_chunk.append(line)
-        if current_chunk:
-            total_embed_chars += len(header) + len("\n".join(current_chunk))
-        return total_embed_chars
-    if calculate_total_chars(lines_with_server) <= GLOBAL_LIMIT:
-        chosen_lines = lines_with_server
-    else:
-        chosen_lines = lines_without_server
+            proof_with_server = f"[image]({parts[0]}) – {parts[1]}"
+        chosen_lines.append(f"ㆍ `{alt}` – {proof_with_server}")
+    LIMIT = 3800
+    header = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:whitealert:1496542298908000257> **Alt(s)**\n"
     embeds = []
     chunk = []
     for line in chosen_lines:
@@ -463,7 +445,17 @@ async def a(ctx, *, to_check: str = None):
         embed = discord.Embed(colour=0xffffff)
         embed.description = header + "\n".join(chunk)
         embeds.append(embed)
-    await ctx.reply(embeds=embeds, view=RelatedIDsView(user_id, alts))
+    for idx, embed in enumerate(embeds):
+        if idx == 0:
+            if len(embeds) == 1:
+                await ctx.reply(embed=embed, view=RelatedIDsView(user_id, alts))
+            else:
+                await ctx.reply(embed=embed)
+        else:
+            if idx == len(embeds) - 1:
+                await ctx.send(embed=embed, view=RelatedIDsView(user_id, alts))
+            else:
+                await ctx.send(embed=embed)
 
 class RelatedIDsView(discord.ui.View):
     def __init__(self, user_id, alts):
