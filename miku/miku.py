@@ -35,6 +35,9 @@ staffweeklycol = db["staff_weekly"]
 filescol = db["files"]
 kafu = client["kafu"]
 reminders = kafu["reminders"]
+tickets = kafu["tickets"]
+transcripts = kafu["transcripts"]
+counters = kafu["counters"]
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
@@ -45,6 +48,8 @@ VERIFY_CHANNEL = 1375260857772150804
 TRAINING_CHANNEL = 1375271729680748635
 TICKET_CHANNEL = 1375261699111784478
 QUOTA_CHANNEL = 1505563131655749712
+JSON_CHANNEL = 1520096583595724982
+ATTACHMENT_CHANNEL = 1520096619012292659
 
 # tri roles info
 staff_role = 1373803879623430268
@@ -179,6 +184,15 @@ async def on_ready():
     bot.add_view(TagsView())
     bot.add_view(FileView())
     bot.add_view(InputClosingView())
+    if not hasattr(bot, "ticket_manager"):
+        bot.ticket_manager = TicketManager(
+            bot,
+            tickets,
+            transcripts,
+            JSON_CHANNEL,
+            ATTACHMENT_CHANNEL,
+            counters
+        )
     if not reminder_loop.is_running():
         reminder_loop.start()
     if not weekly_quota.is_running():
@@ -2350,145 +2364,6 @@ async def tickets_find(interaction: discord.Interaction, text: str,
         embeds.append(embed)
     for embed in embeds:
         await interaction.followup.send(embed=embed)
-
-@bot.command(name="add")
-async def add(ctx, mode: str = None, member: str = None):
-    if get(ctx.guild.roles, id=ticket_ping) not in ctx.author.roles:
-        return
-    if mode and mode != "all":
-        member = mode
-        mode = None
-    if not member:
-        await ctx.reply("Please specify a user to add to tickets.")
-        return
-    try:
-        member_obj = await commands.MemberConverter().convert(ctx, member)
-    except commands.BadArgument:
-        await ctx.reply("Could not find that user in this server. Make sure it's a valid mention or user ID.")
-        return
-
-    manager = getattr(bot, "ticket_manager", None)
-    if not manager:
-        await ctx.reply("Ticket manager is not initialized.")
-        return
-
-    if mode == "all":
-        if not (get(ctx.guild.roles, id=sr_ping) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
-            await ctx.reply("Unauthorised.")
-            return
-        active_tickets = manager.tickets.find({"status": "open"})
-        count = 0
-
-        for ticket_doc in active_tickets:
-            ticket_id = ticket_doc["_id"]
-            manager.tickets.update_one(
-                {"_id": ticket_id},
-                {"$addToSet": {"allowed_users": member_obj.id}}
-            )
-            thread_id = ticket_doc.get("thread_id") or ticket_id
-            thread = ctx.guild.get_thread(thread_id)
-            if not thread:
-                try:
-                    thread = await ctx.guild.fetch_channel(thread_id)
-                except discord.HTTPException:
-                    thread = None
-            if isinstance(thread, discord.Thread):
-                try:
-                    await thread.add_user(member_obj)
-                    count += 1
-                except discord.HTTPException:
-                    pass
-        embed = discord.Embed(colour=0xffffff, description=f"Successfully added {member_obj.mention} to {count} ticket threads.")
-        await ctx.reply(embed=embed)
-        return
-    else:
-        ticket = await manager.from_ticket(ctx.channel.id)
-        if not ticket or ticket.data.get("status") != "open":
-            await ctx.reply(
-                "This command can only be used within an active ticket thread.")
-            return
-        manager.tickets.update_one(
-            {"_id": ticket.id},
-            {"$addToSet": {"allowed_users": member_obj.id}}  # Using member_obj
-        )
-        if isinstance(ctx.channel, discord.Thread):
-            try:
-                await ctx.channel.add_user(member_obj)  # Using member_obj
-            except discord.HTTPException as e:
-                await ctx.reply(f"Updated transcript permissions, but failed to add them to the thread: {e}")
-                return
-        embed = discord.Embed(colour=0xffffff, description=f"Added {member_obj.mention} to this ticket.")
-        await ctx.reply(embed=embed)
-
-@bot.command(name="remove")
-async def remove(ctx, mode: str = None, target: str = None):
-    if not (get(ctx.guild.roles, id=sr_ping) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
-        await ctx.reply("Unauthorised.")
-        return
-    if mode and mode != "all":
-        target = mode
-        mode = None
-    if not target:
-        await ctx.reply("Please specify a user or user ID to remove from tickets.")
-        return
-    try:
-        member_obj = await commands.MemberConverter().convert(ctx, target)
-    except commands.BadArgument:
-        await ctx.reply("Could not find that user in this server. Make sure it's a valid mention or user ID.")
-        return
-    manager = getattr(bot, "ticket_manager", None)
-    if not manager:
-        await ctx.reply("Ticket manager is not initialized.")
-        return
-    if mode == "all":
-        active_tickets = manager.tickets.find({"status": "open"})
-        count = 0
-
-        await ctx.reply(f"Removing {member_obj.mention} from all active ticket threads...")
-
-        for ticket_doc in active_tickets:
-            ticket_id = ticket_doc["_id"]
-
-            manager.tickets.update_one(
-                {"_id": ticket_id},
-                {"$pull": {"allowed_users": member_obj.id}}
-            )
-
-            thread_id = ticket_doc.get("thread_id") or ticket_id
-            thread = ctx.guild.get_thread(thread_id)
-            if not thread:
-                try:
-                    thread = await ctx.guild.fetch_channel(thread_id)
-                except discord.HTTPException:
-                    thread = None
-
-            if isinstance(thread, discord.Thread):
-                try:
-                    await thread.remove_user(member_obj)
-                    count += 1
-                except discord.HTTPException:
-                    pass
-        embed = discord.Embed(colour=0xffffff, description=f"Successfully removed {member_obj.mention} from {count} ticket threads.")
-        await ctx.reply(embed=embed)
-        return
-    else:
-        ticket = await manager.from_ticket(ctx.channel.id)
-        if not ticket or ticket.data.get("status") != "open":
-            await ctx.reply(
-                "This command can only be used within an active ticket thread.")
-            return
-        manager.tickets.update_one(
-            {"_id": ticket.id},
-            {"$pull": {"allowed_users": member_obj.id}}
-        )
-        if isinstance(ctx.channel, discord.Thread):
-            try:
-                await ctx.channel.remove_user(member_obj)
-            except discord.HTTPException as e:
-                await ctx.reply(f"Revoked transcript permissions, but failed to remove them from the thread: {e}")
-                return
-        embed = discord.Embed(colour=0xffffff, description=f"Removed {member_obj.mention} from this ticket.")
-        await ctx.reply(embed=embed)
 
 @bot.command()
 async def sync(ctx: commands.Context):
