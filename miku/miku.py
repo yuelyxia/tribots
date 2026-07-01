@@ -1945,7 +1945,7 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
     await interaction.response.defer(ephemeral=True)
     colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
     if image:
-        image_embed = discord.Embed(colour=0xffffff)
+        image_embed = discord.Embed(colour=colour)
         image_embed.set_image(url=image.url)
         await interaction.channel.send("_ _", embed=image_embed)
     embed1 = discord.Embed(colour=colour, description="""
