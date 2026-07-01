@@ -318,12 +318,12 @@ async def weekly_quota():
         return round(min(done / quota, 1), 3)
 
     config = staffweeklycol.find_one({"_id": "global"}) or {
-        "reports_quota": 1,
-        "tickets_quota": 1,
-        "sr_reports_quota": 1,
-        "sr_reviews_quota": 1,
-        "sr_tickets_quota": 1,
-        "sr_closes_quota": 1
+        "reports_quota": 0,
+        "tickets_quota": 0,
+        "sr_reports_quota": 0,
+        "sr_reviews_quota": 0,
+        "sr_tickets_quota": 0,
+        "sr_closes_quota": 0
     }
     staff_members = set(o5_r.members + adm_r.members + sr_r.members + rep_r.members + tr_r.members + full_break_role.members + half_break_role.members)
     for member in staff_members:
@@ -1501,7 +1501,7 @@ async def lbsr(ctx):
         reviews = staff_profile.get("reviews", 0)
         weekly_reviews = weekly_profile.get("weekly_reviews", 0)
         closes = staff_profile.get("closes", 0)
-        weekly_closes = weekly_profile.get("closes", 0)
+        weekly_closes = weekly_profile.get("weekly_closes", 0)
         role_categories[matched_role][1].append(
             (member, reviews, weekly_reviews, closes, weekly_closes)
         )
