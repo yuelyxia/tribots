@@ -3564,11 +3564,11 @@ async def add(ctx, mode: str = None, member: str = None):
             return
         manager.tickets.update_one(
             {"_id": ticket.id},
-            {"$addToSet": {"allowed_users": member_obj.id}}  # Using member_obj
+            {"$addToSet": {"allowed_users": member_obj.id}}
         )
         if isinstance(ctx.channel, discord.Thread):
             try:
-                await ctx.channel.add_user(member_obj)  # Using member_obj
+                await ctx.channel.add_user(member_obj)
             except discord.HTTPException as e:
                 await ctx.reply(f"Updated transcript permissions, but failed to add them to the thread: {e}")
                 return
@@ -3707,9 +3707,14 @@ async def create_ticket(
     )
     allowed_ids = [interaction.user.id]
     guild = interaction.guild
-    staff_role = guild.get_role(int(ticket_ping))
-    if staff_role:
-        for member in staff_role.members:
+    ticket_ping_role = guild.get_role(int(ticket_ping))
+    if ticket_ping_role:
+        for member in ticket_ping_role.members:
+            if not member.bot and member.id not in allowed_ids:
+                allowed_ids.append(member.id)
+    adm_ping_role = guild.get_role(int(adm_ping))
+    if adm_ping_role:
+        for member in adm_ping_role.members:
             if not member.bot and member.id not in allowed_ids:
                 allowed_ids.append(member.id)
     try:
@@ -3932,20 +3937,17 @@ class TranscriptExporter:
             "1": "font-weight: bold;", "4": "text-decoration: underline;"
         }
 
-        # Split text by ANSI escape sequence markers
         parts = text.split("\u001b[")
         result = [parts[0]]
         open_spans = 0
 
         for part in parts[1:]:
             if ";" in part or "m" in part:
-                # Extract code and match text payload boundary
                 code_match = re.match(r"^([0-9;]+)m", part)
                 if code_match:
                     codes = code_match.group(1).split(";")
                     text_content = part[len(code_match.group(0)):]
 
-                    # Code 0 resets formatting
                     if "0" in codes:
                         result.append("</span>" * open_spans)
                         open_spans = 0
@@ -3964,10 +3966,8 @@ class TranscriptExporter:
 
     @classmethod
     def format_markdown(cls, text: str) -> str:
-        """Parses Discord markdown, code blocks, headers, and interactive mentions."""
         text = html.escape(text)
 
-        # 1. Multi-line & Inline Code Blocks (Keep your existing code here)
         def code_block_sub(match):
             lang = match.group(1) or ""
             code_content = match.group(2)
@@ -3980,7 +3980,6 @@ class TranscriptExporter:
                       r'<code style="background: #202225; padding: 2px 4px; border-radius: 3px; font-family: monospace;">\1</code>',
                       text)
 
-        # 2. FIXED: Discord Headers & Small Text Parsing (Run before bold/italics)
         text = re.sub(r"^###\s+([\s\S]+?)$",
                       r'<h3 style="color: #fff; margin: 8px 0 4px 0; font-size: 1.15em;">\1</h3>', text,
                       flags=re.MULTILINE)
@@ -3996,7 +3995,6 @@ class TranscriptExporter:
         text = re.sub(r"\*([\s\S]+?)\*", r"<em>\1</em>", text)
         text = re.sub(r"__([\s\S]+?)__", r"<u>\1</u>", text)
 
-        # 5. Block Quotes
         text = re.sub(r"^&gt;\s([\s\S]+?)$",
                       r'<blockquote style="border-left: 4px solid #4f545c; padding-left: 8px; margin: 4px 0; color: #b9bbbe;">\1</blockquote>',
                       text, flags=re.MULTILINE)
@@ -4975,33 +4973,30 @@ class TicketManager:
         closed_unix = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
         closed_str = f"<t:{closed_unix}:F> (<t:{closed_unix}:R>)"
 
-        embed.add_field(name="type", value=ticket.data["type"], inline=True)
-        embed.add_field(name="created at", value=created_str, inline=True)
 
         claims = "None"
         try:
             global ticket_claims
-            # Reach into the permanent ticket_claims db since it survives reopens now
             claims_doc = await asyncio.to_thread(ticket_claims.find_one, {"_id": ticket.thread_id})
             if claims_doc and claims_doc.get("claimed_by"):
                 legacy_claims = claims_doc["claimed_by"]
                 if isinstance(legacy_claims, list) and len(legacy_claims) > 0:
                     claims = " ".join([f"<@{u_id}>" for u_id in legacy_claims])
-                    # Sync it back into the main ticket data
                     ticket.data["claimed_by"] = legacy_claims
                     await self.save(ticket)
         except Exception as e:
             print(f"Fallback check failed: {e}")
 
-        # Safety net in case the db fetch fails
         if claims == "None":
             raw_claims = ticket.data.get("claimed_by", [])
             if isinstance(raw_claims, list) and len(raw_claims) > 0:
                 claims = " ".join([f"<@{u_id}>" for u_id in raw_claims])
 
-        embed.add_field(name="claimed by", value=claims, inline=True)
+        embed.add_field(name="type", value=ticket.data["type"], inline=True)
+        embed.add_field(name="claimed by", value=claims, inline=False)
         embed.add_field(name="closed by", value=f"<@{closed_by}>", inline=True)
-        embed.add_field(name="closed at", value=closed_str, inline=True)
+        embed.add_field(name="created at", value=created_str, inline=False)
+        embed.add_field(name="closed at", value=closed_str, inline=False)
 
         raw_duration = exported["ticket"].get("open_duration")
         if raw_duration is not None:
