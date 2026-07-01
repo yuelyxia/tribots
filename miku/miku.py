@@ -107,7 +107,7 @@ async def on_message(message):
     if message.author.id == KAFU:
         if message.embeds:
             for embed in message.embeds:
-                if embed.description and "　。。。　ticket　　ೀ　" in embed.description:
+                if embed.description and "。。。ticket　ೀ　" in embed.description:
                     embed = discord.Embed(colour=0xffffff)
                     embed.add_field(name="Closing", value="", inline=False)
                     await message.channel.send(embed=embed, view=InputClosingView())
