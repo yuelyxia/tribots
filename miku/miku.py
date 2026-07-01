@@ -106,11 +106,10 @@ def is_active_staff(user):
 async def on_message(message):
     if message.author.id == KAFU:
         if message.embeds:
-            target_value = None
             for embed in message.embeds:
                 if "　。。。　ticket　　ೀ　" in embed.description:
                     embed = discord.Embed(colour=0xffffff)
-                    embed.add_field(name="Closing", value="", inline=False)
+                    embed.add_field(name="Closing", value="\u200b", inline=False)
                     await message.channel.send(embed=embed, view=InputClosingView())
                     break
 
@@ -137,20 +136,25 @@ class InputClosingModal(discord.ui.Modal, title="Closing"):
         super().__init__()
         self.message = message
         embed = message.embeds[0]
-        current_closing = embed.fields[0].value.strip("`") or ""
+        current_closing = embed.fields[0].value.strip("`") if embed.fields else ""
+        if current_closing == "\u200b":
+            current_closing = ""
         self.closing.default = current_closing
     async def on_submit(self, interaction: discord.Interaction):
-        embed = self.message.embeds[0]
+        embed = self.message.embeds[0].copy()
+        display_text = f"`{self.closing.value}`" if self.closing.value.strip() else "\u200b"
+
         embed.set_field_at(
             0,
             name="Closing",
-            value=f"`{self.closing.value}`" if self.closing.value.strip() else "",
+            value=display_text,
             inline=False
         )
         embed.set_footer(
             text=f"Last edited by {interaction.user}",
             icon_url=interaction.user.display_avatar.url
         )
+
         await self.message.edit(embed=embed, view=InputClosingView())
         await interaction.response.send_message("Closing updated.", ephemeral=True)
 
