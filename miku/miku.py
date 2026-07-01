@@ -109,7 +109,7 @@ async def on_message(message):
             for embed in message.embeds:
                 if embed.description and "　。。。　ticket　　ೀ　" in embed.description:
                     embed = discord.Embed(colour=0xffffff)
-                    embed.add_field(name="Closing", value="\u200b", inline=False)
+                    embed.add_field(name="Closing", value="", inline=False)
                     await message.channel.send(embed=embed, view=InputClosingView())
                     break
 
@@ -137,19 +137,12 @@ class InputClosingModal(discord.ui.Modal, title="Closing"):
         self.message = message
         embed = message.embeds[0]
         current_closing = embed.fields[0].value.strip("`") if embed.fields else ""
-        if current_closing == "\u200b":
-            current_closing = ""
         self.closing.default = current_closing
     async def on_submit(self, interaction: discord.Interaction):
-        embed = self.message.embeds[0].copy()
-        display_text = f"`{self.closing.value}`" if self.closing.value.strip() else "\u200b"
+        embed = discord.Embed(colour=0xffffff)
+        display_text = f"`{self.closing.value}`" if self.closing.value.strip() else ""
 
-        embed.set_field_at(
-            0,
-            name="Closing",
-            value=display_text,
-            inline=False
-        )
+        embed.add_field(name="Closing", value=display_text, inline=False)
         embed.set_footer(
             text=f"Last edited by {interaction.user}",
             icon_url=interaction.user.display_avatar.url
