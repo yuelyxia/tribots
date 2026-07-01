@@ -1434,13 +1434,15 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
 @settings.command(name="points", description="Set points to a certain value.")
 async def set_points(interaction: discord.Interaction, user: str, category: Literal["staff", "mm", "pilot", "tickets"], timeframe: Literal["monthly", "alltime"], value: str):
     await interaction.response.defer(ephemeral=True)
+    guild_id = interaction.guild.id
+    if guild_id == TRI_Archive:
+        return await interaction.followup.send(f"KAFU leaderboard is disabled in TRI Archive.", ephemeral=True)
     if not is_int(value):
         await interaction.followup.send("Please input a valid integer value.", ephemeral=True)
         return
     if not interaction.user.guild_permissions.manage_roles:
         await interaction.followup.send(f"Unauthorised.", ephemeral=True)
         return
-    guild_id = interaction.guild.id
     try:
         user = await bot.fetch_user(int(user.replace("<@", "").replace(">", "")))
     except Exception:
@@ -1473,6 +1475,7 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
             await interaction.followup.send(
                 f"`{user_id}`’s **{timeframe} {category}** points has been set to **{value}**.", ephemeral=True)
         else:
+            if category == "tickets": category = "staff"
             await interaction.followup.send(
                 f"`{user_id}` is not appointed as **{category}**.",
                 ephemeral=True)

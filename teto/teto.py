@@ -11506,9 +11506,9 @@ def is_int(value):
 settings = app_commands.Group(name="set", description="Set.")
 bot.tree.add_command(settings)
 
-@settings.command(name="points")
+@settings.command(name="credits", description="Set credits to a certain value.")
 @app_commands.checks.has_role(adm_ping)
-async def set_points(interaction: discord.Interaction, user: str, category: Literal["reports", "tickets", "reviews", "closes", "votes"], timeframe: Literal["weekly", "alltime"], value: int):
+async def set_credits(interaction: discord.Interaction, user: str, category: Literal["reports", "tickets", "reviews", "closes", "votes"], timeframe: Literal["weekly", "alltime"], value: int):
     try:
         user = await bot.fetch_user(int(user.strip("<@>")))
     except Exception:
