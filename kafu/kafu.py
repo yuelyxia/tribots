@@ -3753,7 +3753,7 @@ class ReportModal(discord.ui.Modal, title="ㆍㆍReport"):
 
     async def on_submit(self, interaction: discord.Interaction):
         embed=discord.Embed(colour=0xffffff, description=f"""
-# ‎report　。。。ticket　ೀ　
+## ‎　　report　。。。ticket　ೀ　
 
 -# **ㆍ　opened by** – {interaction.user.mention} `{interaction.user.id}`
 -# **ㆍ　reporting** – <@{self.user_id.value}> `{self.user_id.value}`
@@ -3780,7 +3780,7 @@ class AppealModal(discord.ui.Modal, title="ㆍㆍAppeal"):
     )
     async def on_submit(self, interaction: discord.Interaction):
         embed = discord.Embed(colour=0xffffff, description=f"""
-# ‎appeal　。。。ticket　ೀ　
+## ‎　　appeal　。。。ticket　ೀ　
 
 -# **ㆍ　opened by** – {interaction.user.mention} `{interaction.user.id}`
 -# **ㆍ　appealing** – <@{self.user_id.value}> `{self.user_id.value}`
@@ -3801,7 +3801,7 @@ class VerifyModal(discord.ui.Modal, title="ㆍㆍVerify"):
     )
     async def on_submit(self, interaction: discord.Interaction):
         embed = discord.Embed(colour=0xffffff, description=f"""
-# ‎verify　。。。ticket　ೀ　
+## ‎　　verify　。。。ticket　ೀ　
 
 -# **ㆍ　opened by** – {interaction.user.mention} `{interaction.user.id}`
 
@@ -3820,7 +3820,7 @@ class OthersModal(discord.ui.Modal, title="ㆍㆍOthers"):
     )
     async def on_submit(self, interaction: discord.Interaction):
         embed = discord.Embed(colour=0xffffff, description=f"""
-# ‎others　。。。ticket　ೀ　
+## ‎　　others　。。。ticket　ೀ　
 
 -# **ㆍ　opened by** – {interaction.user.mention} `{interaction.user.id}`
 
