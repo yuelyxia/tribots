@@ -2,12 +2,16 @@
 
 # standard libraries
 import asyncio
+import inspect
 import datetime
 import io
 import os
 import re
 import time
 import uuid
+import json
+import html
+import base64
 from asyncio import Lock
 from collections import defaultdict
 from typing import Literal, Optional
@@ -25,12 +29,10 @@ from gtts import gTTS
 from pymongo import UpdateOne
 
 # local imports
-from database.database import Database
+
 
 # environment
 load_dotenv()
-
-db = Database()
 
 TOKEN = os.getenv("TOKEN")
 CLIENT = os.getenv("CLIENT")
@@ -38,8 +40,10 @@ CLIENT = os.getenv("CLIENT")
 # mongodb
 client = pymongo.MongoClient(CLIENT)
 kafu = client["kafu"]
+db = client["database"]
+trusteduserscol = db["trusted_users"]
+staffweeklycol = db["staff_weekly"]
 
-tickets = kafu["tickets"]
 servers = kafu["servers"]
 timezones = kafu["timezones"]
 vouch_servers = kafu["vouch_servers"]
@@ -48,23 +52,34 @@ votes = kafu["votes"]
 ticket_claims = kafu["ticket_claims"]
 afk = kafu["afk"]
 
+tickets = kafu["tickets"]
+transcripts = kafu["transcripts"]
+counters = kafu["counters"]
+
 # ids
 
 TRI_Archive = 1371673839695826974
 Tethys = 1434471275723493388
 ticket_ping = 1449382692671193294
 sr_ping = 1375254710952661102
+adm_ping = 1375276457890287748
 KAFU = 1457009979817988241
+MIKU = 1457309787044839477
 
 yuelyxia = 1303291812282372137
 
 USERGUIDE = "https://docs.google.com/document/d/1Af_bHhXTjpJ9GkIPihmSQYibDVMYTFnUBhaA7DlQ29s/"
+JSON_CHANNEL = 1520096583595724982
+ATTACHMENT_CHANNEL = 1520096619012292659
+TRANSCRIPT_CHANNEL = 1375269831934476318
 
 TIMEZONES = sorted(available_timezones())
 
+def is_sr(user):
+    return any(role.id in (sr_ping, adm_ping) for role in user.roles)
+
 # bot setup
 intents = discord.Intents.all()
-intents.voice_states = True
 
 bot = commands.Bot(
     command_prefix=",",
@@ -82,15 +97,23 @@ async def on_ready():
     bot.add_view(MMView())
     bot.add_view(MMFormsView())
     bot.add_view(MMRisksView())
-
+    bot.add_view(TranscriptView(ticket_data={}))
+    bot.add_view(TranscriptDMView(ticket_data={}))
+    if not hasattr(bot, "ticket_manager"):
+        bot.ticket_manager = TicketManager(
+            bot,
+            tickets,
+            transcripts,
+            JSON_CHANNEL,
+            ATTACHMENT_CHANNEL,
+            counters
+        )
+    await bot.add_cog(Logger(bot))
     quota_check.start()
     customrole_expiry_loop.start()
     vote_auto_close_loop.start()
     vote_cleanup_loop.start()
     ticket_claim_cleanup_loop.start()
-
-    await db.initialise()
-
     if not hasattr(bot, "queue_started"):
         bot.loop.create_task(message_update_worker())
         bot.queue_started = True
@@ -328,6 +351,8 @@ async def quota_check():
         guilds = servers.find({})  # all servers
         for server_info in guilds:
             guild_id = int(server_info["_id"])
+            if guild_id == TRI_Archive:
+                continue
             try:
                 guild = await bot.fetch_guild(guild_id)
             except discord.NotFound:
@@ -367,14 +392,8 @@ async def quota_check():
                             total_tickets += monthly_tickets
                         tickets_embed = discord.Embed(description=desc if desc else "No staff found.", colour = 0xffffff)
                         summary = discord.Embed(colour=0xffffff)
-                        if guild_id == TRI_Archive:
-                            summary.description = (
-                                f"✦　　┈　　total tickets　　┈　　**{total_tickets}**")
-                        else:
-                            summary.description = (
+                        summary.description = (
                                 f"✦　　┈　　total credits　　┈　　**{total_credits}**\n✦　　┈　　total tickets　　┈　　**{total_tickets}**")
-                        if guild_id != TRI_Archive:
-                            await channel.send("## _ _　　　staff leaderboard", embed=staff_embed)
                         await channel.send("## _ _　　　tickets leaderboard", embed=tickets_embed)
                         await channel.send("## _ _　　　monthly summary", embed=summary)
                     except discord.NotFound: pass
@@ -818,6 +837,8 @@ async def lb(ctx, *, category: str=None):
     guild_id = ctx.guild.id
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one(server_query)
+    if ctx.guild.id == TRI_Archive:
+        return
     if not server_info:
         return
     if category == "s":
@@ -979,6 +1000,12 @@ async def claim(ctx, mode: str = None, member: discord.Member = None):
         return
     ticket_claims.update_one({"_id": ctx.channel.id},
                              {"$addToSet": {"claimed_by": target.id}, "$set": {"closed": False}}, upsert=True)
+    if ctx.guild.id == TRI_Archive:
+        manager = getattr(bot, "ticket_manager", None)
+        if manager:
+            ticket = await manager.from_thread(ctx.channel.id)
+            if ticket:
+                await ticket.claim(target.id)
     embed = discord.Embed(colour=0xffffff, description=f"{target.mention} has claimed the ticket.")
     await ctx.reply(embed=embed)
 
@@ -1017,6 +1044,12 @@ async def unclaim(ctx, mode: str = None, member: discord.Member = None):
         {"_id": ctx.channel.id},
         {"$pull": {"claimed_by": target.id}}
     )
+    if ctx.guild.id == TRI_Archive:
+        manager = getattr(bot, "ticket_manager", None)
+        if manager:
+            ticket = await manager.from_thread(ctx.channel.id)
+            if ticket:
+                await ticket.unclaim(target.id)
     embed = discord.Embed(colour=0xffffff, description=f"{target.mention} has unclaimed the ticket.")
     await ctx.reply(embed=embed)
 
@@ -1045,29 +1078,161 @@ async def claims(ctx, *args):
 async def close(ctx, *args):
     if args:
         return
-    server_info = servers.find_one_and_update(
+    server_info = await asyncio.to_thread(
+        servers.find_one_and_update,
         {"_id": str(ctx.guild.id)},
         {"$setOnInsert": {"_id": str(ctx.guild.id)}},
         upsert=True,
         return_document=True
     )
-    if server_info:
-        if not server_info.get("staff_role"):
-            await ctx.reply("**staff role** has not been set up for this server.")
-            return
-        staff_role = server_info.get("staff_role")
-        adm_ping = server_info["adm_ping"]
-        if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
-            if ctx.guild.id == TRI_Archive:
-                if not (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
-                    return await ctx.reply("You are not authorised to close this ticket.")
-            active_claims = await get_uncredited_claims(ctx.channel.id)
+    if not server_info or not server_info.get("staff_role"):
+        await ctx.reply("**staff role** has not been set up for this server.")
+        return
+    staff_role = server_info.get("staff_role")
+    adm_ping = server_info.get("adm_ping")
+    if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
+        active_claims = await get_uncredited_claims(ctx.channel.id)
+        if ctx.guild.id == TRI_Archive:
+            if not (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
+                return await ctx.reply("You are not authorised to close this ticket.")
+        else:
             if not active_claims:
                 await ctx.reply("No new ticket credits to give.")
                 return
-            mentions = [f"<@{uid}>" for uid in active_claims]
-            embed = discord.Embed(colour=0xffffff, description=f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
+        mentions = [f"<@{uid}>" for uid in active_claims]
+        embed = discord.Embed(colour=0xffffff, description=f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
+        if ctx.guild.id == TRI_Archive:
+            ticket = await bot.ticket_manager.from_thread(ctx.channel.id)
+            if not ticket:
+                return await ctx.reply("This channel is not an active ticket thread.")
+            claims_doc = await asyncio.to_thread(ticket_claims.find_one, {"_id": ctx.channel.id})
+            all_claims = claims_doc.get("claimed_by", []) if claims_doc else ticket.data.get("claimed_by", [])
+            credited_users = ticket.data.get("credited_users", [])
+            new_claims = [uid for uid in all_claims if uid not in credited_users]
+            past_claims = [uid for uid in all_claims if uid in credited_users]
+            new_mentions = ", ".join([f"<@{uid}>" for uid in new_claims]) if new_claims else "None"
+            past_mentions = ", ".join([f"<@{uid}>" for uid in past_claims]) if past_claims else "None"
+            embed = discord.Embed(colour=0xffffff)
+            embed.description = (
+                f"### Ticket Claim Status\n"
+                f"**Newly claimed:** {new_mentions}\n"
+                f"**Previously credited:** {past_mentions}"
+            )
+
+            async def get_miku_closing(thread: discord.Thread):
+                async for message in thread.history(limit=None, oldest_first=True):
+                    if message.author.id == MIKU:
+                        if message.embeds:
+                            embed = message.embeds[0]
+                            if embed.fields:
+                                field = embed.fields[0]
+                                closing = field.value.strip("`")
+                                return closing
+                        break
+                return ""
+            detected = await get_miku_closing(ctx.channel)
+            embed.add_field(name="Closing", value=detected, inline=True)
+            await ctx.reply(embed=embed, view=TRICloseView(active_claims))
+        else:
             await ctx.reply(embed=embed, view=TicketCloseView(active_claims))
+
+class TicketClosingModal(discord.ui.Modal, title="Ticket Closing Reason"):
+    closing = discord.ui.TextInput(label="Closing", required=False, style=discord.TextStyle.paragraph)
+    def __init__(self, message: discord.Message, active_claims: list):
+        super().__init__()
+        self.message = message
+        self.active_claims = active_claims
+        embed = message.embeds[0]
+        current_closing = ""
+        if embed.fields:
+            current_closing = embed.fields[0].value.strip("`") or ""
+        self.closing.default = current_closing
+
+    async def on_submit(self, interaction: discord.Interaction):
+        embed = self.message.embeds[0]
+        val = f"{self.closing.value}" if self.closing.value.strip() else ""
+        if embed.fields:
+            embed.set_field_at(0, name="Closing", value=val, inline=False)
+        else:
+            embed.add_field(name="Closing", value=val, inline=False)
+        await self.message.edit(embed=embed, view=TRICloseView(self.active_claims))
+        await interaction.response.send_message("Closing updated.", ephemeral=True)
+
+class TRICloseView(discord.ui.View):
+    def __init__(self, active_claims):
+        super().__init__(timeout=120)
+        self.active_claims = active_claims
+
+    @discord.ui.button(label="Closing", style=discord.ButtonStyle.blurple, custom_id="triclose:closing",
+                       row=0)
+    async def closing_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(TicketClosingModal(interaction.message, self.active_claims))
+
+    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green, custom_id="triclose:confirm")
+    async def confirm_button(self, interaction, button):
+        await interaction.response.defer(ephemeral=True)
+        if not is_sr(interaction.user):
+            return await interaction.followup.send("You do not have permission to close this ticket.", ephemeral=True)
+
+        closing = None
+        if interaction.message.embeds and interaction.message.embeds[0].fields:
+            closing = interaction.message.embeds[0].fields[0].value
+
+        if not closing:
+            return await interaction.followup.send("Please add a closing before confirming.", ephemeral=True)
+
+        ticket = await bot.ticket_manager.from_thread(interaction.channel_id)
+        if ticket is None:
+            return await interaction.followup.send("This channel is not an active ticket thread.", ephemeral=True)
+
+        claims_doc = ticket_claims.find_one({"_id": interaction.channel_id})
+        claims_to_process = claims_doc.get("claimed_by", []) if claims_doc else ticket.data.get("claimed_by", [])
+
+        if "credited_users" not in ticket.data:
+            ticket.data["credited_users"] = []
+        new_claims = [uid for uid in self.active_claims if uid not in ticket.data["credited_users"]]
+
+        weekly_operations = []
+        alltime_operations = []
+        closer_id = str(interaction.user.id)
+
+        for uid in new_claims:
+            uid_str = str(uid)
+            weekly_operations.append(UpdateOne({"_id": uid_str}, {"$inc": {"weekly_tickets": 1}}))
+            alltime_operations.append(UpdateOne({"_id": uid_str}, {"$inc": {"tickets": 1}}))
+            ticket.data["credited_users"].append(uid)
+
+        weekly_operations.append(UpdateOne({"_id": closer_id}, {"$inc": {"weekly_closes": 1}}))
+        alltime_operations.append(UpdateOne({"_id": closer_id}, {"$inc": {"closes": 1}}))
+
+        await ticket.save()
+        if weekly_operations:
+            await asyncio.to_thread(staffweeklycol.bulk_write, weekly_operations)
+        if alltime_operations:
+            await asyncio.to_thread(trusteduserscol.bulk_write, alltime_operations)
+
+        await interaction.edit_original_response(content="Ticket credit(s) have been given.", view=None)
+        closing_embed = discord.Embed(description=f"""
+**Ticket closed by {interaction.user.mention}**
+\n**Closing:**\n{closing}
+        """)
+        await interaction.channel.send(embed=closing_embed)
+        try:
+            await bot.ticket_manager.close(
+                ticket=ticket,
+                closed_by=interaction.user.id,
+                closing=closing
+            )
+            await interaction.followup.send("Ticket closed successfully!", ephemeral=True)
+            await interaction.channel.edit(locked=True, archived=True)
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, custom_id="triclose:cancel")
+    async def cancel_button(self, interaction, button):
+        await interaction.response.defer()
+        await interaction.edit_original_response(content="**Cancelled.** Ticket credit(s) have not been given.",view=None)
+
 
 class TicketCloseView(discord.ui.View):
     def __init__(self, active_claims):
@@ -1113,7 +1278,7 @@ class TicketCloseView(discord.ui.View):
 def user_info(user, staff_data=None, mm_data=None, pilot_data=None):
     profile = discord.Embed()
     profile.set_thumbnail(url=f"{user.display_avatar}")
-    profile.description = f"{user.display_name}\n`{user.name}` {user.mention}\n`{user.id}`"
+    profile.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`"
     profile.description += f"\n**Account Created:** <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
     if staff_data is not None:
         profile.add_field(
@@ -2458,38 +2623,6 @@ class UnbanReqView(discord.ui.View):
 
 #
 
-@bot.tree.command(name="panel", description="Sends a ticket panel.")
-@app_commands.checks.has_permissions(administrator=True)
-async def panel(interaction: discord.Interaction, type: Optional[str]):
-    guild_id = interaction.guild.id
-    if guild_id == TRI_Archive:
-        await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
-    ## 　　<:2paperclip:1449650494044639335>　　┈　　open ticket　　୭
-    　<:00_reply:1448474301673115748>　provide __uncropped__ & **unedited** proofs
-    　<:00_reply:1448474301673115748>　fake proofs / disrespect = **ban**
-    　<:00_reply:1448474301673115748>　**do not open** for appeals on bans
-    -# _ _　✦ 　not following rules / ghosting = close
-                """), view=TRITicketView())
-        await interaction.response.send_message("Panel has been sent.", ephemeral=True)
-    else:
-        """guild_id = interaction.guild.id
-        server_query = {"_id": str(guild_id)}
-        server_info = servers.find_one_and_update(
-            {"_id": str(interaction.guild.id)},
-            {"$setOnInsert": {"_id": str(interaction.guild.id)}},
-            upsert=True,
-            return_document=True
-        )"""
-        if type == "support":
-            pass
-        elif type == "services":
-            pass
-
-class TranscriptView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-
 """@bot.tree.command(name="whitelist")
 @app_commands.describe(server="Server invite")
 @app_commands.checks.has_permissions(administrator=True)
@@ -3372,6 +3505,169 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
 
 # TRI
 
+
+@bot.command(name="add")
+async def add(ctx, mode: str = None, member: str = None):
+    if get(ctx.guild.roles, id=ticket_ping) not in ctx.author.roles:
+        return
+    if mode and mode != "all":
+        member = mode
+        mode = None
+    if not member:
+        await ctx.reply("Please specify a user to add to tickets.")
+        return
+    try:
+        member_obj = await commands.MemberConverter().convert(ctx, member)
+    except commands.BadArgument:
+        await ctx.reply("Could not find that user in this server. Make sure it's a valid mention or user ID.")
+        return
+
+    manager = getattr(bot, "ticket_manager", None)
+    if not manager:
+        await ctx.reply("Ticket manager is not initialized.")
+        return
+
+    if mode == "all":
+        if not is_sr(ctx.author):
+            await ctx.reply("Unauthorised.")
+            return
+        active_tickets = manager.tickets.find({"status": "open"})
+        count = 0
+
+        for ticket_doc in active_tickets:
+            ticket_id = ticket_doc["_id"]
+            manager.tickets.update_one(
+                {"_id": ticket_id},
+                {"$addToSet": {"allowed_users": member_obj.id}}
+            )
+            thread_id = ticket_doc.get("thread_id") or ticket_id
+            thread = ctx.guild.get_thread(thread_id)
+            if not thread:
+                try:
+                    thread = await ctx.guild.fetch_channel(thread_id)
+                except discord.HTTPException:
+                    thread = None
+            if isinstance(thread, discord.Thread):
+                try:
+                    await thread.add_user(member_obj)
+                    count += 1
+                except discord.HTTPException:
+                    pass
+        embed = discord.Embed(colour=0xffffff, description=f"Successfully added {member_obj.mention} to {count} ticket threads.")
+        await ctx.reply(embed=embed)
+        return
+    else:
+        ticket = await manager.from_ticket(ctx.channel.id)
+        if not ticket or ticket.data.get("status") != "open":
+            await ctx.reply(
+                "This command can only be used within an active ticket thread.")
+            return
+        manager.tickets.update_one(
+            {"_id": ticket.id},
+            {"$addToSet": {"allowed_users": member_obj.id}}  # Using member_obj
+        )
+        if isinstance(ctx.channel, discord.Thread):
+            try:
+                await ctx.channel.add_user(member_obj)  # Using member_obj
+            except discord.HTTPException as e:
+                await ctx.reply(f"Updated transcript permissions, but failed to add them to the thread: {e}")
+                return
+        embed = discord.Embed(colour=0xffffff, description=f"Added {member_obj.mention} to this ticket.")
+        await ctx.reply(embed=embed)
+
+@bot.command(name="remove")
+async def remove(ctx, mode: str = None, target: str = None):
+    if get(ctx.guild.roles, id=ticket_ping) not in ctx.author.roles:
+        return
+    if mode and mode != "all":
+        target = mode
+        mode = None
+    if not target:
+        await ctx.reply("Please specify a user or user ID to remove from tickets.")
+        return
+    try:
+        member_obj = await commands.MemberConverter().convert(ctx, target)
+    except commands.BadArgument:
+        await ctx.reply("Could not find that user in this server. Make sure it's a valid mention or user ID.")
+        return
+    manager = getattr(bot, "ticket_manager", None)
+    if not manager:
+        await ctx.reply("Ticket manager is not initialized.")
+        return
+    if mode == "all":
+        if not is_sr(ctx.author):
+            await ctx.reply("Unauthorised.")
+            return
+        active_tickets = manager.tickets.find({"status": "open"})
+        count = 0
+
+        await ctx.reply(f"Removing {member_obj.mention} from all active ticket threads...")
+
+        for ticket_doc in active_tickets:
+            ticket_id = ticket_doc["_id"]
+
+            manager.tickets.update_one(
+                {"_id": ticket_id},
+                {"$pull": {"allowed_users": member_obj.id}}
+            )
+
+            thread_id = ticket_doc.get("thread_id") or ticket_id
+            thread = ctx.guild.get_thread(thread_id)
+            if not thread:
+                try:
+                    thread = await ctx.guild.fetch_channel(thread_id)
+                except discord.HTTPException:
+                    thread = None
+
+            if isinstance(thread, discord.Thread):
+                try:
+                    await thread.remove_user(member_obj)
+                    count += 1
+                except discord.HTTPException:
+                    pass
+        embed = discord.Embed(colour=0xffffff, description=f"Successfully removed {member_obj.mention} from {count} ticket threads.")
+        await ctx.reply(embed=embed)
+        return
+    else:
+        ticket = await manager.from_ticket(ctx.channel.id)
+        if not ticket or ticket.data.get("status") != "open":
+            await ctx.reply(
+                "This command can only be used within an active ticket thread.")
+            return
+        manager.tickets.update_one(
+            {"_id": ticket.id},
+            {"$pull": {"allowed_users": member_obj.id}}
+        )
+        if isinstance(ctx.channel, discord.Thread):
+            try:
+                await ctx.channel.remove_user(member_obj)
+            except discord.HTTPException as e:
+                await ctx.reply(f"Revoked transcript permissions, but failed to remove them from the thread: {e}")
+                return
+        embed = discord.Embed(colour=0xffffff, description=f"Removed {member_obj.mention} from this ticket.")
+        await ctx.reply(embed=embed)
+
+
+@bot.tree.command(name="panel", description="Sends a ticket panel.")
+@app_commands.checks.has_permissions(administrator=True)
+async def panel(interaction: discord.Interaction, colour: str=None, image: discord.Attachment=None):
+    await interaction.response.defer(ephemeral=True)
+    colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
+    if image:
+        image_embed = discord.Embed(colour=colour)
+        image_embed.set_image(url=image.url)
+        await interaction.channel.send("_ _", embed=image_embed)
+    guild_id = interaction.guild.id
+    if guild_id == TRI_Archive:
+        await interaction.channel.send(embed=discord.Embed(colour=colour, description="""
+## 　　<:2paperclip:1449650494044639335>　　┈　open ticket　✦୧
+　<:whiteheartsmall:1462773852441677958>　provide __uncropped__ & **unedited** proofs
+　<:whiteheartsmall:1462773852441677958>　fake proofs / disrespect = **ban**
+　<:whiteheartsmall:1462773852441677958>　**do not open** for appeals on bans
+-# _ _　 ✦ 　not following rules / ghosting = close
+                """), view=TRITicketView())
+        await interaction.followup.send("Panel has been sent.", ephemeral=True)
+
 tri_ticket_options = [
     discord.SelectOption(emoji="<:whitebutterfly:1459750881611354237>", label="ㆍㆍReport", value="report"),
     discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="ㆍㆍAppeal", value="appeal"),
@@ -3396,6 +3692,39 @@ class TRITicketView(discord.ui.View):
             elif self.select_callback.values[0] == "others":
                 await interaction.response.send_modal(OthersModal())
 
+async def create_ticket(
+    interaction: discord.Interaction,
+    *,
+    ticket_type: str,
+    embed: discord.Embed
+):
+    await interaction.response.defer()
+
+    thread = await interaction.channel.create_thread(
+        name=f"{ticket_type}-{interaction.user.name}",
+        auto_archive_duration=10080,
+        type=discord.ChannelType.private_thread
+    )
+    allowed_ids = [interaction.user.id]
+    guild = interaction.guild
+    staff_role = guild.get_role(int(ticket_ping))
+    if staff_role:
+        for member in staff_role.members:
+            if not member.bot and member.id not in allowed_ids:
+                allowed_ids.append(member.id)
+    try:
+        ticket = await bot.ticket_manager.create(thread, interaction.user, ticket_type)
+    except ValueError as e:
+        return await interaction.followup.send(f"> {e}", ephemeral=True)
+    ticket.data["allowed_users"] = allowed_ids
+    await ticket.save()
+    await interaction.followup.send(
+        f"> Created new ticket: {thread.jump_url}",
+        ephemeral=True
+    )
+    await thread.send(f"{interaction.user.mention} <@&{ticket_ping}>")
+    await thread.send(embed=embed)
+
 class ReportModal(discord.ui.Modal, title="ㆍㆍReport"):
     user_id = discord.ui.TextInput(
         label='ㆍㆍWho are you reporting?',
@@ -3418,35 +3747,21 @@ class ReportModal(discord.ui.Modal, title="ㆍㆍReport"):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        channel = interaction.channel
-        thread = await channel.create_thread(
-            name=f"report-{interaction.user.name}",
-            auto_archive_duration=10080,
-            type=discord.ChannelType.private_thread
-        )
-        await interaction.followup.send(f"Created new ticket: {thread.jump_url}", ephemeral=True)
-        await thread.send(f"{interaction.user.mention}")  # <@&{ticket_ping}>
         embed=discord.Embed(colour=0xffffff, description=f"""
-# ‎　　　　report 　𓈒　𓈒　𓈒　　ticket　　ೀ　
+# ‎　report　。。。　ticket　ೀ　
 
--# _ _　<:dot66:1449656949632139405>　opened by: {interaction.user.mention} `{interaction.user.id}`
--# _ _　<:dot66:1449656949632139405>　reporting on: <@{self.user_id.value}> `{self.user_id.value}`
--# _ _　<:dot66:1449656949632139405>　game: {self.game.value}
--# _ _　<:dot66:1449656949632139405>　anonymous: {self.anon.value}
+-# ㆍ　opened by – {interaction.user.mention} `{interaction.user.id}`
+-# ㆍ　reporting – <@{self.user_id.value}> `{self.user_id.value}`
+-# ㆍ　game – {self.game.value}
+-# ㆍ　anonymous – {self.anon.value}
 
-➴　 description: {self.desc.value}
+**➴　 description**\n{self.desc.value}
         """)
-        await thread.send(embed=embed)
-        new_ticket = {
-            "_id": str(thread.id),
-            "opened_by": f"{interaction.user.id}",
-            "opened_at": f"{time.time()}",
-            "claimed_by": [],
-            "closed_by": "",
-            "closed_at": "",
-        }
-        tickets.insert_one(new_ticket)
+        await create_ticket(
+            interaction,
+            ticket_type="report",
+            embed=embed
+        )
 
 class AppealModal(discord.ui.Modal, title="ㆍㆍAppeal"):
     user_id = discord.ui.TextInput(
@@ -3459,67 +3774,39 @@ class AppealModal(discord.ui.Modal, title="ㆍㆍAppeal"):
         style=discord.TextStyle.long,
     )
     async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        channel = interaction.channel
-        thread = await channel.create_thread(
-            name=f"appeal-{interaction.user.name}",
-            auto_archive_duration=10080,
-            type=discord.ChannelType.private_thread
-        )
-        await interaction.followup.send(f"Created new ticket: {thread.jump_url}", ephemeral=True)
-        await thread.send(f"{interaction.user.mention}")  # <@&{ticket_ping}>
         embed = discord.Embed(colour=0xffffff, description=f"""
-# ‎　　　　appeal 　𓈒　𓈒　𓈒　　ticket　　ೀ　
+# ‎　appeal　。。。　ticket　ೀ　
 
--# _ _　<:dot66:1449656949632139405>　opened by: {interaction.user.mention} `{interaction.user.id}`
--# _ _　<:dot66:1449656949632139405>　appealing for: <@{self.user_id.value}> `{self.user_id.value}`
+-# ㆍ　opened by: {interaction.user.mention} `{interaction.user.id}`
+-# ㆍ　appealing: <@{self.user_id.value}> `{self.user_id.value}`
 
-➴　 description: {self.desc.value}
+**➴　 description**\n{self.desc.value}
 """)
-        await thread.send(embed=embed)
-        new_ticket = {
-            "_id": str(thread.id),
-            "opened_by": f"{interaction.user.id}",
-            "opened_at": f"{time.time()}",
-            "claimed_by": [],
-            "closed_by": "",
-            "closed_at": "",
-        }
-        tickets.insert_one(new_ticket)
+        await create_ticket(
+            interaction,
+            ticket_type="appeal",
+            embed=embed
+        )
 
 class VerifyModal(discord.ui.Modal, title="ㆍㆍVerify"):
     desc = discord.ui.TextInput(
         label='ㆍㆍVerification issue?',
         style=discord.TextStyle.long,
-        placeholder='Alt Intrusion / VPN, explain if needed.',
+        placeholder='Access Denied / VPN, explain if needed.',
     )
     async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        channel = interaction.channel
-        thread = await channel.create_thread(
-            name=f"verify-{interaction.user.name}",
-            auto_archive_duration=10080,
-            type=discord.ChannelType.private_thread
-        )
-        await interaction.followup.send(f"Created new ticket: {thread.jump_url}", ephemeral=True)
-        await thread.send(f"{interaction.user.mention}")  # <@&{ticket_ping}>
         embed = discord.Embed(colour=0xffffff, description=f"""
-# ‎　　　　verify 　𓈒　𓈒　𓈒　　ticket　　ೀ　
+# ‎　verify　。。。　ticket　ೀ　
 
--# _ _　<:dot66:1449656949632139405>　opened by: {interaction.user.mention} `{interaction.user.id}`
+-# ㆍ　opened by: {interaction.user.mention} `{interaction.user.id}`
 
-➴　 description: {self.desc.value}
+**➴　 description**\n{self.desc.value}
 """)
-        await thread.send(embed=embed)
-        new_ticket = {
-            "_id": str(thread.id),
-            "opened_by": f"{interaction.user.id}",
-            "opened_at": f"{time.time()}",
-            "claimed_by": [],
-            "closed_by": "",
-            "closed_at": "",
-        }
-        tickets.insert_one(new_ticket)
+        await create_ticket(
+            interaction,
+            ticket_type="verify",
+            embed=embed
+        )
 
 class OthersModal(discord.ui.Modal, title="ㆍㆍOthers"):
     desc = discord.ui.TextInput(
@@ -3527,33 +3814,1428 @@ class OthersModal(discord.ui.Modal, title="ㆍㆍOthers"):
         style=discord.TextStyle.long,
     )
     async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        channel = interaction.channel
-        thread = await channel.create_thread(
-            name=f"others-{interaction.user.name}",
-            auto_archive_duration=10080,
-            type=discord.ChannelType.private_thread
-        )
-        await interaction.followup.send(f"Created new ticket: {thread.jump_url}", ephemeral=True)
-        await thread.send(f"{interaction.user.mention}")  # <@&{ticket_ping}>
         embed = discord.Embed(colour=0xffffff, description=f"""
-# ‎　　　　others 　𓈒　𓈒　𓈒　　ticket　　ೀ　
+# ‎　others　。。。　ticket　ೀ　
 
--# _ _　<:dot66:1449656949632139405>　opened by: {interaction.user.mention} `{interaction.user.id}`
+-# ㆍ　opened by: {interaction.user.mention} `{interaction.user.id}`
 
-➴　 description: {self.desc.value}
+**➴　 description**\n{self.desc.value}
 """)
-        await thread.send(embed=embed)
-        new_ticket = {
-            "_id": str(thread.id),
-            "opened_by": f"{interaction.user.id}",
-            "opened_at": f"{time.time()}",
-            "claimed_by": [],
-            "closed_by": "",
-            "closed_at": "",
-        }
-        tickets.insert_one(new_ticket)
+        await create_ticket(
+            interaction,
+            ticket_type="others",
+            embed=embed
+        )
 
+# logger
+
+class Logger(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    async def ticket(self, thread_id: int):
+        return await self.bot.ticket_manager.from_thread(thread_id)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if not isinstance(message.channel, discord.Thread):
+            return
+        ticket = await self.ticket(message.channel.id)
+        if ticket is None:
+            return
+        await ticket.log_message(message)
+        if ticket.data.get("status") == "closed":
+            if message.channel.locked:
+                return
+            await self.bot.ticket_manager.reopen(ticket)
+            await message.channel.send("**Ticket reopened.**")
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, before: discord.Message, after: discord.Message):
+        if not isinstance(after.channel, discord.Thread):
+            return
+
+        ticket = await self.ticket(after.channel.id)
+        if ticket is None:
+            return
+        await ticket.edit_message(before, after)
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: discord.Message):
+        if not isinstance(message.channel, discord.Thread):
+            return
+        ticket = await self.ticket(message.channel.id)
+        if ticket is None:
+            return
+        await ticket.delete_message(message)
+
+    @commands.Cog.listener()
+    async def on_thread_members_update(self, added_members: list[discord.ThreadMember], removed_members: list[discord.ThreadMember]):
+        sample_member = added_members[0] if added_members else (removed_members[0] if removed_members else None)
+        if not sample_member:
+            return
+
+        ticket = await self.ticket(sample_member.thread_id)
+        if ticket is None:
+            return
+        updated = False
+        for member in added_members:
+            if member.id not in ticket.data["allowed_users"]:
+                ticket.data["allowed_users"].append(member.id)
+                updated = True
+        for member in removed_members:
+            if member.id == ticket.creator_id:
+                continue
+
+            if member.id in ticket.data["allowed_users"]:
+                ticket.data["allowed_users"].remove(member.id)
+                updated = True
+        if updated:
+            await ticket.save()
+
+    @commands.Cog.listener()
+    async def on_thread_update(self, before: discord.Thread, after: discord.Thread):
+        ticket = await self.ticket(after.id)
+        if ticket is None:
+            return
+
+        if before.name != after.name:
+            await ticket.manager.transcript.add_event(
+                ticket.id,
+                {
+                    "type": "thread_rename",
+                    "before": before.name,
+                    "after": after.name,
+                    "timestamp": datetime.datetime.now(datetime.timezone.utc)
+                }
+            )
+
+
+# exporter
+
+
+class TranscriptExporter:
+    def __init__(self, bot):
+        self.bot = bot
+
+    @staticmethod
+    def parse_ansi(text: str) -> str:
+        """Converts Discord ANSI color escapes inside code blocks into styled HTML."""
+        if "\u001b[" not in text:
+            return text
+
+        ansi_map = {
+            "30": "color: #4f545c;", "31": "color: #f04747;", "32": "color: #43b581;",
+            "33": "color: #faa61a;", "34": "color: #7289da;", "35": "color: #eb459e;",
+            "36": "color: #00b0f4;", "37": "color: #ffffff;", "40": "background-color: #1e1f22;",
+            "41": "background-color: #f04747;", "42": "background-color: #43b581;",
+            "1": "font-weight: bold;", "4": "text-decoration: underline;"
+        }
+
+        # Split text by ANSI escape sequence markers
+        parts = text.split("\u001b[")
+        result = [parts[0]]
+        open_spans = 0
+
+        for part in parts[1:]:
+            if ";" in part or "m" in part:
+                # Extract code and match text payload boundary
+                code_match = re.match(r"^([0-9;]+)m", part)
+                if code_match:
+                    codes = code_match.group(1).split(";")
+                    text_content = part[len(code_match.group(0)):]
+
+                    # Code 0 resets formatting
+                    if "0" in codes:
+                        result.append("</span>" * open_spans)
+                        open_spans = 0
+
+                    styles = [ansi_map[c] for c in codes if c in ansi_map]
+                    if styles:
+                        result.append(f"<span style='{'; '.join(styles)}'>")
+                        open_spans += 1
+
+                    result.append(text_content)
+                    continue
+            result.append("\u001b[" + part)
+
+        result.append("</span>" * open_spans)
+        return "".join(result)
+
+    @classmethod
+    def format_markdown(cls, text: str) -> str:
+        """Parses Discord markdown, code blocks, headers, and interactive mentions."""
+        text = html.escape(text)
+
+        # 1. Multi-line & Inline Code Blocks (Keep your existing code here)
+        def code_block_sub(match):
+            lang = match.group(1) or ""
+            code_content = match.group(2)
+            if lang.strip().lower() == "ansi":
+                code_content = cls.parse_ansi(code_content)
+            return f'<pre style="background: #202225; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; margin-top: 6px;">{code_content}</pre>'
+
+        text = re.sub(r"```(\w*)\n([\s\S]*?)\n```", code_block_sub, text)
+        text = re.sub(r"`([^`\n]+)`",
+                      r'<code style="background: #202225; padding: 2px 4px; border-radius: 3px; font-family: monospace;">\1</code>',
+                      text)
+
+        # 2. FIXED: Discord Headers & Small Text Parsing (Run before bold/italics)
+        text = re.sub(r"^###\s+([\s\S]+?)$",
+                      r'<h3 style="color: #fff; margin: 8px 0 4px 0; font-size: 1.15em;">\1</h3>', text,
+                      flags=re.MULTILINE)
+        text = re.sub(r"^##\s+([\s\S]+?)$", r'<h2 style="color: #fff; margin: 12px 0 6px 0; font-size: 1.4em;">\1</h2>',
+                      text, flags=re.MULTILINE)
+        text = re.sub(r"^#\s+([\s\S]+?)$", r'<h1 style="color: #fff; margin: 16px 0 8px 0; font-size: 1.75em;">\1</h1>',
+                      text, flags=re.MULTILINE)
+        text = re.sub(r"^-#\s+([\s\S]+?)$",
+                      r'<span style="font-size: 0.82em; color: #72767d; display: block; margin: 2px 0;">\1</span>',
+                      text, flags=re.MULTILINE)
+
+        text = re.sub(r"\*\*([\s\S]+?)\*\*", r"<strong>\1</strong>", text)
+        text = re.sub(r"\*([\s\S]+?)\*", r"<em>\1</em>", text)
+        text = re.sub(r"__([\s\S]+?)__", r"<u>\1</u>", text)
+
+        # 5. Block Quotes
+        text = re.sub(r"^&gt;\s([\s\S]+?)$",
+                      r'<blockquote style="border-left: 4px solid #4f545c; padding-left: 8px; margin: 4px 0; color: #b9bbbe;">\1</blockquote>',
+                      text, flags=re.MULTILINE)
+
+        return text.replace("\n", "<br>")
+
+    async def export(self, ticket: dict, transcript: dict):
+        messages = transcript.get("messages", [])
+        events = transcript.get("events", [])
+
+        raw_created = ticket.get("created_at")
+        raw_closed = ticket.get("closed_at")
+
+        if isinstance(raw_created, (int, float)):
+            created_at = datetime.datetime.fromtimestamp(raw_created, datetime.timezone.utc).replace(tzinfo=None)
+        elif isinstance(raw_created, str):
+            try:
+                created_at = datetime.datetime.strptime(raw_created.split(".")[0], "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                created_at = datetime.datetime.now()
+        elif isinstance(raw_created, datetime.datetime):
+            created_at = raw_created.replace(tzinfo=None)
+        else:
+            created_at = datetime.datetime.now()
+
+        if isinstance(raw_closed, (int, float)):
+            closed_at = datetime.datetime.fromtimestamp(raw_closed, datetime.timezone.utc).replace(tzinfo=None)
+        elif isinstance(raw_closed, str):
+            try:
+                closed_at = datetime.datetime.strptime(raw_closed.split(".")[0], "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                closed_at = None
+        elif isinstance(raw_closed, datetime.datetime):
+            closed_at = raw_closed.replace(tzinfo=None)
+        else:
+            closed_at = None
+
+        duration = None
+        if closed_at:
+            duration = (closed_at - created_at).total_seconds()
+
+
+        exported = {
+            "ticket": {
+                "id": ticket["_id"],
+                "guild_id": ticket["guild_id"],
+                "thread_id": ticket["thread_id"],
+                "thread_name": ticket["thread_name"],
+                "creator_id": ticket["creator_id"],
+                "type": ticket["type"],
+                "status": ticket["status"],
+                "claimed_by": ticket["claimed_by"],
+                "created_at": created_at,
+                "closed_by": ticket["closed_by"],
+                "closed_at": closed_at,
+                "open_duration": duration,
+                "closing": ticket["closing"],
+                "allowed_users": ticket["allowed_users"]
+            },
+            "statistics": ticket["statistics"],
+            "messages": messages,
+            "events": events,
+            "exported_at": datetime.datetime.now(datetime.timezone.utc)
+        }
+
+        return exported
+
+    async def to_html(self, exported_data: dict) -> str:
+        ticket_info = exported_data["ticket"]
+        messages = exported_data["messages"]
+
+        guild_id = ticket_info.get("guild_id") or TRI_Archive
+        guild = self.bot.get_guild(guild_id)
+
+        async def resolve_mentions(text: str) -> str:
+            if not text:
+                return ""
+
+            # Users
+            for match in re.finditer(r"&lt;@!?(\d+)&gt;", text):
+                u_id = match.group(1)
+                u_id_int = int(u_id)
+                user_obj = guild.get_member(u_id_int) if guild else None
+                if not user_obj:
+                    try:
+                        user_obj = await guild.fetch_member(u_id_int) if guild else None
+                    except discord.HTTPException:
+                        pass
+                if not user_obj:
+                    user_obj = self.bot.get_user(u_id_int)
+                    if not user_obj:
+                        try:
+                            user_obj = await self.bot.fetch_user(u_id_int)
+                        except discord.HTTPException:
+                            pass
+
+                display_name = user_obj.display_name if user_obj else f"User ({u_id})"
+                safe_html = f'<span class="mention-user">@{html.escape(display_name)}</span>'
+                text = text.replace(match.group(0), safe_html)
+
+            # Roles
+            for match in re.finditer(r"&lt;@&amp;(\d+)&gt;", text):
+                r_id = match.group(1)
+                r_id_int = int(r_id)
+                role_obj = guild.get_role(r_id_int) if guild else None
+                if not role_obj:
+                    for g in self.bot.guilds:
+                        role_obj = g.get_role(r_id_int)
+                        if role_obj: break
+                role_name = role_obj.name if role_obj else f"Deleted Role"
+                safe_html = f'<span class="mention-role">@{html.escape(role_name)}</span>'
+                text = text.replace(match.group(0), safe_html)
+
+            # Channels
+            for match in re.finditer(r"&lt;#(\d+)&gt;", text):
+                c_id = match.group(1)
+                c_id_int = int(c_id)
+                chan_obj = self.bot.get_channel(c_id_int)
+                if not chan_obj:
+                    try:
+                        chan_obj = await self.bot.fetch_channel(c_id_int)
+                    except discord.HTTPException:
+                        pass
+                chan_name = chan_obj.name if chan_obj else "deleted-channel"
+                safe_html = f'<span class="mention-channel">#{html.escape(chan_name)}</span>'
+                text = text.replace(match.group(0), safe_html)
+
+            return text
+
+        def process_discord_elements(text: str) -> str:
+            if not text:
+                return ""
+
+            # Emojis
+            emoji_pattern = r"(?:<|&lt;)(a?):([a-zA-Z0-9_]+):(\d+)(?:>|&gt;)"
+
+            def emoji_replacer(match):
+                is_animated = bool(match.group(1))
+                name = match.group(2)
+                emoji_id = match.group(3)
+                ext = "gif" if is_animated else "png"
+                url = f"https://cdn.discordapp.com/emojis/{emoji_id}.{ext}"
+                return f'<img class="discord-emoji" src="{url}" alt=":{name}:" title=":{name}:" style="height: 1.375em; vertical-align: bottom; margin: 0 1px;">'
+
+            text = re.sub(emoji_pattern, emoji_replacer, text)
+
+            # Timestamps
+            timestamp_pattern = r"(?:<|&lt;)t:(-?\d+)(?::([tTdDfFR]))?(?:>|&gt;)"
+
+            def timestamp_replacer(match):
+                epoch = int(match.group(1))
+                flag = match.group(2) or "f"
+                dt = datetime.datetime.fromtimestamp(epoch, datetime.timezone.utc)
+
+                if flag == "t":
+                    display_str = dt.strftime("%I:%M %p")
+                elif flag == "T":
+                    display_str = dt.strftime("%I:%M:%S %p")
+                elif flag == "d":
+                    display_str = dt.strftime("%d/%m/%Y")
+                elif flag == "D":
+                    display_str = dt.strftime("%d %B %Y")
+                elif flag == "F":
+                    display_str = dt.strftime("%A, %d %B %Y %I:%M %p")
+                elif flag == "R":
+                    display_str = dt.strftime("%b %d, %Y %I:%M %p")
+                else:
+                    display_str = dt.strftime("%d %B %Y %I:%M %p")
+
+                return f'<time class="discord-timestamp" datetime="{dt.isoformat()}" data-epoch="{epoch}" data-flag="{flag}">{display_str}</time>'
+
+            return re.sub(timestamp_pattern, timestamp_replacer, text)
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Transcript - Ticket #{ticket_info['id']}</title>
+            <style>
+                body {{ font-family: sans-serif; background: #36393f; color: #dcddde; padding: 20px; }}
+                .ticket-header {{ border-bottom: 1px solid #4f545c; padding-bottom: 10px; margin-bottom: 20px; }}
+
+                /* Layout structural updates */
+                .message-wrapper {{ display: flex; margin-bottom: 15px; padding: 5px; padding-left: 10px; }}
+                .avatar-container {{ margin-right: 12px; }}
+                .avatar {{ width: 40px; height: 40px; border-radius: 50%; background: #2f3136; }}
+                .message-body {{ flex: 1; }}
+
+                .author {{ font-weight: bold; color: #fff; margin-right: 8px; }}
+                .timestamp {{ font-size: 0.8em; color: #72767d; }}
+                .content {{ margin-top: 4px; word-break: break-word; }}
+
+                /* Styling to simulate real Discord mentions */
+                .mention-user, .mention-role, .mention-channel {{
+                    background: rgba(88, 101, 242, 0.3);
+                    color: #dee0fc;
+                    padding: 0 4px;
+                    border-radius: 3px;
+                    font-weight: 500;
+                    font-family: inherit;
+                }}
+                .mention-user:hover, .mention-role:hover, .mention-channel:hover {{
+                    background: #5865f2;
+                    color: #fff;
+                    cursor: pointer;
+                }}
+                
+                /* Requested Element Formatting */
+                .deleted {{ color: #f04747; background: rgba(240, 71, 71, 0.1); padding: 2px 5px; border-radius: 3px; }}
+                .edited-tag {{ font-size: 0.75em; color: #72767d; margin-left: 4px; }}
+                .edit-history {{ font-size: 0.8em; color: #b9bbbe; margin-top: 4px; font-style: italic; background: #2f3136; padding: 4px 8px; border-radius: 4px; display: inline-block; }}
+
+                /* Attachments */
+                .attachment-img {{ max-width: 400px; max-height: 300px; border-radius: 4px; margin-top: 8px; display: block; }}
+
+                /* Rich Embed Layouts */
+                .embed-block {{ background: #2f3136; border-left: 4px solid #1e1f22; border-radius: 4px; padding: 12px; margin-top: 8px; max-width: 520px; display: flex; flex-direction: column; gap: 6px; }}
+                .embed-flex-wrapper {{ display: flex; justify-content: space-between; gap: 10px; }}
+                .embed-content {{ flex: 1; }}
+                .embed-title {{ font-weight: bold; color: #fff; font-size: 1em; margin-bottom: 4px; }}
+                .embed-description {{ font-size: 0.9em; color: #dcddde; white-space: normal; word-break: break-word;}}
+                .embed-thumbnail {{ width: 80px; height: 80px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }}
+                .embed-image {{ max-width: 100%; border-radius: 4px; margin-top: 6px; }}
+                .embed-footer {{ font-size: 0.75em; color: #72767d; margin-top: 4px; }}
+            </style>
+        </head>
+        <body>
+            <div class="ticket-header">
+                <h1>Ticket #{ticket_info['id']} ({html.escape(ticket_info['thread_name'])})</h1>
+                <p>Creator ID: {ticket_info['creator_id']} | Type: {ticket_info['type']}</p>
+            </div>
+            <div class="messages">
+        """
+        for msg in messages:
+            author_data = msg.get("author", {})
+            author_name = author_data.get("display_name", "Unknown User")
+            avatar_base64 = author_data.get("avatar_base64")
+            avatar_src = f"data:image/png;base64,{avatar_base64}" if avatar_base64 else "https://discord.com/assets/c09a43a372ba40e301147888bbd1d325.png"
+
+            is_deleted = msg.get("is_deleted", False)
+            content_class = "content deleted" if is_deleted else "content"
+
+            raw_content = msg.get("content", "")
+            content_text = TranscriptExporter.format_markdown(raw_content)
+            content_text = await resolve_mentions(content_text)
+            content_text = process_discord_elements(content_text)
+
+            if is_deleted:
+                content_text += " (deleted)"
+
+            raw_msg_time = msg.get('created_at', '')
+            if isinstance(raw_msg_time, datetime.datetime):
+                msg_timestamp_str = raw_msg_time.strftime("%d %b %Y %I:%M %p")
+            elif isinstance(raw_msg_time, (int, float)):
+                msg_timestamp_str = datetime.datetime.fromtimestamp(raw_msg_time, datetime.timezone.utc).strftime(
+                    "%d %b %Y %I:%M %p")
+            else:
+                msg_timestamp_str = str(raw_msg_time).split(".")[0]
+
+            html_content += f"""
+                            <div class="message-wrapper">
+                                <div class="avatar-container">
+                                    <img class="avatar" src="{avatar_src}" alt="Avatar">
+                                </div>
+                                <div class="message-body">
+                                    <span class="author">{html.escape(author_name)}</span> 
+                                    <span class="timestamp">{msg_timestamp_str}</span>
+                        """
+            edited_tag = '<span class="edited-tag">(edited)</span>' if msg.get("edited_at") else ''
+            html_content += f'<div class="{content_class}">{content_text}{edited_tag}</div>'
+            edit_history = msg.get("edit_history", [])
+            if edit_history and not is_deleted:
+                html_content += '<div class="edit-history-container">'
+                for old_version in edit_history:
+                    old_content = html.escape(old_version.get("content", ""))
+                    html_content += f'<div class="edit-history">Before edit: "{old_content}"</div><br>'
+                html_content += '</div>'
+
+            for attach in msg.get("attachments", []):
+                content_type = attach.get("content_type", "")
+                is_video = attach.get("is_video", False)
+                channel_id = attach.get("archive_channel")
+                message_id = attach.get("archive_message")
+                target_filename = attach.get("filename")
+
+                url = None
+
+                if channel_id and message_id:
+                    try:
+                        target_channel = self.bot.get_channel(channel_id) or await self.bot.fetch_channel(
+                            channel_id)
+                        if target_channel:
+                            live_msg = await target_channel.fetch_message(message_id)
+
+                            for live_attach in live_msg.attachments:
+                                if live_attach.filename == target_filename:
+                                    url = live_attach.url
+                                    if not content_type or content_type == "application/octet-stream":
+                                        content_type = live_attach.content_type or ""
+                                    break
+
+                            if not url and live_msg.attachments:
+                                url = live_msg.attachments[0].url
+                                if not content_type or content_type == "application/octet-stream":
+                                    content_type = live_msg.attachments[0].content_type or ""
+                    except Exception as e:
+                        print(f"Could not fetch live attachment link: {e}")
+
+                if not url:
+                    continue
+
+                if "media.discordapp.net" in url:
+                    url = url.replace("media.discordapp.net", "cdn.discordapp.com")
+
+                filename_lower = target_filename.lower() if target_filename else ""
+                if not is_video:
+                    is_video = content_type.startswith("video/") or filename_lower.endswith(
+                        ('.mp4', '.webm', '.mov', '.mkv', '.3gp'))
+
+                if is_video:
+                    if not content_type.startswith("video/") or content_type == "application/octet-stream":
+                        if filename_lower.endswith('.webm'):
+                            content_type = "video/webm"
+                        elif filename_lower.endswith('.mov'):
+                            content_type = "video/quicktime"
+                        else:
+                            content_type = "video/mp4"
+                    html_content += f"""
+                                            <div class="video-container" style="margin-top: 10px; margin-bottom: 10px;">
+                                                <video class="attachment-video" controls preload="auto" crossorigin="anonymous" style="max-width: 500px; width: 100%; border-radius: 6px; background: #202225; display: block; border: 1px solid #2f3136;">
+                                                    <source src="{url}" type="{content_type}">
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                                <span style="font-size: 0.75em; color: #72767d; display: block; margin-top: 4px; font-family: monospace;">
+                                                    🎥 <a href="{url}" style="color: #7289da; text-decoration: none;" target="_blank">Download {html.escape(target_filename)}</a>
+                                                </span>
+                                            </div>
+                                            """
+                elif content_type.startswith("image/"):
+                    html_content += f'<img class="attachment-img" src="{url}" alt="Attachment Image" style="max-width: 400px; max-height: 300px; border-radius: 4px; margin-top: 8px; display: block;">'
+
+            embeds = msg.get("embeds", [])
+            if embeds:
+                html_content += '<div class="message-embeds-container" style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">'
+                for embed in embeds:
+                    if embed.get("type") in ["image", "link"] and not embed.get("title") and not embed.get(
+                            "description"):
+                        continue
+                    color_hex = f"#{embed.get('color', 0):06x}" if embed.get('color') else "#1e1f22"
+                    title = embed.get("title", "")
+
+                    raw_description = embed.get("description", "")
+                    description = TranscriptExporter.format_markdown(raw_description) if raw_description else ""
+                    description = await resolve_mentions(description)
+                    description = process_discord_elements(description)
+
+                    thumbnail = embed.get("thumbnail", {}).get("url", "")
+                    image = embed.get("image", {}).get("url", "")
+                    footer_data = embed.get("footer", {})
+                    footer_text = footer_data.get("text", "")
+                    footer_icon = footer_data.get("icon_url", "")
+
+                    html_content += f"""
+                                    <div class="embed-block" style="border-left-color: {color_hex}; margin-top: 0;">
+                                        <div class="embed-flex-wrapper">
+                                            <div class="embed-content">
+                                    """
+                    if title:
+                        html_content += f'<div class="embed-title">{html.escape(title)}</div>'
+                    if description:
+                        html_content += f'<div class="embed-description">{description}</div>'
+                    fields = embed.get("fields", [])
+                    if fields:
+                        html_content += '<div class="embed-fields">'
+                        for field in fields:
+                            f_name = html.escape(field.get("name", ""))
+
+                            # Process field formatting, mentions, and timestamps safely
+                            raw_f_val = field.get("value", "")
+                            f_val = TranscriptExporter.format_markdown(raw_f_val) if raw_f_val else ""
+                            f_val = await resolve_mentions(f_val)
+                            f_val = process_discord_elements(f_val)
+
+                            inline_style = "display: inline-block; width: 30%;" if field.get(
+                                "inline") else "width: 100%;"
+                            html_content += f"""
+                                            <div class="embed-field" style="{inline_style}">
+                                                <div class="embed-field-name">{f_name}</div>
+                                                <div class="embed-field-value">{f_val}</div>
+                                            </div>
+                                            """
+                        html_content += '</div>'
+
+                    html_content += '</div>'
+                    if thumbnail:
+                        html_content += f'<img class="embed-thumbnail" src="{thumbnail}" alt="Thumbnail">'
+                    html_content += '</div>'
+                    if image:
+                        html_content += f'<img class="embed-image" src="{image}" alt="Embed Image">'
+                    if footer_text:
+                        html_content += '<div class="embed-footer" style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">'
+                        if footer_icon:
+                            html_content += f'<img src="{footer_icon}" alt="Footer Icon" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">'
+                        html_content += f'<span style="font-size: 0.75em; color: #72767d;">{html.escape(footer_text)}</span>'
+                        html_content += '</div>'
+                    html_content += '</div>'
+                html_content += '</div>'
+            html_content += """
+                    </div>
+                </div>
+            """
+        html_content += "</div></body></html>"
+        return html_content
+
+
+# transcript
+
+class TranscriptManager:
+
+    def __init__(self, transcripts, archive):
+        self.transcripts = transcripts
+        self.archive = archive
+
+    def _now(self):
+        return datetime.datetime.now(datetime.timezone.utc)
+
+    async def _author(self, user):
+        avatar_base64 = None
+        try:
+            avatar = user.display_avatar.with_size(64)
+            avatar_bytes = await avatar.read()
+            avatar_base64 = base64.b64encode(avatar_bytes).decode("utf-8")
+        except Exception as e:
+            print(e)
+        return {
+            "id": user.id,
+            "username": user.name,
+            "display_name": user.display_name,
+            "bot": user.bot,
+            "avatar_base64": avatar_base64
+        }
+
+    async def _attachments(self, message):
+        attachments = []
+
+        for attachment in message.attachments:
+            uploaded = await self.archive.upload_attachment(attachment)
+            if uploaded is None:
+                continue
+
+            content_type = uploaded.get("content_type") or attachment.content_type or ""
+            filename_lower = attachment.filename.lower()
+
+            is_video = content_type.startswith("video/") or filename_lower.endswith(
+                ('.mp4', '.webm', '.mov', '.mkv', '.3gp'))
+
+            if is_video and not content_type.startswith("video/"):
+                if filename_lower.endswith('.webm'):
+                    content_type = "video/webm"
+                elif filename_lower.endswith('.mov'):
+                    content_type = "video/quicktime"
+                else:
+                    content_type = "video/mp4"
+
+            attachments.append({
+                "filename": attachment.filename,
+                "content_type": content_type,
+                "size": attachment.size,
+                "archive_channel": uploaded["channel_id"],
+                "archive_message": uploaded["message_id"],
+                "is_video": is_video
+            })
+        return attachments
+
+    async def _message(self, message):
+        return {
+            "message_id": message.id,
+            "channel_id": message.channel.id,
+            "message_type": message.type.name,
+            "system": message.is_system(),
+            "author": await self._author(message.author),
+            "content": message.content,
+            "reference": (
+                message.reference.message_id
+                if message.reference and message.reference.message_id
+                else None
+            ),
+            "mentions": {
+                "users": message.raw_mentions,
+                "roles": message.raw_role_mentions,
+                "channels": message.raw_channel_mentions,
+            },
+            "stickers": [{"id": s.id, "name": s.name} for s in message.stickers],
+            "created_at": message.created_at,
+            "edited_at": None,
+            "deleted_at": None,
+            "is_deleted": False,
+            "edit_history": [],
+            "attachments": await self._attachments(message),
+            "embeds": [embed.to_dict() for embed in message.embeds]
+        }
+
+    async def create(self, ticket_id: int):
+        await asyncio.to_thread(
+            self.transcripts.update_one,
+            {"_id": ticket_id},
+            {
+                "$setOnInsert": {
+                    "messages": [],
+                    "events": [],
+                    "created_at": self._now(),
+                    "closed": False,
+                    "closed_at": None
+                }
+            },
+            upsert=True
+        )
+
+    async def get(self, ticket_id: int):
+        return await asyncio.to_thread(self.transcripts.find_one, {"_id": ticket_id})
+
+    async def add_message(self, ticket_id: int, message):
+        message_data = await self._message(message)
+        await asyncio.to_thread(
+            self.transcripts.update_one,
+            {"_id": ticket_id},
+            {"$push": {"messages": message_data}}
+        )
+
+    async def edit_message(self, ticket_id: int, before, after):
+        now = self._now()
+        update_payload = {
+            "$set": {
+                "messages.$[m].content": after.content,
+                "messages.$[m].edited_at": now,
+                "messages.$[m].embeds": [embed.to_dict() for embed in after.embeds]
+            }
+        }
+        if not before.author.bot:
+            author_data = await self._author(before.author)
+            update_payload["$push"] = {
+                "messages.$[m].edit_history": {
+                    "content": before.content,
+                    "edited_at": now
+                },
+                "events": {
+                    "type": "message_edit",
+                    "message_id": before.id,
+                    "author": author_data,
+                    "timestamp": now
+                }
+            }
+
+        await asyncio.to_thread(
+            self.transcripts.update_one,
+            {"_id": ticket_id},
+            update_payload,
+            array_filters=[{"m.message_id": before.id}]
+        )
+
+
+    async def delete_message(self, ticket_id: int, message):
+        now = self._now()
+        author_data = await self._author(message.author)
+
+        await asyncio.to_thread(
+            self.transcripts.update_one,
+            {"_id": ticket_id},
+            {
+                "$set": {
+                    "messages.$[m].is_deleted": True,
+                    "messages.$[m].deleted_at": now
+                },
+                "$push": {
+                    "events": {
+                        "type": "message_delete",
+                        "message_id": message.id,
+                        "author": author_data,
+                        "timestamp": now
+                    }
+                }
+            },
+            array_filters=[{"m.message_id": message.id}]
+        )
+
+    async def add_event(self, ticket_id: int, event: dict):
+        await asyncio.to_thread(
+            self.transcripts.update_one,
+            {"_id": ticket_id},
+            {"$push": {"events": event}}
+        )
+
+    async def finalise(self, ticket_id: int):
+        now = self._now()
+
+        await asyncio.to_thread(
+            self.transcripts.update_one,
+            {"_id": ticket_id},
+            {
+                "$set": {
+                    "closed": True,
+                    "closed_at": now
+                },
+                "$push": {
+                    "events": {
+                        "type": "ticket_closed",
+                        "timestamp": now
+                    }
+                }
+            }
+        )
+        return await self.get(ticket_id)
+
+    async def reopen(self, ticket_id: int):
+        now = self._now()
+
+        await asyncio.to_thread(
+            self.transcripts.update_one,
+            {"_id": ticket_id},
+            {
+                "$set": {
+                    "closed": False,
+                    "closed_at": None
+                },
+                "$push": {
+                    "events": {
+                        "type": "ticket_reopened",
+                        "timestamp": now
+                    }
+                }
+            }
+        )
+
+# uploader
+
+class ArchiveUploader:
+
+    def __init__(self, bot, json_channel: int, attachment_channel: int):
+        self.bot = bot
+        self.json_channel = json_channel
+        self.attachment_channel = attachment_channel
+
+        self.attachment_cache = {}
+        self.avatar_cache = {}
+
+    def json_channel_obj(self):
+        return self.bot.get_channel(self.json_channel)
+
+    def attachment_channel_obj(self):
+        return self.bot.get_channel(self.attachment_channel)
+
+    async def upload_json(self, ticket_id: int, transcript: dict):
+        channel = self.json_channel_obj()
+        if channel is None:
+            return None
+
+        buffer = io.BytesIO(
+            json.dumps(
+                transcript,
+                indent=4,
+                default=str
+            ).encode("utf-8")
+        )
+
+        file = discord.File(
+            buffer,
+            filename=f"ticket_{ticket_id}.json"
+        )
+
+        message = await channel.send(
+            content=f"Ticket #{ticket_id}",
+            file=file
+        )
+
+        return {
+            "json_channel": channel.id,
+            "json_message": message.id,
+            "uploaded_at": datetime.datetime.now(datetime.timezone.utc)
+        }
+
+    async def upload_attachment(self, attachment):
+        cached = self.attachment_cache.get(attachment.id)
+        if cached:
+            return cached
+
+        channel = self.attachment_channel_obj()
+        if channel is None:
+            return None
+
+        try:
+            file = await attachment.to_file()
+            message = await channel.send(file=file)
+            uploaded = message.attachments[0]
+
+            result = {
+                "filename": uploaded.filename,
+                "url": uploaded.url,
+                "content_type": attachment.content_type,  # Ensure content_type is captured
+                "message_id": message.id,
+                "channel_id": channel.id
+            }
+            self.attachment_cache[attachment.id] = result
+            return result
+        except Exception as e:
+            print(f"UPLOAD FAILED: {attachment.filename}")
+            print(type(e), e)
+            raise
+
+    async def upload_avatar(self, user):
+        cached = self.avatar_cache.get(user.id)
+        if cached:
+            return cached
+
+        channel = self.attachment_channel_obj()
+        if channel is None:
+            return None
+
+        try:
+            file = await user.display_avatar.to_file()
+            message = await channel.send(file=file)
+            uploaded = message.attachments[0]
+
+            result = {
+                "url": uploaded.url,
+                "message_id": message.id,
+                "channel_id": channel.id
+            }
+            self.avatar_cache[user.id] = result
+            return result
+        except discord.HTTPException:
+            return None
+
+    async def upload_html(self, ticket_id: int, html_string: str):
+        channel = self.attachment_channel_obj()
+        if channel is None:
+            return None
+
+        buffer = io.BytesIO(html_string.encode("utf-8"))
+        file = discord.File(buffer, filename=f"ticket_{ticket_id}.html")
+        message = await channel.send(file=file)
+        uploaded = message.attachments[0]
+
+        return {
+            "url": uploaded.url,
+            "message_id": message.id,
+            "channel_id": channel.id
+        }
+
+# ticket
+
+class Ticket:
+
+    def __init__(self, manager, data: dict):
+        self.manager = manager
+        self.data = data
+
+        self.data.setdefault("statistics", {
+            "messages": 0,
+            "attachments": 0,
+            "edits": 0,
+            "deletions": 0
+        })
+
+    @property
+    def id(self):
+        return self.data["_id"]
+
+    @property
+    def guild_id(self):
+        return self.data["guild_id"]
+
+    @property
+    def thread_id(self):
+        return self.data["thread_id"]
+
+    @property
+    def thread_name(self):
+        return self.data["thread_name"]
+
+    @property
+    def creator_id(self):
+        return self.data["creator_id"]
+
+    @property
+    def status(self):
+        return self.data["status"]
+
+    @property
+    def claimed_by(self):
+        return self.data["claimed_by"]
+
+    @property
+    def allowed_users(self):
+        return self.data["allowed_users"]
+
+    @property
+    def closing(self):
+        return self.data["closing"]
+
+    async def save(self):
+        self.data["last_updated"] = datetime.datetime.now(datetime.timezone.utc)
+        if inspect.iscoroutinefunction(self.manager.save):
+            await self.manager.save(self)
+        else:
+            await asyncio.to_thread(self.manager.save, self)
+
+    async def log_message(self, message):
+        await self.manager.transcript.add_message(self.id, message)
+        self.data["statistics"]["messages"] += 1
+        self.data["statistics"]["attachments"] += len(message.attachments)
+        await self.save()
+
+    async def edit_message(self, before, after):
+        await self.manager.transcript.edit_message(self.id, before, after)
+        self.data["statistics"]["edits"] += 1
+        await self.save()
+
+    async def delete_message(self, message):
+        await self.manager.transcript.delete_message(self.id, message)
+        self.data["statistics"]["deletions"] += 1
+        await self.save()
+
+    async def claim(self, user_id: int):
+        if user_id not in self.data["claimed_by"]:
+            self.data["claimed_by"].append(user_id)
+            await self.save()
+
+    async def unclaim(self, user_id: int):
+        if user_id in self.data["claimed_by"]:
+            self.data["claimed_by"].remove(user_id)
+            await self.save()
+
+    def add_user(self, user_id: int):
+        if user_id not in self.data["allowed_users"]:
+            self.data["allowed_users"].append(user_id)
+
+    def remove_user(self, user_id: int):
+        if user_id in self.data["allowed_users"]:
+            self.data["allowed_users"].remove(user_id)
+
+    async def close(self, closed_by: int, closing: str):
+        await self.manager.close(self, closed_by, closing)
+
+    async def reopen(self):
+        await self.manager.reopen(self)
+
+# manager
+
+class TicketManager:
+
+    def __init__(self, bot, tickets, transcripts, json_channel: int, attachment_channel: int,
+                 counters_collection):
+        self.bot = bot
+        self.tickets = tickets
+        self.transcripts = transcripts
+        self.counters = counters_collection
+        self.archive = ArchiveUploader(bot, json_channel, attachment_channel)
+        self.transcript = TranscriptManager(transcripts, self.archive)
+        self.exporter = TranscriptExporter(bot=self.bot)
+
+    async def _get_next_ticket_id(self) -> int:
+
+        def db_op():
+            result = self.counters.find_one_and_update(
+                {"_id": "ticket_id"},
+                {"$inc": {"seq": 1}},
+                upsert=True,
+                return_document=True
+            )
+            return result["seq"]
+
+        return await asyncio.to_thread(db_op)
+
+    async def create(self, thread: discord.Thread, creator: discord.Member, ticket_type: str):
+        def count_open():
+            return self.tickets.count_documents({
+                "creator_id": creator.id,
+                "status": "open"
+            })
+
+        open_count = await asyncio.to_thread(count_open)
+        if open_count >= 2:
+            raise ValueError("You have reached the maximum limit of 2 active tickets.")
+
+        ticket_id = await self._get_next_ticket_id()
+        now = datetime.datetime.now(datetime.timezone.utc)
+
+        document = {
+            "_id": ticket_id,
+            "guild_id": thread.guild.id,
+            "thread_id": thread.id,
+            "thread_name": thread.name,
+            "type": ticket_type,
+            "creator_id": creator.id,
+            "claimed_by": [],
+            "credited_users": [],
+            "created_at": now,
+            "closed_by": None,
+            "closed_at": None,
+            "closing": None,
+            "status": "open",
+            "allowed_users": [creator.id],
+            "archive": {
+                "json_channel": None,
+                "json_message": None
+            },
+            "statistics": {
+                "messages": 0,
+                "attachments": 0,
+                "edits": 0,
+                "deletions": 0
+            },
+            "last_updated": now
+        }
+
+        await asyncio.to_thread(self.tickets.insert_one, document)
+        await self.transcript.create(ticket_id)
+        return Ticket(self, document)
+
+    async def from_thread(self, thread_id: int):
+        document = await asyncio.to_thread(self.tickets.find_one, {"thread_id": thread_id})
+        if document is None:
+            return None
+        return Ticket(self, document)
+
+    async def from_ticket(self, ticket_id: int):
+        document = await asyncio.to_thread(self.tickets.find_one, {"_id": ticket_id})
+        if document is None:
+            return None
+        return Ticket(self, document)
+
+    async def save(self, ticket):
+        await asyncio.to_thread(
+            self.tickets.replace_one,
+            {"_id": ticket.id},
+            ticket.data
+        )
+
+    async def close(self, ticket, closed_by: int, closing: str):
+        ticket.data["status"] = "closed"
+        ticket.data["closed_by"] = closed_by
+        ticket.data["closed_at"] = datetime.datetime.now(datetime.timezone.utc)
+        ticket.data["closing"] = closing
+
+        await self.transcript.finalise(ticket.id)
+        fresh_transcript = await self.transcript.get(ticket.id)
+        exported = await self.exporter.export(ticket.data, fresh_transcript)
+
+        json_archive = await self.archive.upload_json(ticket.id, exported)
+        if json_archive:
+            ticket.data["archive"] = json_archive
+
+        html_str = await self.exporter.to_html(exported)
+        html_archive = await self.archive.upload_html(ticket.id, html_str)
+        if html_archive:
+            ticket.data["html_url"] = html_archive["url"]
+
+        embed = discord.Embed(
+            title=f"Ticket #{ticket.id} Closed",
+            color=0xffffff,
+            timestamp=datetime.datetime.now(datetime.timezone.utc)
+        )
+        if ticket.data.get("created_at"):
+            created_val = ticket.data["created_at"]
+            if isinstance(created_val, datetime.datetime):
+                if created_val.tzinfo is None:
+                    created_val = created_val.replace(tzinfo=datetime.timezone.utc)
+                created_unix = int(created_val.timestamp())
+            else:
+                created_unix = int(created_val)
+            created_str = f"<t:{created_unix}:F> (<t:{created_unix}:R>)"
+        else:
+            created_str = "Unknown"
+
+        closed_unix = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        closed_str = f"<t:{closed_unix}:F> (<t:{closed_unix}:R>)"
+
+        embed.add_field(name="type", value=ticket.data["type"], inline=True)
+        embed.add_field(name="created at", value=created_str, inline=True)
+
+        claims = "None"
+        try:
+            global ticket_claims
+            # Reach into the permanent ticket_claims db since it survives reopens now
+            claims_doc = await asyncio.to_thread(ticket_claims.find_one, {"_id": ticket.thread_id})
+            if claims_doc and claims_doc.get("claimed_by"):
+                legacy_claims = claims_doc["claimed_by"]
+                if isinstance(legacy_claims, list) and len(legacy_claims) > 0:
+                    claims = " ".join([f"<@{u_id}>" for u_id in legacy_claims])
+                    # Sync it back into the main ticket data
+                    ticket.data["claimed_by"] = legacy_claims
+                    await self.save(ticket)
+        except Exception as e:
+            print(f"Fallback check failed: {e}")
+
+        # Safety net in case the db fetch fails
+        if claims == "None":
+            raw_claims = ticket.data.get("claimed_by", [])
+            if isinstance(raw_claims, list) and len(raw_claims) > 0:
+                claims = " ".join([f"<@{u_id}>" for u_id in raw_claims])
+
+        embed.add_field(name="claimed by", value=claims, inline=True)
+        embed.add_field(name="closed by", value=f"<@{closed_by}>", inline=True)
+        embed.add_field(name="closed at", value=closed_str, inline=True)
+
+        raw_duration = exported["ticket"].get("open_duration")
+        if raw_duration is not None:
+            seconds = int(raw_duration)
+            days = seconds // 86400
+            seconds %= 86400
+            hours = seconds // 3600
+            seconds %= 3600
+            minutes = seconds // 60
+            seconds %= 60
+            duration_parts = []
+            if days > 0:
+                duration_parts.append(f"{days}d")
+            if hours > 0 or days > 0:
+                duration_parts.append(f"{hours}h")
+            if minutes > 0 or hours > 0 or days > 0:
+                duration_parts.append(f"{minutes}m")
+            duration_value = " ".join(duration_parts)
+        else:
+            duration_value = "N/A"
+
+        embed.add_field(name="duration", value=duration_value, inline=True)
+        embed.add_field(name="closing", value=closing, inline=False)
+
+        view = TranscriptView(ticket.data)
+
+        transcript_channel = self.bot.get_channel(TRANSCRIPT_CHANNEL)
+        if transcript_channel:
+            msg = await transcript_channel.send(embed=embed, view=view)
+            ticket.data["summary_message_id"] = msg.id
+        try:
+            creator = self.bot.get_user(ticket.creator_id) or await self.bot.fetch_user(ticket.creator_id)
+            if creator:
+                view = TranscriptDMView(ticket.data)
+                dm_msg = await creator.send(embed=embed, view=view)
+                ticket.data["dm_message_id"] = dm_msg.id
+        except discord.HTTPException:
+            print(f"Could not DM transcript summary to user {ticket.creator_id}")
+            ticket.data["dm_message_id"] = None
+        await self.save(ticket)
+
+    async def reopen(self, ticket):
+        ticket.data["status"] = "open"
+        ticket.data["closed_by"] = None
+        ticket.data["closed_at"] = None
+        ticket.data["closing"] = None
+
+        summary_id = ticket.data.get("summary_message_id")
+        dm_id = ticket.data.get("dm_message_id")
+
+        if summary_id:
+            try:
+                transcript_channel = self.bot.get_channel(TRANSCRIPT_CHANNEL) or await self.bot.fetch_channel(
+                    TRANSCRIPT_CHANNEL)
+                if transcript_channel:
+                    try:
+                        old_msg = await transcript_channel.fetch_message(summary_id)
+                        if old_msg and old_msg.embeds:
+                            for field in old_msg.embeds[0].fields:
+                                if field.name.lower() == "claimed by" and field.value != "None":
+                                    extracted_ids = [int(uid) for uid in re.findall(r'<@!?(\d+)>', field.value)]
+                                    for uid in extracted_ids:
+                                        if uid not in ticket.data.setdefault("claimed_by", []):
+                                            ticket.data["claimed_by"].append(uid)
+                                    break
+                    except discord.NotFound:
+                        pass
+                    partial_msg = transcript_channel.get_partial_message(summary_id)
+                    await partial_msg.delete()
+            except Exception as delete_error:
+                print(f"An error occurred while deleting channel summary: {delete_error}")
+            ticket.data["summary_message_id"] = None
+
+        if dm_id:
+            try:
+                creator = self.bot.get_user(ticket.creator_id) or await self.bot.fetch_user(ticket.creator_id)
+                if creator:
+                    dm_channel = creator.dm_channel or await creator.create_dm()
+                    partial_dm = dm_channel.get_partial_message(dm_id)
+                    await partial_dm.delete()
+            except Exception as delete_error:
+                print(f"An error occurred while deleting DM summary: {delete_error}")
+            ticket.data["dm_message_id"] = None
+
+        global ticket_claims
+        await asyncio.to_thread(
+            ticket_claims.update_one,
+            {"_id": ticket.thread_id},
+            {"$set": {"closed": False}}
+        )
+
+        await self.transcript.reopen(ticket.id)
+        await self.save(ticket)
+
+
+class TranscriptView(discord.ui.View):
+    def __init__(self, ticket_data: dict):
+        super().__init__(timeout=None)
+        self.ticket_data = ticket_data
+
+        guild_id = ticket_data.get("guild_id")
+        thread_id = ticket_data.get("thread_id")
+
+        if guild_id and thread_id:
+            thread_url = f"https://discord.com/channels/{guild_id}/{thread_id}"
+
+            self.add_item(discord.ui.Button(
+                label="thread",
+                style=discord.ButtonStyle.link,
+                url=thread_url
+            ))
+
+    @discord.ui.button(label="html", style=discord.ButtonStyle.blurple, custom_id="transcript:html")
+    async def view_transcript(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
+        ticket_id = self.ticket_data.get("_id")
+        manager = getattr(interaction.client, "ticket_manager", None)
+        fresh_ticket = await manager.from_ticket(ticket_id) if manager else None
+        data = fresh_ticket.data if fresh_ticket else self.ticket_data
+
+        allowed_users = data.get("allowed_users", [])
+        if interaction.user.id not in allowed_users:
+            await interaction.followup.send("You do not have permission to view this transcript.", ephemeral=True)
+            return
+
+        html_url = data.get("html_url")
+        if not html_url:
+            await interaction.followup.send("HTML file could not be found.", ephemeral=True)
+            return
+
+        await interaction.followup.send(f"[Transcript here.]({html_url})", ephemeral=True)
+
+    @discord.ui.button(
+        label="edit closing",
+        style=discord.ButtonStyle.gray,
+        custom_id="transcript:editclosing",
+        row=0
+    )
+    async def edit_closing(self, interaction: discord.Interaction, button: discord.ui.Button):
+        ticket_id = self.ticket_data.get("_id")
+        fresh_ticket = await interaction.client.ticket_manager.from_ticket(ticket_id)
+        data = fresh_ticket.data if fresh_ticket else self.ticket_data
+
+        if not is_sr(interaction.user):
+            await interaction.response.send_message("You cannot modify this close reason.", ephemeral=True)
+            return
+
+        await interaction.response.send_modal(EditClosingModal(data))
+
+
+class TranscriptDMView(discord.ui.View):
+    def __init__(self, ticket_data: dict):
+        super().__init__(timeout=None)
+        self.ticket_data = ticket_data
+
+        guild_id = ticket_data.get("guild_id")
+        thread_id = ticket_data.get("thread_id")
+
+        if guild_id and thread_id:
+            thread_url = f"https://discord.com/channels/{guild_id}/{thread_id}"
+
+            self.add_item(discord.ui.Button(
+                label="thread",
+                style=discord.ButtonStyle.link,
+                url=thread_url
+            ))
+
+    @discord.ui.button(label="html", style=discord.ButtonStyle.blurple, custom_id="transcriptdm:html")
+    async def view_transcript(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
+        ticket_id = self.ticket_data.get("_id")
+        manager = getattr(interaction.client, "ticket_manager", None)
+        fresh_ticket = await manager.from_ticket(ticket_id) if manager else None
+        data = fresh_ticket.data if fresh_ticket else self.ticket_data
+
+        allowed_users = data.get("allowed_users", [])
+        if interaction.user.id not in allowed_users:
+            await interaction.followup.send("You do not have permission to view this transcript.", ephemeral=True)
+            return
+
+        html_url = data.get("html_url")
+        if not html_url:
+            await interaction.followup.send("HTML file could not be found.", ephemeral=True)
+            return
+
+        await interaction.followup.send(f"[Transcript here.]({html_url})", ephemeral=True)
+
+
+class EditClosingModal(discord.ui.Modal, title="Edit Closing"):
+    def __init__(self, ticket_data: dict):
+        super().__init__()
+        self.ticket_data = ticket_data
+
+        self.new_closing = discord.ui.TextInput(
+            label="New Closing",
+            style=discord.TextStyle.long,
+            default=ticket_data.get("closing", ""),
+            max_length=3500
+        )
+        self.add_item(self.new_closing)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        bot = interaction.client
+        manager = getattr(bot, "ticket_manager", None)
+
+        ticket = await manager.from_ticket(self.ticket_data["_id"])
+        if not ticket:
+            await interaction.followup.send("Ticket data not found.", ephemeral=True)
+            return
+
+        ticket.data["closing"] = self.new_closing.value
+
+        transcript = await manager.transcript.get(ticket.id)
+        exported = await manager.exporter.export(ticket.data, transcript)
+
+        html_str = await manager.exporter.to_html(exported)
+        html_archive = await manager.archive.upload_html(ticket.id, html_str)
+        if html_archive:
+            ticket.data["html_url"] = html_archive["url"]
+
+        await manager.save(ticket)
+
+        embed = interaction.message.embeds[0]
+        embed.set_field_at(6, name="closing", value=self.new_closing.value, inline=False)
+
+        new_view = TranscriptView(ticket.data)
+        await interaction.message.edit(embed=embed, view=new_view)
+
+        await interaction.followup.send("Closing updated successfully!", ephemeral=True)
+
+transcript = TranscriptManager(kafu, archive=ArchiveUploader(bot, JSON_CHANNEL, ATTACHMENT_CHANNEL))
 
 @bot.command()
 async def sync(ctx: commands.Context):
