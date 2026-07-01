@@ -10925,16 +10925,18 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             elif is_account_report:
                 add_case_list[2] = ", ".join(sorted_tags)
             edited_fields.append(f"tags　–　{', '.join(sorted_tags)}")
+            profile = None
             if is_user_report:
                 profile = userscol.find_one({"_id": str(id)})
             elif is_server_report:
                 profile = serverscol.find_one({"_id": str(id)})
             elif is_account_report:
                 profile = accountscol.find_one({"_id": str(id)})
-            no_of_cases = len(profile) - 2
             cases = []
-            for i in range(1, no_of_cases + 1):
-                cases.append(profile[str(i)])
+            if profile:
+                no_of_cases = len(profile) - 2
+                for i in range(1, no_of_cases + 1):
+                    cases.append(profile[str(i)])
             tags_strings = []
             all_tags_list = []
             if is_account_report:
@@ -11506,7 +11508,7 @@ bot.tree.add_command(settings)
 
 @settings.command(name="points")
 @app_commands.checks.has_role(adm_ping)
-async def set_points(interaction: discord.Interaction, user: str, category: Literal["reports", "reviews", "votes"], timeframe: Literal["weekly", "alltime"], value: int):
+async def set_points(interaction: discord.Interaction, user: str, category: Literal["reports", "tickets", "reviews", "closes", "votes"], timeframe: Literal["weekly", "alltime"], value: int):
     try:
         user = await bot.fetch_user(int(user.strip("<@>")))
     except Exception:
@@ -11531,12 +11533,26 @@ async def set_points(interaction: discord.Interaction, user: str, category: Lite
                 if timeframe == "alltime":
                     trusteduser_profile["reports"] = value
                     trusteduserscol.replace_one(user_query, trusteduser_profile)
+            if category == "tickets":
+                if timeframe == "weekly":
+                    staff_weekly["weekly_tickets"] = value
+                    staffweeklycol.replace_one(user_query, staff_weekly)
+                if timeframe == "alltime":
+                    trusteduser_profile["tickets"] = value
+                    trusteduserscol.replace_one(user_query, trusteduser_profile)
             if category == "reviews":
                 if timeframe == "weekly":
                     staff_weekly["weekly_reviews"] = value
                     staffweeklycol.replace_one(user_query, staff_weekly)
                 if timeframe == "alltime":
                     trusteduser_profile["reviews"] = value
+                    trusteduserscol.replace_one(user_query, trusteduser_profile)
+            if category == "closes":
+                if timeframe == "weekly":
+                    staff_weekly["weekly_closes"] = value
+                    staffweeklycol.replace_one(user_query, staff_weekly)
+                if timeframe == "alltime":
+                    trusteduser_profile["closes"] = value
                     trusteduserscol.replace_one(user_query, trusteduser_profile)
             if category == "votes":
                 if timeframe == "alltime":
@@ -11567,7 +11583,9 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
                     new_staff = {
                         "_id": str(user.id),
                         "weekly_reports": 0,
+                        "weekly_tickets": 0,
                         "weekly_reviews": 0,
+                        "weekly_closes": 0,
                     }
                     staffweeklycol.insert_one(new_staff)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as current TRI Staff.")
@@ -11597,14 +11615,18 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
                     "pilot": 0,
                     "trader": 0,
                     "reports": 0,
+                    "tickets": 0,
                     "reviews": 0,
+                    "closes": 0,
                     "votes": 0,
                 }
                 trusteduserscol.insert_one(new_user)
                 new_staff = {
                     "_id": str(user.id),
                     "weekly_reports": 0,
+                    "weekly_tickets": 0,
                     "weekly_reviews": 0,
+                    "weekly_closes": 0,
                 }
                 staffweeklycol.insert_one(new_staff)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as current TRI Staff.")
@@ -11617,7 +11639,9 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
                     "pilot": 0,
                     "trader": 0,
                     "reports": 0,
+                    "tickets": 0,
                     "reviews": 0,
+                    "closes": 0,
                     "votes": 0,
                 }
                 trusteduserscol.insert_one(new_user)
@@ -11631,7 +11655,10 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
                     "pilot": 1,
                     "trader": 0,
                     "reports": 0,
+                    "tickets": 0,
                     "reviews": 0,
+                    "closes": 0,
+                    "votes": 0,
                 }
                 trusteduserscol.insert_one(new_user)
                 await interaction.response.send_message(f"`{user.id}` has been appointed as Professional Pilot.")
@@ -11644,7 +11671,9 @@ async def appoint(interaction: discord.Interaction, user: str, category: Literal
                     "pilot": 0,
                     "trader": 1,
                     "reports": 0,
+                    "tickets": 0,
                     "reviews": 0,
+                    "closes": 0,
                     "votes": 0,
                 }
                 trusteduserscol.insert_one(new_user)
