@@ -3734,7 +3734,7 @@ class ReportModal(discord.ui.Modal, title="ㆍㆍReport"):
     user_id = discord.ui.TextInput(
         label='ㆍㆍWho are you reporting?',
         style=discord.TextStyle.short,
-        placeholder='User ID / Server Invite',
+        placeholder='User ID / Server Invite / Game UID',
     )
     game = discord.ui.TextInput(
         label='ㆍㆍGame?',
@@ -3755,10 +3755,10 @@ class ReportModal(discord.ui.Modal, title="ㆍㆍReport"):
         embed=discord.Embed(colour=0xffffff, description=f"""
 # ‎　report　。。。ticket　ೀ　
 
--# ㆍ　opened by – {interaction.user.mention} `{interaction.user.id}`
--# ㆍ　reporting – <@{self.user_id.value}> `{self.user_id.value}`
--# ㆍ　game – {self.game.value}
--# ㆍ　anonymous – {self.anon.value}
+-# **ㆍ　opened by** – {interaction.user.mention} `{interaction.user.id}`
+-# **ㆍ　reporting** – <@{self.user_id.value}> `{self.user_id.value}`
+-# **ㆍ　game** – {self.game.value}
+-# **ㆍ　anonymous** – {self.anon.value}
 
 **➴　 description**\n{self.desc.value}
         """)
@@ -3782,8 +3782,8 @@ class AppealModal(discord.ui.Modal, title="ㆍㆍAppeal"):
         embed = discord.Embed(colour=0xffffff, description=f"""
 # ‎　appeal　。。。ticket　ೀ　
 
--# ㆍ　opened by: {interaction.user.mention} `{interaction.user.id}`
--# ㆍ　appealing: <@{self.user_id.value}> `{self.user_id.value}`
+-# **ㆍ　opened by** – {interaction.user.mention} `{interaction.user.id}`
+-# **ㆍ　appealing** – <@{self.user_id.value}> `{self.user_id.value}`
 
 **➴　 description**\n{self.desc.value}
 """)
@@ -3803,7 +3803,7 @@ class VerifyModal(discord.ui.Modal, title="ㆍㆍVerify"):
         embed = discord.Embed(colour=0xffffff, description=f"""
 # ‎　verify　。。。ticket　ೀ　
 
--# ㆍ　opened by: {interaction.user.mention} `{interaction.user.id}`
+-# **ㆍ　opened by** – {interaction.user.mention} `{interaction.user.id}`
 
 **➴　 description**\n{self.desc.value}
 """)
@@ -3822,7 +3822,7 @@ class OthersModal(discord.ui.Modal, title="ㆍㆍOthers"):
         embed = discord.Embed(colour=0xffffff, description=f"""
 # ‎　others　。。。ticket　ೀ　
 
--# ㆍ　opened by: {interaction.user.mention} `{interaction.user.id}`
+-# **ㆍ　opened by** – {interaction.user.mention} `{interaction.user.id}`
 
 **➴　 description**\n{self.desc.value}
 """)
