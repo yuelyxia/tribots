@@ -188,15 +188,6 @@ async def on_ready():
     bot.add_view(TagsView())
     bot.add_view(FileView())
     bot.add_view(InputClosingView())
-    if not hasattr(bot, "ticket_manager"):
-        bot.ticket_manager = TicketManager(
-            bot,
-            tickets,
-            transcripts,
-            JSON_CHANNEL,
-            ATTACHMENT_CHANNEL,
-            counters
-        )
     if not reminder_loop.is_running():
         reminder_loop.start()
     if not weekly_quota.is_running():
