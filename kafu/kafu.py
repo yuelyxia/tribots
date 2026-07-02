@@ -5151,8 +5151,8 @@ class TranscriptView(discord.ui.View):
         super().__init__(timeout=None)
         self.ticket_data = ticket_data or {}
 
-        guild_id = ticket_data.get("guild_id")
-        thread_id = ticket_data.get("thread_id")
+        guild_id = self.ticket_data.get("guild_id")
+        thread_id = self.ticket_data.get("thread_id")
 
         if guild_id and thread_id:
             thread_url = f"https://discord.com/channels/{guild_id}/{thread_id}"
@@ -5227,8 +5227,8 @@ class TranscriptDMView(discord.ui.View):
         super().__init__(timeout=None)
         self.ticket_data = ticket_data or {}
 
-        guild_id = ticket_data.get("guild_id")
-        thread_id = ticket_data.get("thread_id")
+        guild_id = self.ticket_data.get("guild_id")
+        thread_id = self.ticket_data.get("thread_id")
 
         if guild_id and thread_id:
             thread_url = f"https://discord.com/channels/{guild_id}/{thread_id}"
