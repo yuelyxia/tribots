@@ -335,7 +335,7 @@ def reconstruct_server_r_profile(guild_data, r_profile_list, title):
     if guild_icon:
         r_profile.set_thumbnail(url=guild_icon)
     r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
-    r_profile.description += f"\n{guild_name}\n`{guild_id}`"
+    r_profile.description += f"{guild_name}\n`{guild_id}`"
     if guild_created_at:
         ts = int(guild_created_at)
         r_profile.description += (
