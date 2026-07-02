@@ -4520,6 +4520,36 @@ class TranscriptManager:
     async def get(self, ticket_id: int):
         return await asyncio.to_thread(self.transcripts.find_one, {"_id": ticket_id})
 
+    async def sync_messages(self, ticket_id: int, channel: discord.Thread):
+        transcript = await self.get(ticket_id)
+        if not transcript:
+            return
+
+        existing_message_ids = {m["message_id"] for m in transcript.get("messages", [])}
+        missing_messages = []
+
+        try:
+            async for message in channel.history(limit=None, oldest_first=True):
+                if message.id not in existing_message_ids:
+                    message_data = await self._message(message)
+                    missing_messages.append(message_data)
+        except discord.HTTPException as e:
+            print(f"Failed to fetch channel history during sync on ticket {ticket_id}: {e}")
+
+        if missing_messages:
+            await asyncio.to_thread(
+                self.transcripts.update_one,
+                {"_id": ticket_id},
+                {
+                    "$push": {
+                        "messages": {
+                            "$each": missing_messages,
+                            "$sort": {"message_id": 1}
+                        }
+                    }
+                }
+            )
+
     async def add_message(self, ticket_id: int, message):
         message_data = await self._message(message)
         await asyncio.to_thread(
@@ -4696,7 +4726,7 @@ class ArchiveUploader:
             result = {
                 "filename": uploaded.filename,
                 "url": uploaded.url,
-                "content_type": attachment.content_type,  # Ensure content_type is captured
+                "content_type": attachment.content_type,
                 "message_id": message.id,
                 "channel_id": channel.id
             }
@@ -4938,6 +4968,16 @@ class TicketManager:
         )
 
     async def close(self, ticket, closed_by: int, closing: str):
+        thread = self.bot.get_channel(ticket.thread_id)
+        if not thread:
+            try:
+                thread = await self.bot.fetch_channel(ticket.thread_id)
+            except discord.HTTPException:
+                thread = None
+
+        if isinstance(thread, discord.Thread):
+            await self.transcript.sync_messages(ticket.id, thread)
+
         ticket.data["status"] = "closed"
         ticket.data["closed_by"] = closed_by
         ticket.data["closed_at"] = datetime.datetime.now(datetime.timezone.utc)
@@ -4945,6 +4985,14 @@ class TicketManager:
 
         await self.transcript.finalise(ticket.id)
         fresh_transcript = await self.transcript.get(ticket.id)
+
+        if fresh_transcript and "messages" in fresh_transcript:
+            total_messages = len(fresh_transcript["messages"])
+            total_attachments = sum(len(m.get("attachments", [])) for m in fresh_transcript["messages"])
+
+            ticket.data["statistics"]["messages"] = total_messages
+            ticket.data["statistics"]["attachments"] = total_attachments
+
         exported = await self.exporter.export(ticket.data, fresh_transcript)
 
         json_archive = await self.archive.upload_json(ticket.id, exported)
