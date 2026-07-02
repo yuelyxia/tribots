@@ -3689,13 +3689,39 @@ class TRITicketView(discord.ui.View):
                        max_values=1)
     async def select_callback(self, interaction, select):
         if interaction.guild.id == TRI_Archive:
-            if self.select_callback.values[0] == "report":
+            manager = getattr(interaction.client, "ticket_manager", None)
+            if manager:
+                def count_metrics():
+                    global_count = manager.tickets.count_documents({"status": "open"})
+                    user_count = manager.tickets.count_documents({
+                        "creator_id": interaction.user.id,
+                        "status": "open"
+                    })
+                    return global_count, user_count
+
+                global_open_count, open_count = await asyncio.to_thread(count_metrics)
+
+                if global_open_count >= 500:
+                    return await interaction.response.send_message(
+                        "> The ticket system has reached its global limit of 500 active tickets. Please try again later.",
+                        ephemeral=True
+                    )
+
+                max_limit = 10 if is_adm(interaction.user) else 2
+                if open_count >= max_limit:
+                    return await interaction.response.send_message(
+                        f"> You have reached the maximum limit of {max_limit} active tickets.",
+                        ephemeral=True
+                    )
+
+            selected_value = select.values[0]
+            if selected_value == "report":
                 await interaction.response.send_modal(ReportModal())
-            elif self.select_callback.values[0] == "appeal":
+            elif selected_value == "appeal":
                 await interaction.response.send_modal(AppealModal())
-            elif self.select_callback.values[0] == "verify":
+            elif selected_value == "verify":
                 await interaction.response.send_modal(VerifyModal())
-            elif self.select_callback.values[0] == "others":
+            elif selected_value == "others":
                 await interaction.response.send_modal(OthersModal())
 
 async def create_ticket(
@@ -3726,11 +3752,15 @@ async def create_ticket(
     try:
         ticket = await bot.ticket_manager.create(thread, interaction.user, ticket_type)
     except ValueError as e:
+        try:
+            await thread.delete()
+        except:
+            pass
         return await interaction.followup.send(f"> {e}", ephemeral=True)
     ticket.data["allowed_users"] = allowed_ids
     await ticket.save()
     await interaction.followup.send(
-        f"> Created new ticket: {thread.jump_url}",
+        f"> Created new ticket – {thread.jump_url}",
         ephemeral=True
     )
     await thread.send(f"{interaction.user.mention} <@&{ticket_ping}>")
@@ -4906,15 +4936,22 @@ class TicketManager:
         return await asyncio.to_thread(db_op)
 
     async def create(self, thread: discord.Thread, creator: discord.Member, ticket_type: str):
-        def count_open():
-            return self.tickets.count_documents({
+        def count_metrics():
+            global_count = self.tickets.count_documents({"status": "open"})
+            user_count = self.tickets.count_documents({
                 "creator_id": creator.id,
                 "status": "open"
             })
+            return global_count, user_count
 
-        open_count = await asyncio.to_thread(count_open)
-        if open_count >= 2:
-            raise ValueError("You have reached the maximum limit of 2 active tickets.")
+        global_open_count, open_count = await asyncio.to_thread(count_metrics)
+
+        if global_open_count >= 500:
+            raise ValueError("The system has reached the global limit of 500 active tickets.")
+
+        max_limit = 10 if is_adm(creator) else 2
+        if open_count >= max_limit:
+            raise ValueError(f"You have reached the maximum limit of {max_limit} active tickets.")
 
         ticket_id = await self._get_next_ticket_id()
         now = datetime.datetime.now(datetime.timezone.utc)
