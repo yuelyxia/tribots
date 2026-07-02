@@ -1186,7 +1186,6 @@ class TRICloseView(discord.ui.View):
             return await interaction.followup.send("This channel is not an active ticket thread.", ephemeral=True)
 
         claims_doc = ticket_claims.find_one({"_id": interaction.channel_id})
-        claims_to_process = claims_doc.get("claimed_by", []) if claims_doc else ticket.data.get("claimed_by", [])
 
         if "credited_users" not in ticket.data:
             ticket.data["credited_users"] = []
