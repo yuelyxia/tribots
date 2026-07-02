@@ -79,7 +79,7 @@ TIMEZONES = sorted(available_timezones())
 def is_sr(user):
     return any(role.id in (sr_ping, adm_ping) for role in user.roles)
 
-def is_sr(user):
+def is_adm(user):
     return any(role.id in (adm_ping, o5_role) for role in user.roles)
 
 # bot setup
