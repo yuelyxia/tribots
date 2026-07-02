@@ -4794,22 +4794,6 @@ class ArchiveUploader:
         except discord.HTTPException:
             return None
 
-    async def upload_html(self, ticket_id: int, html_string: str):
-        channel = self.attachment_channel_obj()
-        if channel is None:
-            return None
-
-        buffer = io.BytesIO(html_string.encode("utf-8"))
-        file = discord.File(buffer, filename=f"ticket_{ticket_id}.html")
-        message = await channel.send(file=file)
-        uploaded = message.attachments[0]
-
-        return {
-            "url": uploaded.url,
-            "message_id": message.id,
-            "channel_id": channel.id
-        }
-
 # ticket
 
 class Ticket:
@@ -5039,11 +5023,6 @@ class TicketManager:
         if json_archive:
             ticket.data["archive"] = json_archive
 
-        html_str = await self.exporter.to_html(exported)
-        html_archive = await self.archive.upload_html(ticket.id, html_str)
-        if html_archive:
-            ticket.data["html_url"] = html_archive["url"]
-
         embed = discord.Embed(
             title=f"Ticket #{ticket.id} Closed",
             color=0xffffff,
@@ -5233,12 +5212,37 @@ class TranscriptView(discord.ui.View):
                 await interaction.followup.send("You do not have permission to view this transcript.", ephemeral=True)
                 return
 
-        html_url = data.get("html_url")
-        if not html_url:
-            await interaction.followup.send("HTML file could not be found.", ephemeral=True)
-            return
+        archive_info = data.get("archive", {})
+        json_channel_id = archive_info.get("json_channel")
+        json_message_id = archive_info.get("json_message")
 
-        await interaction.followup.send(f"[Transcript here.]({html_url})", ephemeral=True)
+        if not json_channel_id or not json_message_id:
+            await interaction.followup.send("The raw transcript JSON source could not be found.", ephemeral=True)
+            return
+        try:
+            json_channel = interaction.client.get_channel(int(json_channel_id)) or \
+                           await interaction.client.fetch_channel(int(json_channel_id))
+            json_message = await json_channel.fetch_message(int(json_message_id))
+            if not json_message.attachments:
+                await interaction.followup.send("Transcript log file missing from storage container.", ephemeral=True)
+                return
+            file_bytes = await json_message.attachments[0].read()
+            transcript_dict = json.loads(file_bytes.decode('utf-8'))
+            exporter = interaction.client.ticket_manager.transcript
+            exported_data = await exporter.export(data, transcript_dict)
+            html_string = await exporter.to_html(exported_data)
+            ticket_id = data.get("_id", "unknown")
+            discord_file = discord.File(
+                io.BytesIO(html_string.encode('utf-8')),
+                filename=f"transcript-ticket-{ticket_id}.html"
+            )
+            await interaction.followup.send(
+                content="Transcript here.",
+                file=discord_file,
+                ephemeral=True
+            )
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred while compiling your live view: {e}", ephemeral=True)
 
     @discord.ui.button(
         label="edit closing",
@@ -5306,12 +5310,37 @@ class TranscriptDMView(discord.ui.View):
             await interaction.followup.send("You do not have permission to view this transcript.", ephemeral=True)
             return
 
-        html_url = data.get("html_url")
-        if not html_url:
-            await interaction.followup.send("HTML file could not be found.", ephemeral=True)
-            return
+        archive_info = data.get("archive", {})
+        json_channel_id = archive_info.get("json_channel")
+        json_message_id = archive_info.get("json_message")
 
-        await interaction.followup.send(f"[Transcript here.]({html_url})", ephemeral=True)
+        if not json_channel_id or not json_message_id:
+            await interaction.followup.send("The raw transcript JSON source could not be found.", ephemeral=True)
+            return
+        try:
+            json_channel = interaction.client.get_channel(int(json_channel_id)) or \
+                           await interaction.client.fetch_channel(int(json_channel_id))
+            json_message = await json_channel.fetch_message(int(json_message_id))
+            if not json_message.attachments:
+                await interaction.followup.send("Transcript log file missing from storage container.", ephemeral=True)
+                return
+            file_bytes = await json_message.attachments[0].read()
+            transcript_dict = json.loads(file_bytes.decode('utf-8'))
+            exporter = interaction.client.ticket_manager.transcript
+            exported_data = await exporter.export(data, transcript_dict)
+            html_string = await exporter.to_html(exported_data)
+            ticket_id = data.get("_id", "unknown")
+            discord_file = discord.File(
+                io.BytesIO(html_string.encode('utf-8')),
+                filename=f"transcript-ticket-{ticket_id}.html"
+            )
+            await interaction.followup.send(
+                content="Transcript here.",
+                file=discord_file,
+                ephemeral=True
+            )
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred while compiling your live view: {e}", ephemeral=True)
 
 
 class EditClosingModal(discord.ui.Modal, title="Edit Closing"):
@@ -5341,11 +5370,6 @@ class EditClosingModal(discord.ui.Modal, title="Edit Closing"):
 
         transcript = await manager.transcript.get(ticket.id)
         exported = await manager.exporter.export(ticket.data, transcript)
-
-        html_str = await manager.exporter.to_html(exported)
-        html_archive = await manager.archive.upload_html(ticket.id, html_str)
-        if html_archive:
-            ticket.data["html_url"] = html_archive["url"]
 
         await manager.save(ticket)
 
