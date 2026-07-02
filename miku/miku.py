@@ -1318,25 +1318,26 @@ async def ban(ctx):
         await ctx.reply(f"<@&{tethys_ban_perms}>")
 
 @bot.command(name="rm")
-async def rm(ctx, hours: int):
+async def rm(ctx, hours: int = None):
     if isinstance(ctx.channel, discord.Thread):
         if ctx.channel.parent_id != TICKET_CHANNEL:
             return
     else:
-        await ctx.send("This command can only be used in a thread.")
+        return await ctx.send("This command can only be used in a thread.")
     thread = ctx.channel
-    if not hours:
+    if hours is None:
         reminder = reminders.find_one({"thread_id": thread.id})
         if reminder:
             now = datetime.datetime.now(datetime.timezone.utc).timestamp()
             remaining = reminder["end_time"] - now
             hours_left = max(1, int((remaining + 3599) // 3600))
-            expected_name = f"{reminder["base_name"]} - {hours_left}h"
+            expected_name = f"{reminder['base_name']} - {hours_left}h"
             if thread.name != expected_name:
                 try:
                     await thread.edit(name=expected_name)
                 except:
                     pass
+        return
     if hours < 0:
         return await ctx.reply("Hours must be at least 0.")
     elif hours < 1:
@@ -1360,8 +1361,8 @@ async def rm(ctx, hours: int):
                 "thread_id": thread.id,
                 "user_id": ctx.author.id,
                 "end_time": (
-                    datetime.datetime.now(datetime.timezone.utc)
-                    + datetime.timedelta(hours=hours)
+                        datetime.datetime.now(datetime.timezone.utc)
+                        + datetime.timedelta(hours=hours)
                 ).timestamp(),
                 "base_name": base_name
             }
@@ -1387,7 +1388,14 @@ async def rn(ctx, *, new_name: str):
         if ctx.channel.parent_id != TICKET_CHANNEL and ctx.channel.parent_id != TRAINING_CHANNEL:
             return
         try:
+            reminder = reminders.find_one({"thread_id": ctx.channel.id})
+            reminder_text = ""
+            if reminder:
+                reminders.delete_one({"thread_id": ctx.channel.id})
+                reminder_text = "Reminder deleted."
             await ctx.channel.edit(name=new_name)
+            if reminder_text:
+                await ctx.reply(reminder_text)
         except Exception as e:
             await ctx.send(f"Renaming failed due to an error: {e}")
     else:
