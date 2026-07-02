@@ -101,8 +101,8 @@ async def on_ready():
     bot.add_view(MMView())
     bot.add_view(MMFormsView())
     bot.add_view(MMRisksView())
-    bot.add_view(TranscriptView(ticket_data={}))
-    bot.add_view(TranscriptDMView(ticket_data={}))
+    bot.add_view(TranscriptView())
+    bot.add_view(TranscriptDMView())
     if not hasattr(bot, "ticket_manager"):
         bot.ticket_manager = TicketManager(
             bot,
@@ -5147,9 +5147,9 @@ class TicketManager:
 
 
 class TranscriptView(discord.ui.View):
-    def __init__(self, ticket_data: dict):
+    def __init__(self, ticket_data: dict=None):
         super().__init__(timeout=None)
-        self.ticket_data = ticket_data
+        self.ticket_data = ticket_data or {}
 
         guild_id = ticket_data.get("guild_id")
         thread_id = ticket_data.get("thread_id")
@@ -5163,14 +5163,30 @@ class TranscriptView(discord.ui.View):
                 url=thread_url
             ))
 
+    async def _get_ticket_data(self, interaction: discord.Interaction):
+        if self.ticket_data.get("_id"):
+            return self.ticket_data
+
+        if interaction.message and interaction.message.embeds:
+            embed = interaction.message.embeds[0]
+            match = re.search(r'#(\d+)', embed.title or '')
+            if match:
+                ticket_id = int(match.group(1))
+                manager = getattr(interaction.client, "ticket_manager", None)
+                if manager:
+                    fresh_ticket = await manager.from_ticket(ticket_id)
+                    if fresh_ticket:
+                        return fresh_ticket.data
+        return None
+
     @discord.ui.button(label="html", style=discord.ButtonStyle.blurple, custom_id="transcript:html")
     async def view_transcript(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
 
-        ticket_id = self.ticket_data.get("_id")
-        manager = getattr(interaction.client, "ticket_manager", None)
-        fresh_ticket = await manager.from_ticket(ticket_id) if manager else None
-        data = fresh_ticket.data if fresh_ticket else self.ticket_data
+        data = await self._get_ticket_data(interaction)
+        if not data:
+            await interaction.followup.send("Could not retrieve ticket data for this transcript.", ephemeral=True)
+            return
 
         if is_adm(interaction.user):
             pass
@@ -5194,9 +5210,10 @@ class TranscriptView(discord.ui.View):
         row=0
     )
     async def edit_closing(self, interaction: discord.Interaction, button: discord.ui.Button):
-        ticket_id = self.ticket_data.get("_id")
-        fresh_ticket = await interaction.client.ticket_manager.from_ticket(ticket_id)
-        data = fresh_ticket.data if fresh_ticket else self.ticket_data
+        data = await self._get_ticket_data(interaction)
+        if not data:
+            await interaction.response.send_message("Could not retrieve ticket data.", ephemeral=True)
+            return
 
         if not is_sr(interaction.user):
             await interaction.response.send_message("You cannot modify this close reason.", ephemeral=True)
@@ -5206,9 +5223,9 @@ class TranscriptView(discord.ui.View):
 
 
 class TranscriptDMView(discord.ui.View):
-    def __init__(self, ticket_data: dict):
+    def __init__(self, ticket_data: dict=None):
         super().__init__(timeout=None)
-        self.ticket_data = ticket_data
+        self.ticket_data = ticket_data or {}
 
         guild_id = ticket_data.get("guild_id")
         thread_id = ticket_data.get("thread_id")
@@ -5222,16 +5239,32 @@ class TranscriptDMView(discord.ui.View):
                 url=thread_url
             ))
 
+    async def _get_ticket_data(self, interaction: discord.Interaction):
+        if self.ticket_data.get("_id"):
+            return self.ticket_data
+
+        if interaction.message and interaction.message.embeds:
+            embed = interaction.message.embeds[0]
+            match = re.search(r'#(\d+)', embed.title or '')
+            if match:
+                ticket_id = int(match.group(1))
+                manager = getattr(interaction.client, "ticket_manager", None)
+                if manager:
+                    fresh_ticket = await manager.from_ticket(ticket_id)
+                    if fresh_ticket:
+                        return fresh_ticket.data
+        return None
+
     @discord.ui.button(label="html", style=discord.ButtonStyle.blurple, custom_id="transcriptdm:html")
     async def view_transcript(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
 
-        ticket_id = self.ticket_data.get("_id")
-        manager = getattr(interaction.client, "ticket_manager", None)
-        fresh_ticket = await manager.from_ticket(ticket_id) if manager else None
-        data = fresh_ticket.data if fresh_ticket else self.ticket_data
+        data = await self._get_ticket_data(interaction)
+        if not data:
+            await interaction.followup.send("Could not retrieve ticket data for this transcript.", ephemeral=True)
+            return
 
-        allowed_users = data.get("allowed_users", [])
+        allowed_users = [int(uid) for uid in data.get("allowed_users", [])]
         if interaction.user.id not in allowed_users:
             await interaction.followup.send("You do not have permission to view this transcript.", ephemeral=True)
             return
