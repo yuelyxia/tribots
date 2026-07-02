@@ -63,6 +63,7 @@ Tethys = 1434471275723493388
 ticket_ping = 1449382692671193294
 sr_ping = 1375254710952661102
 adm_ping = 1375276457890287748
+o5_role = 1522164698894827561
 KAFU = 1457009979817988241
 MIKU = 1457309787044839477
 
@@ -77,6 +78,9 @@ TIMEZONES = sorted(available_timezones())
 
 def is_sr(user):
     return any(role.id in (sr_ping, adm_ping) for role in user.roles)
+
+def is_sr(user):
+    return any(role.id in (adm_ping, o5_role) for role in user.roles)
 
 # bot setup
 intents = discord.Intents.all()
@@ -5168,10 +5172,13 @@ class TranscriptView(discord.ui.View):
         fresh_ticket = await manager.from_ticket(ticket_id) if manager else None
         data = fresh_ticket.data if fresh_ticket else self.ticket_data
 
-        allowed_users = data.get("allowed_users", [])
-        if interaction.user.id not in allowed_users:
-            await interaction.followup.send("You do not have permission to view this transcript.", ephemeral=True)
-            return
+        if is_adm(interaction.user):
+            pass
+        else:
+            allowed_users = [int(uid) for uid in data.get("allowed_users", [])]
+            if interaction.user.id not in allowed_users:
+                await interaction.followup.send("You do not have permission to view this transcript.", ephemeral=True)
+                return
 
         html_url = data.get("html_url")
         if not html_url:
