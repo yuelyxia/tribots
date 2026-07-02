@@ -7365,7 +7365,7 @@ class ServerVoteView(discord.ui.View):
                          {"content": f"**Report has been published.** Report accepted by <@{accepted_by}>.",
                           "view": None}))
                     await bot.get_channel(channel_id).send(
-                        f"Report on `{guild_id}` has been published. <@{requested_by}> <@{accepted_by}><@{accepted_by}>")
+                        f"Report on `{guild_id}` has been published. <@{requested_by}> <@{accepted_by}>")
                     inprogresscol.delete_one({"_id": interaction.message.id})
                 try:
                     voters = agree_users + disagree_users
