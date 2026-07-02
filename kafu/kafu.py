@@ -4390,6 +4390,34 @@ class TranscriptExporter:
 
                     thumbnail = embed.get("thumbnail", {}).get("url", "")
                     image = embed.get("image", {}).get("url", "")
+
+                    channel_id = msg.get("channel_id")
+                    message_id = msg.get("message_id")
+
+                    if channel_id and message_id and ("cdn.discordapp.com/attachments/" in str(
+                            thumbnail) or "cdn.discordapp.com/attachments/" in str(image)):
+                        try:
+                            target_channel = self.bot.get_channel(int(channel_id)) or await self.bot.fetch_channel(
+                                int(channel_id))
+                            if target_channel:
+                                live_msg = await target_channel.fetch_message(int(message_id))
+
+                                for live_attach in live_msg.attachments:
+                                    if thumbnail and live_attach.filename in str(thumbnail):
+                                        thumbnail = live_attach.url
+                                    if image and live_attach.filename in str(image):
+                                        image = live_attach.url
+
+                                if live_msg.embeds:
+                                    live_embed = live_msg.embeds[0]
+                                    if live_embed.thumbnail and ("cdn.discordapp.com/attachments/" in str(thumbnail)):
+                                        thumbnail = live_embed.thumbnail.url
+                                    if live_embed.image and ("cdn.discordapp.com/attachments/" in str(image)):
+                                        image = live_embed.image.url
+
+                        except Exception as embed_err:
+                            print(f"Message {message_id} in Channel {channel_id} failed: {embed_err}")
+
                     footer_data = embed.get("footer", {})
                     footer_text = footer_data.get("text", "")
                     footer_icon = footer_data.get("icon_url", "")
@@ -4409,7 +4437,6 @@ class TranscriptExporter:
                         for field in fields:
                             f_name = html.escape(field.get("name", ""))
 
-                            # Process field formatting, mentions, and timestamps safely
                             raw_f_val = field.get("value", "")
                             f_val = TranscriptExporter.format_markdown(raw_f_val) if raw_f_val else ""
                             f_val = await resolve_mentions(f_val)
@@ -5219,16 +5246,25 @@ class TranscriptView(discord.ui.View):
         if not json_channel_id or not json_message_id:
             await interaction.followup.send("The raw transcript JSON source could not be found.", ephemeral=True)
             return
+
         try:
             json_channel = interaction.client.get_channel(int(json_channel_id)) or \
                            await interaction.client.fetch_channel(int(json_channel_id))
             json_message = await json_channel.fetch_message(int(json_message_id))
+
             if not json_message.attachments:
                 await interaction.followup.send("Transcript log file missing from storage container.", ephemeral=True)
                 return
+
             file_bytes = await json_message.attachments[0].read()
             transcript_dict = json.loads(file_bytes.decode('utf-8'))
-            exporter = interaction.client.ticket_manager.transcript
+
+            manager = interaction.client.ticket_manager
+            exporter = getattr(manager, "exporter", None)
+
+            if not exporter:
+                await interaction.followup.send("Transcript exporter engine is not initialised.", ephemeral=True)
+                return
             exported_data = await exporter.export(data, transcript_dict)
             html_string = await exporter.to_html(exported_data)
             ticket_id = data.get("_id", "unknown")
@@ -5237,11 +5273,12 @@ class TranscriptView(discord.ui.View):
                 filename=f"transcript-ticket-{ticket_id}.html"
             )
             await interaction.followup.send(
-                content="Transcript here.",
+                content="HTML transcript here.",
                 file=discord_file,
                 ephemeral=True
             )
         except Exception as e:
+            print(f"{e}")
             await interaction.followup.send(f"An error occurred while compiling your live view: {e}", ephemeral=True)
 
     @discord.ui.button(
@@ -5317,16 +5354,25 @@ class TranscriptDMView(discord.ui.View):
         if not json_channel_id or not json_message_id:
             await interaction.followup.send("The raw transcript JSON source could not be found.", ephemeral=True)
             return
+
         try:
             json_channel = interaction.client.get_channel(int(json_channel_id)) or \
                            await interaction.client.fetch_channel(int(json_channel_id))
             json_message = await json_channel.fetch_message(int(json_message_id))
+
             if not json_message.attachments:
                 await interaction.followup.send("Transcript log file missing from storage container.", ephemeral=True)
                 return
+
             file_bytes = await json_message.attachments[0].read()
             transcript_dict = json.loads(file_bytes.decode('utf-8'))
-            exporter = interaction.client.ticket_manager.transcript
+
+            manager = interaction.client.ticket_manager
+            exporter = getattr(manager, "exporter", None)
+
+            if not exporter:
+                await interaction.followup.send("Transcript exporter engine is not initialised.", ephemeral=True)
+                return
             exported_data = await exporter.export(data, transcript_dict)
             html_string = await exporter.to_html(exported_data)
             ticket_id = data.get("_id", "unknown")
@@ -5335,11 +5381,12 @@ class TranscriptDMView(discord.ui.View):
                 filename=f"transcript-ticket-{ticket_id}.html"
             )
             await interaction.followup.send(
-                content="Transcript here.",
+                content="HTML transcript here.",
                 file=discord_file,
                 ephemeral=True
             )
         except Exception as e:
+            print(f"{e}")
             await interaction.followup.send(f"An error occurred while compiling your live view: {e}", ephemeral=True)
 
 
