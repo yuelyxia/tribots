@@ -1374,7 +1374,8 @@ async def rm(ctx, hours: int = None):
 @rm.error
 async def rm_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
-        retry_at = int(time.time() + error.retry_after)
+        now_ts = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        retry_at = int(now_ts + error.retry_after)
         return await ctx.send(
             f"This command is on cooldown. Retry <t:{retry_at}:R>."
         )
@@ -1403,7 +1404,8 @@ async def rn(ctx, *, new_name: str):
 @rn.error
 async def rn_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
-        retry_at = int(time.time() + error.retry_after)
+        now_ts = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        retry_at = int(now_ts + error.retry_after)
         return await ctx.send(
             f"This command is on cooldown. Retry <t:{retry_at}:R>."
         )
