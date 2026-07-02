@@ -364,7 +364,7 @@ async def quota_check():
                 if staff_lb_channel:
                     try:
                         channel = await guild.fetch_channel(int(staff_lb_channel.replace("<#", "").replace(">", "")))
-                        total_credits = 0
+                        total_moderations = 0
                         total_tickets = 0
                         staff = server_info.get("staff", {})
                         sorted_staff = sorted(
@@ -377,7 +377,7 @@ async def quota_check():
                             monthly = data.get("monthly", 0)
                             alltime = data.get("alltime", 0)
                             desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{alltime}** all ㆍ **{monthly}** month\n"
-                            total_credits += monthly
+                            total_moderations += monthly
                         staff_embed = discord.Embed(description=desc if desc else "No staff found.", colour = 0xffffff)
                         sorted_tickets = sorted(
                             staff.items(),
@@ -393,7 +393,8 @@ async def quota_check():
                         tickets_embed = discord.Embed(description=desc if desc else "No staff found.", colour = 0xffffff)
                         summary = discord.Embed(colour=0xffffff)
                         summary.description = (
-                                f"✦　　┈　　total credits　　┈　　**{total_credits}**\n✦　　┈　　total tickets　　┈　　**{total_tickets}**")
+                                f"✦　　┈　　total moderations　　┈　　**{total_moderations}**\n✦　　┈　　total tickets　　┈　　**{total_tickets}**")
+                        await channel.send("## _ _　　　staff leaderboard", embed=staff_embed)
                         await channel.send("## _ _　　　tickets leaderboard", embed=tickets_embed)
                         await channel.send("## _ _　　　monthly summary", embed=summary)
                     except discord.NotFound: pass
@@ -402,8 +403,7 @@ async def quota_check():
                 if services_lb_channel:
                     try:
                         channel = await guild.fetch_channel(int(services_lb_channel.replace("<#", "").replace(">", "")))
-                        total_services = 0
-                        total_mm_services = 0
+                        total_mm_vouches = 0
                         total_pilot_services = 0
                         mms = server_info.get("mms", {})
                         sorted_mms = sorted(
@@ -416,8 +416,7 @@ async def quota_check():
                             monthly = data.get("monthly", 0)
                             alltime = data.get("alltime", 0)
                             desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{alltime}** all ㆍ **{monthly}** month\n"
-                            total_services += monthly
-                            total_mm_services += monthly
+                            total_mm_vouches += monthly
                         mms_embed = discord.Embed(description=desc if desc else "No mms found.", colour = 0xffffff)
                         pilots = server_info.get("pilots", {})
                         sorted_pilots = sorted(
@@ -430,12 +429,13 @@ async def quota_check():
                             monthly = data.get("monthly", 0)
                             alltime = data.get("alltime", 0)
                             desc += f"-# {rank}ㆍ　<@{user_id}>　–　**{alltime}** all ㆍ **{monthly}** month\n"
-                            total_services += monthly
                             total_pilot_services += monthly
                         pilots_embed = discord.Embed(description=desc if desc else "No pilots found.", colour = 0xffffff)
                         summary = discord.Embed(colour=0xffffff)
+                        total_mm_services = total_mm_vouches // 2
+                        total_services = total_pilot_services + total_mm_services
                         summary.description = (
-                            f"✦　　┈　　total services　　┈　　**{total_services}**\n✦　　┈　　total mm services　　┈　　**{total_mm_services}**\n✦　　┈　　total pilot services　　┈　　**{total_pilot_services}**")
+                            f"✦　　┈　　total services　　┈　　**{total_services}**\n✦　　┈　　total mm services　　┈　　**{total_mm_services}** ({total_mm_vouches} mmv)\n✦　　┈　　total pilot services　　┈　　**{total_pilot_services}**")
                         await channel.send("## _ _　　　mm leaderboard", embed=mms_embed)
                         await channel.send("## _ _　　　pilot leaderboard", embed=pilots_embed)
                         await channel.send("## _ _　　　monthly summary", embed=summary)
@@ -3672,10 +3672,10 @@ async def panel(interaction: discord.Interaction, colour: str=None, image: disco
         await interaction.followup.send("Panel has been sent.", ephemeral=True)
 
 tri_ticket_options = [
-    discord.SelectOption(emoji="<:whitebutterfly:1459750881611354237>", label="ㆍㆍReport", value="report"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="ㆍㆍAppeal", value="appeal"),
+    discord.SelectOption(emoji="<a:purplebow2:1522142135544184853>", label="ㆍㆍReport", value="report"),
+    discord.SelectOption(emoji="<:pinkheart:1518434487007186994>", label="ㆍㆍAppeal", value="appeal"),
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍVerify", value="verify"),
-    discord.SelectOption(emoji="<:redbow:1462286246763040921>", label="ㆍㆍOthers", value="others"),
+    discord.SelectOption(emoji="<a:purple_flower:1515565233798778930>", label="ㆍㆍOthers", value="others"),
     ]
 
 class TRITicketView(discord.ui.View):

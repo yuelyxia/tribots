@@ -2111,6 +2111,8 @@ async def anon_error(interaction: discord.Interaction, error):
         return
     raise error
 
+@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=True)
+@app_commands.guild_install()
 @anon.command(name="edit", description="Edit MIKU’s message.")
 @app_commands.checks.cooldown(2, 5)
 @app_commands.describe(message_id="The message to edit", message="Your message", image1="Image 1 (optional)", image2="Image 2 (optional)", image3="Image 3 (optional)", image4="Image 4 (optional)", image5="Image 5 (optional)", image6="Image 6 (optional)", image7="Image 7 (optional)", image8="Image 8 (optional)", image9="Image 9 (optional)", image10="Image 10 (optional)")
