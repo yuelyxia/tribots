@@ -695,7 +695,7 @@ async def quota(ctx, member: discord.Member = None):
         ratio_display = "N/A" if current_reviews_ratio == -1 else f"{current_reviews_ratio:.2f}"
         embed.description += f"\nreviews　–　**{current_reviews}** / {quota_display}　–　`{ratio_display}`"
         if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
-    current_tickets = weekly_profile.get("tickets", 0)
+    current_tickets = weekly_profile.get("weekly_tickets", 0)
     if is_sr(member):
         current_tickets_quota = get_quota_config().get("sr_tickets_quota", 0)
     else:
@@ -765,7 +765,7 @@ async def quota_history(ctx, member: discord.Member=None):
                 f"\n-# _ _ reviews　–　**{r_done}** / {r_q_disp}　–　`{r_r_disp}`"
             )
         cr_embed.description = desc
-        current_closes = weekly_profile.get("closes", 0)
+        current_closes = weekly_profile.get("weekly_closes", 0)
         current_closes_quota = apply_break(get_quota_config().get("sr_closes_quota", 0), member)
         current_closes_ratio = round(min(current_closes / current_closes_quota, 1),
                                      2) if current_closes_quota >= 0 else -1
@@ -830,7 +830,7 @@ async def quota_history(ctx, member: discord.Member=None):
             f"\n-# _ _ reports　–　**{rep_done}** / {rep_q_disp}　–　`{rep_r_disp}`"
         )
     tr_embed.description = desc
-    current_tickets = weekly_profile.get("tickets", 0)
+    current_tickets = weekly_profile.get("weekly_tickets", 0)
     t_quota_val = get_quota_config().get("sr_tickets_quota" if is_sr(member) else "tickets_quota", 0)
     current_tickets_quota = apply_break(t_quota_val, member)
     current_tickets_ratio = round(min(current_tickets / current_tickets_quota, 1),
@@ -1228,7 +1228,7 @@ class ClosingView(discord.ui.View):
 - edited alts only
   - `edited alts for 𝐢𝐝 - added 𝐢𝐝 𝐢𝐝, removed 𝐢𝐝`
 - edited server owner
-  - `server owner edited for 𝐢𝐝`
+  - `server owner edited for 𝐢𝐝 - from 𝐢𝐝 to 𝐢𝐝`
 - edited links only
   - `edited links for 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 - added 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝, removed 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝`
 - insufficient proof
@@ -1316,6 +1316,15 @@ async def ban(ctx):
         await ctx.reply(f"<@&{ban_perms}>")
     elif ctx.guild.id == tethys:
         await ctx.reply(f"<@&{tethys_ban_perms}>")
+
+@bot.command(name="proof", help="Sends proof autoresponder.")
+@commands.has_any_role(staff_role, tethys_staff_role, professional_mm_role, professional_pilot_role)
+async def proof(ctx):
+    if ctx.guild.id == TRI_Archive:
+        embed = discord.Embed(colour=0xffffff, description="""
+## please send uncropped proofs
+        """)
+        await ctx.channel.send(embed=embed)
 
 @bot.command(name="rm")
 async def rm(ctx, hours: int = None):
