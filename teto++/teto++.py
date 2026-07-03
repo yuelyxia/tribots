@@ -565,6 +565,14 @@ async def c(ctx, *, to_check: str = None):
 
     target_raw = to_check if to_check else str(ctx.author.id)
 
+    fetched_invite_guild = None
+    if not target_raw.strip().isdigit():
+        try:
+            invite = await bot.fetch_invite(target_raw.strip())
+            fetched_invite_guild = invite.guild
+        except Exception:
+            pass
+
     clean_text = re.sub(r"<a?:\w+:\d+>", "", target_raw)
 
     tokens = clean_text.split()
@@ -611,9 +619,13 @@ async def c(ctx, *, to_check: str = None):
         profile.set_footer(text="✦　TRI bot")
         return await ctx.reply(embed=profile)
 
-    if is_reported_server_id or (not target_user and not is_numeric_id):
+    if is_reported_server_id or fetched_invite_guild or (not target_user and not is_numeric_id):
         server_id = worker_input.strip('<@>')
-        if not server_id.isdigit():
+
+        if fetched_invite_guild:
+            guild = fetched_invite_guild
+            server_id = str(guild.id)
+        elif not server_id.isdigit():
             try:
                 invite = await bot.fetch_invite(target_raw)
                 guild = invite.guild
@@ -633,7 +645,7 @@ async def c(ctx, *, to_check: str = None):
                 view=ReportedServerView(guild, server_profile, requested_by, len(server_profile) - 2)
             )
         else:
-            if server_id.isdigit() and not target_raw.startswith("http"):
+            if server_id.isdigit() and not fetched_invite_guild and not target_raw.startswith("http"):
                 return await ctx.reply(
                     "Please provide a valid user ID. To check servers, please provide a valid invite link.")
             return await ctx.reply(embed=default_server_profile(guild), view=MemberView())
