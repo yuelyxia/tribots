@@ -220,10 +220,12 @@ def format_trusteduser_profile(user, trusteduser_profile):
     trusted_embed.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     trusted_embed.set_footer(text="✦　This user is trusted.")
     if trusteduser_profile["staff"] == 1:
-        trusted_embed.description += "### Staff Info"
-        trusted_embed.description += f"\n**Reports** – {trusteduser_profile["reports"]}"
-        trusted_embed.description += f"\n**Reviews** – {trusteduser_profile["reviews"]}"
-        trusted_embed.description += f"\n**Votes** – {trusteduser_profile["votes"]}"
+        trusted_embed.description += "\n**Staff Info**"
+        trusted_embed.description += f"\n> **Tickets** – {trusteduser_profile["tickets"]}"
+        trusted_embed.description += f"\n> **Reports** – {trusteduser_profile["reports"]}"
+        trusted_embed.description += f"\n> **Closes** – {trusteduser_profile["closes"]}"
+        trusted_embed.description += f"\n> **Reviews** – {trusteduser_profile["reviews"]}"
+        trusted_embed.description += f"\n> **Votes** – {trusteduser_profile["votes"]}"
         if trusteduser_profile["mm"] == 1 or trusteduser_profile["pilot"] == 1 or trusteduser_profile["trader"] == 1:
             trusted_embed.description += "\n"
     if trusteduser_profile["mm"] == 1:
@@ -694,391 +696,320 @@ async def on_message(message):
 
 # check
 
-@bot.command(name='mc', help='Checks a list of users (max 200), leave a space between users.')
+async def fetch_worker(raw_user):
+    user_id = re.sub(r"\D", "", raw_user)
+    if not (17 <= len(user_id) <= 20):
+        return None, None
+
+    user_id_int = int(user_id)
+
+    cached_user = bot.get_user(user_id_int)
+    if cached_user:
+        return cached_user, None
+
+    try:
+        fetched_user = await bot.fetch_user(user_id_int)
+        return fetched_user, None
+    except discord.NotFound:
+        return None, raw_user
+    except discord.HTTPException:
+        return None, None
+
+@bot.command(name='mc', help='Checks a list of users (max 100), leave a space between users.')
 async def mc(ctx, *, to_check: str = None):
-    if to_check != None:
-        users = to_check.split()
-        if len(users) > 200:
-            return await ctx.reply("Exceeded 200 users.")
-        estimated_seconds = round(len(users) * 0.5, 1)
-        status_message = await ctx.reply(f"Checking **{len(users)}** users.\nEstimated time: **~{estimated_seconds}s**")
-        valid_users = []
-        invalid_users = []
-        embeds = []
-        for raw_user in users:
-            try:
-                user_id = int(re.sub(r"\D", "", raw_user))
-                fetched_user = await bot.fetch_user(user_id)
-            except:
-                invalid_users.append(raw_user)
-            else:
-                if fetched_user not in valid_users:
-                    valid_users.append(fetched_user)
-        if valid_users:
-            valid_users_grouped = [valid_users[i:i + 25] for i in range(0, len(valid_users), 25)]
-            for group in valid_users_grouped:
-                description = ""
-                for user in group:
-                    user_id = user.id
-                    user_query = {"_id": str(user_id)}
-                    trusteduser_profile = trusteduserscol.find_one(user_query)
-                    if trusteduser_profile and not (
-                            trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
-                            trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and
-                            trusteduser_profile["trader"] == 0):
-                        description += f"\n{user.mention} `{user.id}` is trusted.\n"
-                    else:
-                        user_profile = userscol.find_one(user_query)
-                        if user_profile:
-                            if len(user_profile) == 2:
-                                main = user_profile['main']
-                                user_query = {"_id": main}
-                                main_user_profile = userscol.find_one(user_query)
-                                main_user = await bot.fetch_user(int(main))
-                                r_profile_list = main_user_profile["r_profile_list"]
-                                no_of_cases = len(main_user_profile) - 2
-                                cases = []
-                                for i in range(1, no_of_cases + 1):
-                                    cases.append(main_user_profile[str(i)])
-                                tags_strings = []
-                                all_tags_list = []
-                                for case in cases:
-                                    tags_strings.append(case[2])
-                                for tags_string in tags_strings:
-                                    tags_list = tags_string.split(", ")
-                                    for tag in tags_list:
-                                        all_tags_list.append(tag)
-                                all_tags_list = sort_user_tags(all_tags_list)
-                                all_unique_tags = list(dict.fromkeys(all_tags_list))
-                                description += f"\n**{user.mention} `{user.id}` is reported as alt of {main_user.mention} `{main_user.id}` ({selected_string(all_unique_tags)}).**\n"
-                            else:
-                                r_profile_list = user_profile["r_profile_list"]
-                                no_of_cases = len(user_profile) - 2
-                                cases = []
-                                for i in range(1, no_of_cases + 1):
-                                    cases.append(user_profile[str(i)])
-                                tags_strings = []
-                                all_tags_list = []
-                                for case in cases:
-                                    tags_strings.append(case[2])
-                                for tags_string in tags_strings:
-                                    tags_list = tags_string.split(", ")
-                                    for tag in tags_list:
-                                        all_tags_list.append(tag)
-                                all_tags_list = sort_user_tags(all_tags_list)
-                                all_unique_tags = list(dict.fromkeys(all_tags_list))
-                                description += f"\n**{user.mention} `{user.id}` is reported as {selected_string(all_unique_tags)}.**\n"
-                        else: description += f"\n{user.mention} `{user.id}` is unreported.\n"
-                embed = discord.Embed(description=description)
-                embeds.append(embed)
-            if invalid_users:
-                invalid_users_grouped = [invalid_users[i:i + 25] for i in range(0, len(invalid_users), 25)]
-                if len(invalid_users) <= 50:
-                    for group in invalid_users_grouped:
-                        description = ""
-                        for user in group:
-                            description += f"\n`{user}` is invalid.\n"
-                        invalid_embed = discord.Embed(description=description)
-                        embeds.append(invalid_embed)
-                elif len(invalid_users) > 50:
-                    description = ""
-                    for user in invalid_users_grouped[0]:
-                        description += f"\n`{user}` is invalid.\n"
-                    invalid_embed = discord.Embed(description=description)
-                    embeds.append(invalid_embed)
-                    for user in invalid_users_grouped[1]:
-                        description += f"\n`{user}` is invalid.\n"
-                    description += f"\nThere are more than 50 invalid users.\n"
-                    invalid_embed = discord.Embed(description=description)
-                    embeds.append(invalid_embed)
-            await status_message.edit(content=None, embeds=embeds)
+    if to_check is None:
+        return
+
+    users = to_check.split()
+    valid_users = []
+    invalid_users = []
+
+    results = await asyncio.gather(*(fetch_worker(u) for u in users))
+
+    for fetched_user, invalid_raw in results:
+        if fetched_user and fetched_user not in valid_users:
+            valid_users.append(fetched_user)
+        if invalid_raw and invalid_raw not in invalid_users:
+            invalid_users.append(invalid_raw)
+
+    if len(valid_users) + len(invalid_users) > 100:
+        return await ctx.reply("Exceeded 100 users.")
+
+    status_message = await ctx.reply(
+        f"_Checking **{len(valid_users)}** users..._")
+    if not valid_users:
+        await status_message.delete()
+        if invalid_users:
+            await ctx.send(f"Invalid: {' '.join([f'`{u}`' for u in invalid_users])}")
+        return await ctx.reply("No valid user IDs provided.")
+
+    processed_ids = set()
+    processed_mains = set()
+
+    message_batches = []
+    current_content = []
+    current_embeds = []
+
+    for user in valid_users:
+        current_id = str(user.id)
+
+        if current_id in processed_ids:
+            continue
+        processed_ids.add(current_id)
+
+        if len(current_embeds) == 10 or len(current_content) == 10:
+            message_batches.append(("\n".join(current_content), current_embeds))
+            current_content = []
+            current_embeds = []
+
+        user_query = {"_id": current_id}
+        trusteduser_profile = trusteduserscol.find_one(user_query)
+
+        if trusteduser_profile and not (
+                trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
+                trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and
+                trusteduser_profile["trader"] == 0):
+
+            trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
+            current_embeds.append(trusted_embed)
+            current_content.append(f"<:whiteheart:1434538078747365507> `{current_id}` is trusted.")
         else:
-            await ctx.reply("No valid users provided.")
+            user_profile = userscol.find_one(user_query)
+            if user_profile:
+                is_alt = len(user_profile) == 2
+                target_profile = user_profile
+                main_id_str = ""
+                already_processed_embed = False
+
+                if is_alt:
+                    main = user_profile['main']
+                    if main in processed_mains:
+                        already_processed_embed = True
+                    else:
+                        processed_mains.add(main)
+
+                    target_profile = userscol.find_one({"_id": main}) or {}
+                    try:
+                        main_user = await bot.fetch_user(int(main))
+                        user = main_user
+                        main_id_str = str(main_user.id)
+                    except discord.HTTPException:
+                        main_id_str = str(main)
+
+                no_of_cases = len(target_profile) - 2 if target_profile else 0
+
+                all_tags_list = []
+                for i in range(1, no_of_cases + 1):
+                    case = target_profile.get(str(i))
+                    if case and len(case) > 2:
+                        all_tags_list.extend(case[2].split(", "))
+
+                all_tags_list = sort_user_tags(all_tags_list)
+                all_unique_tags = list(dict.fromkeys(all_tags_list))
+
+                if is_alt:
+                    current_content.append(
+                        f"<a:whitealert:1496542298908000257> **`{current_id}` (alt of `{main_id_str}`) is reported as {selected_string(all_unique_tags)}.**")
+                else:
+                    current_content.append(
+                        f"<a:whitealert:1496542298908000257> **`{current_id}` is reported as {selected_string(all_unique_tags)}.**")
+
+                if already_processed_embed:
+                    continue
+
+                r_profile_list = target_profile.get("r_profile_list", [])
+                title = all_unique_tags[0] if all_unique_tags else "Reported"
+                r_profile = format_user_r_profile(user, r_profile_list, title)
+                current_embeds.append(r_profile)
+            else:
+                profile = default_user_profile(user)
+                current_embeds.append(profile)
+                current_content.append(f"<:whitedot:1462907474947342567> `{current_id}` is unreported.")
+
+    if current_content or current_embeds:
+        message_batches.append(("\n".join(current_content), current_embeds))
+
+    for idx, (content, embeds_chunk) in enumerate(message_batches):
+        if idx == 0:
+            await status_message.edit(content=content, embeds=embeds_chunk)
+        else:
+            await ctx.send(content=content, embeds=embeds_chunk)
+
+    if invalid_users:
+        invalid_formatted = " ".join([f"`{user}`" for user in invalid_users])
+        await ctx.send(content=f"Invalid: {invalid_formatted}")
 
 
 @bot.command(name="c", help="Checks a user or server.")
 async def c(ctx, *, to_check: str = None):
     requested_by = ctx.author
-    if to_check: to_check = to_check.strip()
-    if to_check and " " in to_check:
+
+    author_query = {"_id": str(ctx.author.id)}
+    trusted_author = trusteduserscol.find_one(author_query)
+    is_staff = bool(
+        trusted_author and
+        trusted_author.get("current_staff") == 1 and
+        (is_active_staff(ctx.author) or get(ctx.guild.roles, id=t_role) in ctx.author.roles)
+    )
+
+    game_input, uid_input, game = None, None, None
+    has_space = to_check and " " in to_check.strip()
+
+    if to_check:
+        to_check = to_check.strip()
         match = re.match(r"(.+?)\s+(\S+)$", to_check)
         if match:
             game_input = match.group(1).strip()
             uid_input = match.group(2).strip()
             game = format_game(game_input)
-            if game is None:
-                return await ctx.reply(f"The game {game_input} is **invalid** or **unsupported**.")
-            game_uid = format_game_uid(game, uid_input)
-            account_query = {"_id": str(game_uid)}
-            account_profile = accountscol.find_one(account_query)
-            if account_profile:
-                if len(account_profile) == 2:
-                    main = account_profile['main']
-                    account_query = {"_id": main}
-                    main_profile = accountscol.find_one(account_query)
-                    #
-                    user_query = {"_id": str(ctx.author.id)}
-                    trusteduser_profile = trusteduserscol.find_one(user_query)
-                    if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                and (is_active_staff(ctx.author)
-                                                     or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                        await ctx.reply(f"Account `{game_uid}` is linked to `{main}`.",
-                                        embeds=reported_account_profile(main, main_profile),
-                                        view=EditAccountReportView(main, main_profile, requested_by,
-                                                                   len(main_profile) - 2))
-                    else:
-                        await ctx.reply(
-                            f"Account `{game_uid}` is linked to `{main}`.",
-                            embeds=reported_account_profile(main, main_profile),
-                            view=ReportedAccountView(main, main_profile, requested_by,
-                                                     len(main_profile) - 2))
-                else:
-                    #
-                    user_query = {"_id": str(ctx.author.id)}
-                    trusteduser_profile = trusteduserscol.find_one(user_query)
-                    if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                and (is_active_staff(ctx.author)
-                                                     or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                        await ctx.reply(f"Account is reported.",
-                                        embeds=reported_account_profile(game_uid, account_profile),
-                                        view=EditAccountReportView(game_uid, account_profile, requested_by,
-                                                                   len(account_profile) - 2))
-                    else:
-                        await ctx.reply(f"Account is reported.",
-                                        embeds=reported_account_profile(game_uid, account_profile),
-                                        view=ReportedAccountView(game_uid, account_profile, requested_by,
-                                                                 len(account_profile) - 2))
-            #
-            else:
-                profile = default_account_profile(game_uid)
-                #
-                user_query = {"_id": str(ctx.author.id)}
-                trusteduser_profile = trusteduserscol.find_one(user_query)
-                if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                            and (is_active_staff(ctx.author)
-                                                 or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                    requested_by = ctx.author
-                    await ctx.reply(embed=profile, view=NewAccountReportView(game_uid, requested_by))
-                else:
-                    await ctx.reply(embed=profile, view=MemberView())
-    else:
-        if to_check == None:
-            user = ctx.author
-            user_id = user.id
-            user_query = {"_id": str(user_id)}
-            trusteduser_profile = trusteduserscol.find_one(user_query)
-            if trusteduser_profile and not (
-                    trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
-                    trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and
-                    trusteduser_profile["trader"] == 0):
-                trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
-                await ctx.reply("User is trusted.", embed=trusted_embed)
-            #
-            else:
-                user_profile = userscol.find_one(user_query)
-                if user_profile:
-                    if len(user_profile) == 2:
-                        main = user_profile['main']
-                        user_query = {"_id": main}
-                        main_user_profile = userscol.find_one(user_query)
-                        main_user = await bot.fetch_user(int(main))
-                        #
-                        user_query = {"_id": str(user_id)}
-                        trusteduser_profile = trusteduserscol.find_one(user_query)
-                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                    and (is_active_staff(ctx.author)
-                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                            await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
-                                            embeds=reported_user_profile(main_user, main_user_profile),
-                                            view=EditUserReportView(main_user, main_user_profile, requested_by,
-                                                                len(main_user_profile) - 2))
-                        else:
-                            await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
-                                            embeds=reported_user_profile(main_user, main_user_profile),
-                                            view=ReportedUserView(main_user, main_user_profile, requested_by,
-                                                                  len(main_user_profile) - 2))
-                    #
-                    else:
-                        #
-                        user_query = {"_id": str(user_id)}
-                        trusteduser_profile = trusteduserscol.find_one(user_query)
-                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                    and (is_active_staff(ctx.author)
-                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                            await ctx.reply(f"User is reported.",
-                                            embeds=reported_user_profile(user, user_profile),
-                                            view=EditUserReportView(user, user_profile, requested_by, len(user_profile) - 2))
-                        else:
-                            await ctx.reply(f"User is reported.",
-                                            embeds=reported_user_profile(user, user_profile),
-                                            view=ReportedUserView(user, user_profile, requested_by, len(user_profile) - 2))
-                #
-                else:
-                    profile = default_user_profile(user)
-                    #
-                    user_query = {"_id": str(user_id)}
-                    trusteduser_profile = trusteduserscol.find_one(user_query)
-                    if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                and (is_active_staff(ctx.author)
-                                                     or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                        await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
-                    else:
-                        await ctx.reply(embed=profile, view=MemberView())
 
+    if game is not None and uid_input is not None:
+        game_uid = format_game_uid(game, uid_input)
+        account_profile = accountscol.find_one({"_id": str(game_uid)})
+
+        if account_profile:
+            if len(account_profile) == 2:
+                main = account_profile['main']
+                main_profile = accountscol.find_one({"_id": main})
+                msg = f"Account `{game_uid}` is linked to `{main}`."
+                view = EditAccountReportView(main, main_profile, requested_by,
+                                             len(main_profile) - 2) if is_staff else ReportedAccountView(main,
+                                                                                                         main_profile,
+                                                                                                         requested_by,
+                                                                                                         len(main_profile) - 2)
+                return await ctx.reply(msg, embeds=reported_account_profile(main, main_profile), view=view)
+            else:
+                msg = "Account is reported."
+                view = EditAccountReportView(game_uid, account_profile, requested_by,
+                                             len(account_profile) - 2) if is_staff else ReportedAccountView(game_uid,
+                                                                                                            account_profile,
+                                                                                                            requested_by,
+                                                                                                            len(account_profile) - 2)
+                return await ctx.reply(msg, embeds=reported_account_profile(game_uid, account_profile), view=view)
         else:
-            try:
-                if int(to_check.strip('<@>')) in tri_bots:
-                    user = await bot.fetch_user(int(to_check.strip('<@>')))
-                    user_id = user.id
-                    profile = discord.Embed(colour=0xffffff)
-                    profile.set_thumbnail(url=f"{user.display_avatar.url}")
-                    profile.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`"
-                    profile.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
-                    if user_id == 1450073025818136598:
-                        profile.description += "\n**TETO** ┈ report bot for `/tri`"
-                    elif user_id == 1457249982104211467:
-                        profile.description += "\n**TETO++** ┈ report bot for `/tri`"
-                    elif user_id == 1457382953293320304:
-                        profile.description += "\n**NERU** ┈ alts bot for `/tri`"
-                    elif user_id == 1457309787044839477:
-                        profile.description += "\n**MIKU** ┈ utils bot for `/tri`"
-                    elif user_id == 1457009979817988241:
-                        profile.description += "\n**KAFU** ┈ tickets bot for `/tri`"
-                    profile.set_footer(text="✦　TRI bot")
-                    await ctx.reply(embed=profile)
-                    return
-            except Exception: pass
-            try:
-                user = await bot.fetch_user(int(to_check.strip('<@>')))
-            except discord.NotFound:
-                server_query = {"_id": to_check.strip('<@>')}
-                trustedserver_profile = trustedserverscol.find_one(server_query)
-                if trustedserver_profile:
-                    trusted_embed = format_trustedserver_profile(UnknownGuild(int(to_check.strip('<@>'))))
-                    await ctx.reply("Server is trusted.", embed=trusted_embed)
-                else:
-                    server_profile = serverscol.find_one(server_query)
-                    if server_profile:  # reported server
-                        await ctx.reply(f"Server is reported.",
-                                            embeds=reported_server_profile(UnknownGuild(int(to_check.strip('<@>'))), server_profile),
-                                            view=ReportedServerView(UnknownGuild(int(to_check.strip('<@>'))), server_profile, requested_by,
-                                                                    len(server_profile) - 2))
-                    else:  # unreported server
-                        await ctx.reply("Please provide a valid user ID. To check servers, please provide a valid invite link.")
+            view = NewAccountReportView(game_uid, requested_by) if is_staff else MemberView()
+            return await ctx.reply(embed=default_account_profile(game_uid), view=view)
 
-            except discord.HTTPException as e:
-                await ctx.reply(f"An error occurred: {e}")
-            except ValueError:
+    target_raw = to_check if to_check else str(ctx.author.id)
+
+    clean_text = re.sub(r"<a?:\w+:\d+>", "", target_raw)
+
+    tokens = clean_text.split()
+    first_valid_id = None
+    target_user = None
+    is_reported_server_id = False
+
+    for token in tokens:
+        cleaned_token = re.sub(r"\D", "", token)
+        if 17 <= len(cleaned_token) <= 20:
+            fetched, _ = await fetch_worker(cleaned_token)
+            if fetched:
+                first_valid_id = cleaned_token
+                target_user = fetched
+                break
+            if serverscol.find_one({"_id": cleaned_token}):
+                first_valid_id = cleaned_token
+                is_reported_server_id = True
+                break
+
+    if has_space and not first_valid_id:
+        return await ctx.reply(f"The game {game_input} is **invalid** or **unsupported**.")
+
+    worker_input = first_valid_id if first_valid_id else target_raw
+    is_numeric_id = worker_input.strip('<@>').isdigit()
+    if not target_user and not is_reported_server_id:
+        target_user, _ = await fetch_worker(worker_input)
+
+    if target_user and target_user.id in tri_bots:
+        profile = discord.Embed(colour=0xffffff)
+        profile.set_thumbnail(url=f"{target_user.display_avatar.url}")
+        profile.description = f"{target_user.display_name}\n`{target_user.id}`\n{target_user.mention}\n`{target_user.name}`\n"
+        profile.description += f"\n-# **Account Created** – <t:{round(target_user.created_at.timestamp())}:D> (<t:{round(target_user.created_at.timestamp())}:R>)\n"
+
+        bot_desc = {
+            1450073025818136598: "\n**TETO** ┈ report bot for `/tri`",
+            1457249982104211467: "\n**TETO++** ┈ report bot for `/tri`",
+            1457382953293320304: "\n**NERU** ┈ alts bot for `/tri`",
+            1457309787044839477: "\n**MIKU** ┈ utils bot for `/tri`",
+            1457009979817988241: "\n**KAFU** ┈ utils bot for **trading** & tickets bot for `/tri`"
+        }
+        profile.description += bot_desc.get(target_user.id, "")
+        profile.set_footer(text="✦　TRI bot")
+        return await ctx.reply(embed=profile)
+
+    if is_reported_server_id or (not target_user and not is_numeric_id):
+        server_id = worker_input.strip('<@>')
+        if not server_id.isdigit():
+            try:
+                invite = await bot.fetch_invite(target_raw)
+                guild = invite.guild
+                server_id = str(guild.id)
+            except Exception:
+                return await ctx.reply("The invite link is **invalid** or **expired**.")
+        else:
+            guild = UnknownGuild(int(server_id))
+
+        server_profile = serverscol.find_one({"_id": server_id})
+        trusted_server = trustedserverscol.find_one({"_id": server_id})
+
+        if trusted_server:
+            return await ctx.reply("Server is trusted.", embed=format_trustedserver_profile(guild))
+        elif server_profile:
+            view = EditServerReportView(guild, server_profile, requested_by,
+                                        len(server_profile) - 2) if is_staff else ReportedServerView(guild,
+                                                                                                     server_profile,
+                                                                                                     requested_by,
+                                                                                                     len(server_profile) - 2)
+            return await ctx.reply("Server is reported.", embeds=reported_server_profile(guild, server_profile),
+                                   view=view)
+        else:
+            if server_id.isdigit() and not to_check.startswith("http"):
+                return await ctx.reply(
+                    "Please provide a valid user ID. To check servers, please provide a valid invite link.")
+            view = NewServerReportView(guild, requested_by) if is_staff else MemberView()
+            return await ctx.reply(embed=default_server_profile(guild), view=view)
+
+    user_id_str = str(target_user.id) if target_user else str(worker_input.strip('<@>'))
+    trusteduser_profile = trusteduserscol.find_one({"_id": user_id_str})
+
+    if trusteduser_profile and not (
+            trusteduser_profile.get("current_staff", 0) == 0 and trusteduser_profile.get("staff", 0) == 0 and
+            trusteduser_profile.get("mm", 0) == 0 and trusteduser_profile.get("pilot", 0) == 0 and
+            trusteduser_profile.get("trader", 0) == 0):
+        return await ctx.reply("User is trusted.", embed=format_trusteduser_profile(target_user, trusteduser_profile))
+
+    user_profile = userscol.find_one({"_id": user_id_str})
+    if user_profile:
+        if len(user_profile) == 2:
+            main = user_profile['main']
+            main_user_profile = userscol.find_one({"_id": main})
+            main_user, _ = await fetch_worker(main)
+            if not main_user:
                 try:
-                    invite = await bot.fetch_invite(to_check)
-                except discord.NotFound:
-                    await ctx.reply("The invite link is **invalid** or **expired**.")
-                except discord.Forbidden:
-                    await ctx.reply("Unable to access details of invite.")
-                except Exception as e:
-                    await ctx.reply(f"An error occurred: {e}")
-                else:
-                    guild = invite.guild
-                    guild_id = invite.guild.id
-                    server_query = {"_id": str(guild_id)}
-                    trustedserver_profile = trustedserverscol.find_one(server_query)
-                    if trustedserver_profile:
-                        trusted_embed = format_trustedserver_profile(guild)
-                        await ctx.reply("Server is trusted.", embed=trusted_embed)
-                    else:
-                        server_profile = serverscol.find_one(server_query)
-                        if server_profile:  # reported server
-                            #
-                            user_query = {"_id": str(ctx.author.id)}
-                            trusteduser_profile = trusteduserscol.find_one(user_query)
-                            if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                        and (is_active_staff(ctx.author)
-                                                             or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                                await ctx.reply(f"Server is reported.",
-                                                embeds=reported_server_profile(guild, server_profile),
-                                                view=EditServerReportView(guild, server_profile, requested_by,
-                                                                        len(server_profile) - 2))
-                            else:
-                                await ctx.reply(f"Server is reported.",
-                                                embeds=reported_server_profile(guild, server_profile),
-                                                view=ReportedServerView(guild, server_profile, requested_by,
-                                                                      len(server_profile) - 2))
-                        else:  # unreported server
-                            profile = default_server_profile(guild)
-                            #
-                            user_query = {"_id": str(ctx.author.id)}
-                            trusteduser_profile = trusteduserscol.find_one(user_query)
-                            if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                        and (is_active_staff(ctx.author)
-                                                             or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                                await ctx.reply(embed=profile, view=NewServerReportView(guild, requested_by))
-                            else:
-                                await ctx.reply(embed=profile, view=MemberView())
-            #
-            else:
-                user_id = user.id
-                user_query = {"_id": str(user_id)}
-                trusteduser_profile = trusteduserscol.find_one(user_query)
-                if trusteduser_profile and not (
-                        trusteduser_profile["current_staff"] == 0 and trusteduser_profile["staff"] == 0 and
-                        trusteduser_profile["mm"] == 0 and trusteduser_profile["pilot"] == 0 and
-                        trusteduser_profile["trader"] == 0):
-                    trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
-                    await ctx.reply("User is trusted.", embed=trusted_embed)
-                else:
-                    user_profile = userscol.find_one(user_query)
-                    if user_profile:
-                        if len(user_profile) == 2:
-                            main = user_profile['main']
-                            user_query = {"_id": main}
-                            main_user_profile = userscol.find_one(user_query)
-                            main_user = await bot.fetch_user(int(main))
-                            #
-                            user_query = {"_id": str(ctx.author.id)}
-                            trusteduser_profile = trusteduserscol.find_one(user_query)
-                            if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                        and (is_active_staff(ctx.author)
-                                                             or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                                await ctx.reply(f"User `{user_id}` is reported as alt of `{main}`.",
-                                                embeds=reported_user_profile(main_user, main_user_profile),
-                                                view=EditUserReportView(main_user, main_user_profile, requested_by,
-                                                                    len(main_user_profile) - 2))
-                            else:
-                                await ctx.reply(
-                                    f"User `{user_id}` is reported as alt of `{main}`.",
-                                    embeds=reported_user_profile(main_user, main_user_profile),
-                                    view=ReportedUserView(main_user, main_user_profile, requested_by,
-                                                          len(main_user_profile) - 2))
-                        else:
-                            #
-                            user_query = {"_id": str(ctx.author.id)}
-                            trusteduser_profile = trusteduserscol.find_one(user_query)
-                            if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                        and (is_active_staff(ctx.author)
-                                                             or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                                await ctx.reply(f"User is reported.",
-                                                embeds=reported_user_profile(user, user_profile),
-                                                view=EditUserReportView(user, user_profile, requested_by,
-                                                                    len(user_profile) - 2))
-                            else:
-                                await ctx.reply(f"User is reported.",
-                                                embeds=reported_user_profile(user, user_profile),
-                                                view=ReportedUserView(user, user_profile, requested_by,
-                                                                      len(user_profile) - 2))
-                    #
-                    else:
-                        profile = default_user_profile(user)
-                        #
-                        user_query = {"_id": str(ctx.author.id)}
-                        trusteduser_profile = trusteduserscol.find_one(user_query)
-                        if trusteduser_profile and (trusteduser_profile["current_staff"] == 1
-                                                    and (is_active_staff(ctx.author)
-                                                         or get(ctx.guild.roles, id=t_role) in ctx.author.roles)):
-                            requested_by = ctx.author
-                            await ctx.reply(embed=profile, view=NewUserReportView(user, requested_by))
-                        else:
-                            await ctx.reply(embed=profile, view=MemberView())
+                    main_user = await bot.fetch_user(int(main))
+                except Exception:
+                    main_user = target_user
 
+            msg = f"User `{user_id_str}` is reported as alt of `{main}`."
+            view = EditUserReportView(main_user, main_user_profile, requested_by,
+                                      len(main_user_profile) - 2) if is_staff else ReportedUserView(main_user,
+                                                                                                    main_user_profile,
+                                                                                                    requested_by,
+                                                                                                    len(main_user_profile) - 2)
+            return await ctx.reply(msg, embeds=reported_user_profile(main_user, main_user_profile), view=view)
+        else:
+            view = EditUserReportView(target_user, user_profile, requested_by,
+                                      len(user_profile) - 2) if is_staff else ReportedUserView(target_user,
+                                                                                               user_profile,
+                                                                                               requested_by,
+                                                                                               len(user_profile) - 2)
+            return await ctx.reply("User is reported.", embeds=reported_user_profile(target_user, user_profile),
+                                   view=view)
+
+    else:
+        profile = default_user_profile(target_user)
+        view = NewUserReportView(target_user, requested_by) if is_staff else MemberView()
+        return await ctx.reply(embed=profile, view=view)
 
 # reported user
 class ReportedUserView(discord.ui.View):
