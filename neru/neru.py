@@ -331,63 +331,108 @@ async def on_message(message: discord.Message):
 
     await bot.process_commands(message)
 
+async def fetch_worker(raw_user):
+    user_id = re.sub(r"\D", "", raw_user)
+    if not (17 <= len(user_id) <= 20):
+        return None, None
+
+    user_id_int = int(user_id)
+
+    cached_user = bot.get_user(user_id_int)
+    if cached_user:
+        return cached_user, None
+
+    try:
+        fetched_user = await bot.fetch_user(user_id_int)
+        return fetched_user, None
+    except discord.NotFound:
+        return None, raw_user
+    except discord.HTTPException:
+        return None, None
+
 @bot.command(name="ma", help="Checks a list of users (max 100) for logged alts, leave a space between users.")
 async def ma(ctx, *, to_check: str = None):
-    if to_check != None:
-        users = to_check.split()
-        valid_users = []
-        invalid_users = []
-        for raw_user in users:
-            user_id = re.sub(r"\D", "", raw_user)
-            if not (17 <= len(user_id) <= 20):
-                continue
-            try:
-                fetched_user = await bot.fetch_user(int(user_id))
-            except discord.NotFound:
-                invalid_users.append(raw_user)
-            except discord.HTTPException:
-                continue
-            else:
-                if fetched_user not in valid_users:
-                    valid_users.append(fetched_user)
-        if len(valid_users) + len(invalid_users) > 100:
-            return await ctx.reply("Exceeded 100 users.")
-        estimated_seconds = round(len(valid_users) * 0.35, 1)
-        status_message = await ctx.reply(f"Checking **{len(valid_users)}** users.\nEstimated time: **~{estimated_seconds}s**")
-        if not valid_users:
-            await status_message.delete()
-            return await ctx.reply("No valid user IDs provided.")
-        lines = []
-        embeds = []
-        for user in valid_users:
-            user_id = str(user.id)
-            alts_info = altscol.find_one({"_id": user_id})
-            if not alts_info:
-                lines.append(f"{user.mention} `{user.id}` – No alts")
-                continue
-            else:
-                alts_count = len(alts_info.get("alts", []))
-                lines.append(f"**{user.mention} `{user.id}` – {alts_count} alt(s)**")
-        line_groups = [lines[i:i + 25] for i in range(0, len(lines), 25)][:10]
-        for group in line_groups:
-            embed = discord.Embed(description="\n".join(group))
-            embeds.append(embed)
+    if to_check is None:
+        return
+
+    users = to_check.split()
+    valid_users = []
+    invalid_users = []
+
+    results = await asyncio.gather(*(fetch_worker(u) for u in users))
+
+    for fetched_user, invalid_raw in results:
+        if fetched_user and fetched_user not in valid_users:
+            valid_users.append(fetched_user)
+        if invalid_raw and invalid_raw not in invalid_users:
+            invalid_users.append(invalid_raw)
+
+    if len(valid_users) + len(invalid_users) > 100:
+        return await ctx.reply("Exceeded 100 users.")
+
+    status_message = await ctx.reply(
+        f"_Checking **{len(valid_users)}** users for alts..._")
+    if not valid_users:
+        await status_message.delete()
         if invalid_users:
-            invalid_users_grouped = [invalid_users[i:i + 25] for i in range(0, len(invalid_users), 25)]
-            for group in invalid_users_grouped[:10 - len(embeds)]:
-                embeds.append(discord.Embed(
-                    description="\n".join(f"`{u}` is invalid." for u in group)
-                ))
-        await status_message.edit(content=None, embeds=embeds)
+            await ctx.send(f"Invalid: {' '.join([f'`{u}`' for u in invalid_users])}")
+        return await ctx.reply("No valid user IDs provided.")
+
+    processed_ids = set()
+    message_batches = []
+    current_content = []
+    current_embeds = []
+
+    for user in valid_users:
+        current_id = str(user.id)
+
+        if current_id in processed_ids:
+            continue
+        processed_ids.add(current_id)
+
+        if len(current_embeds) == 10 or len(current_content) == 10:
+            message_batches.append(("\n".join(current_content), current_embeds))
+            current_content = []
+            current_embeds = []
+
+        alts_info = altscol.find_one({"_id": current_id})
+
+        if alts_info and alts_info.get("alts"):
+            alts_list = alts_info.get("alts", [])
+            alts_count = len(alts_list)
+            raw_ids = " ".join(alt for alt in alts_list)
+            current_content.append(
+                f"<a:whitealert:1496542298908000257> **`{current_id}` has {alts_count} logged alt(s).**")
+            embed = discord.Embed(colour=0xffffff)
+            embed.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:whitealert:1496542298908000257> **Alt(s)**\n`{raw_ids}`"
+            current_embeds.append(embed)
+        else:
+            current_content.append(f"<:whitedot:1462907474947342567> `{current_id}` has no logged alts.")
+            embed = discord.Embed(colour=0xffffff)
+            embed.description = f"<:whitecross:1462774085737119828>　No alts logged for `{current_id}`."
+            current_embeds.append(embed)
+    if current_content or current_embeds:
+        message_batches.append(("\n".join(current_content), current_embeds))
+
+    for idx, (content, embeds_chunk) in enumerate(message_batches):
+        if idx == 0:
+            await status_message.edit(content=content, embeds=embeds_chunk)
+        else:
+            await ctx.send(content=content, embeds=embeds_chunk)
+
+    if invalid_users:
+        invalid_formatted = " ".join([f"`{user}`" for user in invalid_users])
+        await ctx.send(content=f"Invalid: {invalid_formatted}")
+
 
 @bot.command(name="a", help="Checks a user for logged alts.")
 async def a(ctx, *, to_check: str = None):
+    status_message = await ctx.reply("_Checking user for alts..._")
     if to_check is None:
         user = ctx.author
     else:
-        try:
-            user = await bot.fetch_user(int(to_check.strip('<@!>')))
-        except:
+        user, _ = await fetch_worker(to_check)
+        if not user:
             await ctx.send("Please provide a valid user ID.")
             return
     user_id = str(user.id)
@@ -448,9 +493,9 @@ async def a(ctx, *, to_check: str = None):
     for idx, embed in enumerate(embeds):
         if idx == 0:
             if len(embeds) == 1:
-                await ctx.reply(embed=embed, view=RelatedIDsView(user_id, alts))
+                await status_message.edit(content=None, embed=embed, view=RelatedIDsView(user_id, alts))
             else:
-                await ctx.reply(embed=embed)
+                await status_message.edit(content=None, embed=embed)
         else:
             if idx == len(embeds) - 1:
                 await ctx.send(embed=embed, view=RelatedIDsView(user_id, alts))
