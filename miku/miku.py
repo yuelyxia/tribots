@@ -1318,13 +1318,139 @@ async def ban(ctx):
         await ctx.reply(f"<@&{tethys_ban_perms}>")
 
 @bot.command(name="proof", help="Sends proof autoresponder.")
-@commands.has_any_role(staff_role, tethys_staff_role, professional_mm_role, professional_pilot_role)
 async def proof(ctx):
     if ctx.guild.id == TRI_Archive:
         embed = discord.Embed(colour=0xffffff, description="""
-## please send uncropped proofs
+## ‎　report proofs
+
+provide relevant user ids, server invites & ids, or game uids. 
+-# _not just usernames, since usernames can change._
+-# 　⤷　how to obtain user/server id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
+
+**screenshots are strongly preferred**, followed by screen recordings or html files.
+
+please show **entire conversation, _from start to end_**
+-# _do not crop, omit, delete, or edit any messages related to the report until the investigation is complete._
+
+- for **breach of agreement** reports, show the following
+  - trade agreement
+  - proof you fulfilled your side
+  - proof of payment
+  - confrontation & outcome (excuses, blocking, ghosting)
+
+- additional requirements
+  - **timestamps** should be visible
+  - if you've blocked the other user, **temporarily unblock them** before taking screenshots so the conversation displays correctly.
+  - for crypto payments, send **blockchain txids**.
+
+**__uncropped__ & unedited**
+show your **entire screen**. sensitive personal information such as real names, passwords, ip addresses, or other private information may be blurred.
+
+**video too large**
+upload your video at [catbox.moe](https://catbox.moe) and copy & paste the link here.
         """)
-        await ctx.channel.send(embed=embed)
+        await ctx.channel.send(embed=embed, view=ProofView(ctx.author))
+
+class ProofView(discord.ui.View):
+    def __init__(self, requested_by: discord.User):
+        super().__init__(timeout=120)
+        self.requested_by = requested_by
+
+        self.report_button = discord.ui.Button(
+            label="report",
+            emoji="<:redheart:1462285627243499655>",
+            style=discord.ButtonStyle.grey,
+            disabled=True,
+            custom_id="proof:report"
+        )
+        self.appeal_button = discord.ui.Button(
+            label="appeal",
+            emoji="<:greenheart:1522917891090026650>",
+            style=discord.ButtonStyle.grey,
+            disabled=False,
+            custom_id="proof:appeal"
+        )
+
+        self.report_button.callback = self.report_callback
+        self.appeal_button.callback = self.appeal_callback
+
+        self.add_item(self.report_button)
+        self.add_item(self.appeal_button)
+
+    async def appeal_callback(self, interaction: discord.Interaction):
+        self.appeal_button.disabled = True
+        self.report_button.disabled = False
+
+        if interaction.user.id != self.requested_by.id:
+            return
+
+        embed=(discord.Embed(colour=0xffffff, description="""
+## ‎　appeal proofs
+
+**screenshots are strongly preferred**, followed by screen recordings or html files.
+
+please provide clear proofs supporting your appeal.
+-# _do not crop, omit, delete, or edit any messages related to the appeal until the investigation is complete._
+
+- depending on your appeal, show the following
+  - the full context surrounding the incident.
+  - any proofs that contradicts or explains the report against you.
+  - if you believe the report contains **false** or **misleading** information, clearly identify which parts and provide supporting evidence.
+
+- additional requirements
+  - **timestamps** should be visible
+  - if you've blocked the other user, **temporarily unblock them** before taking screenshots so the conversation displays correctly.
+  - for crypto payments, send **blockchain txids**.
+
+- appeals based on minimum report period (mrp)
+  - appeals based solely on meeting the mrp are **not guaranteed** and are reviewed on a case by case basis.
+  - you must provide proofs showing that you have genuinely changed since the incident. simply claiming to be sorry or promising not to repeat the offense is generally insufficient.
+
+**__uncropped__ & unedited**
+show your **entire screen**. sensitive personal information such as real names, passwords, ip addresses, or other private information may be blurred.
+
+**video too large**
+upload your video at [catbox.moe](https://catbox.moe) and copy & paste the link here.
+"""))
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    async def report_callback(self, interaction: discord.Interaction):
+        self.appeal_button.disabled = False
+        self.report_button.disabled = True
+
+        if interaction.user.id != self.requested_by.id:
+            return
+
+        embed=(discord.Embed(colour=0xffffff, description="""
+## ‎　report proofs
+
+provide relevant user ids, server invites & ids, or game uids. 
+-# _not just usernames, since usernames can change._
+-# 　⤷　how to obtain user/server id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
+
+**screenshots are strongly preferred**, followed by screen recordings or html files.
+
+please show **entire conversation, _from start to end_**
+-# _do not crop, omit, delete, or edit any messages related to the report until the investigation is complete._
+
+- for **breach of agreement** reports, show the following
+  - trade agreement
+  - proof you fulfilled your side
+  - proof of payment
+  - confrontation & outcome (excuses, blocking, ghosting)
+
+- additional requirements
+  - **timestamps** should be visible
+  - if you've blocked the other user, **temporarily unblock them** before taking screenshots so the conversation displays correctly.
+  - for crypto payments, send **blockchain txids**.
+
+**__uncropped__ & unedited**
+show your **entire screen**. sensitive personal information such as real names, passwords, ip addresses, or other private information may be blurred.
+
+**video too large**
+upload your video at [catbox.moe](https://catbox.moe) and copy & paste the link here.
+"""))
+        await interaction.response.edit_message(embed=embed, view=self)
 
 @bot.command(name="rm")
 async def rm(ctx, hours: int = None):
