@@ -1023,7 +1023,6 @@ async def c(ctx, *, to_check: str = None):
         view = NewUserReportView(target_user, requested_by) if is_staff else MemberView()
         return await ctx.reply(embed=profile, view=view)
 
-
 @bot.command(name="ca", help="Checks a user’s alts and profile data.")
 async def ca(ctx, *, to_check: str = None):
     requested_by = ctx.author
@@ -1063,7 +1062,7 @@ async def ca(ctx, *, to_check: str = None):
     alts_embed = discord.Embed(colour=0xffffff)
     if alts_info and alts_info.get("alts"):
         raw_ids = " ".join(alt for alt in alts_info.get("alts", []))
-        alts_embed.description = f"<a:whitealert:1496542298908000257> **Alt(s)** of `{target_user.id}`\n`{raw_ids}`"
+        alts_embed.description = f"<a:whitealert:1496542298908000257> **Alt(s)** of `{target_user.id}`\n\n`{raw_ids}`"
     else:
         alts_embed.description = "<:whitecross:1462774085737119828>　No alts logged for this user."
 
