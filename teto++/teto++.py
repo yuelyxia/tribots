@@ -24,6 +24,7 @@ serverscol = db["servers"]
 accountscol = db["accounts"]
 trusteduserscol = db["trusted_users"]
 trustedserverscol = db["trusted_servers"]
+altscol = db["alts"]
 
 
 # tri bots
@@ -684,6 +685,79 @@ async def c(ctx, *, to_check: str = None):
             )
     else:
         return await ctx.reply(embed=default_user_profile(target_user), view=MemberView())
+
+@bot.command(name="ca", help="Checks a user’s alts and profile data.")
+async def ca(ctx, *, to_check: str = None):
+    requested_by = ctx.author
+
+    author_query = {"_id": str(ctx.author.id)}
+    trusted_author = trusteduserscol.find_one(author_query)
+
+    target_user = None
+    if to_check:
+        clean_text = re.sub(r"<a?:\w+:\d+>", "", to_check.strip())
+        cleaned_token = re.sub(r"\D", "", clean_text)
+
+        if 17 <= len(cleaned_token) <= 20:
+            target_user, _ = await fetch_worker(cleaned_token)
+            user_id_str = cleaned_token
+        else:
+            user_id_str = clean_text
+    else:
+        target_user = ctx.author
+        user_id_str = str(ctx.author.id)
+
+    if not target_user and user_id_str.isdigit():
+        try:
+            target_user = await bot.fetch_user(int(user_id_str))
+        except Exception:
+            pass
+
+    if not target_user:
+        return await ctx.reply("Please provide a valid user ID or mention.")
+
+    alts_info = altscol.find_one({"_id": user_id_str})
+    alts_embed = discord.Embed(colour=0xffffff)
+    if alts_info and alts_info.get("alts"):
+        raw_ids = " ".join(alt for alt in alts_info.get("alts", []))
+        alts_embed.description = f"<a:whitealert:1496542298908000257> **Alt(s)** of `{target_user.id}`\n\n`{raw_ids}`"
+    else:
+        alts_embed.description = "<:whitecross:1462774085737119828>　No alts logged for this user."
+
+    await ctx.reply(embed=alts_embed)
+
+    trusteduser_profile = trusteduserscol.find_one({"_id": user_id_str})
+    if trusteduser_profile and not (
+            trusteduser_profile.get("current_staff", 0) == 0 and trusteduser_profile.get("staff", 0) == 0 and
+            trusteduser_profile.get("mm", 0) == 0 and trusteduser_profile.get("pilot", 0) == 0 and
+            trusteduser_profile.get("trader", 0) == 0):
+        return await ctx.send("User is trusted.", embed=format_trusteduser_profile(target_user, trusteduser_profile))
+
+    user_profile = userscol.find_one({"_id": user_id_str})
+    if user_profile:
+        if len(user_profile) == 2:
+            main = user_profile['main']
+            main_user_profile = userscol.find_one({"_id": main})
+            main_user, _ = await fetch_worker(main)
+            if not main_user:
+                try:
+                    main_user = await bot.fetch_user(int(main))
+                except Exception:
+                    main_user = target_user
+
+            msg = f"User `{user_id_str}` is reported as alt of `{main}`."
+            view = ReportedUserView(main_user, main_user_profile, requested_by, len(main_user_profile) - 2)
+            return await ctx.send(msg, embeds=reported_user_profile(main_user, main_user_profile), view=view)
+        else:
+            view = ReportedUserView(target_user, user_profile, requested_by, len(user_profile) - 2)
+            return await ctx.send("User is reported.", embeds=reported_user_profile(target_user, user_profile),
+                                   view=view)
+
+    else:
+        profile = default_user_profile(target_user)
+        view = MemberView()
+        return await ctx.send(embed=profile, view=view)
+
 
 @bot.command(name='mc', help='Checks a list of users (max 100), leave a space between users.')
 async def mc(ctx, *, to_check: str = None):
