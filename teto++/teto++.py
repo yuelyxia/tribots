@@ -688,10 +688,10 @@ async def c(ctx, *, to_check: str = None):
 
 @bot.command(name="ca", help="Checks a user’s alts and profile data.")
 async def ca(ctx, *, to_check: str = None):
-    requested_by = ctx.author
+    if ctx.guild.id == TRI_Archive:
+        return
 
-    author_query = {"_id": str(ctx.author.id)}
-    trusted_author = trusteduserscol.find_one(author_query)
+    requested_by = ctx.author
 
     target_user = None
     if to_check:
@@ -762,6 +762,9 @@ async def ca(ctx, *, to_check: str = None):
 @bot.command(name='mc', help='Checks a list of users (max 100), leave a space between users.')
 async def mc(ctx, *, to_check: str = None):
     if to_check is None:
+        return
+
+    if ctx.guild.id == TRI_Archive:
         return
 
     users = to_check.split()
