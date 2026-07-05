@@ -684,7 +684,7 @@ async def process_and_save_invite(invite: discord.Invite):
     if added:
         invitescol.update_one({"_id": guild_id_str}, {"$set": {"invites": current_invites}}, upsert=True)
         if log_channel:
-            msg = f"**Invites Updated** for `{guild_id_str}`\n"
+            msg = f"**Invites Updated** for {invite.guild.name} `{guild_id_str}`\n"
             if replaced_code:
                 msg += f"> **Replaced** – `{replaced_code}` <:whitearrow4:1523377871480033301> `{invite.code}`"
             else:
