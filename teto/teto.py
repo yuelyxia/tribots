@@ -1092,7 +1092,7 @@ async def c(ctx, *, to_check: str = None):
                         removed_invites.append(code)
 
                 invitescol.update_one({"_id": server_id}, {"$set": {"invites": valid_invites}})
-                guild_name = f"{guild.name} " if guild else ""
+                guild_name = f"{guild.name} " if guild and not isinstance(guild, UnknownGuild) else ""
                 if removed_invites and log_channel:
                     await log_channel.send(
                         f"**Invites Updated** for {guild_name}`{server_id}`\n"

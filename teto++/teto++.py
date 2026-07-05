@@ -544,18 +544,18 @@ async def process_invites():
     log_channel = bot.get_channel(INVITE_LOGS_CHANNEL)
     now_ts = int(discord.utils.utcnow().timestamp())
 
-    all_stored = invitescol.find({})
+    all_stored = list(invitescol.find({}))
     for server_doc in all_stored:
         guild_id = server_doc["_id"]
         guild_name = ""
-        stored_invites_data = server_doc.get("invites",
-                                             [])  # Format: [{"code": "abc", "priority": 3, "expires_at": int/None}, ...]
+        stored_invites_data = server_doc.get("invites", [])
         valid_invites = []
         removed_invites = []
 
         for inv_entry in stored_invites_data:
             code = inv_entry if isinstance(inv_entry, str) else inv_entry.get("code")
             expires_at = None if isinstance(inv_entry, str) else inv_entry.get("expires_at")
+
             if expires_at and now_ts >= expires_at:
                 removed_invites.append(code)
                 continue
@@ -574,11 +574,11 @@ async def process_invites():
             except (discord.NotFound, discord.HTTPException):
                 removed_invites.append(code)
         if removed_invites and log_channel:
+            invitescol.update_one({"_id": guild_id}, {"$set": {"invites": valid_invites}})
             await log_channel.send(
                 f"**Invites Updated** for {guild_name}`{guild_id}`\n"
                 f"> **Removed** – {', '.join([f'`{c}`' for c in removed_invites])}"
             )
-        invitescol.update_one({"_id": guild_id}, {"$set": {"invites": valid_invites}})
 
         for guild in bot.guilds:
             guild_id_str = str(guild.id)
@@ -872,7 +872,7 @@ async def c(ctx, *, to_check: str = None):
                         removed_invites.append(code)
 
                 invitescol.update_one({"_id": server_id}, {"$set": {"invites": valid_invites}})
-                guild_name = f"{guild.name} " if guild else ""
+                guild_name = f"{guild.name} " if guild and not isinstance(guild, UnknownGuild) else ""
                 if removed_invites and log_channel:
                     await log_channel.send(
                         f"**Invites Updated** for {guild_name}`{server_id}`\n"
