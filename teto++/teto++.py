@@ -766,15 +766,16 @@ async def c(ctx, *, to_check: str = None):
     target_raw = to_check if to_check else str(ctx.author.id)
 
     fetched_invite_guild = None
-    if not target_raw.strip().isdigit():
+    if not target_raw.strip().isdigit() and not (target_raw.startswith('<@') and target_raw.endswith('>')):
         try:
-            invite_code = target_raw
-            code_match = re.search(r'(?:invite/|discord\.gg/|discord\.com/invite/)?([a-zA-Z0-9-]+)', target_raw)
-            if code_match:
-                invite_code = code_match.group(1)
+            invite_code = target_raw.strip()
+            cleaned_url = re.sub(r'(https?://)?(www\.)?(discord\.gg|discord\.com/invite)/', '', invite_code).strip()
+            if cleaned_url:
+                invite_code = cleaned_url.split('/')[0]
 
             invite = await bot.fetch_invite(invite_code, with_counts=True)
             fetched_invite_guild = invite.guild
+
             await process_and_save_invite(invite)
         except Exception:
             pass
@@ -833,10 +834,10 @@ async def c(ctx, *, to_check: str = None):
             server_id = str(guild.id)
         elif not server_id.isdigit():
             try:
-                invite_code = target_raw
-                code_match = re.search(r'(?:invite/|discord\.gg/)([a-zA-Z0-9-]+)', target_raw)
-                if code_match:
-                    invite_code = code_match.group(1)
+                invite_code = target_raw.strip()
+                cleaned_url = re.sub(r'(https?://)?(www\.)?(discord\.gg|discord\.com/invite)/', '', invite_code).strip()
+                if cleaned_url:
+                    invite_code = cleaned_url.split('/')[0]
 
                 invite = await bot.fetch_invite(invite_code, with_counts=True)
                 guild = invite.guild
