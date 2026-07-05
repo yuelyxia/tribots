@@ -714,7 +714,11 @@ async def process_and_save_invite(invite: discord.Invite):
     if any(x["code"] == invite.code for x in current_invites):
         return
 
-    p, exp = get_invite_priority_and_expiry(invite)
+    try:
+        p, exp = get_invite_priority_and_expiry(invite)
+    except Exception:
+        p, exp = 1, None
+
     candidate = {"code": invite.code, "priority": p, "expires_at": exp}
 
     added = False
@@ -754,17 +758,33 @@ def get_invite_priority_and_expiry(invite: discord.Invite):
     2: Vanity URL
     1: Temporary (max_age > 0)
     """
+    is_vanity_url = False
+    if hasattr(invite, 'is_vanity') and callable(invite.is_vanity):
+        try:
+            is_vanity_url = invite.is_vanity()
+        except Exception:
+            pass
+
+    if not is_vanity_url and invite.guild and hasattr(invite.guild, 'vanity_url_code'):
+        if invite.code == invite.guild.vanity_url_code:
+            is_vanity_url = True
+
+    if is_vanity_url:
+        return 2, None
+
     expires_at_ts = None
     if invite.expires_at:
         expires_at_ts = int(invite.expires_at.timestamp())
-    if invite.max_age == 0:
+
+    max_age = getattr(invite, 'max_age', 0) or 0
+
+    if max_age == 0:
         return 3, None  # Permanent
-    elif invite.is_vanity():
-        return 2, None  # Vanity URL
     else:
-        if not expires_at_ts and invite.created_at and invite.max_age:
-            expires_at_ts = int((invite.created_at + datetime.timedelta(seconds=invite.max_age)).timestamp())
+        if not expires_at_ts and invite.created_at and max_age:
+            expires_at_ts = int((invite.created_at + datetime.timedelta(seconds=max_age)).timestamp())
         return 1, expires_at_ts
+
 
 
 # check
@@ -970,7 +990,7 @@ async def c(ctx, *, to_check: str = None):
     if not target_raw.strip().isdigit():
         try:
             invite_code = target_raw
-            code_match = re.search(r'(?:invite/|discord\.gg/)([a-zA-Z0-9-]+)', target_raw)
+            code_match = re.search(r'(?:invite/|discord\.gg/|discord\.com/invite/)?([a-zA-Z0-9-]+)', target_raw)
             if code_match:
                 invite_code = code_match.group(1)
 
@@ -1004,7 +1024,6 @@ async def c(ctx, *, to_check: str = None):
         return await ctx.reply(f"The game {game_input} is **invalid** or **unsupported**.")
 
     worker_input = first_valid_id if first_valid_id else target_raw
-    is_numeric_id = worker_input.strip('<@>').isdigit()
     if not target_user and not is_reported_server_id:
         target_user, _ = await fetch_worker(worker_input)
 
@@ -1025,7 +1044,7 @@ async def c(ctx, *, to_check: str = None):
         profile.set_footer(text="✦　TRI bot")
         return await ctx.reply(embed=profile)
 
-    if is_reported_server_id or fetched_invite_guild or (not target_user and not is_numeric_id):
+    if is_reported_server_id or fetched_invite_guild or not target_user:
         server_id = worker_input.strip('<@>')
         guild = None
 
@@ -1097,7 +1116,7 @@ async def c(ctx, *, to_check: str = None):
             return await ctx.reply("Server is reported.", embeds=reported_server_profile(guild, server_profile),
                                    view=view)
         else:
-            if server_id.isdigit() and not fetched_invite_guild and not target_raw.startswith("http"):
+            if server_id.isdigit() and (not guild or isinstance(guild, UnknownGuild)):
                 return await ctx.reply(
                     "Please provide a valid user ID. To check servers, please provide a valid invite link.")
             view = NewServerReportView(guild, requested_by) if is_staff else MemberView()
