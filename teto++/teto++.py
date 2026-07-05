@@ -575,10 +575,10 @@ async def process_invites():
                 removed_invites.append(code)
         if removed_invites and log_channel:
             invitescol.update_one({"_id": guild_id}, {"$set": {"invites": valid_invites}})
-            await log_channel.send(
+            await log_channel.send(embed=discord.Embed(description=
                 f"**Invites Updated** for {guild_name}`{guild_id}`\n"
                 f"> **Removed** – {', '.join([f'`{c}`' for c in removed_invites])}"
-            )
+            ))
 
         for guild in bot.guilds:
             guild_id_str = str(guild.id)
@@ -632,12 +632,12 @@ async def process_invites():
             if added_invites or replaced_invites:
                 invitescol.update_one({"_id": guild_id_str}, {"$set": {"invites": current_invites}}, upsert=True)
                 if log_channel:
-                    log_msg = f"**Invites Updated** for {guild.name} `{guild_id_str}`\n"
+                    msg = f"**Invites Updated** for {guild.name} `{guild_id_str}`\n"
                     if added_invites:
-                        log_msg += f"> **Added** – {', '.join([f'`{c}`' for c in added_invites])}\n"
+                        msg += f"> **Added** – {', '.join([f'`{c}`' for c in added_invites])}\n"
                     if replaced_invites:
-                        log_msg += f"> **Replaced** – {', '.join(replaced_invites)}\n"
-                    await log_channel.send(log_msg)
+                        msg += f"> **Replaced** – {', '.join(replaced_invites)}\n"
+                    await log_channel.send(embed=discord.Embed(description=msg))
 
 
 async def process_and_save_invite(invite: discord.Invite):
@@ -689,7 +689,7 @@ async def process_and_save_invite(invite: discord.Invite):
                 msg += f"> **Replaced** – `{replaced_code}` <:whitearrow4:1523377871480033301> `{invite.code}`"
             else:
                 msg += f"> **Added** – `{invite.code}`"
-            await log_channel.send(msg)
+            await log_channel.send(embed=discord.Embed(description=msg))
 
 
 @bot.event
@@ -874,10 +874,10 @@ async def c(ctx, *, to_check: str = None):
                 invitescol.update_one({"_id": server_id}, {"$set": {"invites": valid_invites}})
                 guild_name = f"{guild.name} " if guild and not isinstance(guild, UnknownGuild) else ""
                 if removed_invites and log_channel:
-                    await log_channel.send(
+                    await log_channel.send(embed=discord.Embed(description=
                         f"**Invites Updated** for {guild_name}`{server_id}`\n"
                         f"> **Removed** – {', '.join([f'`{c}`' for c in removed_invites])}"
-                    )
+                    ))
 
             if not guild:
                 guild = bot.get_guild(int(server_id)) or UnknownGuild(int(server_id))

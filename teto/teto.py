@@ -748,7 +748,7 @@ async def process_and_save_invite(invite: discord.Invite):
                 msg += f"> **Replaced** – `{replaced_code}` <:whitearrow4:1523377871480033301> `{invite.code}`"
             else:
                 msg += f"> **Added** – `{invite.code}`"
-            await log_channel.send(msg)
+            await log_channel.send(embed=discord.Embed(description=msg))
 
 
 def get_invite_priority_and_expiry(invite: discord.Invite):
@@ -1094,10 +1094,10 @@ async def c(ctx, *, to_check: str = None):
                 invitescol.update_one({"_id": server_id}, {"$set": {"invites": valid_invites}})
                 guild_name = f"{guild.name} " if guild and not isinstance(guild, UnknownGuild) else ""
                 if removed_invites and log_channel:
-                    await log_channel.send(
+                    await log_channel.send(embed=discord.Embed(description=
                         f"**Invites Updated** for {guild_name}`{server_id}`\n"
                         f"> **Removed** – {', '.join([f'`{c}`' for c in removed_invites])}"
-                    )
+                    ))
 
             if not guild:
                 guild = bot.get_guild(int(server_id)) or UnknownGuild(int(server_id))
