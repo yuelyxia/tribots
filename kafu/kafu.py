@@ -653,7 +653,6 @@ Do’s & Don’ts:
 > By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
 """)
 
-
 @bot.command(name="mm")
 async def mm(ctx, *, desc: str=None):
     if not desc:
@@ -973,25 +972,26 @@ async def ticket_claim_cleanup_loop():
 
 @bot.command(name="claim")
 async def claim(ctx, mode: str = None, member: discord.Member = None):
-    server_info = servers.find_one_and_update(
-        {"_id": str(ctx.guild.id)},
-        {"$setOnInsert": {"_id": str(ctx.guild.id)}},
-        upsert=True,
-        return_document=True
-    )
-    if not server_info.get("staff_role"):
-        await ctx.reply("**staff role** has not been set up for this server.")
-        return
-    if not server_info.get("adm_ping"):
-        await ctx.reply("**adm ping** has not been set up for this server.")
-        return
-    staff_role = server_info["staff_role"]
-    adm_ping = server_info["adm_ping"]
-    if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) not in ctx.author.roles:
-        return
+    if ctx.guild.id != TRI_Archive:
+        server_info = servers.find_one_and_update(
+            {"_id": str(ctx.guild.id)},
+            {"$setOnInsert": {"_id": str(ctx.guild.id)}},
+            upsert=True,
+            return_document=True
+        )
+        if not server_info.get("staff_role"):
+            await ctx.reply("**staff role** has not been set up for this server.")
+            return
+        if not server_info.get("adm_ping"):
+            await ctx.reply("**adm ping** has not been set up for this server.")
+            return
+        staff_role = server_info["staff_role"]
+        adm_ping = server_info["adm_ping"]
+        if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) not in ctx.author.roles:
+            return
     target = ctx.author
     if mode == "force":
-        if not (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
+        if not (is_sr(ctx.author) or (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles)):
             await ctx.reply("Unauthorised.")
             return
         if not member:
@@ -1015,25 +1015,26 @@ async def claim(ctx, mode: str = None, member: discord.Member = None):
 
 @bot.command(name="unclaim")
 async def unclaim(ctx, mode: str = None, member: discord.Member = None):
-    server_info = servers.find_one_and_update(
-        {"_id": str(ctx.guild.id)},
-        {"$setOnInsert": {"_id": str(ctx.guild.id)}},
-        upsert=True,
-        return_document=True
-    )
-    if not server_info.get("staff_role"):
-        await ctx.reply("**staff role** has not been set up for this server.")
-        return
-    if not server_info.get("adm_ping"):
-        await ctx.reply("**adm ping** has not been set up for this server.")
-        return
-    staff_role = server_info["staff_role"]
-    adm_ping = server_info["adm_ping"]
-    if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) not in ctx.author.roles:
-        return
+    if ctx.guild.id != TRI_Archive:
+        server_info = servers.find_one_and_update(
+            {"_id": str(ctx.guild.id)},
+            {"$setOnInsert": {"_id": str(ctx.guild.id)}},
+            upsert=True,
+            return_document=True
+        )
+        if not server_info.get("staff_role"):
+            await ctx.reply("**staff role** has not been set up for this server.")
+            return
+        if not server_info.get("adm_ping"):
+            await ctx.reply("**adm ping** has not been set up for this server.")
+            return
+        staff_role = server_info["staff_role"]
+        adm_ping = server_info["adm_ping"]
+        if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) not in ctx.author.roles:
+            return
     target = ctx.author
     if mode == "force":
-        if not (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
+        if not (is_sr(ctx.author) or (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles)):
             await ctx.reply("Unauthorised.")
             return
         if not member:
@@ -1082,62 +1083,62 @@ async def claims(ctx, *args):
 async def close(ctx, *args):
     if args:
         return
-    server_info = await asyncio.to_thread(
-        servers.find_one_and_update,
-        {"_id": str(ctx.guild.id)},
-        {"$setOnInsert": {"_id": str(ctx.guild.id)}},
-        upsert=True,
-        return_document=True
-    )
-    if not server_info or not server_info.get("staff_role"):
-        await ctx.reply("**staff role** has not been set up for this server.")
-        return
-    staff_role = server_info.get("staff_role")
-    adm_ping = server_info.get("adm_ping")
-    if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
-        active_claims = await get_uncredited_claims(ctx.channel.id)
-        if ctx.guild.id == TRI_Archive:
-            if not (get(ctx.guild.roles, id=int(adm_ping.replace("<@&", "").replace(">", ""))) in ctx.author.roles or ctx.author.guild_permissions.manage_roles):
-                return await ctx.reply("You are not authorised to close this ticket.")
-        else:
-            if not active_claims:
-                await ctx.reply("No new ticket credits to give.")
-                return
-        mentions = [f"<@{uid}>" for uid in active_claims]
-        embed = discord.Embed(colour=0xffffff, description=f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
-        if ctx.guild.id == TRI_Archive:
-            ticket = await bot.ticket_manager.from_thread(ctx.channel.id)
-            if not ticket:
-                return await ctx.reply("This channel is not an active ticket thread.")
-            claims_doc = await asyncio.to_thread(ticket_claims.find_one, {"_id": ctx.channel.id})
-            all_claims = claims_doc.get("claimed_by", []) if claims_doc else ticket.data.get("claimed_by", [])
-            credited_users = ticket.data.get("credited_users", [])
-            new_claims = [uid for uid in all_claims if uid not in credited_users]
-            past_claims = [uid for uid in all_claims if uid in credited_users]
-            new_mentions = ", ".join([f"<@{uid}>" for uid in new_claims]) if new_claims else "None"
-            past_mentions = ", ".join([f"<@{uid}>" for uid in past_claims]) if past_claims else "None"
-            embed = discord.Embed(colour=0xffffff)
-            embed.description = (
-                f"### Ticket Claim Status\n"
-                f"**Newly claimed:** {new_mentions}\n"
-                f"**Previously credited:** {past_mentions}"
-            )
+    if ctx.guild.id != TRI_Archive:
+        server_info = await asyncio.to_thread(
+            servers.find_one_and_update,
+            {"_id": str(ctx.guild.id)},
+            {"$setOnInsert": {"_id": str(ctx.guild.id)}},
+            upsert=True,
+            return_document=True
+        )
+        if not server_info or not server_info.get("staff_role"):
+            await ctx.reply("**staff role** has not been set up for this server.")
+            return
+        staff_role = server_info.get("staff_role")
+    active_claims = await get_uncredited_claims(ctx.channel.id)
+    if ctx.guild.id == TRI_Archive:
+        if not is_sr(ctx.author):
+            return await ctx.reply("You are not authorised to close this ticket.")
+    else:
+        if not active_claims:
+            await ctx.reply("No new ticket credits to give.")
+            return
+    mentions = [f"<@{uid}>" for uid in active_claims]
+    embed = discord.Embed(colour=0xffffff, description=f"Ticket has been claimed by **{len(mentions)}** user(s)\n" + ", ".join(mentions))
+    if ctx.guild.id == TRI_Archive:
+        ticket = await bot.ticket_manager.from_thread(ctx.channel.id)
+        if not ticket:
+            return await ctx.reply("This channel is not an active ticket thread.")
+        claims_doc = await asyncio.to_thread(ticket_claims.find_one, {"_id": ctx.channel.id})
+        all_claims = claims_doc.get("claimed_by", []) if claims_doc else ticket.data.get("claimed_by", [])
+        credited_users = ticket.data.get("credited_users", [])
+        new_claims = [uid for uid in all_claims if uid not in credited_users]
+        past_claims = [uid for uid in all_claims if uid in credited_users]
+        new_mentions = ", ".join([f"<@{uid}>" for uid in new_claims]) if new_claims else "None"
+        past_mentions = ", ".join([f"<@{uid}>" for uid in past_claims]) if past_claims else "None"
+        embed = discord.Embed(colour=0xffffff)
+        embed.description = (
+            f"### Ticket Claim Status\n"
+            f"**Newly claimed:** {new_mentions}\n"
+            f"**Previously credited:** {past_mentions}"
+        )
 
-            async def get_miku_closing(thread: discord.Thread):
-                async for message in thread.history(limit=None, oldest_first=True):
-                    if message.author.id == MIKU:
-                        if message.embeds:
-                            embed = message.embeds[0]
-                            if embed.fields:
-                                field = embed.fields[0]
-                                closing = field.value.strip("`")
-                                return closing
-                        break
-                return ""
-            detected = await get_miku_closing(ctx.channel)
-            embed.add_field(name="Closing", value=detected, inline=True)
-            await ctx.reply(embed=embed, view=TRICloseView(active_claims))
-        else:
+        async def get_miku_closing(thread: discord.Thread):
+            async for message in thread.history(limit=None, oldest_first=True):
+                if message.author.id == MIKU:
+                    if message.embeds:
+                        embed = message.embeds[0]
+                        if embed.fields:
+                            field = embed.fields[0]
+                            closing = field.value.strip("`")
+                            return closing
+                    break
+            return ""
+        detected = await get_miku_closing(ctx.channel)
+        embed.add_field(name="Closing", value=detected, inline=True)
+        await ctx.reply(embed=embed, view=TRICloseView(active_claims))
+    else:
+        if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
             await ctx.reply(embed=embed, view=TicketCloseView(active_claims))
 
 class TicketClosingModal(discord.ui.Modal, title="Ticket Closing Reason"):
@@ -1306,7 +1307,7 @@ def user_info(user, staff_data=None, mm_data=None, pilot_data=None):
             value=f"**{pilot_data.get('alltime', 0)}** all ㆍ **{pilot_data.get('monthly', 0)}** month",
             inline=False
         )
-    profile.set_footer(text="✦　Use ,c to check if user is reported, unreported or trusted.")
+    profile.set_footer(text="✦　,c to check if user is reported, unreported or trusted.")
     return profile
 
 @bot.command(name="p")
@@ -1319,31 +1320,29 @@ async def profile(ctx, user:str = None):
         except Exception:
             await ctx.reply("Please provide a valid user ID.")
             return
-    guild_id = str(ctx.guild.id)
-    server_info = servers.find_one({"_id": guild_id})
-    if not server_info:
-        await ctx.reply(embed=user_info(user))
-        return
-    uid = str(user.id)
-    staff = server_info.get("staff", {})
-    mms = server_info.get("mms", {})
-    pilots = server_info.get("pilots", {})
-    roles = []
-    if uid in staff:
-        roles.append("staff")
-        staff_data = staff.get(uid, {})
-    else:
-        staff_data = None
-    if uid in mms:
-        roles.append("mm")
-        mm_data = mms.get(uid, {})
-    else:
-        mm_data = None
-    if uid in pilots:
-        roles.append("pilot")
-        pilot_data = pilots.get(uid, {})
-    else:
-        pilot_data = None
+    guild_id = ctx.guild.id
+    staff_data = None
+    mm_data = None
+    pilot_data = None
+    if guild_id != TRI_Archive:
+        server_info = servers.find_one({"_id": str(guild_id)})
+        if not server_info:
+            await ctx.reply(embed=user_info(user))
+            return
+        uid = str(user.id)
+        staff = server_info.get("staff", {})
+        mms = server_info.get("mms", {})
+        pilots = server_info.get("pilots", {})
+        roles = []
+        if uid in staff:
+            roles.append("staff")
+            staff_data = staff.get(uid, {})
+        if uid in mms:
+            roles.append("mm")
+            mm_data = mms.get(uid, {})
+        if uid in pilots:
+            roles.append("pilot")
+            pilot_data = pilots.get(uid, {})
     await ctx.reply(embed=user_info(user, staff_data, mm_data, pilot_data))
 
 def format_time_utc(tz_str: str):
@@ -1398,7 +1397,6 @@ async def set_timezone(interaction: discord.Interaction, timezone: str):
     if timezone not in TIMEZONES:
         await interaction.response.send_message("Invalid timezone.", ephemeral=True)
         return
-    guild_id = interaction.guild.id
     if interaction.guild is None:
         await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
         return
@@ -1794,6 +1792,7 @@ async def customrole_create(interaction: discord.Interaction,
     await interaction.followup.send(f"Custom role {role.mention} created for {owner.mention}")
 
 @customrole.command(name="delete", description="Delete a custom role.")
+@app_commands.default_permissions(manage_roles=True)
 async def customrole_delete(interaction: discord.Interaction, role: discord.Role):
     await interaction.response.defer(ephemeral=True)
     server_info = servers.find_one_and_update(
@@ -2285,6 +2284,8 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
             servers.replace_one(server_query, server_info)
     else:
         guild_id = interaction.guild.id
+        if guild_id == TRI_Archive:
+            return await interaction.followup.send("ban requests disabled for this server.", ephemeral=True)
         server_query = {"_id": str(guild_id)}
         server_info = servers.find_one_and_update(
             {"_id": str(interaction.guild.id)},
@@ -2492,6 +2493,8 @@ async def unban(interaction: discord.Interaction, user: str, reason: Optional[st
             servers.replace_one(server_query, server_info)
     else:
         guild_id = interaction.guild.id
+        if guild_id == TRI_Archive:
+            return await interaction.followup.send("unban requests disabled for this server.", ephemeral=True)
         server_query = {"_id": str(guild_id)}
         server_info = servers.find_one_and_update(
             {"_id": str(interaction.guild.id)},
@@ -2627,39 +2630,11 @@ class UnbanReqView(discord.ui.View):
                 servers.replace_one(server_query, server_info)
                 await interaction.followup.send(f"Unban request rejected.", ephemeral=True)
 
-#
-
-"""@bot.tree.command(name="whitelist")
-@app_commands.describe(server="Server invite")
-@app_commands.checks.has_permissions(administrator=True)
-async def whitelist(interaction: discord.Interaction, server: str):
-    if interaction.user.id == yuelyxia:
-        try:
-            invite = await bot.fetch_invite(server)
-        except discord.NotFound:
-            await interaction.response.send_message("The invite link is **invalid** or **expired**.", ephemeral=True)
-        except discord.Forbidden:
-            await interaction.response.send_message("Unable to access details of invite.", ephemeral=True)
-        except Exception as e:
-            await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
-        else:
-            guild_id = invite.guild.id
-            server_query = {"_id": str(guild_id)}
-            server_info = servers.find_one(server_query)
-            if server_info:
-                await interaction.response.send_message(f"`{guild_id}` is already whitelisted.")
-            else:
-                server_info = {
-                    "_id": str(guild_id),
-                }
-                servers.insert_one(server_info)
-                await interaction.response.send_message(f"`{guild_id}` has been whitelisted.")"""
-
 @bot.tree.command(name="break", description="Toggle staff/mm/pilot break.")
 async def break_command(interaction: discord.Interaction, category: Literal["staff", "mm", "pilot"]):
     await interaction.response.defer()
     if interaction.guild.id == TRI_Archive:
-        return await interaction.followup.send("This command cannot be used in this server.")
+        return await interaction.followup.send("Please use miku’s /break command instead.")
     server_info = servers.find_one_and_update(
         {"_id": str(interaction.guild.id)},
         {"$setOnInsert": {"_id": str(interaction.guild.id)}},
@@ -2799,6 +2774,8 @@ async def appoint_staff(interaction: discord.Interaction, user: str, role: Optio
 @app_commands.describe(user="User/role to appoint as mm", role="mm role to assign.")
 async def appoint_mm(interaction: discord.Interaction, user: str, role: Optional[discord.Role]=None):
     await interaction.response.defer(ephemeral=True)
+    if interaction.guild.id == TRI_Archive:
+        return await interaction.followup.send("This command cannot be used in this server.")
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one_and_update(
@@ -2859,6 +2836,8 @@ async def appoint_mm(interaction: discord.Interaction, user: str, role: Optional
 @app_commands.describe(user="User/role to appoint as pilot", role="pilot role to assign.")
 async def appoint_pilot(interaction: discord.Interaction, user: str, role: Optional[discord.Role]=None):
     await interaction.response.defer(ephemeral=True)
+    if interaction.guild.id == TRI_Archive:
+        return await interaction.followup.send("This command cannot be used in this server.")
     guild_id = interaction.guild.id
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one_and_update(
@@ -3073,7 +3052,7 @@ async def dismiss(interaction: discord.Interaction, user: str, category: Literal
 async def dismiss_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     original = getattr(error, "original", error)
     if isinstance(original, discord.Forbidden):
-        await interaction.followup.send("Missing permissions. Check if KAFU’s highest role is above the role you are trying to assign.", ephemeral=True)
+        await interaction.followup.send("Missing permissions. Check if KAFU’s highest role is above the role you are trying to remove.", ephemeral=True)
     else:
         await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
@@ -3086,6 +3065,10 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
     "pilot roles", "pilot role", "pilot ping", "pilot supervisor", "pilot trainer", "pilot break", "pilot vouch channel"
 ]]=None, input: Optional[str]=None):
     guild_id = interaction.guild.id
+    TRI_enablelist = ["bans warns channel", "staff roles", "staff role", "staff ping"]
+    if guild_id == TRI_Archive:
+        if topic not in TRI_enablelist:
+            return await interaction.response.send_message(f"**{topic}** is disabled for TRI Archive.")
     server_query = {"_id": str(guild_id)}
     server_info = servers.find_one_and_update(
         {"_id": str(interaction.guild.id)},
@@ -3094,6 +3077,11 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         return_document=True
     )
     if topic is None:
+        if guild_id == TRI_Archive:
+            for topic in TRI_enablelist:
+                embed = discord.Embed(colour=0xffffff)
+                embed.add_field(name=topic, value=server_info.get(topic, "unset"), inline=False)
+                return await interaction.response.send_message(embed=embed, ephemeral=True)
         general_embed = discord.Embed(colour=0xffffff)
         general_embed.add_field(name="bans warns channel", value=server_info.get("bans_warns_channel", "unset"), inline=False) #
         general_embed.add_field(name="transcripts channel", value=server_info.get("transcripts_channel", "unset"), inline=False) #
@@ -3123,7 +3111,7 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         service_embed.add_field(name="pilot break", value=server_info.get("pilot_break", "unset"), inline=False) #
         service_embed.add_field(name="pilot vouch channel", value=server_info.get("pilot_vouch_channel", "unset"), inline=False)
         embeds = [general_embed, staff_embed, service_embed]
-        await interaction.response.send_message(embeds=embeds, ephemeral=True)
+        return await interaction.response.send_message(embeds=embeds, ephemeral=True)
     if topic == "bans warns channel" and input is not None:
         if input.strip().lower() == "none":
             server_info["bans_warns_channel"] = None
