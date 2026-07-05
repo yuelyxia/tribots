@@ -438,7 +438,7 @@ async def a(ctx, *, to_check: str = None):
     user_id = str(user.id)
     alts_info = altscol.find_one({"_id": user_id})
     if not alts_info:
-        await ctx.reply(embed=default_no_alts(user))
+        await status_message.edit(content=None, embed=default_no_alts(user))
         return
     alts = alts_info.get("alts", [])
     proofs = alts_info.get("proofs", [])
