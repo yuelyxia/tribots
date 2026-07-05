@@ -7,6 +7,7 @@ load_dotenv()
 import pymongo
 
 import asyncio
+import aiohttp
 import re
 
 import discord
@@ -502,6 +503,7 @@ async def update_reports_count():
 @bot.event
 async def on_ready():
     update_reports_count.start()
+    update_scam_domains.start()
 
 
 # check
@@ -1258,6 +1260,83 @@ class MemberView(discord.ui.View):
 
 check = app_commands.Group(name="check", description="Check.")
 bot.tree.add_command(check)
+
+RAW_LIST_URL = "https://raw.githubusercontent.com/Discord-AntiScam/scam-links/main/list.txt"
+scam_domains = set()
+
+@tasks.loop(hours=12)
+async def update_scam_domains():
+    global scam_domains
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(RAW_LIST_URL) as response:
+                if response.status == 200:
+                    text = await response.text()
+                    new_domains = {
+                        line.strip().lower()
+                        for line in text.splitlines()
+                        if line.strip() and not line.strip().startswith("#")
+                    }
+                    if new_domains:
+                        scam_domains = new_domains
+                        print(f"Updated {len(scam_domains)} domains.")
+    except Exception as e:
+        print(f"Cache refresh failed: {e}")
+
+def defang_url(match: re.Match[str]) -> str:
+    url = match.group(0)
+    url = url.replace("https://", "hxxps://").replace("http://", "hxxp://")
+    parts = url.split(".")
+    if len(parts) > 1:
+        return "[-]".join(parts[:-1]) + f"[{parts[-2][-1] if parts[-1] else ''}]" + parts[-1]
+    return f"{url}"
+
+@check.command(name="link", description="Checks a text or link for known malicious domains.")
+@app_commands.describe(text="The text or link you want to check.")
+async def check_link(interaction: discord.Interaction, text: str):
+    extracted_urls = re.findall(r'(?:https?://)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+)', text)
+    if not extracted_urls:
+        return await interaction.response.send_message(
+            "No URLs or domains detected in your input.",
+            ephemeral=True
+        )
+
+    flagged_domains = []
+    for domain in extracted_urls:
+        cleaned_domain = domain.lower()
+
+        if cleaned_domain in scam_domains:
+            flagged_domains.append(cleaned_domain)
+        else:
+            parts = cleaned_domain.split('.')
+            if len(parts) > 2:
+                root_domain = ".".join(parts[-2:])
+                if root_domain in scam_domains:
+                    flagged_domains.append(cleaned_domain)
+
+    ephemeral_embed = discord.Embed(colour=0xffffff)
+
+    if flagged_domains:
+        unique_flags = list(set(flagged_domains))
+        formatted_list = "\n".join(f"- `{d}`" for d in unique_flags)
+        ephemeral_embed.description = f"<a:whitealert:1496542298908000257> **Malicious link(s) identified.**\n\n{formatted_list}"
+        ephemeral_embed.set_footer(text="The public copy has been safely censored.")
+
+        await interaction.response.send_message(embed=ephemeral_embed, ephemeral=True)
+
+        safe_text = text
+        for bad_domain in unique_flags:
+            escaped_domain = re.escape(bad_domain)
+            safe_text = re.sub(rf'(https?://)?(www\.)?{escaped_domain}', defang_url, safe_text, flags=re.IGNORECASE)
+
+        public_embed = discord.Embed(description=f"{safe_text}", colour=0xffffff)
+        public_embed.set_footer(text="The malicious link(s) have been safely censored.")
+        await interaction.channel.send(content=f"<a:whitealert:1496542298908000257> **{interaction.user.mention} checked a text containing the following malicious link(s)**", embed=public_embed)
+
+    else:
+        ephemeral_embed.description = "No known malicious domains detected.\n-# **This does not mean the link is guaranteed to be safe.**"
+        await interaction.response.send_message(embed=ephemeral_embed, ephemeral=True)
+
 
 @check.command(name="all", description="Check all users in the server for bannable report(s).")
 @commands.has_permissions(administrator=True)
