@@ -11,6 +11,7 @@ import io
 import aiohttp
 import asyncio
 import re
+import datetime
 
 import discord
 from discord import app_commands
@@ -33,6 +34,7 @@ trustedserverscol = db["trusted_servers"]
 staffweeklycol = db["staff_weekly"]
 inprogresscol = db["in_progress"]
 altscol = db["alts"]
+invitescol = db["invites"]
 
 inprogresscol.create_index("user_id", unique=True, sparse=True)
 inprogresscol.create_index("guild_id", unique=True, sparse=True)
@@ -44,6 +46,7 @@ USER_REPORTS_CHANNEL = 1375132097605406721
 SERVER_REPORTS_CHANNEL = 1375184563675856916
 ACCOUNT_REPORTS_CHANNEL = 1515531623045533716
 TICKETS_CHANNEL = 1375261699111784478
+INVITE_LOGS_CHANNEL = 1523229932375900300
 
 # tri roles info
 o5_role = 1372426616671834234
@@ -696,6 +699,74 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
+async def process_and_save_invite(invite: discord.Invite):
+    if not invite.guild:
+        return
+
+    log_channel = bot.get_channel(INVITE_LOGS_CHANNEL)
+    guild_id_str = str(invite.guild.id)
+    server_doc = invitescol.find_one({"_id": guild_id_str}) or {"_id": guild_id_str, "invites": []}
+    current_invites = server_doc.get("invites", [])
+
+    current_invites = [{"code": x, "priority": 1, "expires_at": None} if isinstance(x, str) else x for x in
+                       current_invites]
+
+    if any(x["code"] == invite.code for x in current_invites):
+        return
+
+    p, exp = get_invite_priority_and_expiry(invite)
+    candidate = {"code": invite.code, "priority": p, "expires_at": exp}
+
+    added = False
+    replaced_code = None
+
+    if len(current_invites) < 5:
+        current_invites.append(candidate)
+        added = True
+    else:
+        current_invites.sort(key=lambda x: (x["priority"], -(x["expires_at"] or 9999999999)))
+        lowest_saved = current_invites[0]
+
+        if candidate["priority"] > lowest_saved["priority"] or (
+                candidate["priority"] == lowest_saved["priority"] and
+                candidate["expires_at"] is not None and lowest_saved["expires_at"] is not None and
+                candidate["expires_at"] > lowest_saved["expires_at"]
+        ):
+            replaced_code = lowest_saved["code"]
+            current_invites[0] = candidate
+            added = True
+
+    if added:
+        invitescol.update_one({"_id": guild_id_str}, {"$set": {"invites": current_invites}}, upsert=True)
+        if log_channel:
+            msg = f"**Invites Updated** for `{guild_id_str}`\n"
+            if replaced_code:
+                msg += f"> **Replaced** – `{replaced_code}` <:whitearrow4:1523377871480033301> `{invite.code}`"
+            else:
+                msg += f"> **Added** – `{invite.code}`"
+            await log_channel.send(msg)
+
+
+def get_invite_priority_and_expiry(invite: discord.Invite):
+    """
+    Returns (priority_score, expires_at_timestamp)
+    3: Permanent (max_age == 0)
+    2: Vanity URL
+    1: Temporary (max_age > 0)
+    """
+    expires_at_ts = None
+    if invite.expires_at:
+        expires_at_ts = int(invite.expires_at.timestamp())
+    if invite.max_age == 0:
+        return 3, None  # Permanent
+    elif invite.is_vanity():
+        return 2, None  # Vanity URL
+    else:
+        if not expires_at_ts and invite.created_at and invite.max_age:
+            expires_at_ts = int((invite.created_at + datetime.timedelta(seconds=invite.max_age)).timestamp())
+        return 1, expires_at_ts
+
+
 # check
 
 async def fetch_worker(raw_user):
@@ -856,6 +927,7 @@ async def c(ctx, *, to_check: str = None):
 
     game_input, uid_input, game = None, None, None
     has_space = to_check and " " in to_check.strip()
+    log_channel = bot.get_channel(INVITE_LOGS_CHANNEL)
 
     if to_check:
         to_check = to_check.strip()
@@ -897,13 +969,19 @@ async def c(ctx, *, to_check: str = None):
     fetched_invite_guild = None
     if not target_raw.strip().isdigit():
         try:
-            invite = await bot.fetch_invite(target_raw.strip())
+            invite_code = target_raw
+            code_match = re.search(r'(?:invite/|discord\.gg/)([a-zA-Z0-9-]+)', target_raw)
+            if code_match:
+                invite_code = code_match.group(1)
+
+            invite = await bot.fetch_invite(invite_code, with_counts=True)
             fetched_invite_guild = invite.guild
+
+            await process_and_save_invite(invite)
         except Exception:
             pass
 
     clean_text = re.sub(r"<a?:\w+:\d+>", "", target_raw)
-
     tokens = clean_text.split()
     first_valid_id = None
     target_user = None
@@ -949,18 +1027,61 @@ async def c(ctx, *, to_check: str = None):
 
     if is_reported_server_id or fetched_invite_guild or (not target_user and not is_numeric_id):
         server_id = worker_input.strip('<@>')
+        guild = None
+
         if fetched_invite_guild:
             guild = fetched_invite_guild
             server_id = str(guild.id)
         elif not server_id.isdigit():
             try:
-                invite = await bot.fetch_invite(target_raw)
+                invite_code = target_raw
+                code_match = re.search(r'(?:invite/|discord\.gg/)([a-zA-Z0-9-]+)', target_raw)
+                if code_match:
+                    invite_code = code_match.group(1)
+
+                invite = await bot.fetch_invite(invite_code, with_counts=True)
                 guild = invite.guild
                 server_id = str(guild.id)
+                await process_and_save_invite(invite, log_channel=log_channel)
             except Exception:
                 return await ctx.send("The invite link is **invalid** or **expired**.")
         else:
-            guild = UnknownGuild(int(server_id))
+            server_doc = invitescol.find_one({"_id": server_id})
+            if server_doc and server_doc.get("invites"):
+                valid_invites = []
+                removed_invites = []
+                now_ts = int(discord.utils.utcnow().timestamp())
+
+                for inv_entry in server_doc["invites"]:
+                    code = inv_entry if isinstance(inv_entry, str) else inv_entry.get("code")
+                    expires_at = None if isinstance(inv_entry, str) else inv_entry.get("expires_at")
+
+                    if expires_at and now_ts >= expires_at:
+                        removed_invites.append(code)
+                        continue
+
+                    try:
+                        invite = await bot.fetch_invite(code, with_counts=True)
+                        if invite.guild and str(invite.guild.id) == server_id:
+                            p, exp = get_invite_priority_and_expiry(invite)
+                            valid_invites.append({"code": code, "priority": p, "expires_at": exp})
+                            if not guild:
+                                guild = invite.guild
+                        else:
+                            removed_invites.append(code)
+                    except (discord.NotFound, discord.HTTPException):
+                        removed_invites.append(code)
+
+                invitescol.update_one({"_id": server_id}, {"$set": {"invites": valid_invites}})
+                guild_name = f"{guild.name} " if guild else ""
+                if removed_invites and log_channel:
+                    await log_channel.send(
+                        f"**Invites Updated** for {guild_name}`{server_id}`\n"
+                        f"> **Removed** – {', '.join([f'`{c}`' for c in removed_invites])}"
+                    )
+
+            if not guild:
+                guild = bot.get_guild(int(server_id)) or UnknownGuild(int(server_id))
 
         server_profile = serverscol.find_one({"_id": server_id})
         trusted_server = trustedserverscol.find_one({"_id": server_id})
