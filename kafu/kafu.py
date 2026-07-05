@@ -3723,7 +3723,8 @@ async def create_ticket(
     thread = await interaction.channel.create_thread(
         name=f"{ticket_type}-{interaction.user.name}",
         auto_archive_duration=10080,
-        type=discord.ChannelType.private_thread
+        type=discord.ChannelType.private_thread,
+        invitable=False
     )
     allowed_ids = [interaction.user.id]
     guild = interaction.guild
