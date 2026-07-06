@@ -407,7 +407,7 @@ def default_account_profile(game_uid):
     game, uid = game_uid.split("ㆍ", 1)
     icon = get_game_icon(game)
     if icon: profile.set_thumbnail(url=f"{icon}")
-    profile.description = f"**{game}**ㆍ`{uid}`"
+    profile.description = f"**{game}**\n`{uid}`\n-# `{game_uid}`"
     profile.set_footer(text="✦　This account is unreported or invalid.")
     return profile
 def reported_account_profile(game_uid, account_profile):
@@ -466,7 +466,7 @@ def format_account_r_profile(game_uid, r_profile_list, title):
     icon = get_game_icon(game)
     if icon: r_profile.set_thumbnail(url=f"{icon}")
     r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
-    r_profile.description += f"**{game}**\n`{uid}`"
+    r_profile.description += f"**{game}**\n`{uid}`\n-# `{game_uid}`"
     links = []
     for link in r_profile_list[0]:
         game, uid = link.split("ㆍ")
