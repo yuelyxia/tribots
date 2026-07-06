@@ -3551,7 +3551,7 @@ async def add(ctx, mode: str = None, member: str = None):
         await ctx.reply(embed=embed)
         return
     else:
-        ticket = await manager.from_ticket(ctx.channel.id)
+        ticket = await manager.from_thread(ctx.channel.id)
         if not ticket or ticket.data.get("status") != "open":
             await ctx.reply(
                 "This command can only be used within an active ticket thread.")
@@ -3623,7 +3623,7 @@ async def remove(ctx, mode: str = None, target: str = None):
         await ctx.reply(embed=embed)
         return
     else:
-        ticket = await manager.from_ticket(ctx.channel.id)
+        ticket = await manager.from_thread(ctx.channel.id)
         if not ticket or ticket.data.get("status") != "open":
             await ctx.reply(
                 "This command can only be used within an active ticket thread.")
