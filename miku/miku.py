@@ -181,6 +181,12 @@ async def on_ready():
     bot.add_view(TagsView())
     bot.add_view(FileView())
     bot.add_view(InputClosingView())
+    bot.add_view(FAQOverviewView())
+    bot.add_view(FAQReportsView())
+    bot.add_view(FAQAppealsView())
+    bot.add_view(FAQDefinitionsStandardsView())
+    bot.add_view(FAQScamPreventionView())
+    bot.add_view(FAQStaffTransparencyView())
     if not reminder_loop.is_running():
         reminder_loop.start()
     if not weekly_quota.is_running():
@@ -1130,7 +1136,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "suspect":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　　　　suspect
+## <a:yellowarrow:1509836964453548133>　　suspect
 　　**__definition__**
 
 > users who have exhibited suspicious behaviour.
@@ -1155,7 +1161,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional mm":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　　　　unprofessional mm
+## <a:yellowarrow:1509836964453548133>　　unprofessional mm
 　　**__definition__**
 
 > mm is deemed unprofessional if they have proven to be irresponsible in their service.
@@ -2084,6 +2090,432 @@ Use the following commands to add react roles:
 """, ephemeral=True)
 
 
+
+
+
+faq_overview_options = [
+    discord.SelectOption(label="what is tri?", value="what is tri?"),
+    discord.SelectOption(label="terms of service", value="terms of service"),
+    discord.SelectOption(label="privacy policy", value="privacy policy"),
+    discord.SelectOption(label="ban policy", value="ban policy"),
+    discord.SelectOption(label="how can I contact admin+?", value="how can I contact admin+?"),
+    discord.SelectOption(label="how can I request a collaboration?", value="how can I request a collaboration?"),
+]
+
+class FAQOverviewView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.select(options=faq_overview_options, placeholder="‎　　Select a question . . .　　　", custom_id="faqoverview",
+                       max_values=1)
+    async def select_callback(self, interaction, select):
+        if self.select_callback.values[0] == "what is tri?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　what is tri?
+trade report investigation archive (**tri archive**) est. may 2025 is a server dedicated to **spreading awareness on dangerous, unlawful, or suspicious activity** and promoting community safety.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "terms of service":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　terms of service
+this server allows users to report scams, attempted scams and other unlawful activities, report suspicious behavior to spread awareness, and view or share reports to stay informed.
+by using the services of tri archive (“we”, “our” or “us”), you agree to the following terms:
+- user responsibilities
+  - you must provide accurate and truthful information when submitting scam reports. false or malicious reports are strictly prohibited and will result in a ban.
+- content use and moderation
+  - all reports will be posted to the public without exceptions. by opening a ticket to report, you grant this server the right to display and share the content or evidence attached to the report(s), with the exception of private information which will be blocked out accordingly.
+  - you are responsible for checking through the proofs to be posted to ensure that all private information has been blocked out from the report(s). this server is not liable for any private information posted publicly on accident, although we will remove them immediately once it is brought to our attention. please view our privacy policy for more details.
+- privacy
+  - this server will collect minimal data on private information, only those that are crucial to the report. this private information will not be viewable to or shared with anyone beyond the staff team without your consent. 
+- access to our service
+  - we may ban any users that abuse the service, violate the terms, or submit harmful content. we value the safety and wellbeing of our staff.
+- modifications to the terms
+  - all info is accessible at [this document](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/) which may be updated from time to time. major changes will be announced but minor changes will not. continued use of our service means you accept the new terms.
+- contact
+  - questions or concerns? [open a ticket](https://discord.com/channels/{TRI_Archive}/{TICKET_CHANNEL}).
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "privacy policy":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　privacy policy
+this server (“we”, “our”, or “us”) is committed to protecting your privacy. this policy explains how we collect, use, and protect your information.
+- information we collect
+  - when you submit a report, we collect the content you provide (e.g. scam description, conversation history with scammer).
+  - if an account is involved, we may collect your email address, username or password, but it will be blocked out on the report that is posted publicly.
+- how we use your information
+  - to publish and share scam reports publicly.
+  - to contact you about your report/appeal, if needed.
+- data sharing
+  - we do **not** sell your data to or share your data with anyone beyond the staff team.
+  - if there is any staff whom you do not wish to give access to your data, please state so clearly and we will remove their access to the ticket.
+- your rights
+  - you may request for us to remove or block out evidence which contains your private information, either during or after the report.
+  - however, please note that requesting removal of non-private evidence after a report is confirmed in an attempt to make the report invalid is prohibited. if you are the victim, you may instead make an appeal on behalf of the defendant.
+  - please consider these privacy concerns carefully before making a report, and check through all evidence attached to the report carefully, as any subsequent updates may take some time to confirm.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "ban policy":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　ban policy
+please read through [server rules](https://discord.com/channels/{TRI_Archive}/1371674470611161160) carefully. not following rules may result in warns or bans.
+_we do not ban scammers so that they may make an appeal._
+
+**what does tri ban?**
+- not following discord [tos](https://discord.com/terms) or [guidelines](https://discord.com/guidelines).
+- racist, sexist, homophobic, xenophobic, or similar slurs and sentiments
+- targeted hate, threats of violence, doxxing, or sharing private info.
+- false or malicious reports. this includes editing proofs.
+- advertising products, services, events, or servers.
+- attempting to bribe or gain favours from staff, even outside the server.
+- nsfw material, even if mentioned as a joke.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "how can I contact admin+?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　
+
+                """), ephemeral=True)
+        if self.select_callback.values[0] == "how can I request a collaboration?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　
+
+                """), ephemeral=True)
+
+
+faq_reports_options = [
+    discord.SelectOption(label="how do I check for reports?", value="how do I check for reports?"),
+    discord.SelectOption(label="what can be reported?", value="what can be reported?"),
+    discord.SelectOption(label="what proofs are required for reports?", value="what proofs are required for reports?"),
+    discord.SelectOption(label="can I remain anonymous?", value="can I remain anonymous?"),
+    discord.SelectOption(label="can I report someone who has already been reported?", value="can I report someone who has already been reported?"),
+    discord.SelectOption(label="can I update or withdraw my report?", value="can I update or withdraw my report?"),
+    discord.SelectOption(label="how long does it take for reports to be published?", value="how long does it take for reports to be published?"),
+    discord.SelectOption(label="how do I stay updated with new reports?", value="how do I stay updated with new reports?"),
+    discord.SelectOption(label="what if someone files a false report?", value="what if someone files a false report?"),
+]
+
+
+class FAQReportsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.select(options=faq_reports_options, placeholder="‎　　Select a question . . .　　　", custom_id="faqreports",
+                       max_values=1)
+    async def select_callback(self, interaction, select):
+        if self.select_callback.values[0] == "how do I check for reports?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　how do I check for reports?
+to check for reports, you need some form of **id**. guides [here](https://discord.com/channels/{TRI_Archive}/1523977533115207820).
+-# 　⤷　how to obtain user/server id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
+- `,c` to check
+  - `,c 𝐮𝐬𝐞𝐫 𝐢𝐝`
+  - `,c 𝐢𝐧𝐯𝐢𝐭𝐞`
+  - `,c 𝐠𝐚𝐦𝐞 𝐮𝐢𝐝`
+- you can also check a link against a database of known malicious links using `/check link`.
+
+**examples**
+- `,c 1450073025818136598`
+- `,c` <@1450073025818136598>
+- `,c tri`
+- `,c https://discord.gg/tri`
+- `,c genshin 676767676`
+- `,c Honkai: Star Rail 767676767`
+- `,c idv eu/na10101010`
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what can be reported?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　what can be reported?
+you may report users or servers for a variety of reasons, including but not limited to
+- scamming or attempted scams.
+- suspicious or high risk behaviour.
+- unprofessional conduct by staff, middlemen, pilots, or other service providers.
+- misconduct during report or appeal proceedings (e.g. harassment, threats, bribery, blackmail, or excessive hostility).
+- other behaviour that may pose a risk to the community.
+we also report game accounts to provide greater transparency regarding account histories to help traders make more informed decisions.
+
+if you are unsure whether a situation is reportable, feel free to open a ticket. our staff will review the information and advise you accordingly.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what proofs are required for reports?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　what proofs are required for reports?
+provide relevant user ids, server invites & ids, or game uids. 
+-# _not just usernames, since usernames can change._
+-# 　⤷　how to obtain user/server id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
+
+**screenshots are strongly preferred**, followed by screen recordings or html files.
+
+please show **entire conversation, _from start to end_**
+-# _do not crop, omit, delete, or edit any messages related to the report until the investigation is complete._
+
+- for **breach of agreement** reports, show the following
+  - trade agreement
+  - proof you fulfilled your side
+  - proof of payment
+  - confrontation & outcome (excuses, blocking, ghosting)
+
+- additional requirements
+  - **timestamps** should be visible
+  - if you've blocked the other user, **temporarily unblock them** before taking screenshots so the conversation displays correctly.
+  - for crypto payments, send **blockchain txids**.
+
+**__uncropped__ & unedited**
+show your **entire screen**. sensitive personal information such as real names, passwords, ip addresses, or other private information may be blurred.
+
+**video too large**
+upload your video at [catbox.moe](https://catbox.moe) and copy & paste the link here.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "can I remain anonymous?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　can I remain anonymous?
+yes, you may choose to remain anonymous when reporting by requesting it when opening a ticket. the staff assisting you will ensure your identity is not disclosed in the proofs attached to the report.
+- however, if dm screenshots are included, the other party may still recognise the conversation and infer who provided the proofs.
+- please also check through all evidence attached to the report carefully, as any subsequent updates may take some time to confirm. 
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "can I report someone who has already been reported?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　can I report someone who has already been reported?
+yes, the same user may be reported multiple times to keep track of their latest activity, especially if
+- they are being reported for a separate incident under a different report tag/reason.
+- the new incident occurred at least 6 months after their latest report.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "can I update or withdraw my report?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　can I update or withdraw my report?
+yes, you may request to update or withdraw your report before it is confirmed, subject to staff review.
+after a report has been confirmed, you may still request for evidence containing your private information to be removed or censored.
+- however, requesting the removal of non-private evidence after a report has been confirmed in an attempt to invalidate or weaken the report is prohibited.
+  - if you are the victim and no longer wish for the report to remain, you may instead submit an appeal on behalf of the defendant, which will be reviewed based on the available evidence.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "how long does it take for reports to be published?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　how long does it take for reports to be published?
+there is no fixed timeframe for how long a report takes to be reviewed and published.
+- the time required depends on factors such as the complexity of the case, the amount of evidence submitted, whether additional information is needed, and our current report volume.
+you will be kept informed of your report's progress by the staff handling your ticket. we appreciate your patience while we ensure each report is reviewed thoroughly and fairly.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "how do I stay updated with new reports?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　how do I stay updated with new reports?
+follow tri’s report announcement channels <#1375132097605406721>, <#1375184563675856916> and <#1515531623045533716> to receive updates in your own server.
+-# 　⤷　how to follow a channel? guide [here](https://support.discord.com/hc/en-us/articles/360028384531-Channel-Following-FAQ).
+
+add tri’s bot <@1457249982104211467> to your server by clicking **add app** on the bot’s profile, or click [here](https://discord.com/oauth2/authorize?client_id=1457249982104211467).
+- `,c` to check users, servers or accounts using <@1457249982104211467>.
+- `/check all` to check your server for users with bannable reports.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what if someone files a false report?":
+            await interaction.response.send_message(embed=discord.Embed(description="""
+### <a:whitearrow2:1388147186654515273>　　what if someone files a false report?
+wip
+            """), ephemeral=True)
+
+faq_appeals_options = [
+    discord.SelectOption(label="how to make an appeal?", value="how to make an appeal?"),
+    discord.SelectOption(label="what can be appealed?", value="what can be appealed?"),
+    discord.SelectOption(label="what proofs are required for appeals?", value="what proofs are required for appeals?"),
+    discord.SelectOption(label="can someone else appeal on my behalf?", value="can someone else appeal on my behalf?"),
+]
+
+class FAQAppealsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.select(options=faq_appeals_options, placeholder="‎　　Select a question . . .　　　", custom_id="faqappeals",
+                       max_values=1)
+    async def select_callback(self, interaction, select):
+        if self.select_callback.values[0] == "how to make an appeal?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　how to make an appeal?
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what can be appealed?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　what can be appealed?
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what proofs are required for appeals?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　what proofs are required for appeals?
+**screenshots are strongly preferred**, followed by screen recordings or html files.
+
+please provide clear proofs supporting your appeal.
+-# _do not crop, omit, delete, or edit any messages related to the appeal until the investigation is complete._
+
+- depending on your appeal, show the following
+  - the full context surrounding the incident.
+  - any proofs that contradicts or explains the report against you.
+  - if you believe the report contains **false** or **misleading** information, clearly identify which parts and provide supporting evidence.
+
+- additional requirements
+  - **timestamps** should be visible
+  - if you've blocked the other user, **temporarily unblock them** before taking screenshots so the conversation displays correctly.
+  - for crypto payments, send **blockchain txids**.
+
+- appeals based on minimum report period (mrp)
+  - appeals based solely on meeting the mrp are **not guaranteed** and are reviewed on a case by case basis.
+  - you must provide proofs showing that you have genuinely changed since the incident. simply claiming to be sorry or promising not to repeat the offense is generally insufficient.
+
+**__uncropped__ & unedited**
+show your **entire screen**. sensitive personal information such as real names, passwords, ip addresses, or other private information may be blurred.
+
+**video too large**
+upload your video at [catbox.moe](https://catbox.moe) and copy & paste the link here.
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "can someone else appeal on my behalf?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+
+faq_definitionsstandards_options = [
+    discord.SelectOption(label="what is scamming?", value="what is scamming?"),
+    discord.SelectOption(label="what is a suspect?", value="what is a suspect?"),
+    discord.SelectOption(label="what is impersonation?", value="what is impersonation?"),
+    discord.SelectOption(label="what do the report tags mean?", value="what do the report tags mean?"),
+    discord.SelectOption(label="what is beaming?", value="what is beaming?"),
+    discord.SelectOption(label="what is hitting?", value="what is hitting?"),
+    discord.SelectOption(label="what is proof beyond reasonable doubt?", value="what is proof beyond reasonable doubt?"),
+    discord.SelectOption(label="what does “insufficient proofs” mean?", value="what does “insufficient proofs” mean?"),
+    discord.SelectOption(label="what does “invalid reason” mean?", value="what does “invalid reason” mean?"),
+]
+
+class FAQDefinitionsStandardsView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.select(options=faq_definitionsstandards_options, placeholder="‎　　Select a question . . .　　　", custom_id="faqdefinitionsstandards",
+                       max_values=1)
+    async def select_callback(self, interaction, select):
+        if self.select_callback.values[0] == "what is scamming?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what is a suspect?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what is impersonation?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what do the report tags mean?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what is beaming?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what is hitting?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what is proof beyond reasonable doubt?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what does “insufficient proofs” mean?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what does “invalid reason” mean?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+
+faq_scamprevention_options = [
+    discord.SelectOption(label="how can I avoid being scammed?", value="how can I avoid being scammed?"),
+    discord.SelectOption(label="how do I identify impersonators?", value="how do I identify impersonators?"),
+    discord.SelectOption(label="how do I identify malicious links?", value="how do I identify malicious links?"),
+    discord.SelectOption(label="can I report someone for refusing to use a middleman?", value="can I report someone for refusing to use a middleman?"),
+    discord.SelectOption(label="what should I do immediately after being scammed?", value="what should I do immediately after being scammed?"),
+    discord.SelectOption(label="can tri recover my lost items or money?", value="can tri recover my lost items or money?"),
+    discord.SelectOption(label="what should I do if my account has been compromised?", value="what should I do if my account has been compromised?"),
+]
+
+class FAQScamPreventionView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.select(options=faq_scamprevention_options, placeholder="‎　　Select a question . . .　　　", custom_id="faqscamprevention",
+                       max_values=1)
+    async def select_callback(self, interaction, select):
+        if self.select_callback.values[0] == "how can I avoid being scammed?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "how do I identify impersonators?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "how do I identify malicious links?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "can I report someone for refusing to use a middleman?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what should I do immediately after being scammed?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "can tri recover my lost items or money?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "what should I do if my account has been compromised?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+
+faq_stafftransparency_options = [
+    discord.SelectOption(label="who can access tickets & ongoing reports?", value="who can access tickets & ongoing reports?"),
+    discord.SelectOption(label="how does tri ensure reports & appeals are not biased?", value="how does tri ensure reports & appeals are not biased?"),
+    discord.SelectOption(label="how can I apply to be staff?", value="how can I apply to be staff?"),
+    discord.SelectOption(label="how can I report a tri staff?", value="how can I report a tri staff?"),
+]
+
+class FAQStaffTransparencyView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.select(options=faq_stafftransparency_options, placeholder="‎　　Select a question . . .　　　", custom_id="faqstafftransparency",
+                       max_values=1)
+    async def select_callback(self, interaction, select):
+        if self.select_callback.values[0] == "who can access tickets & ongoing reports?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "how does tri ensure reports & appeals are not biased?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "how can I apply to be staff?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+        if self.select_callback.values[0] == "how can I report a tri staff?":
+            await interaction.response.send_message(embed=discord.Embed(description=f"""
+### <a:whitearrow2:1388147186654515273>　　
+wip
+            """), ephemeral=True)
+
 @send.command(name="faq", description="Sends faq.")
 @app_commands.checks.has_role(adm_ping)
 async def send_faq(interaction: discord.Interaction, colour: str=None, image: discord.Attachment=None):
@@ -2094,103 +2526,147 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
         image_embed.set_image(url=image.url)
         await interaction.channel.send("_ _", embed=image_embed)
     embed1 = discord.Embed(colour=colour, description="""
-### <a:whitearrow2:1388147186654515273>　　what is tri?
-
-> - trade report investigation archive (**tri archive**) est. may 2025 is a server dedicated to **spreading awareness on dangerous, unlawful, or suspicious activity**, while also **commending outstanding mms/pilots and trusted traders** for upholding integrity and professionalism.
-> - we also aim to **hold unprofessional behaviour accountable**, especially among staff members entrusted with positions of responsibility within the trading community.
-
-　　**__what does tri report?__**
-
-> - we have over 20 tags to report users, servers and game accounts as accurately as possible.
-> - we accept a wide range of reports, not only on scammers and suspects but also on dangerous or blacklisted individuals such as raiders, plagiarists or unprofessional staff. when in doubt, feel free to open a ticket to ask.
-> - we also report game accounts to provide greater transparency regarding account histories to help traders make more informed decisions.
->   - if you are the rightful owner of a scammed account and have successfully recovered it, you may open a ticket to update the account’s status.
+### _ _　　overview
+> -# what is tri?
+> -# terms of service
+> -# privacy policy
+> -# ban policy
+> -# how can I contact admin+?
+> -# how can I request a collaboration?
 """)
-    msg1 = await interaction.channel.send("_ _", embed=embed1)
+    msg1 = await interaction.channel.send("_ _", embed=embed1, view=FAQOverviewView())
     embed2 = discord.Embed(colour=colour, description="""
-### <a:whitearrow2:1388147186654515273>　　how to check for reports?
-
-> - `,c` to check
->   - `,c 𝐮𝐬𝐞𝐫 𝐢𝐝`
->   - `,c 𝐢𝐧𝐯𝐢𝐭𝐞`
->   - `,c 𝐠𝐚𝐦𝐞 𝐮𝐢𝐝`
-> - how to obtain user id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
-
-　　**__examples__**
-
-> - `,c 1450073025818136598`
-> - `,c` <@1450073025818136598>
-> - `,c tri`
-> - `,c https://discord.gg/tri`
-> - `,c genshin 666666666`
-> - `,c Honkai: Star Rail 777777777`
-> - `,c idv eu/na10101010`
-
+### _ _　　reports
+> -# how do I check for reports?
+> -# what can be reported?
+> -# what proofs are required for reports?
+> -# can I remain anonymous?
+> -# can I report someone who has already been reported?
+> -# can I update or withdraw my report?
+> -# how long does it take for reports to be published?
+> -# how do I stay updated with new reports?
+> -# what if someone files a false report?
 """)
-    msg2 = await interaction.channel.send("_ _", embed=embed2)
+    msg2 = await interaction.channel.send("_ _", embed=embed2, view=FAQReportsView())
     embed3 = discord.Embed(colour=colour, description="""
-### <a:whitearrow2:1388147186654515273>　　how to stay updated with tri’s reports?
-
-> - follow tri’s report announcement channels <#1375132097605406721>, <#1375184563675856916> and <#1515531623045533716> to receive updates in your own server.
-> - how to follow a channel? guide [here](https://support.discord.com/hc/en-us/articles/360028384531-Channel-Following-FAQ).
-
-> - add tri’s bot <@1457249982104211467> to your server by clicking **add app** on the bot’s profile, or click [here](https://discord.com/oauth2/authorize?client_id=1457249982104211467).
-> - `,c` to check users, servers or accounts using <@1457249982104211467>.
-> - `/check all` to check your server for users with bannable reports.
+### _ _　　appeals
+> -# how to make an appeal?
+> -# what can be appealed?
+> -# what proofs are required for appeals?
+> -# can someone else appeal on my behalf?
 """)
-    msg3 = await interaction.channel.send("_ _", embed=embed3)
-    embed4 = discord.Embed(colour=colour, description=f"""
-### <a:whitearrow2:1388147186654515273>　　how to make a report?
-
-> - <#1375261699111784478> to make a report.
->   - please ensure you have the user id, server invite or account uid.
->   - how to obtain user id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
->   - please also check if the user has been reported recently (within the past 6 months) for similar reasons. [how to check for reports?]({msg2.jump_url})
-> - provide **uncropped**, **unedited** screenshots or screen recordings from **top to bottom** as far as possible.
-
+    msg3 = await interaction.channel.send("_ _", embed=embed3, view=FAQAppealsView())
+    embed4 = discord.Embed(colour=colour, description="""
+### _ _　　definitions & standards
+> -# what is scamming?
+> -# what is a suspect?
+> -# what is impersonation?
+> -# what do the report tags mean?
+> -# what is beaming?
+> -# what is hitting?
+> -# what is proof beyond reasonable doubt?
+> -# what does “insufficient proofs” mean?
+> -# what does “invalid reason” mean?
 """)
-    msg4 = await interaction.channel.send("_ _", embed=embed4)
-    embed5 = discord.Embed(colour=colour, description=f"""
-### <a:whitearrow2:1388147186654515273>　　how to make an appeal?
-
-> - <#1375261699111784478> to make an appeal if you believe your report is inaccurate or unfair, or if you have served minimum report period (mrp) as stated in [legal codex](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/).
->   - note that appeals based on mrp are not guaranteed and will be reviewed on a case by case basis.
-> - please provide all relevant information that may prove your report to be inaccurate or unfair.
-> - you may request for a staff to be your defender i.e. argue in favour of your appeal. however, defenders will remain unbiased, and appeals will still be judged based on the facts and evidence presented.
+    msg4 = await interaction.channel.send("_ _", embed=embed4, view=FAQDefinitionsStandardsView())
+    embed5 = discord.Embed(colour=colour, description="""
+### _ _　　scam prevention
+> -# how can I avoid being scammed?
+> -# how do I identify impersonators?
+> -# how do I identify malicious links?
+> -# can I report someone for refusing to use a middleman?
+> -# what should I do immediately after being scammed?
+> -# can tri recover my lost items or money?
+> -# what should I do if my account has been compromised?
 """)
-    msg5 = await interaction.channel.send("_ _", embed=embed5)
-    embed6 = discord.Embed(colour=colour, description=f"""
-### <a:whitearrow2:1388147186654515273>　　what are tri’s tos and server rules?
-> - our terms of service may be found [here](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/edit?tab=t.0#heading=h.d0k3z1hwlns).
-> - please read through [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160) carefully. not following rules may result in warns or bans.
-> - we do not ban scammers so that they may make an appeal.
-
-　　**__what does tri ban?__**
-
-> - not following discord [tos](https://discord.com/terms) or [guidelines](https://discord.com/guidelines).
-> - racist, sexist, homophobic, xenophobic, or similar slurs and sentiments
-> - targeted hate, threats of violence, doxxing, or sharing private info.
-> - false or malicious reports. this includes editing proofs.
-> - advertising products, services, events, or servers.
-> - attempting to bribe or gain favours from staff, even outside the server.
-> - nsfw material, even if mentioned as a joke.
-
+    msg5 = await interaction.channel.send("_ _", embed=embed5, view=FAQScamPreventionView())
+    embed6 = discord.Embed(colour=colour, description="""
+### _ _　　staff & transparency
+> -# who can access tickets & ongoing reports?
+> -# how does tri ensure reports & appeals are not biased?
+> -# how can I apply to be staff?
+> -# how can I report a tri staff?
 """)
-    msg6 = await interaction.channel.send("_ _", embed=embed6)
+    msg6 = await interaction.channel.send("_ _", embed=embed6, view=FAQStaffTransparencyView())
     embed = discord.Embed(colour=colour, description=f"""
-<:whiteheart:1434538078747365507>　　[what is tri?]({msg1.jump_url})
+<:whiteheart:1434538078747365507>　　[overview]({msg1.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[how to check for reports?]({msg2.jump_url})
+<:whiteheart:1434538078747365507>　　[reports]({msg2.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[how to stay updated with tri’s reports?]({msg3.jump_url})
+<:whiteheart:1434538078747365507>　　[appeals]({msg3.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[how to make a report?]({msg4.jump_url})
+<:whiteheart:1434538078747365507>　　[definitions & standards]({msg4.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[how to make an appeal?]({msg5.jump_url})
+<:whiteheart:1434538078747365507>　　[scam prevention]({msg5.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[what are tri’s tos and server rules?]({msg6.jump_url})
+<:whiteheart:1434538078747365507>　　[staff & transparency]({msg6.jump_url})
 """)
     await interaction.channel.send("_ _", embed=embed)
+
+
+
+#     embed2 = discord.Embed(colour=colour, description="""
+# ### <a:whitearrow2:1388147186654515273>　　how to check for reports?
+#
+# > - `,c` to check
+# >   - `,c 𝐮𝐬𝐞𝐫 𝐢𝐝`
+# >   - `,c 𝐢𝐧𝐯𝐢𝐭𝐞`
+# >   - `,c 𝐠𝐚𝐦𝐞 𝐮𝐢𝐝`
+# > - how to obtain user id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
+#
+# 　　**__examples__**
+#
+# > - `,c 1450073025818136598`
+# > - `,c` <@1450073025818136598>
+# > - `,c tri`
+# > - `,c https://discord.gg/tri`
+# > - `,c genshin 666666666`
+# > - `,c Honkai: Star Rail 777777777`
+# > - `,c idv eu/na10101010`
+#
+# """)
+#     msg2 = await interaction.channel.send("_ _", embed=embed2)
+#     embed3 = discord.Embed(colour=colour, description="""
+# ### <a:whitearrow2:1388147186654515273>　　how to stay updated with tri’s reports?
+#
+# > - follow tri’s report announcement channels <#1375132097605406721>, <#1375184563675856916> and <#1515531623045533716> to receive updates in your own server.
+# > - how to follow a channel? guide [here](https://support.discord.com/hc/en-us/articles/360028384531-Channel-Following-FAQ).
+#
+# > - add tri’s bot <@1457249982104211467> to your server by clicking **add app** on the bot’s profile, or click [here](https://discord.com/oauth2/authorize?client_id=1457249982104211467).
+# > - `,c` to check users, servers or accounts using <@1457249982104211467>.
+# > - `/check all` to check your server for users with bannable reports.
+# """)
+#     msg3 = await interaction.channel.send("_ _", embed=embed3)
+#     embed4 = discord.Embed(colour=colour, description=f"""
+# ### <a:whitearrow2:1388147186654515273>　　how to make a report?
+#
+# > - <#1375261699111784478> to make a report.
+# >   - please ensure you have the user id, server invite or account uid.
+# >   - how to obtain user id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
+# >   - please also check if the user has been reported recently (within the past 6 months) for similar reasons. [how to check for reports?]({msg2.jump_url})
+# > - provide **uncropped**, **unedited** screenshots or screen recordings from **top to bottom** as far as possible.
+#
+# """)
+#     msg4 = await interaction.channel.send("_ _", embed=embed4)
+#     embed5 = discord.Embed(colour=colour, description=f"""
+# ### <a:whitearrow2:1388147186654515273>　　how to make an appeal?
+#
+# > - <#1375261699111784478> to make an appeal if you believe your report is inaccurate or unfair, or if you have served minimum report period (mrp) as stated in [legal codex](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/).
+# >   - note that appeals based on mrp are not guaranteed and will be reviewed on a case by case basis.
+# > - please provide all relevant information that may prove your report to be inaccurate or unfair.
+# > - you may request for a staff to be your defender i.e. argue in favour of your appeal. however, defenders will remain unbiased, and appeals will still be judged based on the facts and evidence presented.
+# """)
+#     msg5 = await interaction.channel.send("_ _", embed=embed5)
+#     embed6 = discord.Embed(colour=colour, description=f"""
+# ### <a:whitearrow2:1388147186654515273>　　what are tri’s tos and server rules?
+# > - our terms of service may be found [here](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/edit?tab=t.0#heading=h.d0k3z1hwlns).
+# > - please read through [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160) carefully. not following rules may result in warns or bans.
+# > - we do not ban scammers so that they may make an appeal.
+
+#
+# """)
+#     msg6 = await interaction.channel.send("_ _", embed=embed6)
+
     await interaction.followup.send("Sent!", ephemeral=True)
 
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -2312,7 +2788,8 @@ async def create_training(interaction: discord.Interaction, name: str, user_id: 
             new_thread = await interaction.channel.create_thread(
                 name=f"t {name}",
                 type=discord.ChannelType.private_thread,
-                auto_archive_duration=10080
+                auto_archive_duration=10080,
+                invitable=False,
             )
             await interaction.response.send_message(f"Created a new private thread: {new_thread.jump_url}", ephemeral=True)
             await new_thread.send(f"{user.mention} <@&{staff_trainer}>")
