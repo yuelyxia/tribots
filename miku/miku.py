@@ -60,7 +60,7 @@ tadm_role = 1373517323914448906
 adm_ping = 1375276457890287748
 sr_of_the_month = 1498909625263722537
 sr_role = 1372426698242658324
-tsr_role = 1372426698242658324
+tsr_role = 1462972920467951728
 sr_ping = 1375254710952661102
 reporter_of_the_month = 1447056456401551410
 rep_role = 1372426736205303808
@@ -468,6 +468,8 @@ async def weekly_quota():
     # closes/reviews
     embeds = []
     for role_id, (title, staff_list) in reviews_role_categories.items():
+        if not staff_list:
+            continue
         embed = discord.Embed(colour=0xffffff)
         embed.description = f"**✦　　┈　　{title}**"
         staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
@@ -486,6 +488,8 @@ async def weekly_quota():
     # tickets/reports
     embeds = []
     for role_id, (title, staff_list) in reports_role_categories.items():
+        if not staff_list:
+            continue
         embed = discord.Embed(colour=0xffffff)
         embed.description = f"**✦　　┈　　{title}**"
         staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
@@ -979,27 +983,27 @@ async def help(ctx):
         await ctx.send(embed=embed)
 
 tags_options = [
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="scammer", value="scammer"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="scam server owner", value="scam server owner"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="raider", value="raider"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="plagiarist", value="plagiarist"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="fake event host", value="fake event host"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="impersonator", value="impersonator"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="vouch scammer", value="vouch scammer"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="suspect", value="suspect"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="unprofessional mm", value="unprofessional mm"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="unprofessional pilot", value="unprofessional pilot"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="unprofessional idv mm", value="unprofessional idv mm"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="unprofessional supervisor", value="unprofessional supervisor"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="unprofessional staff", value="unprofessional staff"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ex-offender", value="ex-offender"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="improper conduct", value="improper conduct"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="service ban", value="service ban"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="scam server", value="scam server"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="impersonator server", value="impersonator server"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="fake vouch server", value="fake vouch server"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="fake event server", value="fake event server"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="suspect server", value="suspect server"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="scammer", value="scammer"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="scam server owner", value="scam server owner"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="raider", value="raider"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="plagiarist", value="plagiarist"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="fake event host", value="fake event host"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="impersonator", value="impersonator"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="vouch scammer", value="vouch scammer"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="suspect", value="suspect"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional mm", value="unprofessional mm"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional pilot", value="unprofessional pilot"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional idv mm", value="unprofessional idv mm"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional supervisor", value="unprofessional supervisor"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional staff", value="unprofessional staff"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="ex-offender", value="ex-offender"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="improper conduct", value="improper conduct"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="service ban", value="service ban"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="scam server", value="scam server"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="impersonator server", value="impersonator server"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="fake vouch server", value="fake vouch server"),
+    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="fake event server", value="fake event server"),
+    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="suspect server", value="suspect server"),
 ]
 
 @bot.command(name="tags", help="Sends the descriptions of demerit tags.")
@@ -1131,7 +1135,7 @@ class TagsView(discord.ui.View):
 > - a server owner may be reported as vouch scammer for allowing spammed vouches in a trading server.
 > - neither the vouched user nor voucher are reportable unless there is evidence of them scamming/attempting to scam.
 
--# **confrontation is __preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+-# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "suspect":
@@ -1192,16 +1196,131 @@ class TagsView(discord.ui.View):
 >   - account was retrieved in an unpreventable situation and the trader consented to the risks beforehand.
 >   - low or moderate preventable risks were taken but no harm was done to the account in the end.
 >   - mm is new/unfamiliar with the rules of the discord trading community.
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "unprofessional mm":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　unprofessional pilot
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "unprofessional pilot":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　unprofessional pilot
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "unprofessional idv mm":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　unprofessional idv mm
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "unprofessional supervisor":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　unprofessional supervisor
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "unprofessional staff":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　unprofessional staff
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "ex-offender":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　ex-offender
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "improper conduct":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　improper conduct
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "service ban":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　service ban
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "scam server":
+            embed = discord.Embed(colour=0xFF0045, description="""
+## <a:redarrow:1388148121242177726>　　scam server
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "impersonator server":
+            embed = discord.Embed(colour=0xFF0045, description="""
+## <a:redarrow:1388148121242177726>　　impersonator server
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "fake vouch server":
+            embed = discord.Embed(colour=0xFF0045, description="""
+## <a:redarrow:1388148121242177726>　　fake vouch server
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "fake event server":
+            embed = discord.Embed(colour=0xFF0045, description="""
+## <a:redarrow:1388148121242177726>　　fake event server
+　　**__definition__**
+
+wip
+
+""")
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        if self.select_callback.values[0] == "suspect server":
+            embed = discord.Embed(colour=0xFFD643, description="""
+## <a:yellowarrow:1509836964453548133>　　suspect server
+　　**__definition__**
+
+wip
 
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
-
 closing_options = [
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍReport", value="report"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍAppeal", value="appeal"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍVerify", value="verify"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍOthers", value="others"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍreport", value="report"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍappeal", value="appeal"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍverify", value="verify"),
+    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍothers", value="others"),
     discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍsr+", value="sr+"),
 ]
 
@@ -1227,8 +1346,10 @@ class ClosingView(discord.ui.View):
             await interaction.response.send_message(embed=discord.Embed(description="""
 - new report
   - `new report on 𝐢𝐝 as 𝐭𝐚𝐠`
-  - `new report on 𝐢𝐝 (alt 𝐢𝐝) as 𝐭𝐚𝐠, 𝐭𝐚𝐠`
+  - `new report on 𝐢𝐝 (alt 𝐢𝐝) as 𝐭𝐚𝐠`
+  - `new report on 𝐢𝐝 (alt 𝐢𝐝) 𝐢𝐝 (alts 𝐢𝐝 𝐢𝐝) as 𝐭𝐚𝐠, 𝐭𝐚𝐠`
   - `new report on 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 as 𝐭𝐚𝐠`
+  - `new report on 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 (link 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝) as 𝐭𝐚𝐠`
 - added report
   - `added report on 𝐢𝐝 as 𝐭𝐚𝐠`
 - edited alts only
@@ -1575,6 +1696,7 @@ async def lb(ctx, *args):
         o5_role: ("overseers", []),
         adm_role: ("admins", []),
         sr_role: ("senior reporters", []),
+        tsr_role: ("trial senior reporters", []),
         rep_role: ("reporters", []),
         tr_role: ("trial reporters", [])
     }
@@ -1627,7 +1749,8 @@ async def lbsr(ctx):
     role_categories = {
         o5_role: ("overseers", []),
         adm_role: ("admins", []),
-        sr_role: ("senior reporters", [])
+        sr_role: ("senior reporters", []),
+        tsr_role: ("trial senior reporters", [])
     }
     staff_ids = []
     member_map = {}
