@@ -269,14 +269,11 @@ def format_user_add_case(add_case_list, case_title):
     else:
         add_case = discord.Embed()
     if add_case_list:
-        add_case.description = f"**{add_case_list[2] or "TBC"}**\n"
-        add_case.description += "-# **Date Added** – " + add_case_list[0]
-        add_case.description += "\n-# **Game(s)** – " + add_case_list[1]
-        add_case.description += f"\n\n**Reason** – {add_case_list[3]}\n\u200b"
-        add_case.description += f"\n-# **Contributor** – {add_case_list[4]}\n-# **TRI Staff** – {add_case_list[5]}\n-# **Accepted by** – {add_case_list[6]}"
-        """add_case.add_field(name="Contributor", value=f"-# {add_case_list[4]}")
-        add_case.add_field(name="TRI Staff", value=f"-# {add_case_list[5]}")
-        add_case.add_field(name="Accepted by", value=f"-# {add_case_list[6]}")"""
+        add_case.description = f"**{add_case_list["tags"] or "TBC"}**\n"
+        add_case.description += "-# **Date Added** – " + add_case_list["date_added"]
+        add_case.description += "\n-# **Game(s)** – " + add_case_list["games"]
+        add_case.description += f"\n\n**Reason** – {add_case_list["reason"]}\n\u200b"
+        add_case.description += f"\n-# **Contributor** – {add_case_list["contributor"]}\n-# **TRI Staff** – {add_case_list["staff"]}\n-# **Accepted by** – {add_case_list["accepted_by"]}"
     return add_case
 def format_trustedserver_profile(guild):
     if guild.id == TRI_Archive:
@@ -318,10 +315,10 @@ def format_server_add_case(add_case_list, case_title):
         add_case = discord.Embed(colour=0xd9b534)
     else:
         add_case = discord.Embed()
-    add_case.description = f"**{add_case_list[1] or "TBC"}**\n"
-    add_case.description += "-# **Date Added** – " + add_case_list[0]
-    add_case.description += f"\n\n**Reason** – {add_case_list[2]}\n\u200b"
-    add_case.description += f"\n-# **Contributor** – {add_case_list[3]}\n-# **TRI Staff** – {add_case_list[4]}\n-# **Accepted by** – {add_case_list[5]}"
+    add_case.description = f"**{add_case_list["tags"] or "TBC"}**\n"
+    add_case.description += "-# **Date Added** – " + add_case_list["date_added"]
+    add_case.description += f"\n\n**Reason** – {add_case_list["reason"]}\n\u200b"
+    add_case.description += f"\n-# **Contributor** – {add_case_list["contributor"]}\n-# **TRI Staff** – {add_case_list["staff"]}\n-# **Accepted by** – {add_case_list["accepted_by"]}"
     return add_case
 def reconstruct_server_r_profile(guild_data, r_profile_list, title):
     if title in red_server_tags:
@@ -484,11 +481,11 @@ def format_account_add_case(add_case_list, case_title):
     else:
         add_case = discord.Embed()
     if add_case_list:
-        add_case.description = f"**{add_case_list[2] or "TBC"}**\n"
-        add_case.description += "-# **Date Added** – " + add_case_list[0]
-        add_case.description += f"\n-# **Related User(s)** – {add_case_list[1] or "None"}"
-        add_case.description += f"\n\n**Reason** – {add_case_list[3]}\n\u200b"
-        add_case.description += f"\n-# **Contributor** – {add_case_list[4]}\n-# **TRI Staff** – {add_case_list[5]}\n-# **Accepted by** – {add_case_list[6]}"
+        add_case.description = f"**{add_case_list["tags"] or "TBC"}**\n"
+        add_case.description += "-# **Date Added** – " + add_case_list["date_added"]
+        add_case.description += f"\n-# **Related User(s)** – {add_case_list["related_users"] or "None"}"
+        add_case.description += f"\n\n**Reason** – {add_case_list["reason"]}\n\u200b"
+        add_case.description += f"\n-# **Contributor** – {add_case_list["contributor"]}\n-# **TRI Staff** – {add_case_list["staff"]}\n-# **Accepted by** – {add_case_list["accepted_by"]}"
     return add_case
 def format_game_uid(game, uid):
     game = format_game(game)
@@ -547,7 +544,6 @@ user_tags_options = [
     discord.SelectOption(label="Unprofessional MM", value="Unprofessional MM"),
     discord.SelectOption(label="Unprofessional Pilot", value="Unprofessional Pilot"),
     discord.SelectOption(label="Unprofessional IDV MM", value="Unprofessional IDV MM"),
-    discord.SelectOption(label="Unprofessional Staff", value="Unprofessional Staff"),
     discord.SelectOption(label="Unprofessional Supervisor", value="Unprofessional Supervisor"),
     discord.SelectOption(label="Improper Conduct", value="Improper Conduct"),
 ]
@@ -1664,27 +1660,10 @@ class NewUserReportView(discord.ui.View):
                 # [2] alts_image_links
                 [],
             ]
-            add_case_list = [
-                # [0] date added
-                "",
-                # [1] games
-                "",
-                # [2] tags
-                "",
-                # [3] reason
-                "",
-                # [4] contributor
-                "",
-                # [5] tri staff
-                "",
-                # [6] accepted by
-                "",
-                # [7] image_links
-                [],
-            ]
-            add_case_list[
-                0] = f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)"
-            add_case_list[5] = f"<@{interaction.user.id}>"
+            add_case_list = {
+                "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
+                "games": "", "tags": "", "reason": "", "contributor": "", "staff": "",
+                "accepted_by": f"<@{interaction.user.id}>", "proofs": []}
             channel_id = msg.channel.id
             message_id = msg.id
             r_profile = format_user_r_profile(user, r_profile_list, title)
@@ -1939,7 +1918,7 @@ class UserTagsView(discord.ui.View):
                 sorted_tags = sort_user_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
                 tags = selected_string(sorted_tags)
-                add_case_list[2] = tags
+                add_case_list["tags"] = tags
                 title = sorted_tags[0]
                 all_other_tags = selected_string(sorted_tags[1:])
                 r_profile_list[1] = all_other_tags
@@ -2032,7 +2011,7 @@ class GamesView(discord.ui.View):
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id:
                 games = selected_string(self.select_callback.values)
-                add_case_list[1] = games
+                add_case_list["games"] = games
                 #
                 inprogresscol.update_one(
                     {"_id": interaction.message.id},
@@ -2132,7 +2111,7 @@ class UserReasonModal(discord.ui.Modal, title="Reason"):
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[3] = reason
+            add_case_list["reason"] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -2234,14 +2213,14 @@ class UserContributorModal(discord.ui.Modal, title="Contributor"):
             message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
-                add_case_list[4] = "Anonymous"
+                add_case_list["contributor"] = "Anonymous"
             else:
                 try:
                     contributor_id = await bot.fetch_user(int(contributor_input))
                 except Exception:
-                    add_case_list[4] = ""
+                    add_case_list["contributor"] = ""
                 else:
-                    add_case_list[4] = f"<@{contributor_id.id}>"
+                    add_case_list["contributor"] = f"<@{contributor_id.id}>"
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -2291,7 +2270,7 @@ class UserProofsView(discord.ui.View):
             #
             if requested_by == interaction.user.id:
                 image_links = []
-                add_case_list[7] = []
+                add_case_list["proofs"] = []
                 await interaction.response.send_message(
                     "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
                     ephemeral=True)
@@ -2322,7 +2301,7 @@ class UserProofsView(discord.ui.View):
                                         if sent_message.attachments:
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
-                                            add_case_list[7].append(new_image_url)
+                                            add_case_list["proofs"].append(new_image_url)
                             except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 #
@@ -2347,7 +2326,7 @@ class UserProofsView(discord.ui.View):
             user = await bot.fetch_user(user_id)
             #
             if requested_by == interaction.user.id or is_sr(interaction.user):
-                image_embeds = image_links_to_embeds(add_case_list[7])
+                image_embeds = image_links_to_embeds(add_case_list["proofs"])
                 await interaction.followup.send(f"Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
@@ -2403,7 +2382,7 @@ class UserProofsView(discord.ui.View):
             message = await thread.fetch_message(message_id)
             if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
-                add_case_list[6] = f"<@{interaction.user.id}>"
+                add_case_list["accepted_by"] = f"<@{interaction.user.id}>"
                 #
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
@@ -2413,7 +2392,7 @@ class UserProofsView(discord.ui.View):
                 agree_users = []
                 disagree_users = []
                 alts_proofs_embeds = image_links_to_embeds(r_profile_list[2])
-                proofs_embeds = image_links_to_embeds(add_case_list[7])
+                proofs_embeds = image_links_to_embeds(add_case_list["proofs"])
                 new_report_message = await vote_channel.send(content=f"New report on `{user.id}`")
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
@@ -2699,27 +2678,10 @@ class EditUserReportView(discord.ui.View):
             title = all_tags_list[0]
             #
             case_title = "TBC"
-            add_case_list = [
-                # [0] date added
-                "",
-                # [1] games
-                "",
-                # [2] tags
-                "",
-                # [3] reason
-                "",
-                # [4] contributor
-                "",
-                # [5] tri staff
-                "",
-                # [6] accepted by
-                "",
-                # [7] image_links
-                [],
-            ]
-            add_case_list[
-                0] = f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)"
-            add_case_list[5] = f"<@{interaction.user.id}>"
+            add_case_list = {
+                "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
+                "games": "", "tags": "", "reason": "", "contributor": "", "staff": "",
+                "accepted_by": f"<@{interaction.user.id}>", "proofs": []}
             channel_id = msg.channel.id
             message_id = msg.id
             try:
@@ -3342,7 +3304,7 @@ class UserAppealView(discord.ui.View):
                 agree_users = []
                 disagree_users = []
                 alts_proofs_embeds = image_links_to_embeds(r_profile_list[2])
-                proofs_embeds = image_links_to_embeds(add_case_list[7])
+                proofs_embeds = image_links_to_embeds(add_case_list["proofs"])
                 add_case_list = [add_case_list]
                 new_report_message = await vote_channel.send(content=f"Appeal on `{user.id}`")
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
@@ -3859,7 +3821,7 @@ class AddReportUserTagsView(discord.ui.View):
                 sorted_tags = sort_user_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
                 tags = selected_string(sorted_tags)
-                add_case_list[2] = tags
+                add_case_list["tags"] = tags
                 #
                 user_id = user.id
                 user_query = {"_id": str(user_id)}
@@ -3964,7 +3926,7 @@ class AddReportGamesView(discord.ui.View):
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id:
                 games = selected_string(self.select_callback.values)
-                add_case_list[1] = games
+                add_case_list["games"] = games
                 #
                 inprogresscol.update_one(
                     {"_id": interaction.message.id},
@@ -4065,7 +4027,7 @@ class AddReportUserReasonModal(discord.ui.Modal, title="Reason"):
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[3] = reason
+            add_case_list["reason"] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -4166,14 +4128,14 @@ class AddReportUserContributorModal(discord.ui.Modal, title="Contributor"):
             message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
-                add_case_list[4] = "Anonymous"
+                add_case_list["contributor"] = "Anonymous"
             else:
                 try:
                     contributor_id = await bot.fetch_user(int(contributor_input))
                 except Exception:
-                    add_case_list[4] = ""
+                    add_case_list["contributor"] = ""
                 else:
-                    add_case_list[4] = f"<@{contributor_id.id}>"
+                    add_case_list["contributor"] = f"<@{contributor_id.id}>"
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -4224,7 +4186,7 @@ class AddReportUserProofsView(discord.ui.View):
             #
             if requested_by == interaction.user.id:
                 image_links = []
-                add_case_list[7] = []
+                add_case_list["proofs"] = []
                 await interaction.response.send_message(
                     "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
                     ephemeral=True)
@@ -4253,7 +4215,7 @@ class AddReportUserProofsView(discord.ui.View):
                                         if sent_message.attachments:
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
-                                            add_case_list[7].append(new_image_url)
+                                            add_case_list["proofs"].append(new_image_url)
                             except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 #
@@ -4278,7 +4240,7 @@ class AddReportUserProofsView(discord.ui.View):
             user = await bot.fetch_user(user_id)
             #
             if requested_by == interaction.user.id or is_sr(interaction.user):
-                image_embeds = image_links_to_embeds(add_case_list[7])
+                image_embeds = image_links_to_embeds(add_case_list["proofs"])
                 await interaction.followup.send(f"Proofs for `{user.id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
@@ -4334,7 +4296,7 @@ class AddReportUserProofsView(discord.ui.View):
             message = await thread.fetch_message(message_id)
             if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
-                add_case_list[6] = f"<@{interaction.user.id}>"
+                add_case_list["accepted_by"] = f"<@{interaction.user.id}>"
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 add_case = format_user_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -4343,7 +4305,7 @@ class AddReportUserProofsView(discord.ui.View):
                 agree_users = []
                 disagree_users = []
                 alts_proofs_embeds = image_links_to_embeds(r_profile_list[2])
-                proofs_embeds = image_links_to_embeds(add_case_list[7])
+                proofs_embeds = image_links_to_embeds(add_case_list["proofs"])
                 new_report_message = await vote_channel.send(content=f"Added report on `{user.id}`")
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
@@ -4967,7 +4929,7 @@ class UserVoteView(discord.ui.View):
                             f"Appeal on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
                     else:  # new case exists
-                        add_case_list[6] = f"{interaction.user.mention}"
+                        add_case_list["accepted_by"] = f"{interaction.user.mention}"
                         inprogresscol.update_one(
                             {"_id": interaction.message.id},
                             {"$set": {"add_case_list": add_case_list}},
@@ -4997,7 +4959,7 @@ class UserVoteView(discord.ui.View):
                             f"Report on `{user.id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
                 else:  # if new reported user
-                    add_case_list[6] = interaction.user.mention
+                    add_case_list["accepted_by"] = interaction.user.mention
                     inprogresscol.update_one(
                         {"_id": interaction.message.id},
                         {"$set": {"add_case_list": add_case_list}},
@@ -5118,25 +5080,15 @@ class NewServerReportView(discord.ui.View):
                 # [1] other tags
                 "",
             ]
-            add_case_list = [
-                # [0] date added
-                "",
-                # [1] tags
-                "",
-                # [2] reason
-                "",
-                # [3] contributor
-                "",
-                # [4] tri staff
-                "",
-                # [5] accepted by
-                "",
-                # [6] image_links
-                [],
-            ]
-            add_case_list[
-                0] = f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)"
-            add_case_list[4] = f"{interaction.user.mention}"
+            add_case_list = {
+                "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
+                "tags": "",
+                "reason": "",
+                "contributor": "",
+                "staff": f"{interaction.user.mention}",
+                "accepted_by": "",
+                "proofs": [],
+            }
             channel_id = msg.channel.id
             message_id = msg.id
             r_profile = format_server_r_profile(guild, r_profile_list, title)
@@ -5306,7 +5258,7 @@ class ServerTagsView(discord.ui.View):
                 sorted_tags = sort_server_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
                 tags = selected_string(sorted_tags)
-                add_case_list[1] = tags
+                add_case_list["tags"] = tags
                 title = sorted_tags[0]
                 all_other_tags = selected_string(sorted_tags[1:])
                 r_profile_list[1] = all_other_tags
@@ -5403,7 +5355,7 @@ class ServerReasonModal(discord.ui.Modal, title="Reason"):
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[2] = reason
+            add_case_list["reason"] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -5498,14 +5450,14 @@ class ServerContributorModal(discord.ui.Modal, title="Contributor"):
             message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
-                add_case_list[3] = "Anonymous"
+                add_case_list["contributor"] = "Anonymous"
             else:
                 try:
                     contributor_id = await bot.fetch_user(int(contributor_input))
                 except Exception:
-                    add_case_list[3] = ""
+                    add_case_list["contributor"] = ""
                 else:
-                    add_case_list[3] = f"<@{contributor_id.id}>"
+                    add_case_list["contributor"] = f"<@{contributor_id.id}>"
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -5553,7 +5505,7 @@ class ServerProofsView(discord.ui.View):
             #
             if requested_by == interaction.user.id:
                 image_links = []
-                add_case_list[6] = []
+                add_case_list["proofs"] = []
                 await interaction.response.send_message(
                     "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
                     ephemeral=True)
@@ -5582,7 +5534,7 @@ class ServerProofsView(discord.ui.View):
                                         if sent_message.attachments:
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
-                                            add_case_list[6].append(new_image_url)
+                                            add_case_list["proofs"].append(new_image_url)
                             except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 #
@@ -5607,7 +5559,7 @@ class ServerProofsView(discord.ui.View):
             guild_id = session["guild_id"]
             #
             if requested_by == interaction.user.id or is_sr(interaction.user):
-                image_embeds = image_links_to_embeds(add_case_list[6])
+                image_embeds = image_links_to_embeds(add_case_list["proofs"])
                 await interaction.followup.send(f"Proofs for `{guild_id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
@@ -5647,7 +5599,7 @@ class ServerProofsView(discord.ui.View):
             message = await thread.fetch_message(message_id)
             if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
-                add_case_list[5] = f"<@{interaction.user.id}>"
+                add_case_list["accepted_by"] = f"<@{interaction.user.id}>"
                 #
                 r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
                 add_case = format_server_add_case(add_case_list, case_title)
@@ -5656,7 +5608,7 @@ class ServerProofsView(discord.ui.View):
                 vote_channel = bot.get_channel(VOTE_CHANNEL)
                 agree_users = []
                 disagree_users = []
-                all_images_to_show = add_case_list[6]
+                all_images_to_show = add_case_list["proofs"]
                 image_embeds = image_links_to_embeds(all_images_to_show)
                 new_report_message = await vote_channel.send(content=f"New report on `{guild_id}`")
                 new_report_thread = await new_report_message.create_thread(name=f"server-{guild_id}")
@@ -5936,25 +5888,15 @@ class EditServerReportView(discord.ui.View):
             title = all_tags_list[0]
             #
             case_title = "TBC"
-            add_case_list = [
-                # [0] date added
-                "",
-                # [1] tags
-                "",
-                # [2] reason
-                "",
-                # [3] contributor
-                "",
-                # [4] tri staff
-                "",
-                # [5] accepted by
-                "",
-                # [6] image_links
-                [],
-            ]
-            add_case_list[
-                0] = f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)"
-            add_case_list[4] = f"<@{interaction.user.id}>"
+            add_case_list = {
+                                "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
+                                "tags": "",
+                                "reason": "",
+                                "contributor": "",
+                                "staff": f"{interaction.user.mention}",
+                                "accepted_by": "",
+                                "proofs": [],
+                            }
             channel_id = msg.channel.id
             message_id = msg.id
             try:
@@ -6310,7 +6252,7 @@ class ServerAppealView(discord.ui.View):
                 vote_channel = bot.get_channel(VOTE_CHANNEL)
                 agree_users = []
                 disagree_users = []
-                image_embeds = image_links_to_embeds(add_case_list[6])
+                image_embeds = image_links_to_embeds(add_case_list["proofs"])
                 add_case_list = [add_case_list]
                 new_report_message = await vote_channel.send(content=f"Appeal on `{guild_id}`")
                 new_report_thread = await new_report_message.create_thread(name=f"server-{guild_id}")
@@ -6571,7 +6513,7 @@ class AddReportServerTagsView(discord.ui.View):
                 sorted_tags = sort_server_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
                 tags = selected_string(sorted_tags)
-                add_case_list[1] = tags
+                add_case_list["tags"] = tags
                 #
                 server_query = {"_id": str(guild_id)}
                 server_profile = serverscol.find_one(server_query)
@@ -6683,7 +6625,7 @@ class AddReportServerReasonModal(discord.ui.Modal, title="Reason"):
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[2] = reason
+            add_case_list["reason"] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -6780,14 +6722,14 @@ class AddReportServerContributorModal(discord.ui.Modal, title="Contributor"):
             message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
-                add_case_list[3] = "Anonymous"
+                add_case_list["contributor"] = "Anonymous"
             else:
                 try:
                     contributor_id = await bot.fetch_user(int(contributor_input))
                 except Exception:
-                    add_case_list[3] = ""
+                    add_case_list["contributor"] = ""
                 else:
-                    add_case_list[3] = f"<@{contributor_id.id}>"
+                    add_case_list["contributor"] = f"<@{contributor_id.id}>"
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -6836,7 +6778,7 @@ class AddReportServerProofsView(discord.ui.View):
             #
             if requested_by == interaction.user.id:
                 image_links = []
-                add_case_list[6] = []
+                add_case_list["proofs"] = []
                 await interaction.response.send_message(
                     "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
                     ephemeral=True)
@@ -6860,7 +6802,7 @@ class AddReportServerProofsView(discord.ui.View):
                                         if sent_message.attachments:
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
-                                            add_case_list[6].append(new_image_url)
+                                            add_case_list["proofs"].append(new_image_url)
                             except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 #
@@ -6884,7 +6826,7 @@ class AddReportServerProofsView(discord.ui.View):
             guild_id = session["guild_id"]
             #
             if requested_by == interaction.user.id or is_sr(interaction.user):
-                image_embeds = image_links_to_embeds(add_case_list[6])
+                image_embeds = image_links_to_embeds(add_case_list["proofs"])
                 await interaction.followup.send(f"Proofs for `{guild_id}`",
                                                 embeds=image_embeds, ephemeral=True)
 
@@ -6924,7 +6866,7 @@ class AddReportServerProofsView(discord.ui.View):
             message = await thread.fetch_message(message_id)
             if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
-                add_case_list[5] = f"<@{interaction.user.id}>"
+                add_case_list["accepted_by"] = f"<@{interaction.user.id}>"
                 #
                 inprogresscol.update_one(
                     {"_id": interaction.message.id},
@@ -6938,7 +6880,7 @@ class AddReportServerProofsView(discord.ui.View):
                 vote_channel = bot.get_channel(VOTE_CHANNEL)
                 agree_users = []
                 disagree_users = []
-                all_images_to_show = add_case_list[6]
+                all_images_to_show = add_case_list["proofs"]
                 image_embeds = image_links_to_embeds(all_images_to_show)
                 new_report_message = await vote_channel.send(content=f"Added report on `{guild_id}`")
                 new_report_thread = await new_report_message.create_thread(name=f"server-{guild_id}")
@@ -7475,7 +7417,7 @@ class ServerVoteView(discord.ui.View):
                             f"Appeal on `{guild_id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
                     else:  # new case exists
-                        add_case_list[5] = f"{interaction.user.mention}"
+                        add_case_list["accepted_by"] = f"{interaction.user.mention}"
                         inprogresscol.update_one(
                             {"_id": interaction.message.id},
                             {"$set": {"add_case_list": add_case_list}},
@@ -7506,7 +7448,7 @@ class ServerVoteView(discord.ui.View):
                             f"Report on `{guild_id}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
                 else:  # if new reported server
-                    add_case_list[5] = f"{interaction.user.mention}"
+                    add_case_list["accepted_by"] = f"{interaction.user.mention}"
                     inprogresscol.update_one(
                         {"_id": interaction.message.id},
                         {"$set": {"add_case_list": add_case_list}},
@@ -7623,27 +7565,10 @@ class NewAccountReportView(discord.ui.View):
                 # [2] links_image_links
                 [],
             ]
-            add_case_list = [
-                # [0] date added
-                "",
-                # [1] related users
-                "",
-                # [2] tags
-                "",
-                # [3] reason
-                "",
-                # [4] contributor
-                "",
-                # [5] tri staff
-                "",
-                # [6] accepted by
-                "",
-                # [7] image_links
-                [],
-            ]
-            add_case_list[
-                0] = f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)"
-            add_case_list[5] = f"<@{interaction.user.id}>"
+            add_case_list = {
+                "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
+                "related_users": "", "tags": "", "reason": "", "contributor": "", "staff": "",
+                "accepted_by": f"<@{interaction.user.id}>", "proofs": []}
             channel_id = msg.channel.id
             message_id = msg.id
             r_profile = format_account_r_profile(game_uid, r_profile_list, title)
@@ -7878,7 +7803,7 @@ class AccountTagsView(discord.ui.View):
                 sorted_tags = sort_account_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
                 tags = selected_string(sorted_tags)
-                add_case_list[2] = tags
+                add_case_list["tags"] = tags
                 if "Recovered Account" in tags:
                     title = "Recovered Account"
                     all_other_tags = selected_string([tag for tag in sorted_tags if tag != "Recovered Account"])
@@ -8000,9 +7925,9 @@ class RelatedUsersModal(
                     valid_users.append(fetched.id)
             r_profile_list = session["r_profile_list"]
             if len(valid_users):
-                add_case_list[1] = related_users_string(valid_users)
+                add_case_list["related_users"] = related_users_string(valid_users)
             else:
-                add_case_list[1] = ""
+                add_case_list["related_users"] = ""
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
                 {"$set": {"add_case_list": add_case_list}}
@@ -8093,7 +8018,7 @@ class AccountReasonModal(discord.ui.Modal, title="Reason"):
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[3] = reason
+            add_case_list["reason"] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -8191,14 +8116,14 @@ class AccountContributorModal(discord.ui.Modal, title="Contributor"):
             message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
-                add_case_list[4] = "Anonymous"
+                add_case_list["contributor"] = "Anonymous"
             else:
                 try:
                     contributor_id = await bot.fetch_user(int(contributor_input))
                 except Exception:
-                    add_case_list[4] = ""
+                    add_case_list["contributor"] = ""
                 else:
-                    add_case_list[4] = f"<@{contributor_id.id}>"
+                    add_case_list["contributor"] = f"<@{contributor_id.id}>"
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -8247,7 +8172,7 @@ class AccountProofsView(discord.ui.View):
             #
             if requested_by == interaction.user.id:
                 image_links = []
-                add_case_list[7] = []
+                add_case_list["proofs"] = []
                 await interaction.response.send_message(
                     "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
                     ephemeral=True)
@@ -8278,7 +8203,7 @@ class AccountProofsView(discord.ui.View):
                                         if sent_message.attachments:
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
-                                            add_case_list[7].append(new_image_url)
+                                            add_case_list["proofs"].append(new_image_url)
                             except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 #
@@ -8302,7 +8227,7 @@ class AccountProofsView(discord.ui.View):
             game_uid = session["account_id"]
             #
             if requested_by == interaction.user.id or is_sr(interaction.user):
-                image_embeds = image_links_to_embeds(add_case_list[7])
+                image_embeds = image_links_to_embeds(add_case_list["proofs"])
                 await interaction.followup.send(f"Proofs for `{game_uid}`",
                                                 embeds=image_embeds, ephemeral=True)
 
@@ -8356,7 +8281,7 @@ class AccountProofsView(discord.ui.View):
             message = await thread.fetch_message(message_id)
             if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
-                add_case_list[6] = f"<@{interaction.user.id}>"
+                add_case_list["accepted_by"] = f"<@{interaction.user.id}>"
                 #
                 r_profile = format_account_r_profile(game_uid, r_profile_list, title)
                 add_case = format_account_add_case(add_case_list, case_title)
@@ -8366,7 +8291,7 @@ class AccountProofsView(discord.ui.View):
                 agree_users = []
                 disagree_users = []
                 links_proofs_embeds = image_links_to_embeds(r_profile_list[2])
-                proofs_embeds = image_links_to_embeds(add_case_list[7])
+                proofs_embeds = image_links_to_embeds(add_case_list["proofs"])
                 new_report_message = await vote_channel.send(content=f"New report on `{game_uid}`")
                 new_report_thread = await new_report_message.create_thread(name=f"{game_uid}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
@@ -8652,27 +8577,10 @@ class EditAccountReportView(discord.ui.View):
                 title = all_tags_list[0]
             #
             case_title = "TBC"
-            add_case_list = [
-                # [0] date added
-                "",
-                # [1] related users
-                "",
-                # [2] tags
-                "",
-                # [3] reason
-                "",
-                # [4] contributor
-                "",
-                # [5] tri staff
-                "",
-                # [6] accepted by
-                "",
-                # [7] image_links
-                [],
-            ]
-            add_case_list[
-                0] = f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)"
-            add_case_list[5] = f"<@{interaction.user.id}>"
+            add_case_list = {
+                "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
+                "related_users": "", "tags": "", "reason": "", "contributor": "", "staff": "",
+                "accepted_by": f"<@{interaction.user.id}>", "proofs": []}
             channel_id = msg.channel.id
             message_id = msg.id
             try:
@@ -9278,7 +9186,7 @@ class AccountAppealView(discord.ui.View):
                 agree_users = []
                 disagree_users = []
                 links_proofs_embeds = image_links_to_embeds(r_profile_list[2])
-                proofs_embeds = image_links_to_embeds(add_case_list[7])
+                proofs_embeds = image_links_to_embeds(add_case_list["proofs"])
                 add_case_list = [add_case_list]
                 new_report_message = await vote_channel.send(content=f"Appeal on `{game_uid}`")
                 new_report_thread = await new_report_message.create_thread(name=f"{game_uid}")
@@ -9765,7 +9673,7 @@ class AddReportAccountTagsView(discord.ui.View):
                 sorted_tags = sort_account_tags(self.select_callback.values)
                 case_title = sorted_tags[0]
                 tags = selected_string(sorted_tags)
-                add_case_list[2] = tags
+                add_case_list["tags"] = tags
                 #
                 account_query = {"_id": str(game_uid)}
                 account_profile = accountscol.find_one(account_query)
@@ -9899,9 +9807,9 @@ class AddReportRelatedUsersModal(
                     valid_users.append(fetched.id)
             r_profile_list = session["r_profile_list"]
             if len(valid_users):
-                add_case_list[1] = related_users_string(valid_users)
+                add_case_list["related_users"] = related_users_string(valid_users)
             else:
-                add_case_list[1] = ""
+                add_case_list["related_users"] = ""
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
                 {"$set": {"add_case_list": add_case_list}}
@@ -9993,7 +9901,7 @@ class AddReportAccountReasonModal(discord.ui.Modal, title="Reason"):
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             reason = re.sub(r"\s+", " ", self.reason.value)
-            add_case_list[3] = reason
+            add_case_list["reason"] = reason
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -10091,14 +9999,14 @@ class AddReportAccountContributorModal(discord.ui.Modal, title="Contributor"):
             message = await thread.fetch_message(message_id)
             contributor_input = self.contributor.value
             if contributor_input.lower() == "n":
-                add_case_list[4] = "Anonymous"
+                add_case_list["contributor"] = "Anonymous"
             else:
                 try:
                     contributor_id = await bot.fetch_user(int(contributor_input))
                 except Exception:
-                    add_case_list[4] = ""
+                    add_case_list["contributor"] = ""
                 else:
-                    add_case_list[4] = f"<@{contributor_id.id}>"
+                    add_case_list["contributor"] = f"<@{contributor_id.id}>"
             #
             inprogresscol.update_one(
                 {"_id": interaction.message.id},
@@ -10148,7 +10056,7 @@ class AddReportAccountProofsView(discord.ui.View):
             #
             if requested_by == interaction.user.id:
                 image_links = []
-                add_case_list[7] = []
+                add_case_list["proofs"] = []
                 await interaction.response.send_message(
                     "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
                     ephemeral=True)
@@ -10177,7 +10085,7 @@ class AddReportAccountProofsView(discord.ui.View):
                                         if sent_message.attachments:
                                             new_image_url = sent_message.attachments[0].url
                                             image_links.append(new_image_url)
-                                            add_case_list[7].append(new_image_url)
+                                            add_case_list["proofs"].append(new_image_url)
                             except Exception:
                                 await msg.channel.send(f"An error occurred with file {attachment.filename}")
                 #
@@ -10201,7 +10109,7 @@ class AddReportAccountProofsView(discord.ui.View):
             game_uid = session["account_id"]
             #
             if requested_by == interaction.user.id or is_sr(interaction.user):
-                image_embeds = image_links_to_embeds(add_case_list[7])
+                image_embeds = image_links_to_embeds(add_case_list["proofs"])
                 await interaction.followup.send(f"Proofs for `{game_uid}`",
                                                 embeds=image_embeds, ephemeral=True)
 
@@ -10255,7 +10163,7 @@ class AddReportAccountProofsView(discord.ui.View):
             message = await thread.fetch_message(message_id)
             if is_sr(interaction.user) and interaction.user.id != requested_by:
                 accepted_by = interaction.user
-                add_case_list[6] = f"<@{interaction.user.id}>"
+                add_case_list["accepted_by"] = f"<@{interaction.user.id}>"
                 r_profile = format_account_r_profile(game_uid, r_profile_list, title)
                 add_case = format_account_add_case(add_case_list, case_title)
                 embeds = [r_profile, add_case]
@@ -10264,7 +10172,7 @@ class AddReportAccountProofsView(discord.ui.View):
                 agree_users = []
                 disagree_users = []
                 links_proofs_embeds = image_links_to_embeds(r_profile_list[2])
-                proofs_embeds = image_links_to_embeds(add_case_list[7])
+                proofs_embeds = image_links_to_embeds(add_case_list["proofs"])
                 new_report_message = await vote_channel.send(content=f"Added report on `{game_uid}`")
                 new_report_thread = await new_report_message.create_thread(name=f"{game_uid}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
@@ -10395,7 +10303,7 @@ class AccountVoteView(discord.ui.View):
                             cases = []
                             for i in range(1, no_of_cases + 1):
                                 cases.append(account_profile[str(i)])
-                            latest_tags = add_case_list[2].split(", ")
+                            latest_tags = add_case_list["tags"].split(", ")
                             all_tags_list = []
                             for case in cases:
                                 all_tags_list.extend(case[2].split(", "))
@@ -10565,7 +10473,7 @@ class AccountVoteView(discord.ui.View):
                         cases = []
                         for i in range(1, no_of_cases + 1):
                             cases.append(account_profile[str(i)])
-                        latest_tags = add_case_list[2].split(", ")
+                        latest_tags = add_case_list["tags"].split(", ")
                         all_tags_list = []
                         for case in cases:
                             all_tags_list.extend(case[2].split(", "))
@@ -10790,7 +10698,7 @@ class AccountVoteView(discord.ui.View):
                             cases = []
                             for i in range(1, no_of_cases + 1):
                                 cases.append(account_profile[str(i)])
-                            latest_tags = add_case_list[2].split(", ")
+                            latest_tags = add_case_list["tags"].split(", ")
                             all_tags_list = []
                             for case in cases:
                                 all_tags_list.extend(case[2].split(", "))
@@ -10827,7 +10735,7 @@ class AccountVoteView(discord.ui.View):
                             f"Appeal on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
                     else:  # new case exists
-                        add_case_list[6] = f"{interaction.user.mention}"
+                        add_case_list["accepted_by"] = f"{interaction.user.mention}"
                         inprogresscol.update_one(
                             {"_id": interaction.message.id},
                             {"$set": {"add_case_list": add_case_list}},
@@ -10857,7 +10765,7 @@ class AccountVoteView(discord.ui.View):
                             f"Report on `{game_uid}` has been published. <@{requested_by}> <@{accepted_by}>")
                         inprogresscol.delete_one({"_id": interaction.message.id})
                 else:  # if new reported account
-                    add_case_list[6] = interaction.user.mention
+                    add_case_list["accepted_by"] = interaction.user.mention
                     inprogresscol.update_one(
                         {"_id": interaction.message.id},
                         {"$set": {"add_case_list": add_case_list}},
@@ -11086,11 +10994,11 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         if sorted_tags:
             case_title = sorted_tags[0]
             if is_user_report:
-                add_case_list[2] = ", ".join(sorted_tags)
+                add_case_list["tags"] = ", ".join(sorted_tags)
             elif is_server_report:
-                add_case_list[1] = ", ".join(sorted_tags)
+                add_case_list["tags"] = ", ".join(sorted_tags)
             elif is_account_report:
-                add_case_list[2] = ", ".join(sorted_tags)
+                add_case_list["tags"] = ", ".join(sorted_tags)
             edited_fields.append(f"tags　–　{', '.join(sorted_tags)}")
             profile = None
             if is_user_report:
@@ -11107,7 +11015,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             tags_strings = []
             all_tags_list = []
             if is_account_report:
-                latest_tags = add_case_list[2].split(", ")
+                latest_tags = add_case_list["tags"].split(", ")
                 all_tags_list = []
                 for case in cases:
                     all_tags_list.extend(case[2].split(", "))
@@ -11141,7 +11049,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             if key in games_map and games_map[key] not in filtered_games:
                 filtered_games.append(games_map[key])
         games_string = ", ".join(filtered_games) if filtered_games else "N/A"
-        add_case_list[1] = games_string
+        add_case_list["games"] = games_string
         edited_fields.append(f"games　–　{games_string}")
     if related_users and is_account_report:
         valid_users = []
@@ -11153,17 +11061,17 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             if fetched.id not in valid_users:
                 valid_users.append(fetched.id)
         if len(valid_users):
-            add_case_list[1] = related_users_string(valid_users)
+            add_case_list["related_users"] = related_users_string(valid_users)
         else:
-            add_case_list[1] = ""
+            add_case_list["related_users"] = ""
         edited_fields.append(f"related users　–　{related_users_string(valid_users)}")
     if reason:
         if is_user_report:
-            add_case_list[3] = reason
+            add_case_list["reason"] = reason
         elif is_server_report:
-            add_case_list[2] = reason
+            add_case_list["reason"] = reason
         elif is_account_report:
-            add_case_list[3] = reason
+            add_case_list["reason"] = reason
         edited_fields.append("reason updated")
     if contributor:
         contributor_value = None
@@ -11176,13 +11084,13 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             except:
                 pass
         if is_user_report and contributor_value:
-            add_case_list[4] = contributor_value
+            add_case_list["contributor"] = contributor_value
             edited_fields.append(f"contributor　–　{contributor_value}")
         elif is_server_report and contributor_value:
-            add_case_list[3] = contributor_value
+            add_case_list["contributor"] = contributor_value
             edited_fields.append(f"contributor　–　{contributor_value}")
         elif is_account_report and contributor_value:
-            add_case_list[4] = contributor_value
+            add_case_list["contributor"] = contributor_value
             edited_fields.append(f"contributor　–　{contributor_value}")
     if proofs:
         await interaction.followup.send("Send proofs to be attached to this report.", ephemeral=True)
@@ -11209,10 +11117,10 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
                     except Exception:
                         pass
         if is_user_report:
-            add_case_list[7] = image_links
+            add_case_list["proofs"] = image_links
             edited_fields.append(f"proofs　–　{len(image_links)} uploaded")
         elif is_server_report:
-            add_case_list[6] = image_links
+            add_case_list["proofs"] = image_links
             edited_fields.append(f"proofs　–　{len(image_links)} uploaded")
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Images received from {interaction.user.mention}.",
@@ -11490,16 +11398,16 @@ async def report(
             if key in games_map and games_map[key] not in filtered_games:
                 filtered_games.append(games_map[key])
     games_string = ", ".join(filtered_games) if filtered_games else "N/A"
-    add_case_list = [
-        f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
-        games_string,
-        selected_string(sorted_tags),
-        reason,
-        contributor_value,
-        f"<@{interaction.user.id}>",
-        "",
-        proof_links
-    ]
+    add_case_list = {
+        "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
+        "games": games_string,
+        "tags": selected_string(sorted_tags),
+        "reason": reason,
+        "contributor": contributor_value,
+        "staff": f"<@{interaction.user.id}>",
+        "accepted_by": "",
+        "proofs": proof_links
+    }
     r_profile = format_user_r_profile(user, r_profile_list, case_title)
     add_case = format_user_add_case(add_case_list, case_title)
     embeds = [r_profile, add_case]
@@ -11522,7 +11430,7 @@ async def report(
         image_embeds = image_links_to_embeds(r_profile_list[2])
         await interaction.followup.send(f"Alts Proofs for `{user.id}`", embeds=image_embeds)
     if proof_links:
-        image_embeds = image_links_to_embeds(add_case_list[7])
+        image_embeds = image_links_to_embeds(add_case_list["proofs"])
         await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds)
 
 @bot.tree.command(name="merge", description="Merges the reports of two users. This action is irreversible.")
