@@ -2324,6 +2324,7 @@ class FAQReportsView(discord.ui.View):
         if self.select_callback.values[0] == "how do I check for reports?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
 ### <a:whitearrow2:1388147186654515273>　　how do I check for reports?
+you can check if a user, server or game account is reported using tri’s bot <@1457249982104211467>.
 to check for reports, you need some form of **id**. guides [here](https://discord.com/channels/{TRI_Archive}/1523977533115207820).
 -# 　⤷　how to obtain user/server id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
 - `,c` to check
@@ -2339,6 +2340,7 @@ to check for reports, you need some form of **id**. guides [here](https://discor
 - `,c https://discord.gg/tri`
 - `,c genshin 676767676`
 - `,c Honkai: Star Rail 767676767`
+- `,c roblox 6767676767`
 - `,c idv eu/na10101010`
             """), ephemeral=True)
         if self.select_callback.values[0] == "what can be reported?":
