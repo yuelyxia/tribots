@@ -134,7 +134,7 @@ def reported_user_profile(user, user_profile):
             all_tags_list.append(tag)
     all_tags_list = sort_user_tags(all_tags_list)
     title = all_tags_list[0]
-    newest_case_tags = cases[-1][2].split(", ")
+    newest_case_tags = cases[-1]["tags"].split(", ")
     newest_case_title = newest_case_tags[0]
     r_profile = format_user_r_profile(user, r_profile_list, title)
     add_case = format_user_add_case(cases[-1], newest_case_title)
@@ -150,14 +150,14 @@ def reported_server_profile(guild, server_profile):
     tags_strings = []
     all_tags_list = []
     for case in cases:
-        tags_strings.append(case[1])
+        tags_strings.append(case["tags"])
     for tags_string in tags_strings:
         tags_list = tags_string.split(", ")
         for tag in tags_list:
             all_tags_list.append(tag)
     all_tags_list = sort_server_tags(all_tags_list)
     title = all_tags_list[0]
-    newest_case_tags = cases[-1][1].split(", ")
+    newest_case_tags = cases[-1]["tags"].split(", ")
     newest_case_title = newest_case_tags[0]
     r_profile = format_server_r_profile(guild, r_profile_list, title)
     if guild.banner:
@@ -425,7 +425,7 @@ def reported_account_profile(game_uid, account_profile):
     else:
         title = all_tags_list[0]
     #
-    newest_case_tags = cases[-1][2].split(", ")
+    newest_case_tags = cases[-1]["tags"].split(", ")
     newest_case_title = newest_case_tags[0]
     r_profile = format_account_r_profile(game_uid, r_profile_list, title)
     add_case = format_account_add_case(cases[-1], newest_case_title)
@@ -1280,7 +1280,7 @@ class ReportedUserView(discord.ui.View):
             if current_case != 1:
                 prev_index = current_case - 2
                 try:
-                    prev_case_tags = cases[prev_index][2].split(", ")
+                    prev_case_tags = cases[prev_index]["tags"].split(", ")
                 except Exception:
                     pass
                 else:
@@ -1323,7 +1323,7 @@ class ReportedUserView(discord.ui.View):
             title = all_tags_list[0]
             next_index = current_case
             try:
-                next_case_tags = cases[next_index][2].split(", ")
+                next_case_tags = cases[next_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -1351,7 +1351,7 @@ class ReportedUserView(discord.ui.View):
         cases = []
         for i in range(1, no_of_cases + 1):
             cases.append(user_profile[str(i)])
-        image_links = cases[current_case - 1][7]
+        image_links = cases[current_case - 1]["proofs"]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
@@ -1405,7 +1405,7 @@ class ReportedServerView(discord.ui.View):
             if current_case != 1:
                 prev_index = current_case - 2
             try:
-                prev_case_tags = cases[prev_index][1].split(", ")
+                prev_case_tags = cases[prev_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -1448,7 +1448,7 @@ class ReportedServerView(discord.ui.View):
             title = all_tags_list[0]
             next_index = current_case
             try:
-                next_case_tags = cases[next_index][1].split(", ")
+                next_case_tags = cases[next_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -1517,7 +1517,7 @@ class ReportedAccountView(discord.ui.View):
             if current_case != 1:
                 prev_index = current_case - 2
                 try:
-                    prev_case_tags = cases[prev_index][2].split(", ")
+                    prev_case_tags = cases[prev_index]["tags"].split(", ")
                 except Exception:
                     pass
                 else:
@@ -1560,7 +1560,7 @@ class ReportedAccountView(discord.ui.View):
                 title = all_tags_list[0]
             next_index = current_case
             try:
-                next_case_tags = cases[next_index][2].split(", ")
+                next_case_tags = cases[next_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -2467,7 +2467,7 @@ class EditUserReportView(discord.ui.View):
             if current_case != 1:
                 prev_index = current_case - 2
                 try:
-                    prev_case_tags = cases[prev_index][2].split(", ")
+                    prev_case_tags = cases[prev_index]["tags"].split(", ")
                 except Exception:
                     pass
                 else:
@@ -2512,7 +2512,7 @@ class EditUserReportView(discord.ui.View):
             title = all_tags_list[0]
             next_index = current_case
             try:
-                next_case_tags = cases[next_index][2].split(", ")
+                next_case_tags = cases[next_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -2757,7 +2757,7 @@ class EditUserReportView(discord.ui.View):
             title = all_tags_list[0]
             current_index = current_case - 1
             add_case_list = user_profile[str(current_case)]
-            case_tags = cases[current_index][2].split(", ")
+            case_tags = cases[current_index]["tags"].split(", ")
             case_title = case_tags[0]
             channel_id = msg.channel.id
             message_id = msg.id
@@ -5681,7 +5681,7 @@ class EditServerReportView(discord.ui.View):
             if current_case != 1:
                 prev_index = current_case - 2
             try:
-                prev_case_tags = cases[prev_index][1].split(", ")
+                prev_case_tags = cases[prev_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -5724,7 +5724,7 @@ class EditServerReportView(discord.ui.View):
             title = all_tags_list[0]
             next_index = current_case
             try:
-                next_case_tags = cases[next_index][1].split(", ")
+                next_case_tags = cases[next_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -5980,7 +5980,7 @@ class EditServerReportView(discord.ui.View):
             title = all_tags_list[0]
             current_index = current_case - 1
             add_case_list = server_profile[str(current_case)]
-            case_tags = cases[current_index][1].split(", ")
+            case_tags = cases[current_index]["tags"].split(", ")
             case_title = case_tags[0]
             channel_id = msg.channel.id
             message_id = msg.id
@@ -8366,7 +8366,7 @@ class EditAccountReportView(discord.ui.View):
             if current_case != 1:
                 prev_index = current_case - 2
                 try:
-                    prev_case_tags = cases[prev_index][2].split(", ")
+                    prev_case_tags = cases[prev_index]["tags"].split(", ")
                 except Exception:
                     pass
                 else:
@@ -8411,7 +8411,7 @@ class EditAccountReportView(discord.ui.View):
                 title = all_tags_list[0]
             next_index = current_case
             try:
-                next_case_tags = cases[next_index][2].split(", ")
+                next_case_tags = cases[next_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -8656,7 +8656,7 @@ class EditAccountReportView(discord.ui.View):
                 title = all_tags_list[0]
             current_index = current_case - 1
             add_case_list = account_profile[str(current_case)]
-            case_tags = cases[current_index][2].split(", ")
+            case_tags = cases[current_index]["tags"].split(", ")
             case_title = case_tags[0]
             channel_id = msg.channel.id
             message_id = msg.id
