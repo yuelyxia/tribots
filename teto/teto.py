@@ -127,7 +127,7 @@ def reported_user_profile(user, user_profile):
     tags_strings = []
     all_tags_list = []
     for case in cases:
-        tags_strings.append(case[2])
+        tags_strings.append(case["tags"])
     for tags_string in tags_strings:
         tags_list = tags_string.split(", ")
         for tag in tags_list:
@@ -415,10 +415,10 @@ def reported_account_profile(game_uid, account_profile):
     for i in range(1, no_of_cases + 1):
         cases.append(account_profile[str(i)])
     latest_case = cases[-1]
-    latest_tags = latest_case[2].split(", ")
+    latest_tags = latest_case["tags"].split(", ")
     all_tags_list = []
     for case in cases:
-        all_tags_list.extend(case[2].split(", "))
+        all_tags_list.extend(case["tags"].split(", "))
     all_tags_list = sort_account_tags(all_tags_list)
     if "Recovered Account" in latest_tags:
         title = "Recovered Account"
@@ -891,7 +891,7 @@ async def mc(ctx, *, to_check: str = None):
                 for i in range(1, no_of_cases + 1):
                     case = target_profile.get(str(i))
                     if case and len(case) > 2:
-                        all_tags_list.extend(case[2].split(", "))
+                        all_tags_list.extend(case["tags"].split(", "))
 
                 all_tags_list = sort_user_tags(all_tags_list)
                 all_unique_tags = list(dict.fromkeys(all_tags_list))
@@ -1270,7 +1270,7 @@ class ReportedUserView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[2])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -1314,7 +1314,7 @@ class ReportedUserView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[2])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -1505,10 +1505,10 @@ class ReportedAccountView(discord.ui.View):
             for i in range(1, no_of_cases + 1):
                 cases.append(account_profile[str(i)])
             latest_case = cases[-1]
-            latest_tags = latest_case[2].split(", ")
+            latest_tags = latest_case["tags"].split(", ")
             all_tags_list = []
             for case in cases:
-                all_tags_list.extend(case[2].split(", "))
+                all_tags_list.extend(case["tags"].split(", "))
             all_tags_list = sort_account_tags(all_tags_list)
             if "Recovered Account" in latest_tags:
                 title = "Recovered Account"
@@ -1549,10 +1549,10 @@ class ReportedAccountView(discord.ui.View):
             for i in range(1, no_of_cases + 1):
                 cases.append(account_profile[str(i)])
             latest_case = cases[-1]
-            latest_tags = latest_case[2].split(", ")
+            latest_tags = latest_case["tags"].split(", ")
             all_tags_list = []
             for case in cases:
-                all_tags_list.extend(case[2].split(", "))
+                all_tags_list.extend(case["tags"].split(", "))
             all_tags_list = sort_account_tags(all_tags_list)
             if "Recovered Account" in latest_tags:
                 title = "Recovered Account"
@@ -2457,7 +2457,7 @@ class EditUserReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[2])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -2503,7 +2503,7 @@ class EditUserReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[2])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -2596,7 +2596,7 @@ class EditUserReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[2])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -2669,7 +2669,7 @@ class EditUserReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[2])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -2748,7 +2748,7 @@ class EditUserReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[2])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -4436,7 +4436,7 @@ class UserVoteView(discord.ui.View):
                         tags_strings = []
                         all_tags_list = []
                         for case in cases:
-                            tags_strings.append(case[2])
+                            tags_strings.append(case["tags"])
                         for tags_string in tags_strings:
                             tags_list = tags_string.split(", ")
                             for tag in tags_list:
@@ -4484,7 +4484,7 @@ class UserVoteView(discord.ui.View):
                             tags_strings = []
                             all_tags_list = []
                             for case in cases:
-                                tags_strings.append(case[2])
+                                tags_strings.append(case["tags"])
                             for tags_string in tags_strings:
                                 tags_list = tags_string.split(", ")
                                 for tag in tags_list:
@@ -4660,7 +4660,7 @@ class UserVoteView(discord.ui.View):
                         tags_strings = []
                         all_tags_list = []
                         for case in cases:
-                            tags_strings.append(case[2])
+                            tags_strings.append(case["tags"])
                         for tags_string in tags_strings:
                             tags_list = tags_string.split(", ")
                             for tag in tags_list:
@@ -4846,7 +4846,7 @@ class UserVoteView(discord.ui.View):
                         tags_strings = []
                         all_tags_list = []
                         for case in cases:
-                            tags_strings.append(case[2])
+                            tags_strings.append(case["tags"])
                         for tags_string in tags_strings:
                             tags_list = tags_string.split(", ")
                             for tag in tags_list:
@@ -4894,7 +4894,7 @@ class UserVoteView(discord.ui.View):
                             tags_strings = []
                             all_tags_list = []
                             for case in cases:
-                                tags_strings.append(case[2])
+                                tags_strings.append(case["tags"])
                             for tags_string in tags_strings:
                                 tags_list = tags_string.split(", ")
                                 for tag in tags_list:
@@ -8354,10 +8354,10 @@ class EditAccountReportView(discord.ui.View):
             for i in range(1, no_of_cases + 1):
                 cases.append(account_profile[str(i)])
             latest_case = cases[-1]
-            latest_tags = latest_case[2].split(", ")
+            latest_tags = latest_case["tags"].split(", ")
             all_tags_list = []
             for case in cases:
-                all_tags_list.extend(case[2].split(", "))
+                all_tags_list.extend(case["tags"].split(", "))
             all_tags_list = sort_account_tags(all_tags_list)
             if "Recovered Account" in latest_tags:
                 title = "Recovered Account"
@@ -8400,10 +8400,10 @@ class EditAccountReportView(discord.ui.View):
             for i in range(1, no_of_cases + 1):
                 cases.append(account_profile[str(i)])
             latest_case = cases[-1]
-            latest_tags = latest_case[2].split(", ")
+            latest_tags = latest_case["tags"].split(", ")
             all_tags_list = []
             for case in cases:
-                all_tags_list.extend(case[2].split(", "))
+                all_tags_list.extend(case["tags"].split(", "))
             all_tags_list = sort_account_tags(all_tags_list)
             if "Recovered Account" in latest_tags:
                 title = "Recovered Account"
@@ -8493,10 +8493,10 @@ class EditAccountReportView(discord.ui.View):
             for i in range(1, no_of_cases + 1):
                 cases.append(account_profile[str(i)])
             latest_case = cases[-1]
-            latest_tags = latest_case[2].split(", ")
+            latest_tags = latest_case["tags"].split(", ")
             all_tags_list = []
             for case in cases:
-                all_tags_list.extend(case[2].split(", "))
+                all_tags_list.extend(case["tags"].split(", "))
             all_tags_list = sort_account_tags(all_tags_list)
             if "Recovered Account" in latest_tags:
                 title = "Recovered Account"
@@ -8566,10 +8566,10 @@ class EditAccountReportView(discord.ui.View):
             for i in range(1, no_of_cases + 1):
                 cases.append(account_profile[str(i)])
             latest_case = cases[-1]
-            latest_tags = latest_case[2].split(", ")
+            latest_tags = latest_case["tags"].split(", ")
             all_tags_list = []
             for case in cases:
-                all_tags_list.extend(case[2].split(", "))
+                all_tags_list.extend(case["tags"].split(", "))
             all_tags_list = sort_account_tags(all_tags_list)
             if "Recovered Account" in latest_tags:
                 title = "Recovered Account"
@@ -8645,10 +8645,10 @@ class EditAccountReportView(discord.ui.View):
             for i in range(1, no_of_cases + 1):
                 cases.append(account_profile[str(i)])
             latest_case = cases[-1]
-            latest_tags = latest_case[2].split(", ")
+            latest_tags = latest_case["tags"].split(", ")
             all_tags_list = []
             for case in cases:
-                all_tags_list.extend(case[2].split(", "))
+                all_tags_list.extend(case["tags"].split(", "))
             all_tags_list = sort_account_tags(all_tags_list)
             if "Recovered Account" in latest_tags:
                 title = "Recovered Account"
@@ -10258,7 +10258,7 @@ class AccountVoteView(discord.ui.View):
                         tags_strings = []
                         all_tags_list = []
                         for case in cases:
-                            tags_strings.append(case[2])
+                            tags_strings.append(case["tags"])
                         for tags_string in tags_strings:
                             tags_list = tags_string.split(", ")
                             for tag in tags_list:
@@ -10306,7 +10306,7 @@ class AccountVoteView(discord.ui.View):
                             latest_tags = add_case_list["tags"].split(", ")
                             all_tags_list = []
                             for case in cases:
-                                all_tags_list.extend(case[2].split(", "))
+                                all_tags_list.extend(case["tags"].split(", "))
                             all_tags_list = sort_account_tags(all_tags_list)
                             if "Recovered Account" in latest_tags:
                                 title = "Recovered Account"
@@ -10476,7 +10476,7 @@ class AccountVoteView(discord.ui.View):
                         latest_tags = add_case_list["tags"].split(", ")
                         all_tags_list = []
                         for case in cases:
-                            all_tags_list.extend(case[2].split(", "))
+                            all_tags_list.extend(case["tags"].split(", "))
                         all_tags_list = sort_account_tags(all_tags_list)
                         if "Recovered Account" in latest_tags:
                             title = "Recovered Account"
@@ -10653,7 +10653,7 @@ class AccountVoteView(discord.ui.View):
                         tags_strings = []
                         all_tags_list = []
                         for case in cases:
-                            tags_strings.append(case[2])
+                            tags_strings.append(case["tags"])
                         for tags_string in tags_strings:
                             tags_list = tags_string.split(", ")
                             for tag in tags_list:
@@ -10701,7 +10701,7 @@ class AccountVoteView(discord.ui.View):
                             latest_tags = add_case_list["tags"].split(", ")
                             all_tags_list = []
                             for case in cases:
-                                all_tags_list.extend(case[2].split(", "))
+                                all_tags_list.extend(case["tags"].split(", "))
                             all_tags_list = sort_account_tags(all_tags_list)
                             if "Recovered Account" in latest_tags:
                                 title = "Recovered Account"
@@ -11018,7 +11018,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
                 latest_tags = add_case_list["tags"].split(", ")
                 all_tags_list = []
                 for case in cases:
-                    all_tags_list.extend(case[2].split(", "))
+                    all_tags_list.extend(case["tags"].split(", "))
                 all_tags_list.extend(latest_tags)
                 all_tags_list = list(dict.fromkeys(all_tags_list))
                 all_tags_list = sort_account_tags(all_tags_list)
@@ -11030,7 +11030,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
                     all_other_tags = selected_string(all_tags_list[1:])
             else:
                 for case in cases:
-                    tags_strings.append(case[2]) if is_user_report else tags_strings.append(case[1])
+                    tags_strings.append(case["tags"]) if is_user_report else tags_strings.append(case[1])
                 for tags_string in tags_strings:
                     tags_list = tags_string.split(", ")
                     for tag in tags_list:
@@ -11468,7 +11468,7 @@ async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
                     cases1.append(main_profile[str(i)])
                 tags_strings1 = []
                 for case in cases1:
-                    tags_strings1.append(case[2])
+                    tags_strings1.append(case["tags"])
                 for tags_string in tags_strings1:
                     tags_list = tags_string.split(", ")
                     for tag in tags_list:
@@ -11479,7 +11479,7 @@ async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
                     cases2.append(alt_profile[str(i)])
                 tags_strings2 = []
                 for case in cases2:
-                    tags_strings2.append(case[2])
+                    tags_strings2.append(case["tags"])
                 for tags_string in tags_strings2:
                     tags_list = tags_string.split(", ")
                     for tag in tags_list:

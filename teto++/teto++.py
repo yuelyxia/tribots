@@ -84,14 +84,14 @@ def reported_user_profile(user, user_profile):
     tags_strings = []
     all_tags_list = []
     for case in cases:
-        tags_strings.append(case[2])
+        tags_strings.append(case["tags"])
     for tags_string in tags_strings:
         tags_list = tags_string.split(", ")
         for tag in tags_list:
             all_tags_list.append(tag)
     all_tags_list = sort_user_tags(all_tags_list)
     title = all_tags_list[0]
-    newest_case_tags = cases[-1][2].split(", ")
+    newest_case_tags = cases[-1]["tags"].split(", ")
     newest_case_title = newest_case_tags[0]
     r_profile = format_user_r_profile(user, r_profile_list, title)
     add_case = format_user_add_case(cases[-1], newest_case_title)
@@ -107,14 +107,14 @@ def reported_server_profile(guild, server_profile):
     tags_strings = []
     all_tags_list = []
     for case in cases:
-        tags_strings.append(case[1])
+        tags_strings.append(case["tags"])
     for tags_string in tags_strings:
         tags_list = tags_string.split(", ")
         for tag in tags_list:
             all_tags_list.append(tag)
     all_tags_list = sort_server_tags(all_tags_list)
     title = all_tags_list[0]
-    newest_case_tags = cases[-1][1].split(", ")
+    newest_case_tags = cases[-1]["tags"].split(", ")
     newest_case_title = newest_case_tags[0]
     r_profile = format_server_r_profile(guild, r_profile_list, title)
     if guild.banner:
@@ -126,29 +126,30 @@ def reported_server_profile(guild, server_profile):
 
 def sort_user_tags(tags):
     sorted_tags = []
-    for i in range(0, len(tags)):
-        tag = tags[i]
+    for tag in tags:
         if tag == "Ex-offender":
             sorted_tags.append(tag)
     for tag_to_find in red_tags:
-        for i in range(0, len(tags)):
-            tag = tags[i]
+        for tag in tags:
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     for tag_to_find in yellow_tags:
-        for i in range(0, len(tags)):
-            tag = tags[i]
+        for tag in tags:
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     return sorted_tags
 def sort_server_tags(tags):
     sorted_tags = []
     for tag_to_find in red_server_tags:
-        for i in range(0, len(tags)):
-            tag = tags[i]
+        for tag in tags:
+            if tag == tag_to_find:
+                sorted_tags.append(tag)
+    for tag_to_find in yellow_server_tags:
+        for tag in tags:
             if tag == tag_to_find:
                 sorted_tags.append(tag)
     return sorted_tags
+
 def selected_string(selected_list):
     string = ", ".join(selected_list)
     return string
@@ -223,33 +224,11 @@ def format_user_add_case(add_case_list, case_title):
     else:
         add_case = discord.Embed()
     if add_case_list:
-        add_case.description = f"**{add_case_list[2]}**\n"
-        """
-        tags_list = add_case_list[2].split(", ")
-        tags_strings = []
-        for tag in tags_list:
-            if tag == "Ex-offender":
-                colour = "\u001b[1;33m"
-            elif tag in red_tags:
-                colour = "\u001b[1;31m"
-            elif tag in yellow_tags:
-                colour = "\u001b[1;33m"
-            else:
-                colour = "\u001b[0m"
-            tags_strings.append(f"{colour}{tag}\u001b[0m")
-        tags_string = ", ".join(tags_strings)
-        add_case.description = (f"```ansi\n{tags_string}\n```")
-        """
-        add_case.description += "-# **Date Added** – " + add_case_list[0]
-        add_case.description += "\n-# **Game(s)** – " + add_case_list[1]
-        #add_case.description += f"\n\n-# **Contributor** – {add_case_list[4]}"
-        add_case.description += f"\n\n**Reason** – {add_case_list[3]}\n\u200b"
-        #add_case.description += f"\n> **Contributor** – {add_case_list[4]}\n> **TRI Staff** – {add_case_list[5]}\n> **Accepted by** – {add_case_list[6]}"
-        add_case.description += f"\n-# **Contributor** – {add_case_list[4]}\n-# **TRI Staff** – {add_case_list[5]}\n-# **Accepted by** – {add_case_list[6]}"
-        """add_case.add_field(name="Contributor", value=f"-# {add_case_list[4]}")
-        add_case.add_field(name="TRI Staff", value=f"-# {add_case_list[5]}")
-        add_case.add_field(name="Accepted by", value=f"-# {add_case_list[6]}")"""
-
+        add_case.description = f"**{add_case_list["tags"] or "TBC"}**\n"
+        add_case.description += "-# **Date Added** – " + add_case_list["date_added"]
+        add_case.description += "\n-# **Game(s)** – " + add_case_list["games"]
+        add_case.description += f"\n\n**Reason** – {add_case_list["reason"]}\n\u200b"
+        add_case.description += f"\n-# **Contributor** – {add_case_list["contributor"]}\n-# **TRI Staff** – {add_case_list["staff"]}\n-# **Accepted by** – {add_case_list["accepted_by"]}"
     return add_case
 def format_trustedserver_profile(guild):
     if guild.id == TRI_Archive:
@@ -291,26 +270,11 @@ def format_server_add_case(add_case_list, case_title):
         add_case = discord.Embed(colour=0xd9b534)
     else:
         add_case = discord.Embed()
-    add_case.description = f"**{add_case_list[1]}**\n"
-    """
-    tags_list = add_case_list[1].split(", ")
-    tags_strings = []
-    for tag in tags_list:
-        if tag in red_server_tags:
-            colour = "\u001b[1;31m"
-        elif tag in yellow_server_tags:
-            colour = "\u001b[1;33m"
-        else:
-            colour = "\u001b[0m"
-        tags_strings.append(f"{colour}{tag}\u001b[0m")
-    tags_string = ", ".join(tags_strings)
-    add_case.description = (f"```ansi\n{tags_string}\n```")
-    """
-    add_case.description += "-# **Date Added** – " + add_case_list[0]
-    add_case.description += f"\n\n**Reason** – {add_case_list[2]}\n\u200b"
-    add_case.description += f"\n-# **Contributor** – {add_case_list[3]}\n-# **TRI Staff** – {add_case_list[4]}\n-# **Accepted by** – {add_case_list[5]}"
+    add_case.description = f"**{add_case_list["tags"] or "TBC"}**\n"
+    add_case.description += "-# **Date Added** – " + add_case_list["date_added"]
+    add_case.description += f"\n\n**Reason** – {add_case_list["reason"]}\n\u200b"
+    add_case.description += f"\n-# **Contributor** – {add_case_list["contributor"]}\n-# **TRI Staff** – {add_case_list["staff"]}\n-# **Accepted by** – {add_case_list["accepted_by"]}"
     return add_case
-
 
 def format_game(game):
     if game.lower() in ["genshin", "gi", "genshin impact"]:
@@ -376,17 +340,17 @@ def reported_account_profile(game_uid, account_profile):
     for i in range(1, no_of_cases + 1):
         cases.append(account_profile[str(i)])
     latest_case = cases[-1]
-    latest_tags = latest_case[2].split(", ")
+    latest_tags = latest_case["tags"].split(", ")
     all_tags_list = []
     for case in cases:
-        all_tags_list.extend(case[2].split(", "))
+        all_tags_list.extend(case["tags"].split(", "))
     all_tags_list = sort_account_tags(all_tags_list)
     if "Recovered Account" in latest_tags:
         title = "Recovered Account"
     else:
         title = all_tags_list[0]
     #
-    newest_case_tags = cases[-1][2].split(", ")
+    newest_case_tags = cases[-1]["tags"].split(", ")
     newest_case_title = newest_case_tags[0]
     r_profile = format_account_r_profile(game_uid, r_profile_list, title)
     add_case = format_account_add_case(cases[-1], newest_case_title)
@@ -445,11 +409,11 @@ def format_account_add_case(add_case_list, case_title):
     else:
         add_case = discord.Embed()
     if add_case_list:
-        add_case.description = f"**{add_case_list[2] or "TBC"}**\n"
-        add_case.description += "-# **Date Added** – " + add_case_list[0]
-        add_case.description += f"\n-# **Related User(s)** – {add_case_list[1] or "None"}"
-        add_case.description += f"\n\n**Reason** – {add_case_list[3]}\n\u200b"
-        add_case.description += f"\n-# **Contributor** – {add_case_list[4]}\n-# **TRI Staff** – {add_case_list[5]}\n-# **Accepted by** – {add_case_list[6]}"
+        add_case.description = f"**{add_case_list["tags"] or "TBC"}**\n"
+        add_case.description += "-# **Date Added** – " + add_case_list["date_added"]
+        add_case.description += f"\n-# **Related User(s)** – {add_case_list["related_users"] or "None"}"
+        add_case.description += f"\n\n**Reason** – {add_case_list["reason"]}\n\u200b"
+        add_case.description += f"\n-# **Contributor** – {add_case_list["contributor"]}\n-# **TRI Staff** – {add_case_list["staff"]}\n-# **Accepted by** – {add_case_list["accepted_by"]}"
     return add_case
 def format_game_uid(game, uid):
     game = format_game(game)
@@ -1096,7 +1060,7 @@ async def mc(ctx, *, to_check: str = None):
                 for i in range(1, no_of_cases + 1):
                     case = target_profile.get(str(i))
                     if case and len(case) > 2:
-                        all_tags_list.extend(case[2].split(", "))
+                        all_tags_list.extend(case["tags"].split(", "))
 
                 all_tags_list = sort_user_tags(all_tags_list)
                 all_unique_tags = list(dict.fromkeys(all_tags_list))
@@ -1159,7 +1123,7 @@ class ReportedUserView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[2])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -1203,7 +1167,7 @@ class ReportedUserView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[2])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -1398,10 +1362,10 @@ class ReportedAccountView(discord.ui.View):
             for i in range(1, no_of_cases + 1):
                 cases.append(account_profile[str(i)])
             latest_case = cases[-1]
-            latest_tags = latest_case[2].split(", ")
+            latest_tags = latest_case["tags"].split(", ")
             all_tags_list = []
             for case in cases:
-                all_tags_list.extend(case[2].split(", "))
+                all_tags_list.extend(case["tags"].split(", "))
             all_tags_list = sort_account_tags(all_tags_list)
             if "Recovered Account" in latest_tags:
                 title = "Recovered Account"
@@ -1442,10 +1406,10 @@ class ReportedAccountView(discord.ui.View):
             for i in range(1, no_of_cases + 1):
                 cases.append(account_profile[str(i)])
             latest_case = cases[-1]
-            latest_tags = latest_case[2].split(", ")
+            latest_tags = latest_case["tags"].split(", ")
             all_tags_list = []
             for case in cases:
-                all_tags_list.extend(case[2].split(", "))
+                all_tags_list.extend(case["tags"].split(", "))
             all_tags_list = sort_account_tags(all_tags_list)
             if "Recovered Account" in latest_tags:
                 title = "Recovered Account"
