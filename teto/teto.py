@@ -1476,7 +1476,7 @@ class ReportedServerView(discord.ui.View):
         cases = []
         for i in range(1, no_of_cases + 1):
             cases.append(server_profile[str(i)])
-        image_links = cases[current_case - 1][6]
+        image_links = cases[current_case - 1]["proofs"]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{guild.id}`", embeds=image_embeds, ephemeral=True)
 
@@ -1588,7 +1588,7 @@ class ReportedAccountView(discord.ui.View):
         cases = []
         for i in range(1, no_of_cases + 1):
             cases.append(account_profile[str(i)])
-        image_links = cases[current_case - 1][7]
+        image_links = cases[current_case - 1]["proofs"]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
 
@@ -1662,8 +1662,8 @@ class NewUserReportView(discord.ui.View):
             ]
             add_case_list = {
                 "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
-                "games": "", "tags": "", "reason": "", "contributor": "", "staff": "",
-                "accepted_by": f"<@{interaction.user.id}>", "proofs": []}
+                "games": "", "tags": "", "reason": "", "contributor": "", "staff": f"{interaction.user.mention}",
+                "accepted_by": "", "proofs": []}
             channel_id = msg.channel.id
             message_id = msg.id
             r_profile = format_user_r_profile(user, r_profile_list, title)
@@ -2540,7 +2540,7 @@ class EditUserReportView(discord.ui.View):
         cases = []
         for i in range(1, no_of_cases + 1):
             cases.append(user_profile[str(i)])
-        image_links = cases[current_case - 1][7]
+        image_links = cases[current_case - 1]["proofs"]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
@@ -2680,8 +2680,8 @@ class EditUserReportView(discord.ui.View):
             case_title = "TBC"
             add_case_list = {
                 "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
-                "games": "", "tags": "", "reason": "", "contributor": "", "staff": "",
-                "accepted_by": f"<@{interaction.user.id}>", "proofs": []}
+                "games": "", "tags": "", "reason": "", "contributor": "", "staff": f"{interaction.user.mention}",
+                "accepted_by": "", "proofs": []}
             channel_id = msg.channel.id
             message_id = msg.id
             try:
@@ -5750,7 +5750,7 @@ class EditServerReportView(discord.ui.View):
         cases = []
         for i in range(1, no_of_cases + 1):
             cases.append(server_profile[str(i)])
-        image_links = cases[current_case - 1][6]
+        image_links = cases[current_case - 1]["proofs"]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{guild.id}`", embeds=image_embeds, ephemeral=True)
 
@@ -7563,8 +7563,8 @@ class NewAccountReportView(discord.ui.View):
             ]
             add_case_list = {
                 "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
-                "related_users": "", "tags": "", "reason": "", "contributor": "", "staff": "",
-                "accepted_by": f"<@{interaction.user.id}>", "proofs": []}
+                "related_users": "", "tags": "", "reason": "", "contributor": "", "staff": f"{interaction.user.mention}",
+                "accepted_by": "", "proofs": []}
             channel_id = msg.channel.id
             message_id = msg.id
             r_profile = format_account_r_profile(game_uid, r_profile_list, title)
@@ -8435,7 +8435,7 @@ class EditAccountReportView(discord.ui.View):
         cases = []
         for i in range(1, no_of_cases + 1):
             cases.append(account_profile[str(i)])
-        image_links = cases[current_case - 1][7]
+        image_links = cases[current_case - 1]["proofs"]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
 
@@ -8575,8 +8575,8 @@ class EditAccountReportView(discord.ui.View):
             case_title = "TBC"
             add_case_list = {
                 "date_added": f"<t:{round(int(discord.utils.utcnow().timestamp()))}:D> (<t:{round(int(discord.utils.utcnow().timestamp()))}:R>)",
-                "related_users": "", "tags": "", "reason": "", "contributor": "", "staff": "",
-                "accepted_by": f"<@{interaction.user.id}>", "proofs": []}
+                "related_users": "", "tags": "", "reason": "", "contributor": "", "staff": f"{interaction.user.mention}",
+                "accepted_by": "", "proofs": []}
             channel_id = msg.channel.id
             message_id = msg.id
             try:
