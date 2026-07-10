@@ -2961,13 +2961,11 @@ class EditAltsOnlyView(discord.ui.View):
                 r_profile = format_user_r_profile(user, r_profile_list, title)
                 #
                 vote_channel = bot.get_channel(VOTE_CHANNEL)
-                add_case_list = []
-                case_title = ""
                 agree_users = []
                 disagree_users = []
                 all_images_to_show = r_profile_list[2]
                 image_embeds = image_links_to_embeds(all_images_to_show)
-                new_report_message = await vote_channel.send(content=f"Alts edited for `{user.id}`")
+                new_report_message = await vote_channel.send(content=f"Edited alts for `{user.id}`")
                 new_report_thread = await new_report_message.create_thread(name=f"{user.id}")
                 await new_report_thread.send(f"<@&{ticket_ping}>")
                 vote_msg = await new_report_thread.send(
@@ -2985,9 +2983,7 @@ class EditAltsOnlyView(discord.ui.View):
                     "channel_id": channel_id,
                     "message_id": interaction.message.id,
                     "r_profile_list": r_profile_list,
-                    "add_case_list": add_case_list,
                     "title": title,
-                    "case_title": case_title,
                     "reason": reason,
                     "vote_channel_id": vote_channel_id,
                     "accepted_by": accepted_by.id,
@@ -4445,7 +4441,7 @@ class UserVoteView(discord.ui.View):
                         title = all_tags_list[0]
                         r_profile = format_user_r_profile(user, r_profile_list, title)
                         user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
-                        await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nAlts edited for `{user.id}`",
+                        await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nEdited alts for `{user.id}`",
                                                         embed=r_profile)
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await user_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
@@ -4855,7 +4851,7 @@ class UserVoteView(discord.ui.View):
                         title = all_tags_list[0]
                         r_profile = format_user_r_profile(user, r_profile_list, title)
                         user_reports_channel = bot.get_channel(USER_REPORTS_CHANNEL)
-                        await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nAlts edited for `{user.id}`",
+                        await user_reports_channel.send(content=f"<@&{updated_user_report_ping}>\nEdited alts for `{user.id}`",
                                                         embed=r_profile)
                         reason_embed = discord.Embed(title="Reason", description=reason)
                         await user_reports_channel.send(content=f"Reason for change(s)", embed=reason_embed)
@@ -8858,8 +8854,6 @@ class EditLinksOnlyView(discord.ui.View):
                 r_profile = format_account_r_profile(game_uid, r_profile_list, title)
                 #
                 vote_channel = bot.get_channel(VOTE_CHANNEL)
-                add_case_list = []
-                case_title = ""
                 agree_users = []
                 disagree_users = []
                 all_images_to_show = r_profile_list[2]
@@ -8882,9 +8876,7 @@ class EditLinksOnlyView(discord.ui.View):
                     "channel_id": channel_id,
                     "message_id": interaction.message.id,
                     "r_profile_list": r_profile_list,
-                    "add_case_list": add_case_list,
                     "title": title,
-                    "case_title": case_title,
                     "reason": reason,
                     "vote_channel_id": vote_channel_id,
                     "accepted_by": accepted_by.id,
@@ -10862,15 +10854,22 @@ bot.tree.add_command(edit)
 async def edit_report(interaction: discord.Interaction, id: str, alts: str = None, alts_proofs: str = None, owner: str = None, links: str = None, links_proofs: str = None, tags: str = None, games: str = None, related_users: str = None, reason: str = None, contributor: str = None, proofs: str = None):
     await interaction.response.defer(ephemeral=True)
     if sum(bool(x) for x in [alts_proofs, links_proofs, proofs]) >= 2:
-        return await interaction.followup.send(
-            "Please edit only one of the following at a time: alts proofs, links proofs, or proofs.", ephemeral=True)
-    session = inprogresscol.find_one({
-        "$or": [{"user_id": int(id)}, {"guild_id": int(id)}, {"account_id": id}]
-    })
+        return await interaction.followup.send("Please edit only one proof field at a time.", ephemeral=True)
+
+    id = id.strip("<@>")
+    query = []
+    try:
+        numeric_id = int(id)
+        query.append({"user_id": numeric_id})
+        query.append({"guild_id": numeric_id})
+    except ValueError:
+        pass
+    query.append({"account_id": id})
+    session = inprogresscol.find_one({"$or": query})
+
     if not session:
         return await interaction.followup.send("Unable to find ongoing report.", ephemeral=True)
-    requested_by = session["requested_by"]
-    if interaction.user.id != requested_by:
+    if interaction.user.id != session.get("requested_by"):
         return await interaction.followup.send("You are not authorised to edit this report.", ephemeral=True)
     try:
         channel = interaction.channel
@@ -10887,14 +10886,190 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
     is_user_report = "user_id" in session
     is_server_report = "guild_id" in session
     is_account_report = "account_id" in session
+    is_edit_or_appeal = "reason" in session
     edited_fields = []
+    title = session.get("title")
+    case_title = session.get("case_title")
     r_profile_list = session.get("r_profile_list", [])
-    add_case_list = session.get("add_case_list", [])
-    add_case_invalid = not isinstance(add_case_list, list) or len(add_case_list) < 2
-    if any([tags, games, reason, contributor, proofs]) and (add_case_invalid or restricted_flow):
-        return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
-    title = session["title"]
-    case_title = session["case_title"]
+    add_case_list = session.get("add_case_list", {})
+    if restricted_flow:
+        if alts and is_user_report:
+            if len(add_case_list) >= 2:
+                return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
+            alt_ids = []
+            for alt in alts.split():
+                try:
+                    alt_user = await bot.fetch_user(int(alt.strip("<@>")))
+                    alt_ids.append(alt_user.id)
+                except:
+                    pass
+            r_profile_list[0] = alts_string(alt_ids) if alt_ids else ""
+            edited_fields.append(f"alts　–　{r_profile_list[0]}")
+        if alts_proofs and is_user_report:
+            if len(add_case_list) >= 2:
+                return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
+            image_links = []
+            await interaction.followup.send(
+                "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
+                ephemeral=True)
+
+            def check(m):
+                return m.author == interaction.user and m.channel == interaction.channel
+
+            try:
+                msg = await bot.wait_for('message', check=check, timeout=120.0)
+            except asyncio.TimeoutError:
+                await interaction.followup.send("You took too long to upload an image.", ephemeral=True)
+                return
+            if msg.attachments:
+                for attachment in msg.attachments:
+                    if attachment.content_type and attachment.content_type.startswith('image/'):
+                        try:
+                            async with aiohttp.ClientSession() as http_session:
+                                async with http_session.get(attachment.url) as resp:
+                                    data = io.BytesIO(await resp.read())
+                                    file = discord.File(data, filename=attachment.filename)
+                                    channel_to_send = bot.get_channel(PROOFS_CHANNEL)
+                                    sent_message = await channel_to_send.send(file=file)
+                                    if sent_message.attachments:
+                                        new_image_url = sent_message.attachments[0].url
+                                        image_links.append(new_image_url)
+                        except Exception:
+                            pass
+            r_profile_list[2] = image_links
+            edited_fields.append(f"alts proofs　–　{len(image_links)} uploaded")
+            image_embeds = image_links_to_embeds(image_links)
+            await message.reply(content=f"Images received from {interaction.user.mention}.", embeds=image_embeds)
+        if owner and is_server_report:
+            if len(add_case_list) >= 2:
+                return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
+            try:
+                owner_user = await bot.fetch_user(int(owner.strip("<@>")))
+                r_profile_list[0] = owner_user.mention
+                edited_fields.append(f"owner　–　{owner_user.mention}")
+            except:
+                pass
+        if links and is_account_report:
+            if len(add_case_list) >= 2:
+                return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
+            links = links.replace("\\n", "\n")
+            game_uid_list = get_game_uid_list(links)
+            r_profile_list[0] = game_uid_list or []
+            edited_fields.append(f"links\n{'\n'.join(r_profile_list[0])}")
+        if links_proofs and is_account_report:
+            if len(add_case_list) >= 2:
+                return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
+            image_links = []
+            await interaction.followup.send(
+                "Please send the images you would like to upload (max 10). **All images previously uploaded in this session have been removed.**",
+                ephemeral=True)
+
+            def check(m):
+                return m.author == interaction.user and m.channel == interaction.channel
+
+            try:
+                msg = await bot.wait_for('message', check=check, timeout=120.0)
+            except asyncio.TimeoutError:
+                await interaction.followup.send("You took too long to upload an image.", ephemeral=True)
+                return
+            if msg.attachments:
+                for attachment in msg.attachments:
+                    if attachment.content_type and attachment.content_type.startswith('image/'):
+                        try:
+                            async with aiohttp.ClientSession() as http_session:
+                                async with http_session.get(attachment.url) as resp:
+                                    data = io.BytesIO(await resp.read())
+                                    file = discord.File(data, filename=attachment.filename)
+                                    channel_to_send = bot.get_channel(PROOFS_CHANNEL)
+                                    sent_message = await channel_to_send.send(file=file)
+                                    if sent_message.attachments:
+                                        new_image_url = sent_message.attachments[0].url
+                                        image_links.append(new_image_url)
+                        except Exception:
+                            pass
+            r_profile_list[2] = image_links
+            edited_fields.append(f"links proofs　–　{len(image_links)} uploaded")
+            image_embeds = image_links_to_embeds(image_links)
+            await message.reply(content=f"Images received from {interaction.user.mention}.", embeds=image_embeds)
+        if reason:
+            if is_edit_or_appeal:
+                session["reason"] = reason
+                await message.reply(embed=discord.Embed(title="Reason", colour=0xffffff, description=reason))
+                edited_fields.append("reason updated")
+
+        update_data = {"r_profile_list": r_profile_list, "title": title}
+        if reason is not None:
+            update_data["reason"] = reason
+
+        inprogresscol.update_one(
+            {"_id": session["_id"]},
+            {"$set": update_data}
+        )
+        embeds = []
+        if is_user_report:
+            user = await bot.fetch_user(session["user_id"])
+            r_profile = format_user_r_profile(user, r_profile_list, title)
+            embeds = [r_profile]
+            if add_case_list and len(add_case_list) >= 2:
+                add_case = format_user_add_case(add_case_list, case_title)
+                embeds.append(add_case)
+        elif is_server_report:
+            guild_data = session["guild_data"]
+            r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
+            embeds = [r_profile]
+            if add_case_list and len(add_case_list) >= 2:
+                add_case = format_server_add_case(add_case_list, case_title)
+                embeds.append(add_case)
+        elif is_account_report:
+            game_uid = session["account_id"]
+            r_profile = format_account_r_profile(game_uid, r_profile_list, title)
+            embeds = [r_profile]
+            if add_case_list and len(add_case_list) >= 2:
+                add_case = format_account_add_case(add_case_list, case_title)
+                embeds.append(add_case)
+        if not embeds:
+            return
+        vote_message = None
+        ticket_message = None
+        vote_channel_id = session.get("vote_channel_id")
+        if vote_channel_id:
+            try:
+                vote_channel = await bot.fetch_channel(vote_channel_id)
+                vote_message = await vote_channel.fetch_message(session["_id"])
+            except:
+                vote_message = None
+        if not vote_message:
+            try:
+                thread = await bot.fetch_channel(session["channel_id"])
+                ticket_message = await thread.fetch_message(session["_id"])
+            except:
+                ticket_message = None
+        if vote_message:
+            await old_message_edit_queue.put((vote_message, {"embeds": embeds}))
+            await interaction.followup.send("Edited successfully.", ephemeral=True)
+            if edited_fields:
+                edit_embed = discord.Embed(
+                    title=f"Edited {id}",
+                    description="\n".join(
+                        f"<:reply:1459162938303578213>　{x}" for x in edited_fields), colour=0xffffff)
+                edit_embed.set_footer(text=f"Edited by {interaction.user}", icon_url=interaction.user.display_avatar)
+                await vote_message.reply(embed=edit_embed)
+        elif ticket_message:
+            if add_case_list and len(add_case_list) < 2:
+                reason_embed = discord.Embed(title="Reason", description=reason)
+            else:
+                reason_embed = discord.Embed(title="Reason", colour=0x1dcca9, description=reason)
+            embeds.append(reason_embed)
+            await old_message_edit_queue.put((ticket_message, {"embeds": embeds}))
+            if edited_fields:
+                edit_embed = discord.Embed(
+                    title=f"Edited {id}",
+                    description="\n".join(
+                        f"<:reply:1459162938303578213>　{x}" for x in edited_fields), colour=0xffffff)
+                edit_embed.set_footer(text=f"Edited by {interaction.user}", icon_url=interaction.user.display_avatar)
+                await ticket_message.reply(embed=edit_embed)
+        return
+
     if alts and is_user_report:
         alt_ids = []
         for alt in alts.split():
@@ -10932,12 +11107,10 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
                                     image_links.append(new_image_url)
                     except Exception:
                         pass
-        if is_user_report:
-            r_profile_list[2] = image_links
-            edited_fields.append(f"alts proofs　–　{len(image_links)} uploaded")
+        r_profile_list[2] = image_links
+        edited_fields.append(f"alts proofs　–　{len(image_links)} uploaded")
         image_embeds = image_links_to_embeds(image_links)
-        await interaction.followup.send(f"Images received from {interaction.user.mention}.",
-                                        embeds=image_embeds, ephemeral=False)
+        await message.reply(content=f"Images received from {interaction.user.mention}.", embeds=image_embeds)
     if owner and is_server_report:
         try:
             owner_user = await bot.fetch_user(int(owner.strip("<@>")))
@@ -10949,7 +11122,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         links = links.replace("\\n", "\n")
         game_uid_list = get_game_uid_list(links)
         r_profile_list[0] = game_uid_list or []
-        edited_fields.append(f"links\n{"\n".join(r_profile_list[0])}")
+        edited_fields.append(f"links\n{'\n'.join(r_profile_list[0])}")
     if links_proofs and is_account_report:
         image_links = []
         await interaction.followup.send(
@@ -10977,12 +11150,10 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
                                     image_links.append(new_image_url)
                     except Exception:
                         pass
-        if is_account_report:
-            r_profile_list[2] = image_links
-            edited_fields.append(f"links proofs　–　{len(image_links)} uploaded")
+        r_profile_list[2] = image_links
+        edited_fields.append(f"links proofs　–　{len(image_links)} uploaded")
         image_embeds = image_links_to_embeds(image_links)
-        await interaction.followup.send(f"Images received from {interaction.user.mention}.",
-                                        embeds=image_embeds, ephemeral=False)
+        await message.reply(content=f"Images received from {interaction.user.mention}.", embeds=image_embeds)
     if tags:
         tag_list = [x.strip().title() for x in tags.split(",") if x.strip()]
         if is_user_report:
@@ -11030,7 +11201,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
                     all_other_tags = selected_string(all_tags_list[1:])
             else:
                 for case in cases:
-                    tags_strings.append(case["tags"]) if is_user_report else tags_strings.append(case[1])
+                    tags_strings.append(case["tags"]) if is_user_report else tags_strings.append(case["tags"])
                 for tags_string in tags_strings:
                     tags_list = tags_string.split(", ")
                     for tag in tags_list:
@@ -11122,9 +11293,11 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         elif is_server_report:
             add_case_list["proofs"] = image_links
             edited_fields.append(f"proofs　–　{len(image_links)} uploaded")
+        elif is_account_report:
+            add_case_list["proofs"] = image_links
+            edited_fields.append(f"proofs　–　{len(image_links)} uploaded")
         image_embeds = image_links_to_embeds(image_links)
-        await interaction.followup.send(f"Images received from {interaction.user.mention}.",
-                                        embeds=image_embeds, ephemeral=False)
+        await message.reply(content=f"Images received from {interaction.user.mention}.", embeds=image_embeds)
 
     update_data = {"r_profile_list": r_profile_list, "add_case_list": add_case_list, "title": title,
                    "case_title": case_title}
