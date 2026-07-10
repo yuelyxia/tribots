@@ -3043,64 +3043,71 @@ async def create_file(interaction: discord.Interaction):
         return
     await interaction.response.send_modal(FileModal())
 
-
-tickets = app_commands.Group(name="tickets", description="Add/remove users to/from ticket threads.")
-bot.tree.add_command(tickets)
-
-@tickets.command(name="find", description="Finds all tickets with name containing the text.")
-@app_commands.describe(text="Text to find", type="Active (Default) / All / Archived")
-@app_commands.checks.has_any_role(ticket_ping, sr_ping, adm_ping)
-async def tickets_find(interaction: discord.Interaction, text: str,
-                       type: Literal["Active", "All", "Archived"] = "Active"):
-    await interaction.response.defer()
-    guild = interaction.guild
-    ticket_channel = guild.get_channel(TICKET_CHANNEL)
+@bot.command(name="t")
+@commands.has_any_role(staff_role)
+async def tickets(ctx, text: str = None, ticket_type: str = None):
+    ticket_channel = ctx.guild.get_channel(TICKET_CHANNEL)
+    if not ticket_channel:
+        return await ctx.reply("Ticket channel not found.")
+    msg = await ctx.reply("_Searching for tickets..._")
+    def get_default_text():
+        nickname = ctx.author.nick or ctx.author.display_name
+        if "ㆍ" in nickname:
+            _, t = nickname.split("ㆍ", 1)
+            return t
+        return nickname
+    if not text:
+        text = get_default_text()
     text_lower = text.lower()
+    if text_lower == "all":
+        text = get_default_text()
+        text_lower = text.lower()
+        ticket_type = "all"
+    elif text_lower == "closed":
+        text = get_default_text()
+        text_lower = text.lower()
+        ticket_type = "closed"
+    ticket_type_lower = ticket_type.lower() if ticket_type else None
     matching_threads = []
     try:
-        if type in ["All", "Active"]:
+        if ticket_type_lower is None or ticket_type_lower == "all":
             for thread in ticket_channel.threads:
                 if text_lower in thread.name.lower():
-                    matching_threads.append(f"{thread.mention}")
-        if type in ["All", "Archived"]:
+                    matching_threads.append(thread.mention)
+        if ticket_type_lower in ["all", "closed"]:
             async for thread in ticket_channel.archived_threads(limit=None, private=False):
                 if text_lower in thread.name.lower():
-                    matching_threads.append(f"{thread.mention}")
+                    matching_threads.append(thread.mention)
             async for thread in ticket_channel.archived_threads(limit=None, private=True):
                 if text_lower in thread.name.lower():
-                    matching_threads.append(f"{thread.mention}")
+                    matching_threads.append(thread.mention)
     except Exception as e:
-        await interaction.followup.send(f"An error occurred while fetching threads: {e}")
-        return
+        return await msg.edit(f"An error occurred while fetching threads: {e}")
     if not matching_threads:
-        await interaction.followup.send(f"No tickets found containing `{text}`.")
-        return
-    chunks = []
-    current_chunk = ""
-    for thread_str in matching_threads:
-        if len(current_chunk) + len(thread_str) + 1 > 1500:
-            chunks.append(current_chunk)
-            current_chunk = thread_str
-        else:
-            if current_chunk:
-                current_chunk += "\n" + thread_str
-            else:
-                current_chunk = thread_str
-    if current_chunk:
-        chunks.append(current_chunk)
+        return await msg.edit(f"No tickets found containing `{text}`.")
+    field_groups = [matching_threads[i:i + 10] for i in range(0, len(matching_threads), 10)]
+    embed_pages = [field_groups[i:i + 3] for i in range(0, len(field_groups), 3)]
     embeds = []
-    for i, chunk in enumerate(chunks):
+    total_pages = len(embed_pages)
+    for page_idx, page_fields in enumerate(embed_pages):
         embed = discord.Embed(
             title=f"Ticket search results for `{text}`",
-            description=chunk,
             color=0xffffff
         )
-        embed.set_footer(
-            text=f"Page {i + 1} of {len(chunks)} – {len(matching_threads)} ticket(s) found"
-        )
+        for field_threads in page_fields:
+            field_value = "\n".join(field_threads)
+            embed.add_field(
+                name="\u200b",
+                value=field_value,
+                inline=True
+            )
+        embed.set_footer(text=f"Page {page_idx + 1} of {total_pages} – {len(matching_threads)} ticket(s) found")
         embeds.append(embed)
-    for embed in embeds:
-        await interaction.followup.send(embed=embed)
+    await msg.edit(content="", embed=embeds[0])
+    if len(embeds) > 1:
+        for embed in embeds[1:]:
+            await ctx.send(embed=embed)
+
 
 @bot.command()
 async def sync(ctx: commands.Context):
