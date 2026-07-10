@@ -4391,9 +4391,9 @@ class UserVoteView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
             user_id = session["user_id"]
@@ -4632,9 +4632,9 @@ class UserVoteView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
             user_id = session["user_id"]
@@ -4760,9 +4760,9 @@ class UserVoteView(discord.ui.View):
         if session:
             channel_id = session["channel_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
             user_id = session["user_id"]
@@ -4797,9 +4797,9 @@ class UserVoteView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             agree_users = session["agree_users"]
             disagree_users = session["disagree_users"]
             reason = session.get("reason")
@@ -6928,9 +6928,9 @@ class ServerVoteView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
             guild_id = session["guild_id"]
@@ -7146,9 +7146,9 @@ class ServerVoteView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
             guild_id = session["guild_id"]
@@ -7274,9 +7274,9 @@ class ServerVoteView(discord.ui.View):
             guild_data = session["guild_data"]
             channel_id = session["channel_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
             agree_users, disagree_users = await handle_vote(interaction, session, "remove")
@@ -7314,9 +7314,9 @@ class ServerVoteView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             agree_users = session["agree_users"]
             disagree_users = session["disagree_users"]
             reason = session.get("reason")
@@ -10214,9 +10214,9 @@ class AccountVoteView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
             game_uid = session["account_id"]
@@ -10446,9 +10446,9 @@ class AccountVoteView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
             game_uid = session["account_id"]
@@ -10571,9 +10571,9 @@ class AccountVoteView(discord.ui.View):
         if session:
             channel_id = session["channel_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             accepted_by = session["accepted_by"]
             reason = session.get("reason")
             game_uid = session["account_id"]
@@ -10607,9 +10607,9 @@ class AccountVoteView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = session["message_id"]
             r_profile_list = session["r_profile_list"]
-            add_case_list = session["add_case_list"]
+            add_case_list = session.get("add_case_list")
             title = session["title"]
-            case_title = session["case_title"]
+            case_title = session.get("case_title")
             agree_users = session["agree_users"]
             disagree_users = session["disagree_users"]
             reason = session.get("reason")
