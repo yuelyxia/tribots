@@ -3082,9 +3082,9 @@ async def tickets(ctx, text: str = None, ticket_type: str = None):
                 if text_lower in thread.name.lower():
                     matching_threads.append(thread.mention)
     except Exception as e:
-        return await msg.edit(f"An error occurred while fetching threads: {e}")
+        return await msg.edit(content=f"An error occurred while fetching threads: {e}")
     if not matching_threads:
-        return await msg.edit(f"No tickets found containing `{text}`.")
+        return await msg.edit(content=f"No tickets found containing `{text}`.")
     field_groups = [matching_threads[i:i + 10] for i in range(0, len(matching_threads), 10)]
     embed_pages = [field_groups[i:i + 3] for i in range(0, len(field_groups), 3)]
     embeds = []
