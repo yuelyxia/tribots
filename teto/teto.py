@@ -1339,7 +1339,7 @@ class ReportedUserView(discord.ui.View):
                                                          view=ReportedUserView(user, user_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reporteduser:proofs")
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="reporteduser:proofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1356,7 +1356,7 @@ class ReportedUserView(discord.ui.View):
         await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
 
-    @discord.ui.button(label="𝘢𝘭𝘵𝘴 𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reporteduser:altsproofs")
+    @discord.ui.button(label="Alts", style=discord.ButtonStyle.grey, custom_id="reporteduser:altsproofs")
     async def alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1464,7 +1464,7 @@ class ReportedServerView(discord.ui.View):
                                                          view=ReportedServerView(guild, server_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reportedserver:proofs")
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="reportedserver:proofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1576,7 +1576,7 @@ class ReportedAccountView(discord.ui.View):
                                                          view=ReportedAccountView(game_uid, account_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reportedaccount:proofs")
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="reportedaccount:proofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -1593,7 +1593,7 @@ class ReportedAccountView(discord.ui.View):
         await interaction.followup.send(f"Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
 
 
-    @discord.ui.button(label="𝘭𝘪𝘯𝘬𝘴 𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="reportedaccount:linksproofs")
+    @discord.ui.button(label="Links", style=discord.ButtonStyle.grey, custom_id="reportedaccount:linksproofs")
     async def links_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -2528,7 +2528,7 @@ class EditUserReportView(discord.ui.View):
                                                          view=EditUserReportView(user, user_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="edituserreport:proofs", row=0)
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="edituserreport:proofs", row=0)
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -2544,7 +2544,7 @@ class EditUserReportView(discord.ui.View):
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="𝘢𝘭𝘵𝘴 𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="edituserreport:altsproofs", row=0)
+    @discord.ui.button(label="Alts", style=discord.ButtonStyle.grey, custom_id="edituserreport:altsproofs", row=0)
     async def alts_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -5736,7 +5736,7 @@ class EditServerReportView(discord.ui.View):
                                                          view=EditServerReportView(guild, server_profile, requested_by,
                                                                                  current_case))
 
-    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="editserverreport:seeproofs")
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="editserverreport:seeproofs")
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -8423,7 +8423,7 @@ class EditAccountReportView(discord.ui.View):
                                                          view=EditAccountReportView(game_uid, account_profile, requested_by,
                                                                                current_case))
 
-    @discord.ui.button(label="𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="editaccountreport:proofs", row=0)
+    @discord.ui.button(label="Proofs", style=discord.ButtonStyle.grey, custom_id="editaccountreport:proofs", row=0)
     async def proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
@@ -8439,7 +8439,7 @@ class EditAccountReportView(discord.ui.View):
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
 
-    @discord.ui.button(label="𝘭𝘪𝘯𝘬𝘴 𝘱𝘳𝘰𝘰𝘧𝘴", style=discord.ButtonStyle.grey, custom_id="editaccountreport:linksproofs", row=0)
+    @discord.ui.button(label="Links", style=discord.ButtonStyle.grey, custom_id="editaccountreport:linksproofs", row=0)
     async def links_proofs_button(self, interaction, button):
         await interaction.response.defer()
         #
