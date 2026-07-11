@@ -1395,7 +1395,7 @@ class ReportedServerView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[1])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -1439,7 +1439,7 @@ class ReportedServerView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[1])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -5667,7 +5667,7 @@ class EditServerReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[1])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -5711,7 +5711,7 @@ class EditServerReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[1])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -5795,7 +5795,7 @@ class EditServerReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[1])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -5875,7 +5875,7 @@ class EditServerReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[1])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -5967,7 +5967,7 @@ class EditServerReportView(discord.ui.View):
             tags_strings = []
             all_tags_list = []
             for case in cases:
-                tags_strings.append(case[1])
+                tags_strings.append(case["tags"])
             for tags_string in tags_strings:
                 tags_list = tags_string.split(", ")
                 for tag in tags_list:
@@ -6991,7 +6991,7 @@ class ServerVoteView(discord.ui.View):
                             tags_strings = []
                             all_tags_list = []
                             for case in cases:
-                                tags_strings.append(case[1])
+                                tags_strings.append(case["tags"])
                             for tags_string in tags_strings:
                                 tags_list = tags_string.split(", ")
                                 for tag in tags_list:
@@ -7377,7 +7377,7 @@ class ServerVoteView(discord.ui.View):
                             tags_strings = []
                             all_tags_list = []
                             for case in cases:
-                                tags_strings.append(case[1])
+                                tags_strings.append(case["tags"])
                             for tags_string in tags_strings:
                                 tags_list = tags_string.split(", ")
                                 for tag in tags_list:
