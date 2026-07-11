@@ -861,7 +861,7 @@ async def mc(ctx, *, to_check: str = None):
 
             trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
             current_embeds.append(trusted_embed)
-            current_content.append(f"<:whiteheart:1434538078747365507> `{current_id}` is trusted.")
+            current_content.append(f"<:tri_whiteheart:1434538078747365507> `{current_id}` is trusted.")
         else:
             user_profile = userscol.find_one(user_query)
             if user_profile:

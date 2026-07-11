@@ -50,7 +50,7 @@ def alts_string(alts_list):
 def default_no_alts(user):
     profile = discord.Embed(colour=0xffffff)
     profile.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n"
-    profile.description += f"<:whitecross:1462774085737119828>　No alts logged for this user."
+    profile.description += f"<:tri_whitecross:1462774085737119828>　No alts logged for this user."
     return profile
 
 @tasks.loop(hours=1.0)
@@ -402,14 +402,14 @@ async def ma(ctx, *, to_check: str = None):
             alts_count = len(alts_list)
             raw_ids = " ".join(alt for alt in alts_list)
             current_content.append(
-                f"<a:whitealert:1496542298908000257> **`{current_id}` has {alts_count} logged alt(s).**")
+                f"<a:tri_whitealert:1496542298908000257> **`{current_id}` has {alts_count} logged alt(s).**")
             embed = discord.Embed(colour=0xffffff)
-            embed.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:whitealert:1496542298908000257> **Alt(s)**\n`{raw_ids}`"
+            embed.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:tri_whitealert:1496542298908000257> **Alt(s)**\n`{raw_ids}`"
             current_embeds.append(embed)
         else:
-            current_content.append(f"<:whitedot:1462907474947342567> `{current_id}` has no logged alts.")
+            current_content.append(f"<:tri_whitedot:1462907474947342567> `{current_id}` has no logged alts.")
             embed = discord.Embed(colour=0xffffff)
-            embed.description = f"<:whitecross:1462774085737119828>　No alts logged for `{current_id}`."
+            embed.description = f"<:tri_whitecross:1462774085737119828>　No alts logged for `{current_id}`."
             current_embeds.append(embed)
     if current_content or current_embeds:
         message_batches.append(("\n".join(current_content), current_embeds))
@@ -474,7 +474,7 @@ async def a(ctx, *, to_check: str = None):
             proof_with_server = f"[image]({parts[0]}) – {parts[1]}"
         chosen_lines.append(f"ㆍ `{alt}` – {proof_with_server}")
     LIMIT = 3800
-    header = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:whitealert:1496542298908000257> **Alt(s)**\n"
+    header = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:tri_whitealert:1496542298908000257> **Alt(s)**\n"
     embeds = []
     chunk = []
     for line in chosen_lines:

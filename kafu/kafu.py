@@ -525,9 +525,9 @@ async def on_message(message: discord.Message):
                         server_info["mms"][user_id]["monthly"] = (server_info["mms"][user_id].get("monthly", 0) + 1)
                         server_info["mms"][user_id]["alltime"] = (server_info["mms"][user_id].get("alltime", 0) + 1)
                         servers.replace_one(server_query, server_info)
-                        await message.add_reaction("<:whitetick:1462774288020013161>")
+                        await message.add_reaction("<:tri_whitetick:1462774288020013161>")
                     else:
-                        await message.add_reaction("<:whitecross:1462774085737119828>")
+                        await message.add_reaction("<:tri_whitecross:1462774085737119828>")
         pilot_vouch_channel = server_info.get("pilot_vouch_channel")
         if pilot_vouch_channel:
             if message.channel.id == int(pilot_vouch_channel.replace("<#", "").replace(">", "")):
@@ -540,9 +540,9 @@ async def on_message(message: discord.Message):
                         server_info["pilots"][user_id]["alltime"] = (
                                     server_info["pilots"][user_id].get("alltime", 0) + 1)
                         servers.replace_one(server_query, server_info)
-                        await message.add_reaction("<:whitetick:1462774288020013161>")
+                        await message.add_reaction("<:tri_whitetick:1462774288020013161>")
                     else:
-                        await message.add_reaction("<:whitecross:1462774085737119828>")
+                        await message.add_reaction("<:tri_whitecross:1462774085737119828>")
 
     if guild_id in voice_clients:
         if active_text_channel.get(guild_id) == message.channel.id:
@@ -761,7 +761,7 @@ class MMRisksView(discord.ui.View):
     @discord.ui.button(label="deadlinks", style=discord.ButtonStyle.grey, custom_id="mm_risks:deadlinks")
     async def deadlinks_button(self, interaction, button):
         await interaction.response.send_message("""
-## Deadlinks <a:whitealert:1496542298908000257>
+## Deadlinks <a:tri_whitealert:1496542298908000257>
 > 3rd party links are links binded to the hoyoverse account which serves as an alternative way to login - Facebook, Game Center, Google, PSN, Apple, Twitter. A deadlink is a 3rd party link where the owner no longer has access to the 3rd party account and is unable to unlink it, but also unable to login via the link, e.g. Twitter account was deleted.
 **__Risks__**
 - **Hoyoverse:** Facebook, Twitter, Google, Apple and Game Center links are __safe__ and can be secured easily by removing all trusted devices via the [Hoyoverse website](https://account.hoyoverse.com). Attempts to login via these links will require a verification code sent to the linked email.
@@ -774,7 +774,7 @@ class MMRisksView(discord.ui.View):
     @discord.ui.button(label="hacked abyss", style=discord.ButtonStyle.grey, custom_id="mm_risks:hacked_abyss")
     async def hacked_abyss_button(self, interaction, button):
         await interaction.response.send_message("""
-## Hαcked Abyss <a:whitealert:1496542298908000257>
+## Hαcked Abyss <a:tri_whitealert:1496542298908000257>
 > A h.abyss account is where a bot was used to complete spiral abyss to gain primogems. A h.abyss account can be identified when a high number of stars has been obtained with missing stats (e.g. most damage taken) or an unusually low "strongest single strike" in the abyss challenge summary. They typically apply to reroll accounts using starter characters. However, other characters can also be used.
 **__Risks__**
 - As it is against Hoyoverse’s ToS, your account and/or IP address may get banned.
@@ -786,7 +786,7 @@ class MMRisksView(discord.ui.View):
     @discord.ui.button(label="lost receipts", style=discord.ButtonStyle.grey, custom_id="mm_risks:lost_receipts")
     async def lost_receipts_button(self, interaction, button):
         await interaction.response.send_message("""
-## Lost Receipts <a:whitealert:1496542298908000257>
+## Lost Receipts <a:tri_whitealert:1496542298908000257>
 > These risks apply to **ALL __P2W__ accounts**, even if you have receipts. P2W is when there has been **any** purchase on the account, regardless of amount, when the purchase was made and from where (in-game top-up, codashop, giveaway win etc.)
 > Receipts must have the __amount spent, transaction ID and what was purchased__ in a **__full__ screenshot** (preferably uncropped) to be a valid receipt.
 **__Risks__**
@@ -800,7 +800,7 @@ class MMRisksView(discord.ui.View):
     @discord.ui.button(label="email surrender", style=discord.ButtonStyle.grey, custom_id="mm_risks:email_surrender")
     async def email_surrender_button(self, interaction, button):
         await interaction.response.send_message("""
-## Email Surrender <a:whitealert:1496542298908000257>
+## Email Surrender <a:tri_whitealert:1496542298908000257>
 > Email surrender requires giving up the entire email, fully losing access of it, so ensure you will never need it in the future.
 **__Risks__**
 - Higher chance of retrieval.
@@ -1535,15 +1535,15 @@ async def vouch(ctx):
         await ctx.reply("You have not set a vouch server.")
         return
     invite = vouch_server["invite"]
-    lines = [f"<:whiteheart:1434538078747365507>　Please vouch for {ctx.author.mention} at the links below:", f"<:greyreply:1448474301673115748><:blank:1383116055550890095>[vouch server]({invite})"]
+    lines = [f"<:tri_whiteheart:1434538078747365507>　Please vouch for {ctx.author.mention} at the links below:", f"<:tri_greyreply:1448474301673115748><:tri_blank:1383116055550890095>[vouch server]({invite})"]
     if is_mm:
         mm_vouch_channel = server_info.get("mm_vouch_channel")
         if mm_vouch_channel:
-            lines.append(f"<:greyreply:1448474301673115748><:blank:1383116055550890095>{mm_vouch_channel}")
+            lines.append(f"<:tri_greyreply:1448474301673115748><:tri_blank:1383116055550890095>{mm_vouch_channel}")
     if is_pilot:
         pilot_vouch_channel = server_info.get("pilot_vouch_channel")
         if pilot_vouch_channel:
-            lines.append(f"<:greyreply:1448474301673115748><:blank:1383116055550890095>{pilot_vouch_channel}")
+            lines.append(f"<:tri_greyreply:1448474301673115748><:tri_blank:1383116055550890095>{pilot_vouch_channel}")
     await ctx.send("\n".join(lines))
 
 @bot.command(name="cr")
@@ -3655,18 +3655,18 @@ async def panel(interaction: discord.Interaction, colour: str=None, image: disco
     if guild_id == TRI_Archive:
         await interaction.channel.send(embed=discord.Embed(colour=colour, description="""
 ## 　　<:2paperclip:1449650494044639335>　　┈　open ticket　✦୧
-　<:whiteheartsmall:1462773852441677958>　provide __uncropped__ & **unedited** proofs
-　<:whiteheartsmall:1462773852441677958>　fake proofs / disrespect = **ban**
-　<:whiteheartsmall:1462773852441677958>　**do not open** for appeals on bans
+　<:tri_whiteheartsmall:1462773852441677958>　provide __uncropped__ & **unedited** proofs
+　<:tri_whiteheartsmall:1462773852441677958>　fake proofs / disrespect = **ban**
+　<:tri_whiteheartsmall:1462773852441677958>　**do not open** for appeals on bans
 -# _ _　 ✦ 　not following rules / ghosting = close
                 """), view=TRITicketView())
         await interaction.followup.send("Panel has been sent.", ephemeral=True)
 
 tri_ticket_options = [
-    discord.SelectOption(emoji="<a:purplebow2:1522142135544184853>", label="ㆍㆍReport", value="report"),
-    discord.SelectOption(emoji="<:pinkheart:1518434487007186994>", label="ㆍㆍAppeal", value="appeal"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍVerify", value="verify"),
-    discord.SelectOption(emoji="<a:purple_flower:1515565233798778930>", label="ㆍㆍOthers", value="others"),
+    discord.SelectOption(emoji="<a:tri_purplebow2:1522142135544184853>", label="ㆍㆍReport", value="report"),
+    discord.SelectOption(emoji="<:tri_pinkheart:1518434487007186994>", label="ㆍㆍAppeal", value="appeal"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍVerify", value="verify"),
+    discord.SelectOption(emoji="<a:tri_purple_flower:1515565233798778930>", label="ㆍㆍOthers", value="others"),
     ]
 
 class TRITicketView(discord.ui.View):

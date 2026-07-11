@@ -518,7 +518,7 @@ async def weekly_quota():
         colour=0xffffff
     )
     if not sr_not_met_quota:
-        sr_nmq_embed.description = "All staff met their weekly quota <a:pinkconfetti:1505564994731905065>"
+        sr_nmq_embed.description = "All staff met their weekly quota <a:tri_pinkconfetti:1505564994731905065>"
     else:
         desc = ""
         for user, qtype, done, quota, ratio in sorted(sr_not_met_quota, key=lambda x: x[4]):
@@ -531,7 +531,7 @@ async def weekly_quota():
         colour=0xffffff
     )
     if not not_met_quota:
-        nmq_embed.description = "All staff met their weekly quota <a:pinkconfetti:1505564994731905065>"
+        nmq_embed.description = "All staff met their weekly quota <a:tri_pinkconfetti:1505564994731905065>"
     else:
         desc = ""
         for user, done, quota, ratio in sorted(not_met_quota, key=lambda x: x[3]):
@@ -692,7 +692,7 @@ async def quota(ctx, member: discord.Member = None):
         quota_display = "FULL BREAK" if current_closes_quota == -1 else str(current_closes_quota)
         ratio_display = "N/A" if current_closes_ratio == -1 else f"{current_closes_ratio:.2f}"
         embed.description += f"\ncloses　–　**{current_closes}** / {quota_display}　–　`{ratio_display}`"
-        if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
+        if ratio_display == "1.00": embed.description += "　<a:tri_pinkconfetti:1505564994731905065>"
     if is_sr(member):
         current_reviews = weekly_profile.get("weekly_reviews", 0)
         current_reviews_quota = (get_quota_config().get("sr_reviews_quota", 0))
@@ -704,7 +704,7 @@ async def quota(ctx, member: discord.Member = None):
         quota_display = "FULL BREAK" if current_reviews_quota == -1 else str(current_reviews_quota)
         ratio_display = "N/A" if current_reviews_ratio == -1 else f"{current_reviews_ratio:.2f}"
         embed.description += f"\nreviews　–　**{current_reviews}** / {quota_display}　–　`{ratio_display}`"
-        if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
+        if ratio_display == "1.00": embed.description += "　<a:tri_pinkconfetti:1505564994731905065>"
     current_tickets = weekly_profile.get("weekly_tickets", 0)
     if is_sr(member):
         current_tickets_quota = get_quota_config().get("sr_tickets_quota", 0)
@@ -716,7 +716,7 @@ async def quota(ctx, member: discord.Member = None):
     quota_display = "FULL BREAK" if current_tickets_quota == -1 else str(current_tickets_quota)
     ratio_display = "N/A" if current_tickets_ratio == -1 else f"{current_tickets_ratio:.2f}"
     embed.description += f"\ntickets　–　**{current_tickets}** / {quota_display}　–　`{ratio_display}`"
-    if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
+    if ratio_display == "1.00": embed.description += "　<a:tri_pinkconfetti:1505564994731905065>"
     current_reports = weekly_profile.get("weekly_reports", 0)
     if is_sr(member):
         current_reports_quota = get_quota_config().get("sr_reports_quota", 0)
@@ -727,7 +727,7 @@ async def quota(ctx, member: discord.Member = None):
     quota_display = "FULL BREAK" if current_reports_quota == -1 else str(current_reports_quota)
     ratio_display = "N/A" if current_reports_ratio == -1 else f"{current_reports_ratio:.2f}"
     embed.description += f"\nreports　–　**{current_reports}** / {quota_display}　–　`{ratio_display}`"
-    if ratio_display == "1.00": embed.description += "　<a:pinkconfetti:1505564994731905065>"
+    if ratio_display == "1.00": embed.description += "　<a:tri_pinkconfetti:1505564994731905065>"
     await ctx.reply(embeds=[profile, embed])
 
 @bot.command(name="qh")
@@ -983,27 +983,27 @@ async def help(ctx):
         await ctx.send(embed=embed)
 
 tags_options = [
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="scammer", value="scammer"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="scam server owner", value="scam server owner"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="raider", value="raider"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="plagiarist", value="plagiarist"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="fake event host", value="fake event host"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="impersonator", value="impersonator"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="vouch scammer", value="vouch scammer"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="suspect", value="suspect"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional mm", value="unprofessional mm"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional pilot", value="unprofessional pilot"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional idv mm", value="unprofessional idv mm"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional supervisor", value="unprofessional supervisor"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="unprofessional staff", value="unprofessional staff"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="ex-offender", value="ex-offender"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="improper conduct", value="improper conduct"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="service ban", value="service ban"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="scam server", value="scam server"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="impersonator server", value="impersonator server"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="fake vouch server", value="fake vouch server"),
-    discord.SelectOption(emoji="<:redheart:1462285627243499655>", label="fake event server", value="fake event server"),
-    discord.SelectOption(emoji="<:yellowheart:1478132316122644544>", label="suspect server", value="suspect server"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="scammer", value="scammer"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="scam server owner", value="scam server owner"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="raider", value="raider"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="plagiarist", value="plagiarist"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="fake event host", value="fake event host"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="impersonator", value="impersonator"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="vouch scammer", value="vouch scammer"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="suspect", value="suspect"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional mm", value="unprofessional mm"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional pilot", value="unprofessional pilot"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional idv mm", value="unprofessional idv mm"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional supervisor", value="unprofessional supervisor"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional staff", value="unprofessional staff"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="ex-offender", value="ex-offender"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="improper conduct", value="improper conduct"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="service ban", value="service ban"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="scam server", value="scam server"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="impersonator server", value="impersonator server"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="fake vouch server", value="fake vouch server"),
+    discord.SelectOption(emoji="<:tri_redheart:1462285627243499655>", label="fake event server", value="fake event server"),
+    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="suspect server", value="suspect server"),
 ]
 
 @bot.command(name="tags", help="Sends the descriptions of demerit tags.")
@@ -1023,7 +1023,7 @@ class TagsView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "scammer":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　scammer
+## <a:tri_redarrow:1388148121242177726>　　scammer
 　　**__definition__**
 
 > users who have shown the **intention to, have attempted to, have admitted to, and/or have scammed**.
@@ -1051,7 +1051,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "scam server owner":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　scam server owner
+## <a:tri_redarrow:1388148121242177726>　　scam server owner
 　　**__definition__**
 
 > users who **own scam servers** or have owned scam servers in the past.
@@ -1069,7 +1069,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "raider":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　raider
+## <a:tri_redarrow:1388148121242177726>　　raider
 　　**__definition__**
 
 > users who have **raided server(s)**.
@@ -1085,7 +1085,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "plagiarist":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　plagiarist
+## <a:tri_redarrow:1388148121242177726>　　plagiarist
 　　**__definition__**
 
 > users who have claimed others’ creative works as their own, or have shared/used such works without the rightful owner’s permission.
@@ -1102,7 +1102,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "fake event host":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　fake event host
+## <a:tri_redarrow:1388148121242177726>　　fake event host
 　　**__definition__**
 
 > users who have hosted events and refused to or repeatedly delayed giving the participant their prize/reward provided that the participant had followed all rules strictly.
@@ -1113,7 +1113,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "impersonator":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　impersonator
+## <a:tri_redarrow:1388148121242177726>　　impersonator
 　　**__definition__**
 
 > users who deliberately imitate or copy the profile, name, layout and/or description of another user without the real user’s permission, with the intent of deception
@@ -1124,7 +1124,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "vouch scammer":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　vouch scammer
+## <a:tri_redarrow:1388148121242177726>　　vouch scammer
 　　**__definition__**
 
 > users who use spammed (often botted) vouches or stolen proofs/vouches, with the intent of deceiving others.
@@ -1140,7 +1140,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "suspect":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　suspect
+## <a:tri_yellowarrow:1509836964453548133>　　suspect
 　　**__definition__**
 
 > users who have exhibited suspicious behaviour.
@@ -1165,7 +1165,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional mm":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　unprofessional mm
+## <a:tri_yellowarrow:1509836964453548133>　　unprofessional mm
 　　**__definition__**
 
 > mm is deemed unprofessional if they have proven to be irresponsible in their service.
@@ -1200,7 +1200,7 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional mm":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　unprofessional pilot
+## <a:tri_yellowarrow:1509836964453548133>　　unprofessional pilot
 　　**__definition__**
 
 wip
@@ -1209,7 +1209,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional pilot":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　unprofessional pilot
+## <a:tri_yellowarrow:1509836964453548133>　　unprofessional pilot
 　　**__definition__**
 
 wip
@@ -1218,7 +1218,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional idv mm":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　unprofessional idv mm
+## <a:tri_yellowarrow:1509836964453548133>　　unprofessional idv mm
 　　**__definition__**
 
 wip
@@ -1227,7 +1227,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional supervisor":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　unprofessional supervisor
+## <a:tri_yellowarrow:1509836964453548133>　　unprofessional supervisor
 　　**__definition__**
 
 wip
@@ -1236,7 +1236,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional staff":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　unprofessional staff
+## <a:tri_yellowarrow:1509836964453548133>　　unprofessional staff
 　　**__definition__**
 
 wip
@@ -1245,7 +1245,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "ex-offender":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　ex-offender
+## <a:tri_yellowarrow:1509836964453548133>　　ex-offender
 　　**__definition__**
 
 wip
@@ -1254,7 +1254,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "improper conduct":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　improper conduct
+## <a:tri_yellowarrow:1509836964453548133>　　improper conduct
 　　**__definition__**
 
 wip
@@ -1263,7 +1263,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "service ban":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　service ban
+## <a:tri_yellowarrow:1509836964453548133>　　service ban
 　　**__definition__**
 
 wip
@@ -1272,7 +1272,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "scam server":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　scam server
+## <a:tri_redarrow:1388148121242177726>　　scam server
 　　**__definition__**
 
 wip
@@ -1281,7 +1281,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "impersonator server":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　impersonator server
+## <a:tri_redarrow:1388148121242177726>　　impersonator server
 　　**__definition__**
 
 wip
@@ -1290,7 +1290,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "fake vouch server":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　fake vouch server
+## <a:tri_redarrow:1388148121242177726>　　fake vouch server
 　　**__definition__**
 
 wip
@@ -1299,7 +1299,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "fake event server":
             embed = discord.Embed(colour=0xFF0045, description="""
-## <a:redarrow:1388148121242177726>　　fake event server
+## <a:tri_redarrow:1388148121242177726>　　fake event server
 　　**__definition__**
 
 wip
@@ -1308,7 +1308,7 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "suspect server":
             embed = discord.Embed(colour=0xFFD643, description="""
-## <a:yellowarrow:1509836964453548133>　　suspect server
+## <a:tri_yellowarrow:1509836964453548133>　　suspect server
 　　**__definition__**
 
 wip
@@ -1317,11 +1317,11 @@ wip
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
 closing_options = [
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍreport", value="report"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍappeal", value="appeal"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍverify", value="verify"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍothers", value="others"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍsr+", value="sr+"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍreport", value="report"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍappeal", value="appeal"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍverify", value="verify"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍothers", value="others"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍsr+", value="sr+"),
 ]
 
 @bot.command(name="cl", help="Sends closing guide.")
@@ -1485,7 +1485,7 @@ class ProofView(discord.ui.View):
 
         self.report_button = discord.ui.Button(
             label="report",
-            emoji="<:redheart:1462285627243499655>",
+            emoji="<:tri_redheart:1462285627243499655>",
             style=discord.ButtonStyle.grey,
             disabled=True,
             custom_id="proof:report"
@@ -1919,11 +1919,11 @@ class StaffRulesView(discord.ui.View):
                                         url="https://docs.google.com/document/d/18GPfRrvzJ4b1d6cJ_yLyd1HELJbE4y9PqBH5-FVQktc/"))
 
 staff_guide_options = [
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍTrial", value="trial"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍBreaks", value="breaks"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍQuota", value="quota"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍTickets", value="tickets"),
-    discord.SelectOption(emoji="<:whiteheart:1434538078747365507>", label="ㆍㆍAutoresponders", value="autoresponders"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍTrial", value="trial"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍBreaks", value="breaks"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍQuota", value="quota"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍTickets", value="tickets"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍAutoresponders", value="autoresponders"),
 ]
 
 class StaffGuideView(discord.ui.View):
@@ -2060,7 +2060,7 @@ async def send_staffrules(interaction: discord.Interaction):
 @app_commands.checks.has_role(adm_ping)
 async def send_staffguide(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
-## <:whitebow:1388714593211125971>　　staff　　guide　　ꫂ᭪
+## <:tri_whitebow:1388714593211125971>　　staff　　guide　　ꫂ᭪
 　　`,help` for list of TRI bots commands.
 """), view=StaffGuideView())
     await interaction.response.send_message("Staff Guide has been sent.", ephemeral=True)
@@ -2114,7 +2114,7 @@ async def send_rules(interaction: discord.Interaction, colour: str=None, image: 
     """)
     await interaction.channel.send("_ _", embed=embed3)
     embed4 = discord.Embed(colour=colour, description="""
-**　ㆍ<:whitebow:1388714593211125971>　full version of rules [here](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/edit?pli=1&tab=t.0#heading=h.1qtqm2f0dk9x)　♪**
+**　ㆍ<:tri_whitebow:1388714593211125971>　full version of rules [here](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/edit?pli=1&tab=t.0#heading=h.1qtqm2f0dk9x)　♪**
     """)
     await interaction.channel.send("_ _", embed=embed4)
     await interaction.followup.send("Sent!")
@@ -2136,44 +2136,44 @@ _ _　　<:cutie:1388714793585606656>ㆍ**claim  roles  here** ㆍㆍ
 """)
     embed1 = discord.Embed(colour=colour, title="★．．　age　range　⊹⁺₊", description="""  
 -# _ _
-　❜ <:whiteheart:1434538078747365507> ㆍ18 +　︵
-　 <:whitebow:1388714593211125971> ㆍ16 — 17　❜
-　❜ <:whitestar:1388147381152911381> ㆍ13 — 15　︵
+　❜ <:tri_whiteheart:1434538078747365507> ㆍ18 +　︵
+　 <:tri_whitebow:1388714593211125971> ㆍ16 — 17　❜
+　❜ <:tri_whitestar:1388147381152911381> ㆍ13 — 15　︵
 """)
     msg1 = await interaction.channel.send("_ _", embed=embed1)
     embed2 = discord.Embed(colour=colour, title="★．．　pronouns　⊹⁺₊", description="""  
 -# _ _
-　┅ <:whitebutterfly:1459750881611354237> ㆍhe 　❀
-　 <:whitepaperclip:1449650494044639335> ㆍ she 　┅
-　┅ <:whitestar:1388147381152911381> ㆍthey 　❀
-　 <:whitebowheart:1459750975710691410> ㆍ ask 　┅
+　┅ <:tri_whitebutterfly:1459750881611354237> ㆍhe 　❀
+　 <:tri_whitepaperclip:1449650494044639335> ㆍ she 　┅
+　┅ <:tri_whitestar:1388147381152911381> ㆍthey 　❀
+　 <:tri_whitebowheart:1459750975710691410> ㆍ ask 　┅
     """)
     msg2 = await interaction.channel.send("_ _", embed=embed2)
     embed3 = discord.Embed(colour=colour, title="★．．　user　update　pings　⊹⁺₊", description="""  
 -# _ _
-　∿ <:whitestar:1388147381152911381> ㆍnew user report　⿻
-　 <:whitebow:1388714593211125971> ㆍupdated user report　∿
-　∿ <:whitepaperclip:1449650494044639335> ㆍappealed user report　⿻
+　∿ <:tri_whitestar:1388147381152911381> ㆍnew user report　⿻
+　 <:tri_whitebow:1388714593211125971> ㆍupdated user report　∿
+　∿ <:tri_whitepaperclip:1449650494044639335> ㆍappealed user report　⿻
 """)
     msg3 = await interaction.channel.send("_ _", embed=embed3)
     embed4 = discord.Embed(colour=colour, title="★．．　server　update　pings　⊹⁺₊", description="""  
 -# _ _
-　 <:whiteheart:1434538078747365507> ㆍnew server report　∿
-　∿ <:whitebutterfly:1459750881611354237> ㆍupdated server report　⿻
-　 <:whitebowheart:1459750975710691410> ㆍappealed server report　∿
+　 <:tri_whiteheart:1434538078747365507> ㆍnew server report　∿
+　∿ <:tri_whitebutterfly:1459750881611354237> ㆍupdated server report　⿻
+　 <:tri_whitebowheart:1459750975710691410> ㆍappealed server report　∿
 """)
     msg4 = await interaction.channel.send("_ _", embed=embed4)
     embed5 = discord.Embed(colour=colour, title="★．．　account　update　pings　⊹⁺₊", description="""  
 -# _ _
-　 <:whitebutterfly:1459750881611354237> ㆍnew account report　⿻
-　∿ <:whitepaperclip:1449650494044639335> ㆍupdated account report　∿
-　 <:whitestar:1388147381152911381> ㆍappealed account report　⿻
+　 <:tri_whitebutterfly:1459750881611354237> ㆍnew account report　⿻
+　∿ <:tri_whitepaperclip:1449650494044639335> ㆍupdated account report　∿
+　 <:tri_whitestar:1388147381152911381> ㆍappealed account report　⿻
 """)
     msg5 = await interaction.channel.send("_ _", embed=embed5)
     embed6 = discord.Embed(colour=colour, description="""  
 -# _ _
-　⬩ <:whitebutterfly:1459750881611354237> ㆍnews　✿
-　 <:whitebow:1388714593211125971> ㆍticket status　⬩
+　⬩ <:tri_whitebutterfly:1459750881611354237> ㆍnews　✿
+　 <:tri_whitebow:1388714593211125971> ㆍticket status　⬩
     """)
     msg6 = await interaction.channel.send("_ _", embed=embed6)
     await interaction.followup.send("Sent!")
@@ -2181,34 +2181,34 @@ _ _　　<:cutie:1388714793585606656>ㆍ**claim  roles  here** ㆍㆍ
 Use the following commands to add react roles:
 
 `!rr addmany {interaction.channel.id} {msg1.id}
-<:whiteheart:1434538078747365507> 1375276990096998440 
-<:whitebow:1388714593211125971> 1375277014679818332 
-<:whitestar:1388147381152911381> 1375277046204203148`
+<:tri_whiteheart:1434538078747365507> 1375276990096998440 
+<:tri_whitebow:1388714593211125971> 1375277014679818332 
+<:tri_whitestar:1388147381152911381> 1375277046204203148`
 
 `!rr addmany {interaction.channel.id} {msg2.id}
-<:whitebutterfly:1459750881611354237> 1375274759507411034
-<:whitepaperclip:1449650494044639335> 1375274745616011355
-<:whitestar:1388147381152911381> 1375274890894250045
-<:whitebowheart:1459750975710691410> 1375274908275445780`
+<:tri_whitebutterfly:1459750881611354237> 1375274759507411034
+<:tri_whitepaperclip:1449650494044639335> 1375274745616011355
+<:tri_whitestar:1388147381152911381> 1375274890894250045
+<:tri_whitebowheart:1459750975710691410> 1375274908275445780`
 
 `!rr addmany {interaction.channel.id} {msg3.id}
-<:whitestar:1388147381152911381> 1375275062185168957
-<:whitebow:1388714593211125971> 1459590866724323625
-<:whitepaperclip:1449650494044639335> 1459590865335877663`
+<:tri_whitestar:1388147381152911381> 1375275062185168957
+<:tri_whitebow:1388714593211125971> 1459590866724323625
+<:tri_whitepaperclip:1449650494044639335> 1459590865335877663`
 
 `!rr addmany {interaction.channel.id} {msg4.id}
-<:whiteheart:1434538078747365507> 1375275002537971742
-<:whitebutterfly:1459750881611354237> 1459590362703204405 
-<:whitebowheart:1459750975710691410> 1459590364292972776`
+<:tri_whiteheart:1434538078747365507> 1375275002537971742
+<:tri_whitebutterfly:1459750881611354237> 1459590362703204405 
+<:tri_whitebowheart:1459750975710691410> 1459590364292972776`
 
 `!rr addmany {interaction.channel.id} {msg5.id}
-<:whitebutterfly:1459750881611354237> 1515589534438395914
-<:whitepaperclip:1449650494044639335> 1515589535059284148
-<:whitestar:1388147381152911381> 1515589539069169844`
+<:tri_whitebutterfly:1459750881611354237> 1515589534438395914
+<:tri_whitepaperclip:1449650494044639335> 1515589535059284148
+<:tri_whitestar:1388147381152911381> 1515589539069169844`
 
 `!rr addmany {interaction.channel.id} {msg6.id}
-<:whitebutterfly:1459750881611354237> 1375276744956706916
-<:whitebow:1388714593211125971> 1459594319110602833`
+<:tri_whitebutterfly:1459750881611354237> 1375276744956706916
+<:tri_whitebow:1388714593211125971> 1459594319110602833`
 
 """, ephemeral=True)
 
@@ -2234,12 +2234,12 @@ class FAQOverviewView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "what is tri?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　what is tri?
+### <a:tri_whitearrow2:1388147186654515273>　　what is tri?
 trade report investigation archive (**tri archive**) est. may 2025 is a server dedicated to **spreading awareness on dangerous, unlawful, or suspicious activity** and promoting community safety.
             """), ephemeral=True)
         if self.select_callback.values[0] == "terms of service":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　terms of service
+### <a:tri_whitearrow2:1388147186654515273>　　terms of service
 this server allows users to report scams, attempted scams and other unlawful activities, report suspicious behavior to spread awareness, and view or share reports to stay informed.
 by using the services of tri archive (“we”, “our” or “us”), you agree to the following terms:
 - user responsibilities
@@ -2258,7 +2258,7 @@ by using the services of tri archive (“we”, “our” or “us”), you agre
             """), ephemeral=True)
         if self.select_callback.values[0] == "privacy policy":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　privacy policy
+### <a:tri_whitearrow2:1388147186654515273>　　privacy policy
 this server (“we”, “our”, or “us”) is committed to protecting your privacy. this policy explains how we collect, use, and protect your information.
 - information we collect
   - when you submit a report, we collect the content you provide (e.g. scam description, conversation history with scammer).
@@ -2276,7 +2276,7 @@ this server (“we”, “our”, or “us”) is committed to protecting your p
             """), ephemeral=True)
         if self.select_callback.values[0] == "ban policy":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　ban policy
+### <a:tri_whitearrow2:1388147186654515273>　　ban policy
 please read through [server rules](https://discord.com/channels/{TRI_Archive}/1371674470611161160) carefully. not following rules may result in warns or bans.
 _we do not ban scammers so that they may make an appeal._
 
@@ -2291,12 +2291,12 @@ _we do not ban scammers so that they may make an appeal._
             """), ephemeral=True)
         if self.select_callback.values[0] == "how can I contact admin+?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 
                 """), ephemeral=True)
         if self.select_callback.values[0] == "how can I request a collaboration?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 
                 """), ephemeral=True)
 
@@ -2323,7 +2323,7 @@ class FAQReportsView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "how do I check for reports?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　how do I check for reports?
+### <a:tri_whitearrow2:1388147186654515273>　　how do I check for reports?
 you can check if a user, server or game account is reported using tri’s bot <@1457249982104211467>.
 to check for reports, you need some form of **id**. guides [here](https://discord.com/channels/{TRI_Archive}/1523977533115207820).
 -# 　⤷　how to obtain user/server id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
@@ -2345,7 +2345,7 @@ to check for reports, you need some form of **id**. guides [here](https://discor
             """), ephemeral=True)
         if self.select_callback.values[0] == "what can be reported?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　what can be reported?
+### <a:tri_whitearrow2:1388147186654515273>　　what can be reported?
 you may report users or servers for a variety of reasons, including but not limited to
 - scamming or attempted scams.
 - suspicious or high risk behaviour.
@@ -2358,7 +2358,7 @@ if you are unsure whether a situation is reportable, feel free to open a ticket.
             """), ephemeral=True)
         if self.select_callback.values[0] == "what proofs are required for reports?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　what proofs are required for reports?
+### <a:tri_whitearrow2:1388147186654515273>　　what proofs are required for reports?
 provide relevant user ids, server invites & ids, or game uids. 
 -# _not just usernames, since usernames can change._
 -# 　⤷　how to obtain user/server id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
@@ -2387,21 +2387,21 @@ upload your video at [catbox.moe](https://catbox.moe) and copy & paste the link 
             """), ephemeral=True)
         if self.select_callback.values[0] == "can I remain anonymous?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　can I remain anonymous?
+### <a:tri_whitearrow2:1388147186654515273>　　can I remain anonymous?
 yes, you may choose to remain anonymous when reporting by requesting it when opening a ticket. the staff assisting you will ensure your identity is not disclosed in the proofs attached to the report.
 - however, if dm screenshots are included, the other party may still recognise the conversation and infer who provided the proofs.
 - please also check through all evidence attached to the report carefully, as any subsequent updates may take some time to confirm. 
             """), ephemeral=True)
         if self.select_callback.values[0] == "can I report someone who has already been reported?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　can I report someone who has already been reported?
+### <a:tri_whitearrow2:1388147186654515273>　　can I report someone who has already been reported?
 yes, the same user may be reported multiple times to keep track of their latest activity, especially if
 - they are being reported for a separate incident under a different report tag/reason.
 - the new incident occurred at least 6 months after their latest report.
             """), ephemeral=True)
         if self.select_callback.values[0] == "can I update or withdraw my report?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　can I update or withdraw my report?
+### <a:tri_whitearrow2:1388147186654515273>　　can I update or withdraw my report?
 yes, you may request to update or withdraw your report before it is confirmed, subject to staff review.
 after a report has been confirmed, you may still request for evidence containing your private information to be removed or censored.
 - however, requesting the removal of non-private evidence after a report has been confirmed in an attempt to invalidate or weaken the report is prohibited.
@@ -2409,14 +2409,14 @@ after a report has been confirmed, you may still request for evidence containing
             """), ephemeral=True)
         if self.select_callback.values[0] == "how long does it take for reports to be published?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　how long does it take for reports to be published?
+### <a:tri_whitearrow2:1388147186654515273>　　how long does it take for reports to be published?
 there is no fixed timeframe for how long a report takes to be reviewed and published.
 - the time required depends on factors such as the complexity of the case, the amount of evidence submitted, whether additional information is needed, and our current report volume.
 you will be kept informed of your report's progress by the staff handling your ticket. we appreciate your patience while we ensure each report is reviewed thoroughly and fairly.
             """), ephemeral=True)
         if self.select_callback.values[0] == "how do I stay updated with new reports?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　how do I stay updated with new reports?
+### <a:tri_whitearrow2:1388147186654515273>　　how do I stay updated with new reports?
 follow tri’s report announcement channels <#1375132097605406721>, <#1375184563675856916> and <#1515531623045533716> to receive updates in your own server.
 -# 　⤷　how to follow a channel? guide [here](https://support.discord.com/hc/en-us/articles/360028384531-Channel-Following-FAQ).
 
@@ -2426,7 +2426,7 @@ add tri’s bot <@1457249982104211467> to your server by clicking **add app** on
             """), ephemeral=True)
         if self.select_callback.values[0] == "what if someone files a false report?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:whitearrow2:1388147186654515273>　　what if someone files a false report?
+### <a:tri_whitearrow2:1388147186654515273>　　what if someone files a false report?
 wip
             """), ephemeral=True)
 
@@ -2446,17 +2446,17 @@ class FAQAppealsView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "how to make an appeal?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　how to make an appeal?
+### <a:tri_whitearrow2:1388147186654515273>　　how to make an appeal?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what can be appealed?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　what can be appealed?
+### <a:tri_whitearrow2:1388147186654515273>　　what can be appealed?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what proofs are required for appeals?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　what proofs are required for appeals?
+### <a:tri_whitearrow2:1388147186654515273>　　what proofs are required for appeals?
 **screenshots are strongly preferred**, followed by screen recordings or html files.
 
 please provide clear proofs supporting your appeal.
@@ -2484,7 +2484,7 @@ upload your video at [catbox.moe](https://catbox.moe) and copy & paste the link 
             """), ephemeral=True)
         if self.select_callback.values[0] == "can someone else appeal on my behalf?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
 
@@ -2509,47 +2509,47 @@ class FAQDefinitionsStandardsView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "what is scamming?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is a suspect?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is impersonation?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what do the report tags mean?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is beaming?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is hitting?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is proof beyond reasonable doubt?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what does “insufficient proofs” mean?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what does “invalid reason” mean?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
 
@@ -2572,37 +2572,37 @@ class FAQScamPreventionView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "how can I avoid being scammed?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how do I identify impersonators?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how do I identify malicious links?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "can I report someone for refusing to use a middleman?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what should I do immediately after being scammed?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "can tri recover my lost items or money?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what should I do if my account has been compromised?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
 
@@ -2622,22 +2622,22 @@ class FAQStaffTransparencyView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "who can access tickets & ongoing reports?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how does tri ensure reports & appeals are not biased?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how can I apply to be staff?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how can I report a tri staff?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　
 wip
             """), ephemeral=True)
 
@@ -2714,24 +2714,24 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
 """)
     msg6 = await interaction.channel.send("_ _", embed=embed6, view=FAQStaffTransparencyView())
     embed = discord.Embed(colour=colour, description=f"""
-<:whiteheart:1434538078747365507>　　[overview]({msg1.jump_url})
+<:tri_whiteheart:1434538078747365507>　　[overview]({msg1.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[reports]({msg2.jump_url})
+<:tri_whiteheart:1434538078747365507>　　[reports]({msg2.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[appeals]({msg3.jump_url})
+<:tri_whiteheart:1434538078747365507>　　[appeals]({msg3.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[definitions & standards]({msg4.jump_url})
+<:tri_whiteheart:1434538078747365507>　　[definitions & standards]({msg4.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[scam prevention]({msg5.jump_url})
+<:tri_whiteheart:1434538078747365507>　　[scam prevention]({msg5.jump_url})
 -# <:blank:1383116055550890095>
-<:whiteheart:1434538078747365507>　　[staff & transparency]({msg6.jump_url})
+<:tri_whiteheart:1434538078747365507>　　[staff & transparency]({msg6.jump_url})
 """)
     await interaction.channel.send("_ _", embed=embed)
 
 
 
 #     embed2 = discord.Embed(colour=colour, description="""
-# ### <a:whitearrow2:1388147186654515273>　　how to check for reports?
+# ### <a:tri_whitearrow2:1388147186654515273>　　how to check for reports?
 #
 # > - `,c` to check
 # >   - `,c 𝐮𝐬𝐞𝐫 𝐢𝐝`
@@ -2752,7 +2752,7 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
 # """)
 #     msg2 = await interaction.channel.send("_ _", embed=embed2)
 #     embed3 = discord.Embed(colour=colour, description="""
-# ### <a:whitearrow2:1388147186654515273>　　how to stay updated with tri’s reports?
+# ### <a:tri_whitearrow2:1388147186654515273>　　how to stay updated with tri’s reports?
 #
 # > - follow tri’s report announcement channels <#1375132097605406721>, <#1375184563675856916> and <#1515531623045533716> to receive updates in your own server.
 # > - how to follow a channel? guide [here](https://support.discord.com/hc/en-us/articles/360028384531-Channel-Following-FAQ).
@@ -2763,7 +2763,7 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
 # """)
 #     msg3 = await interaction.channel.send("_ _", embed=embed3)
 #     embed4 = discord.Embed(colour=colour, description=f"""
-# ### <a:whitearrow2:1388147186654515273>　　how to make a report?
+# ### <a:tri_whitearrow2:1388147186654515273>　　how to make a report?
 #
 # > - <#1375261699111784478> to make a report.
 # >   - please ensure you have the user id, server invite or account uid.
@@ -2774,7 +2774,7 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
 # """)
 #     msg4 = await interaction.channel.send("_ _", embed=embed4)
 #     embed5 = discord.Embed(colour=colour, description=f"""
-# ### <a:whitearrow2:1388147186654515273>　　how to make an appeal?
+# ### <a:tri_whitearrow2:1388147186654515273>　　how to make an appeal?
 #
 # > - <#1375261699111784478> to make an appeal if you believe your report is inaccurate or unfair, or if you have served minimum report period (mrp) as stated in [legal codex](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/).
 # >   - note that appeals based on mrp are not guaranteed and will be reviewed on a case by case basis.
@@ -2783,7 +2783,7 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
 # """)
 #     msg5 = await interaction.channel.send("_ _", embed=embed5)
 #     embed6 = discord.Embed(colour=colour, description=f"""
-# ### <a:whitearrow2:1388147186654515273>　　what are tri’s tos and server rules?
+# ### <a:tri_whitearrow2:1388147186654515273>　　what are tri’s tos and server rules?
 # > - our terms of service may be found [here](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/edit?tab=t.0#heading=h.d0k3z1hwlns).
 # > - please read through [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160) carefully. not following rules may result in warns or bans.
 # > - we do not ban scammers so that they may make an appeal.

@@ -578,7 +578,7 @@ async def process_invites():
                                 candidate["expires_at"] > lowest_saved["expires_at"]
                         ):
                             current_invites[0] = candidate
-                            replaced_invites.append(f"`{lowest_saved['code']}` <:whitearrow4:1523377871480033301> `{candidate['code']}`")
+                            replaced_invites.append(f"`{lowest_saved['code']}` <:tri_whitearrow:1523377871480033301> `{candidate['code']}`")
 
                 if len(current_invites) < 5 and guild.text_channels:
                     try:
@@ -650,7 +650,7 @@ async def process_and_save_invite(invite: discord.Invite):
         if log_channel:
             msg = f"**Invites Updated** for {invite.guild.name} `{guild_id_str}`\n"
             if replaced_code:
-                msg += f"> **Replaced** – `{replaced_code}` <:whitearrow4:1523377871480033301> `{invite.code}`"
+                msg += f"> **Replaced** – `{replaced_code}` <:tri_whitearrow:1523377871480033301> `{invite.code}`"
             else:
                 msg += f"> **Added** – `{invite.code}`"
             await log_channel.send(embed=discord.Embed(description=msg))
@@ -931,9 +931,9 @@ async def ca(ctx, *, to_check: str = None):
     alts_embed = discord.Embed(colour=0xffffff)
     if alts_info and alts_info.get("alts"):
         raw_ids = " ".join(alt for alt in alts_info.get("alts", []))
-        alts_embed.description = f"<a:whitealert:1496542298908000257> **Alt(s)** of `{target_user.id}`\n\n`{raw_ids}`"
+        alts_embed.description = f"<a:tri_whitealert:1496542298908000257> **Alt(s)** of `{target_user.id}`\n\n`{raw_ids}`"
     else:
-        alts_embed.description = "<:whitecross:1462774085737119828>　No alts logged for this user."
+        alts_embed.description = "<:tri_whitecross:1462774085737119828>　No alts logged for this user."
 
     await ctx.reply(embed=alts_embed)
 
@@ -1030,7 +1030,7 @@ async def mc(ctx, *, to_check: str = None):
 
             trusted_embed = format_trusteduser_profile(user, trusteduser_profile)
             current_embeds.append(trusted_embed)
-            current_content.append(f"<:whiteheart:1434538078747365507> `{current_id}` is trusted.")
+            current_content.append(f"<:tri_whiteheart:1434538078747365507> `{current_id}` is trusted.")
         else:
             user_profile = userscol.find_one(user_query)
             if user_profile:
@@ -1067,10 +1067,10 @@ async def mc(ctx, *, to_check: str = None):
 
                 if is_alt:
                     current_content.append(
-                        f"<a:whitealert:1496542298908000257> **`{current_id}` (alt of `{main_id_str}`) is reported as {selected_string(all_unique_tags)}.**")
+                        f"<a:tri_whitealert:1496542298908000257> **`{current_id}` (alt of `{main_id_str}`) is reported as {selected_string(all_unique_tags)}.**")
                 else:
                     current_content.append(
-                        f"<a:whitealert:1496542298908000257> **`{current_id}` is reported as {selected_string(all_unique_tags)}.**")
+                        f"<a:tri_whitealert:1496542298908000257> **`{current_id}` is reported as {selected_string(all_unique_tags)}.**")
 
                 if already_processed_embed:
                     continue
@@ -1082,7 +1082,7 @@ async def mc(ctx, *, to_check: str = None):
             else:
                 profile = default_user_profile(user)
                 current_embeds.append(profile)
-                current_content.append(f"<:whitedot:1462907474947342567> `{current_id}` is unreported.")
+                current_content.append(f"<:tri_whitedot:1462907474947342567> `{current_id}` is unreported.")
 
     if current_content or current_embeds:
         message_batches.append(("\n".join(current_content), current_embeds))
@@ -1528,7 +1528,7 @@ async def check_link(interaction: discord.Interaction, text: str):
     if flagged_domains:
         unique_flags = list(set(flagged_domains))
         formatted_list = "\n".join(f"- `{d}`" for d in unique_flags)
-        ephemeral_embed.description = f"<a:whitealert:1496542298908000257> **Malicious link(s) identified.**\n\n{formatted_list}"
+        ephemeral_embed.description = f"<a:tri_whitealert:1496542298908000257> **Malicious link(s) identified.**\n\n{formatted_list}"
         ephemeral_embed.set_footer(text="The public copy has been safely censored.")
 
         await interaction.response.send_message(embed=ephemeral_embed, ephemeral=True)
@@ -1540,7 +1540,7 @@ async def check_link(interaction: discord.Interaction, text: str):
 
         public_embed = discord.Embed(description=f"{safe_text}", colour=0xffffff)
         public_embed.set_footer(text="The malicious link(s) have been safely censored.")
-        await interaction.channel.send(content=f"<a:whitealert:1496542298908000257> **{interaction.user.mention} checked a text containing the following malicious link(s)**", embed=public_embed)
+        await interaction.channel.send(content=f"<a:tri_whitealert:1496542298908000257> **{interaction.user.mention} checked a text containing the following malicious link(s)**", embed=public_embed)
 
     else:
         ephemeral_embed.description = "No known malicious domains detected.\n-# **This does not mean the link is guaranteed to be safe.**"
