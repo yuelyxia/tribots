@@ -180,7 +180,7 @@ def format_trusteduser_profile(user, trusteduser_profile):
         trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name}")
         title = "Trusted User"
     trusted_embed.set_thumbnail(url=f"{user.display_avatar}")
-    trusted_embed.description = f"```ansi\n\u001b[1;38m{title}\u001b[0m\n```"
+    trusted_embed.description = f"```ansi\n\u001b[1m{title}\u001b[0m\n```"
     trusted_embed.description += f"`{user.id}`\n{user.mention}\n`{user.name}`"
     trusted_embed.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     trusted_embed.set_footer(text="✦　This user is trusted.")
@@ -243,7 +243,7 @@ def format_trustedserver_profile(guild):
         title = "Trusted Server"
     if guild.icon:
         trusted_embed.set_thumbnail(url=f"{guild.icon.url}")
-    trusted_embed.description = f"```ansi\n\u001b[1;38m{title}\u001b[0m\n```"
+    trusted_embed.description = f"```ansi\n\u001b[1m{title}\u001b[0m\n```"
     trusted_embed.description += f"`{guild.id}`"
     if guild.created_at:
         trusted_embed.description += "\n**Server Created** – " + f"<t:{round(int(guild.created_at.timestamp()))}:D> (<t:{round(int(guild.created_at.timestamp()))}:R>)" + '\n'
