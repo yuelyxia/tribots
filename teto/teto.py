@@ -101,17 +101,17 @@ def is_active_staff(user):
 # formatting functions
 
 def default_user_profile(user):
-    profile = discord.Embed()
+    profile = discord.Embed(title=f"{user.display_name}")
     profile.set_thumbnail(url=f"{user.display_avatar}")
-    profile.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`"
+    profile.description = f"`{user.id}`\n{user.mention}\n`{user.name}`"
     profile.description += f"\n-# **Account Created** – <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     profile.set_footer(text="✦　This user is unreported.")
     return profile
 def default_server_profile(guild):
-    profile = discord.Embed()
+    profile = discord.Embed(title=f"{guild.name}")
     if guild.icon:
         profile.set_thumbnail(url=f"{guild.icon.url}")
-    profile.description = f"{guild.name}\n`{guild.id}`"
+    profile.description = f"`{guild.id}`"
     if guild.created_at:
         profile.description += f"\n-# **Server Created** – <t:{round(int(guild.created_at.timestamp()))}:D> (<t:{round(int(guild.created_at.timestamp()))}:R>)" + '\n'
     if guild.banner:
@@ -214,22 +214,24 @@ def image_links_to_embeds(image_links):
 
 def format_trusteduser_profile(user, trusteduser_profile):
     if trusteduser_profile["current_staff"] == 1:
-        trusted_embed = discord.Embed(title="TRI Staff", colour=0xbba8dd)
+        trusted_embed = discord.Embed(colour=0xbba8dd, title=f"{user.display_name}")
+        title = "TRI Staff"
     elif trusteduser_profile["staff"] == 1:
-        trusted_embed = discord.Embed(title="Former TRI Staff", colour=0x9279b5)
+        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name}")
+        title = "Former TRI Staff"
     else:
-        trusted_embed = discord.Embed(title="Trusted User", colour=0x9279b5)
+        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name}")
+        title = "Trusted User"
     trusted_embed.set_thumbnail(url=f"{user.display_avatar}")
-    trusted_embed.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`"
+    trusted_embed.description = f"```ansi\n\u001b[1;38m{title}\u001b[0m\n```"
+    trusted_embed.description += f"`{user.id}`\n{user.mention}\n`{user.name}`"
     trusted_embed.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     trusted_embed.set_footer(text="✦　This user is trusted.")
     if trusteduser_profile["staff"] == 1:
-        trusted_embed.description += "\n**Staff Info**"
-        trusted_embed.description += f"\n> **Tickets** – {trusteduser_profile["tickets"]}"
-        trusted_embed.description += f"\n> **Reports** – {trusteduser_profile["reports"]}"
-        trusted_embed.description += f"\n> **Closes** – {trusteduser_profile["closes"]}"
-        trusted_embed.description += f"\n> **Reviews** – {trusteduser_profile["reviews"]}"
-        trusted_embed.description += f"\n> **Votes** – {trusteduser_profile["votes"]}"
+        trusted_embed.description += "### Staff Info"
+        trusted_embed.description += f"\n**Reports** – {trusteduser_profile["reports"]}"
+        trusted_embed.description += f"\n**Reviews** – {trusteduser_profile["reviews"]}"
+        trusted_embed.description += f"\n**Votes** – {trusteduser_profile["votes"]}"
         if trusteduser_profile["mm"] == 1 or trusteduser_profile["pilot"] == 1 or trusteduser_profile["trader"] == 1:
             trusted_embed.description += "\n"
     if trusteduser_profile["mm"] == 1:
@@ -241,20 +243,20 @@ def format_trusteduser_profile(user, trusteduser_profile):
     return trusted_embed
 def format_user_r_profile(user, r_profile_list, title):
     if title == "Ex-offender":
-        r_profile = discord.Embed(colour=0xFFD643)
+        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name}")
         colour = "\u001b[1;33m"
     elif title in red_tags:
-        r_profile = discord.Embed(colour=0xFF0045)
+        r_profile = discord.Embed(colour=0xFF0045, title=f"{user.display_name}")
         colour = "\u001b[1;31m"
     elif title in yellow_tags:
-        r_profile = discord.Embed(colour=0xFFD643)
+        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name}")
         colour = "\u001b[1;33m"
     else:
-        r_profile = discord.Embed()
+        r_profile = discord.Embed(title=f"{user.display_name}")
         colour = "\u001b[0m"
     r_profile.set_thumbnail(url=f"{user.display_avatar}")
-    r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
-    r_profile.description += f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`"
+    r_profile.description = f"```ansi\n{colour}{title}\u001b[0m\n```"
+    r_profile.description += f"`{user.id}`\n{user.mention}\n`{user.name}`"
     r_profile.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
     r_profile.description += f"\n**Alt(s)** – {r_profile_list[0] or "None"}"
     r_profile.description += f"\n**Other Tag(s)** – {r_profile_list[1] or "None"}"
@@ -277,12 +279,15 @@ def format_user_add_case(add_case_list, case_title):
     return add_case
 def format_trustedserver_profile(guild):
     if guild.id == TRI_Archive:
-        trusted_embed = discord.Embed(title="Trade Report Investigation Archive", colour=0xbba8dd)
+        trusted_embed = discord.Embed(colour=0xbba8dd, title=f"{guild.name}")
+        title = "Trade Report Investigation Archive"
     else:
-        trusted_embed = discord.Embed(title="Trusted Server", colour=0x9279b5)
+        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{guild.name}")
+        title = "Trusted Server"
     if guild.icon:
         trusted_embed.set_thumbnail(url=f"{guild.icon.url}")
-    trusted_embed.description = f"{guild.name}\n`{guild.id}`"
+    trusted_embed.description = f"```ansi\n\u001b[1;38m{title}\u001b[0m\n```"
+    trusted_embed.description += f"`{guild.id}`"
     if guild.created_at:
         trusted_embed.description += "\n**Server Created** – " + f"<t:{round(int(guild.created_at.timestamp()))}:D> (<t:{round(int(guild.created_at.timestamp()))}:R>)" + '\n'
     if guild.banner:
@@ -290,18 +295,18 @@ def format_trustedserver_profile(guild):
     return trusted_embed
 def format_server_r_profile(guild, r_profile_list, title):
     if title in red_server_tags:
-        r_profile = discord.Embed(colour=0xCF2D53)
+        r_profile = discord.Embed(colour=0xCF2D53, title=f"{guild.name}")
         colour = "\u001b[1;31m"
     elif title in yellow_server_tags:
-        r_profile = discord.Embed(colour=0xd9b534)
+        r_profile = discord.Embed(colour=0xd9b534, title=f"{guild.name}")
         colour = "\u001b[1;33m"
     else:
-        r_profile = discord.Embed()
+        r_profile = discord.Embed(title=f"{guild.name}")
         colour = "\u001b[0m"
     if guild.icon:
         r_profile.set_thumbnail(url=f"{guild.icon.url}")
     r_profile.description = f"```ansi\n{colour}{title}\u001b[0m\n```"
-    r_profile.description += f"{guild.name}\n`{guild.id}`"
+    r_profile.description += f"`{guild.id}`"
     if guild.created_at:
         r_profile.description += "\n-# **Server Created** – " + f"<t:{round(int(guild.created_at.timestamp()))}:D> (<t:{round(int(guild.created_at.timestamp()))}:R>)\n"
     r_profile.description += f"\n**Owner** – {r_profile_list[0]}\n**Other Tag(s)** – {r_profile_list[1] or "None"}"
@@ -321,24 +326,24 @@ def format_server_add_case(add_case_list, case_title):
     add_case.description += f"\n-# **Contributor** – {add_case_list["contributor"]}\n-# **TRI Staff** – {add_case_list["staff"]}\n-# **Accepted by** – {add_case_list["accepted_by"]}"
     return add_case
 def reconstruct_server_r_profile(guild_data, r_profile_list, title):
-    if title in red_server_tags:
-        r_profile = discord.Embed(colour=0xCF2D53)
-        colour = "\u001b[1;31m"
-    elif title in yellow_server_tags:
-        r_profile = discord.Embed(colour=0xd9b534)
-        colour = "\u001b[1;33m"
-    else:
-        r_profile = discord.Embed()
-        colour = "\u001b[0m"
     guild_id = guild_data["id"]
     guild_name = guild_data["name"]
     guild_icon = guild_data["icon"]
     guild_created_at = guild_data["created_at"]
     guild_banner = guild_data["banner"]
+    if title in red_server_tags:
+        r_profile = discord.Embed(colour=0xCF2D53, title=f"{guild_name}")
+        colour = "\u001b[1;31m"
+    elif title in yellow_server_tags:
+        r_profile = discord.Embed(colour=0xd9b534, title=f"{guild_name}")
+        colour = "\u001b[1;33m"
+    else:
+        r_profile = discord.Embed(title=f"{guild_name}")
+        colour = "\u001b[0m"
     if guild_icon:
         r_profile.set_thumbnail(url=guild_icon)
     r_profile.description = (f"```ansi\n{colour}{title}\u001b[0m\n```")
-    r_profile.description += f"{guild_name}\n`{guild_id}`"
+    r_profile.description += f"`{guild_id}`"
     if guild_created_at:
         ts = int(guild_created_at)
         r_profile.description += (
