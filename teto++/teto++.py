@@ -185,10 +185,12 @@ def format_trusteduser_profile(user, trusteduser_profile):
     trusted_embed.description += "\n-# **Account Created** – " + f"<t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
     trusted_embed.set_footer(text="✦　This user is trusted.")
     if trusteduser_profile["staff"] == 1:
-        trusted_embed.description += "### Staff Info"
-        trusted_embed.description += f"\n**Reports** – {trusteduser_profile["reports"]}"
-        trusted_embed.description += f"\n**Reviews** – {trusteduser_profile["reviews"]}"
-        trusted_embed.description += f"\n**Votes** – {trusteduser_profile["votes"]}"
+        trusted_embed.description += "**Staff Info**"
+        trusted_embed.description += f"\n> **Tickets** – {trusteduser_profile["tickets"]}"
+        trusted_embed.description += f"\n> **Reports** – {trusteduser_profile["reports"]}"
+        trusted_embed.description += f"\n> **Closes** – {trusteduser_profile["closes"]}"
+        trusted_embed.description += f"\n> **Reviews** – {trusteduser_profile["reviews"]}"
+        trusted_embed.description += f"\n> **Votes** – {trusteduser_profile["votes"]}"
         if trusteduser_profile["mm"] == 1 or trusteduser_profile["pilot"] == 1 or trusteduser_profile["trader"] == 1:
             trusted_embed.description += "\n"
     if trusteduser_profile["mm"] == 1:
