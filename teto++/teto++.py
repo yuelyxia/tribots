@@ -673,6 +673,168 @@ async def on_ready():
         process_invites.start()
 
 
+CHAINS = {
+    "btc": "bitcoin",
+    "bitcoin": "bitcoin",
+
+    "ltc": "litecoin",
+    "litecoin": "litecoin",
+
+    "eth": "ethereum",
+    "ethereum": "ethereum",
+
+    "doge": "dogecoin",
+    "dogecoin": "dogecoin",
+
+    "bch": "bitcoin-cash",
+    "bitcoincash": "bitcoin-cash",
+
+    "dash": "dash",
+
+    "xrp": "ripple",
+    "ripple": "ripple",
+
+    "trx": "tron",
+    "tron": "tron",
+
+    "matic": "polygon",
+    "polygon": "polygon",
+
+    "arb": "arbitrum",
+    "arbitrum": "arbitrum",
+
+    "op": "optimism",
+    "optimism": "optimism",
+
+    "base": "base",
+
+    "avax": "avalanche",
+    "avalanche": "avalanche",
+
+    "bnb": "binance-smart-chain",
+    "bsc": "binance-smart-chain",
+
+    "sol": "solana",
+    "solana": "solana"
+}
+
+COINGECKO_IDS = {
+    "bitcoin": "bitcoin",
+    "litecoin": "litecoin",
+    "ethereum": "ethereum",
+    "dogecoin": "dogecoin",
+    "bitcoin-cash": "bitcoin-cash",
+    "dash": "dash",
+    "ripple": "ripple",
+    "tron": "tron",
+    "polygon": "matic-network",
+    "arbitrum": "ethereum",
+    "optimism": "ethereum",
+    "base": "ethereum",
+    "binance-smart-chain": "binancecoin",
+    "avalanche": "avalanche-2",
+    "solana": "solana"
+}
+
+
+@bot.command()
+async def txid(ctx, chain: str, txid: str):
+    chain = CHAINS.get(chain.lower())
+    if chain is None:
+        return await ctx.send("Unsupported cryptocurrency.")
+    url = f"https://api.blockchair.com/{chain}/dashboards/transaction/{txid}"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status != 200:
+                return await ctx.send("Transaction not found.")
+            data = await resp.json()
+    if "data" not in data or txid not in data["data"]:
+        return await ctx.send("Transaction not found.")
+    tx = data["data"][txid]
+    transaction = tx["transaction"]
+    inputs = tx.get("inputs", [])
+    outputs = tx.get("outputs", [])
+    senders = []
+    for i in inputs:
+        if i.get("recipient"):
+            senders.append(i["recipient"])
+    recipients = []
+    for o in outputs:
+        if o.get("recipient"):
+            recipients.append(o["recipient"])
+    senders = list(dict.fromkeys(senders))
+    recipients = list(dict.fromkeys(recipients))
+    decimals = 18
+    if chain in [
+        "bitcoin",
+        "litecoin",
+        "bitcoin-cash",
+        "dogecoin",
+        "dash"
+    ]:
+        decimals = 8
+    amount = transaction["output_total"] / (10 ** decimals)
+    fee = transaction["fee"] / (10 ** decimals)
+    block_time = transaction["time"]
+    unix = int(datetime.datetime.fromisoformat(block_time).timestamp())
+    embed = discord.Embed(title=f"{chain.title()} Transaction", colour=0xffffff)
+    embed.add_field(
+        name="Hash",
+        value=f"`{txid}`",
+        inline=False
+    )
+    embed.add_field(
+        name="Status",
+        value="Confirmed" if transaction["block_id"] else "Unconfirmed",
+        inline=True
+    )
+    embed.add_field(
+        name="Confirmations",
+        value=transaction.get("confirmations", "Unknown"),
+        inline=True
+    )
+    embed.add_field(
+        name="Block",
+        value=transaction.get("block_id", "Pending"),
+        inline=True
+    )
+    embed.add_field(
+        name="Confirmed",
+        value=f"<t:{unix}:F>",
+        inline=True
+    )
+
+    embed.add_field(
+        name="Amount",
+        value=f"{amount:,.8f}".rstrip("0").rstrip("."),
+        inline=True
+    )
+
+    embed.add_field(
+        name="Fee",
+        value=f"{fee:,.8f}".rstrip("0").rstrip("."),
+        inline=True
+    )
+
+    embed.add_field(
+        name="Sender(s)",
+        value="\n".join(f"`{x}`" for x in senders[:5]) or "Unknown",
+        inline=False
+    )
+
+    embed.add_field(
+        name="Recipient(s)",
+        value="\n".join(f"`{x}`" for x in recipients[:5]) or "Unknown",
+        inline=False
+    )
+
+    embed.add_field(
+        name="Explorer",
+        value=f"https://blockchair.com/{chain}/transaction/{txid}",
+        inline=False
+    )
+    await ctx.reply(embed=embed)
+
 # check
 
 async def fetch_worker(raw_user):
