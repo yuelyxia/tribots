@@ -736,6 +736,42 @@ COINGECKO_IDS = {
     "solana": "solana"
 }
 
+SYMBOLS = {
+    "bitcoin": "BTC",
+    "litecoin": "LTC",
+    "ethereum": "ETH",
+    "dogecoin": "DOGE",
+    "bitcoin-cash": "BCH",
+    "dash": "DASH",
+    "ripple": "XRP",
+    "tron": "TRX",
+    "polygon": "POL",
+    "arbitrum": "ETH",
+    "optimism": "ETH",
+    "base": "ETH",
+    "binance-smart-chain": "BNB",
+    "avalanche": "AVAX",
+    "solana": "SOL",
+}
+
+DECIMALS = {
+    "bitcoin": 8,
+    "litecoin": 8,
+    "ethereum": 18,
+    "dogecoin": 8,
+    "bitcoin-cash": 8,
+    "dash": 8,
+    "ripple": 6,
+    "tron": 6,
+    "polygon": 18,
+    "arbitrum": 18,
+    "optimism": 18,
+    "base": 18,
+    "binance-smart-chain": 18,
+    "avalanche": 18,
+    "solana": 9,
+}
+
 
 @bot.command()
 async def txid(ctx, chain: str, txid: str):
@@ -752,32 +788,72 @@ async def txid(ctx, chain: str, txid: str):
         return await ctx.send("Transaction not found.")
     tx = data["data"][txid]
     transaction = tx["transaction"]
+
     inputs = tx.get("inputs", [])
-    outputs = tx.get("outputs", [])
-    senders = []
-    for i in inputs:
-        if i.get("recipient"):
-            senders.append(i["recipient"])
+    outputs = sorted(
+        tx.get("outputs", []),
+        key=lambda x: x.get("value", 0),
+        reverse=True
+    )
+    senders = list(dict.fromkeys(
+        i["recipient"]
+        for i in inputs
+        if i.get("recipient")
+    ))
     recipients = []
+    largest_value = outputs[0]["value"] if outputs else 0
     for o in outputs:
-        if o.get("recipient"):
-            recipients.append(o["recipient"])
-    senders = list(dict.fromkeys(senders))
-    recipients = list(dict.fromkeys(recipients))
-    decimals = 18
-    if chain in [
-        "bitcoin",
-        "litecoin",
-        "bitcoin-cash",
-        "dogecoin",
-        "dash"
-    ]:
-        decimals = 8
+        if not o.get("recipient"):
+            continue
+        label = ""
+        if o["value"] == largest_value:
+            label = " <:tri_whitestar2:1525772163930390548>"
+        recipients.append((o["recipient"], label))
+    decimals = DECIMALS.get(chain, 18)
+    symbol = SYMBOLS.get(chain, chain.upper())
     amount = transaction["output_total"] / (10 ** decimals)
     fee = transaction["fee"] / (10 ** decimals)
     block_time = transaction["time"]
     unix = int(datetime.datetime.fromisoformat(block_time).timestamp())
-    embed = discord.Embed(title=f"{chain.title()} Transaction", colour=0xffffff)
+
+    historical_price = None
+    current_price = None
+    coin = COINGECKO_IDS.get(chain)
+    if coin:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                        f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=usd"
+                ) as r:
+                    current = await r.json()
+                    current_price = current[coin]["usd"]
+                frm = unix - 1800
+                to = unix + 1800
+                async with session.get(
+                        f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart/range",
+                        params={
+                            "vs_currency": "usd",
+                            "from": frm,
+                            "to": to
+                        }
+                ) as r:
+                    history = await r.json()
+                    if history.get("prices"):
+                        historical_price = history["prices"][0][1]
+        except Exception:
+            pass
+    worth_then = (
+        f"${amount * historical_price:,.2f}"
+        if historical_price
+        else "Unknown"
+    )
+    worth_now = (
+        f"${amount * current_price:,.2f}"
+        if current_price
+        else "Unknown"
+    )
+
+    embed = discord.Embed(title=f"{symbol} Transaction", colour=0xffffff)
     embed.add_field(
         name="Hash",
         value=f"`{txid}`",
@@ -803,31 +879,42 @@ async def txid(ctx, chain: str, txid: str):
         value=f"<t:{unix}:F>",
         inline=True
     )
-
     embed.add_field(
         name="Amount",
-        value=f"{amount:,.8f}".rstrip("0").rstrip("."),
+        value=f"{amount:,.8f}".rstrip("0").rstrip(".") + f" {symbol}",
         inline=True
     )
-
     embed.add_field(
         name="Fee",
-        value=f"{fee:,.8f}".rstrip("0").rstrip("."),
+        value=f"{fee:,.8f}".rstrip("0").rstrip(".") + f" {symbol}",
         inline=True
     )
-
+    embed.add_field(
+        name="Worth Then",
+        value=worth_then,
+        inline=True
+    )
+    embed.add_field(
+        name="Worth Now",
+        value=worth_now,
+        inline=True
+    )
     embed.add_field(
         name="Sender(s)",
-        value="\n".join(f"`{x}`" for x in senders[:5]) or "Unknown",
+        value="\n".join(
+            f"`{x}`"
+            for x in senders[:5]
+        ) or "Unknown",
         inline=False
     )
-
     embed.add_field(
         name="Recipient(s)",
-        value="\n".join(f"`{x}`" for x in recipients[:5]) or "Unknown",
+        value="\n".join(
+            f"`{addr}`{label}"
+            for addr, label in recipients[:5]
+        ) or "Unknown",
         inline=False
     )
-
     embed.add_field(
         name="Explorer",
         value=f"https://blockchair.com/{chain}/transaction/{txid}",
