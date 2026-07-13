@@ -753,6 +753,10 @@ async def quota_history(ctx, member: discord.Member=None):
         cr_embed = discord.Embed(title="closes & reviews history", colour=0xffffff)
         desc = ""
         max_weeks = max(len(closes_history), len(reviews_history))
+        while len(closes_history) < max_weeks:
+            closes_history.insert(0, [0, 0, 0.00])
+        while len(reviews_history) < max_weeks:
+            reviews_history.insert(0, [0, 0, 0.00])
         start_idx = max(0, max_weeks - 7)
 
         for idx in range(start_idx, max_weeks):
@@ -819,6 +823,10 @@ async def quota_history(ctx, member: discord.Member=None):
     tr_embed = discord.Embed(title="tickets & reports history", colour=0xffffff)
     desc = ""
     max_weeks = max(len(tickets_history), len(reports_history))
+    while len(tickets_history) < max_weeks:
+        tickets_history.insert(0, [0, 0, 0.00])
+    while len(reports_history) < max_weeks:
+        reports_history.insert(0, [0, 0, 0.00])
     start_idx = max(0, max_weeks - 7)
     for idx in range(start_idx, max_weeks):
         week_num = (idx - start_idx) + 1
@@ -3108,6 +3116,17 @@ async def tickets(ctx, text: str = None, ticket_type: str = None):
         for embed in embeds[1:]:
             await ctx.send(embed=embed)
 
+@bot.command(name="notify")
+@commands.has_any_role(staff_role)
+async def notify(ctx, user: discord.User):
+    try:
+        await user.send(
+            f"hello! this is a reminder to please check and reply to your ticket when you’re available.\n"
+            f"{ctx.channel.jump_url}"
+        )
+        await ctx.message.add_reaction("<:tri_whitetick:1462774288020013161>")
+    except discord.Forbidden:
+        await ctx.message.add_reaction("<:tri_whitecross:1462774085737119828>")
 
 @bot.command()
 async def sync(ctx: commands.Context):
