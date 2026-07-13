@@ -1809,7 +1809,7 @@ async def check_link(interaction: discord.Interaction, text: str):
 @check.command(name="all", description="Check all users in the server for bannable report(s).")
 @commands.has_permissions(administrator=True)
 async def check_all(interaction: discord.Interaction):
-    await interaction.response.defer()
+    await interaction.response.send_message(f"Checking {interaction.guild.member_count:,} users for bannable report(s).", ephemeral=True)
     if interaction.guild is None:
         return
     start = time.perf_counter()
@@ -1861,16 +1861,16 @@ async def check_all(interaction: discord.Interaction):
         for group in ban_users_grouped:
             embed = discord.Embed(description=f"`{" ".join(group)}`")
             embeds.append(embed)
-        await interaction.followup.send(f"{len(ban_users)} users with bannable report(s) were found.", embeds=embeds)
+        await interaction.channel.send(f"{len(ban_users)} users with bannable report(s) were found.", embeds=embeds)
     elif ban_users and len(ban_users) > 1000:
         embeds = []
         ban_users_grouped = [ban_users[i:i + 100] for i in range(0, 1001, 100)]
         for group in ban_users_grouped:
             embed = discord.Embed(description=f"`{" ".join(group)}`")
             embeds.append(embed)
-        await interaction.followup.send(f"{len(ban_users)} users with bannable report(s) were found, which exceeds the limit of 1000 users that can be shown.", embeds=embeds)
+        await interaction.channel.send(f"{len(ban_users)} users with bannable report(s) were found, which exceeds the limit of 1000 users that can be shown.", embeds=embeds)
     else:
-        await interaction.followup.send("No users with bannable report(s) were found!")
+        await interaction.channel.send("No users with bannable report(s) were found!")
     for doc in userscol.find({"main": {"$exists": True}}):
         if userscol.find_one({"_id": doc["main"]}) is None:
             print("Orphan alt:", doc["_id"], "->", doc["main"])
