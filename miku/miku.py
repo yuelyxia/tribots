@@ -1003,7 +1003,6 @@ tags_options = [
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional pilot", value="unprofessional pilot"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional idv mm", value="unprofessional idv mm"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional supervisor", value="unprofessional supervisor"),
-    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional staff", value="unprofessional staff"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="ex-offender", value="ex-offender"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="improper conduct", value="improper conduct"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="service ban", value="service ban"),
@@ -1236,15 +1235,6 @@ wip
         if self.select_callback.values[0] == "unprofessional supervisor":
             embed = discord.Embed(colour=0xFFD643, description="""
 ## <a:tri_yellowarrow:1509836964453548133>　　unprofessional supervisor
-　　**__definition__**
-
-wip
-
-""")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-        if self.select_callback.values[0] == "unprofessional staff":
-            embed = discord.Embed(colour=0xFFD643, description="""
-## <a:tri_yellowarrow:1509836964453548133>　　unprofessional staff
 　　**__definition__**
 
 wip
