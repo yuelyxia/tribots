@@ -1391,7 +1391,7 @@ class ReportedUserView(discord.ui.View):
             if current_case != 1:
                 prev_index = current_case-2
             try:
-                prev_case_tags = cases[prev_index][2].split(", ")
+                prev_case_tags = cases[prev_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -1434,7 +1434,7 @@ class ReportedUserView(discord.ui.View):
             title = all_tags_list[0]
             next_index = current_case
             try:
-                next_case_tags = cases[next_index][2].split(", ")
+                next_case_tags = cases[next_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -1632,7 +1632,7 @@ class ReportedAccountView(discord.ui.View):
             if current_case != 1:
                 prev_index = current_case - 2
                 try:
-                    prev_case_tags = cases[prev_index][2].split(", ")
+                    prev_case_tags = cases[prev_index]["tags"].split(", ")
                 except Exception:
                     pass
                 else:
@@ -1675,7 +1675,7 @@ class ReportedAccountView(discord.ui.View):
                 title = all_tags_list[0]
             next_index = current_case
             try:
-                next_case_tags = cases[next_index][2].split(", ")
+                next_case_tags = cases[next_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -1827,7 +1827,7 @@ async def check_all(interaction: discord.Interaction):
         no_of_cases = len(profile) - 2
         all_tags_list = []
         for i in range(1, no_of_cases + 1):
-            tags = profile[str(i)][2].split(", ")
+            tags = profile[str(i)]["tags"].split(", ")
             all_tags_list.extend(tags)
         all_tags_list = sort_user_tags(all_tags_list)
         if all_tags_list and all_tags_list[0] in red_tags:
