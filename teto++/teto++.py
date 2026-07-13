@@ -1809,11 +1809,11 @@ async def check_link(interaction: discord.Interaction, text: str):
 @check.command(name="all", description="Check all users in the server for bannable report(s).")
 @commands.has_permissions(administrator=True)
 async def check_all(interaction: discord.Interaction):
+    await interaction.response.defer()
     if interaction.guild is None:
         return
     start = time.perf_counter()
-    await interaction.response.send_message(f"Checking {interaction.guild.member_count:,} users for bannable report(s)...", ephemeral=False)
-    status = await interaction.original_response()
+    status = await interaction.channel.send(content=f"Checking {interaction.guild.member_count:,} users for bannable report(s)...")
     total = interaction.guild.member_count
     ban_users = []
     for idx, member in enumerate(interaction.guild.members, start=1):
