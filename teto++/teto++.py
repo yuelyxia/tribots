@@ -1812,7 +1812,7 @@ async def check_all(interaction: discord.Interaction):
     if interaction.guild is None:
         return
     start = time.perf_counter()
-    await interaction.response.send_message(f"Checking {interaction.guild.member_count:,} users for bannable report(s)...", ephemeral=True)
+    await interaction.response.send_message(f"Checking {interaction.guild.member_count:,} users for bannable report(s)...", ephemeral=False)
     status = await interaction.original_response()
     total = interaction.guild.member_count
     ban_users = []
