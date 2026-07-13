@@ -10,6 +10,7 @@ import asyncio
 import aiohttp
 import re
 import datetime
+import time
 
 import discord
 from discord import app_commands
@@ -1810,11 +1811,32 @@ async def check_link(interaction: discord.Interaction, text: str):
 async def check_all(interaction: discord.Interaction):
     if interaction.guild is None:
         return
-    await interaction.response.send_message(f"Checking {interaction.guild.member_count} users for bannable report(s).", ephemeral=True)
+    start = time.perf_counter()
+    await interaction.response.send_message(f"Checking {interaction.guild.member_count:,} users for bannable report(s)...", ephemeral=True)
+    status = await interaction.original_response()
+    total = interaction.guild.member_count
     ban_users = []
-    for idx, member in enumerate(interaction.guild.members):
+    for idx, member in enumerate(interaction.guild.members, start=1):
         if idx % 50 == 0:
             await asyncio.sleep(0)
+        if idx % 100 == 0:
+            elapsed = time.perf_counter() - start
+            rate = idx / elapsed
+            eta = (total - idx) / rate if rate else 0
+            remaining = int(eta)
+            minutes, seconds = divmod(remaining, 60)
+            eta_text = (
+                f"{minutes}m {seconds}s"
+                if minutes
+                else f"{seconds}s"
+            )
+            await status.edit(
+                content=(
+                    f"Checking {total:,} users for bannable report(s)...\n"
+                    f"Progress: {idx:,}/{total:,} ({idx / total:.1%})\n"
+                    f"ETA: {eta_text}"
+                )
+            )
         user_profile = await asyncio.to_thread(userscol.find_one, {"_id": str(member.id)})
         if not user_profile:
             continue
