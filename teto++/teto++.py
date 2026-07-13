@@ -1820,8 +1820,9 @@ async def check_all(interaction: discord.Interaction):
             continue
         if len(user_profile) == 2:
             main = user_profile["main"]
-            main_user_profile = await asyncio.to_thread(userscol.find_one, {"_id": main})
-            profile = main_user_profile
+            profile = await asyncio.to_thread(userscol.find_one, {"_id": main})
+            if profile is None:
+                continue
         else:
             profile = user_profile
         no_of_cases = len(profile) - 2
@@ -1848,6 +1849,9 @@ async def check_all(interaction: discord.Interaction):
         await interaction.followup.send(f"{len(ban_users)} users with bannable report(s) were found, which exceeds the limit of 1000 users that can be shown.", embeds=embeds)
     else:
         await interaction.followup.send("No users with bannable report(s) were found!")
+    for doc in userscol.find({"main": {"$exists": True}}):
+        if userscol.find_one({"_id": doc["main"]}) is None:
+            print("Orphan alt:", doc["_id"], "->", doc["main"])
 
 
 @bot.command()
