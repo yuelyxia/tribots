@@ -3048,7 +3048,7 @@ async def create_file(interaction: discord.Interaction):
 
 @bot.command(name="t")
 @commands.has_any_role(staff_role)
-async def tickets(ctx, text: str = None, ticket_type: str = None):
+async def t(ctx, text: str = None, ticket_type: str = None):
     ticket_channel = ctx.guild.get_channel(TICKET_CHANNEL)
     if not ticket_channel:
         return await ctx.reply("Ticket channel not found.")
@@ -3073,27 +3073,18 @@ async def tickets(ctx, text: str = None, ticket_type: str = None):
     ticket_type_lower = ticket_type.lower() if ticket_type else None
     matching_threads = []
 
-    async def format_thread_line(thread):
+    async def format_thread_line(thread_obj):
         try:
-            ticket_data = await db.tickets.find_one({
-                "$or": [
-                    {"_id": str(thread.id)},
-                    {"_id": thread.id},
-                    {"thread_id": str(thread.id)},
-                    {"thread_id": thread.id}
-                ]
-            })
-            if ticket_data:
-                creator_id = ticket_data.get("creator_id") or ticket_data.get("opened_by") or ticket_data.get("user_id")
-                if creator_id:
-                    owner_text = f"<@{creator_id}>"
-                else:
-                    owner_text = "Unknown"
+            ticket_data = tickets.find_one({"thread_id": int(thread_obj.id)})
+            if ticket_data and "creator_id" in ticket_data:
+                creator_id = ticket_data["creator_id"]
+                owner_text = f"<@{creator_id}>"
             else:
                 owner_text = "Unknown"
-        except Exception:
+        except Exception as e:
             owner_text = "Unknown"
-        return f"{thread.mention} opened by {owner_text}"
+            print(e)
+        return f"> {thread_obj.mention} – {owner_text}"
 
     try:
         if ticket_type_lower is None or ticket_type_lower == "all":
@@ -3104,16 +3095,16 @@ async def tickets(ctx, text: str = None, ticket_type: str = None):
         if ticket_type_lower in ["all", "closed"]:
             async for thread in ticket_channel.archived_threads(limit=None, private=False):
                 if text_lower in thread.name.lower():
-                    matching_threads.append(thread.mention)
+                    matching_threads.append(f"> {thread.mention}")
             async for thread in ticket_channel.archived_threads(limit=None, private=True):
                 if text_lower in thread.name.lower():
-                    matching_threads.append(thread.mention)
+                    matching_threads.append(f"> {thread.mention}")
     except Exception as e:
         return await msg.edit(content=f"An error occurred while fetching threads: {e}")
     if not matching_threads:
         return await msg.edit(content=f"No tickets found containing `{text}`.")
-    field_groups = [matching_threads[i:i + 10] for i in range(0, len(matching_threads), 10)]
-    embed_pages = [field_groups[i:i + 3] for i in range(0, len(field_groups), 3)]
+    field_groups = [matching_threads[i:i + 15] for i in range(0, len(matching_threads), 15)]
+    embed_pages = [field_groups[i:i + 2] for i in range(0, len(field_groups), 2)]
     embeds = []
     total_pages = len(embed_pages)
     for page_idx, page_fields in enumerate(embed_pages):
@@ -3128,7 +3119,7 @@ async def tickets(ctx, text: str = None, ticket_type: str = None):
                 value=field_value,
                 inline=True
             )
-        embed.set_footer(text=f"Page {page_idx + 1} of {total_pages} – {len(matching_threads)} ticket(s) found")
+        embed.set_footer(text=f"Page {page_idx + 1} of {total_pages}　–　{len(matching_threads)} ticket(s) found")
         embeds.append(embed)
     await msg.edit(content="", embed=embeds[0])
     if len(embeds) > 1:
