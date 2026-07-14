@@ -1087,6 +1087,11 @@ class TagsView(discord.ui.View):
 > - participating in, coordinating, or assisting a raid, regardless of success or scale.
 > - supplying raid tools, bots, or scripts to others for the purpose of raiding.
 
+　　**__notes__**
+
+> - it is not reportable if
+>   - the raid targets a server primarily used for malicious, fraudulent, or otherwise unlawful activities.
+
 -# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -3067,11 +3072,35 @@ async def tickets(ctx, text: str = None, ticket_type: str = None):
         ticket_type = "closed"
     ticket_type_lower = ticket_type.lower() if ticket_type else None
     matching_threads = []
+
+    async def format_thread_line(thread):
+        try:
+            ticket_data = await db.tickets.find_one({
+                "$or": [
+                    {"_id": str(thread.id)},
+                    {"_id": thread.id},
+                    {"thread_id": str(thread.id)},
+                    {"thread_id": thread.id}
+                ]
+            })
+            if ticket_data:
+                creator_id = ticket_data.get("creator_id") or ticket_data.get("opened_by") or ticket_data.get("user_id")
+                if creator_id:
+                    owner_text = f"<@{creator_id}>"
+                else:
+                    owner_text = "Unknown"
+            else:
+                owner_text = "Unknown"
+        except Exception:
+            owner_text = "Unknown"
+        return f"{thread.mention} opened by {owner_text}"
+
     try:
         if ticket_type_lower is None or ticket_type_lower == "all":
             for thread in ticket_channel.threads:
                 if text_lower in thread.name.lower():
-                    matching_threads.append(thread.mention)
+                    formatted_line = await format_thread_line(thread)
+                    matching_threads.append(formatted_line)
         if ticket_type_lower in ["all", "closed"]:
             async for thread in ticket_channel.archived_threads(limit=None, private=False):
                 if text_lower in thread.name.lower():
