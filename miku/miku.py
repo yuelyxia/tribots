@@ -471,7 +471,7 @@ async def weekly_quota():
         if not staff_list:
             continue
         embed = discord.Embed(colour=0xffffff)
-        embed.description = f"**✦　　┈　　{title}**"
+        embed.description = f"**✦　　–　　{title}**"
         staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
         for i, (member, reviews, weekly_reviews, closes, weekly_closes) in enumerate(staff_list, start=1):
             total_reviews += weekly_reviews
@@ -491,7 +491,7 @@ async def weekly_quota():
         if not staff_list:
             continue
         embed = discord.Embed(colour=0xffffff)
-        embed.description = f"**✦　　┈　　{title}**"
+        embed.description = f"**✦　　–　　{title}**"
         staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
         for i, (member, reports, weekly_reports, tickets, weekly_tickets) in enumerate(staff_list, start=1):
             total_reports += weekly_reports
@@ -506,10 +506,10 @@ async def weekly_quota():
 
     summary = discord.Embed(colour=0xffffff)
     summary.description = (
-        f"✦　　┈　　total closes　　┈　　**{total_closes}**\n"
-        f"✦　　┈　　total reviews　　┈　　**{total_reviews}**\n"
-        f"✦　　┈　　total tickets　　┈　　**{total_tickets}**\n"
-        f"✦　　┈　　total reports　　┈　　**{total_reports}**"
+        f"✦　　–　　total closes　　–　　**{total_closes}**\n"
+        f"✦　　–　　total reviews　　–　　**{total_reviews}**\n"
+        f"✦　　–　　total tickets　　–　　**{total_tickets}**\n"
+        f"✦　　–　　total reports　　–　　**{total_reports}**"
     )
     await lb_channel.send("## _ _　　　weekly summary", embed=summary)
 
@@ -962,31 +962,33 @@ async def help(ctx):
         embed.description = """
 -# *Prefix:* `,`
 ### checks
-`c`　┈　Checks a user or server.
-`mc`　┈　Checks a list of users (max 100), leave a space between users.
-`a`　┈　Checks a user for logged alts.
-`ma`　┈　Checks a list of users (max 100) for logged alts, leave a space between users.
+`c`　–　Checks a user or server.
+`mc`　–　Checks a list of users (max 100), leave a space between users.
+`a`　–　Checks a user for logged alts.
+`ma`　–　Checks a list of users (max 100) for logged alts, leave a space between users.
+`ca`　–　Checks a user and for their alts.
 ### utils
-`ar`　┈　Sends jump urls to all active reports in the thread.
-`vr`　┈　Sends a list of all reports in voting in the thread.
-`pr`　┈　Sends a list of all published reports in the thread.
-`fm`　┈　Sends a jump url to the first message in the thread.
-`rn`　┈　Renames the current thread to the new name provided.
-`getids`　┈　Extracts valid user IDs from the string provided.
+`t`　–　Searches for active/closed/all tickets based on text provided.
+`ar`　–　Sends jump urls to all active reports in the thread.
+`vr`　–　Sends a list of all reports in voting in the thread.
+`pr`　–　Sends a list of all published reports in the thread.
+`fm`　–　Sends a jump url to the first message in the thread.
+`rn`　–　Renames the current thread to the new name provided.
+`getids`　–　Extracts valid user IDs from the string provided.
 ### autoresponders
-`sr`　┈　Pings sr+.
-`adm`　┈　Pings adm+.
-`tp`　┈　Pings ticket ping.
-`ban`　┈　Pings ban perms.
-`cl`　┈　Sends closing guide.
-`tags`　┈　Sends tags descriptions.
+`sr`　–　Pings sr+.
+`adm`　–　Pings adm+.
+`tp`　–　Pings ticket ping.
+`ban perms`　–　Pings ban perms.
+`cl`　–　Sends closing guide.
+`tags`　–　Sends tags descriptions.
 ### quota
-`q`　┈　Sends quota progress for this week.
-`qh`　┈　Sends quota history for the past 8 weeks.
-`bb`　┈　Sends break balance.
+`q`　–　Sends quota progress for this week.
+`qh`　–　Sends quota history for the past 8 weeks.
+`bb`　–　Sends break balance.
 ### leaderboard
-`lb`　┈　Sends the current week’s staff leaderboard.
-`lbsr`　┈　Sends the current week’s sr+ leaderboard.
+`lb`　–　Sends the current week’s staff leaderboard.
+`lbsr`　–　Sends the current week’s sr+ leaderboard.
         """
         await ctx.send(embed=embed)
 
@@ -1001,7 +1003,6 @@ tags_options = [
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="suspect", value="suspect"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional mm", value="unprofessional mm"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional pilot", value="unprofessional pilot"),
-    discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional idv mm", value="unprofessional idv mm"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="unprofessional supervisor", value="unprofessional supervisor"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="ex-offender", value="ex-offender"),
     discord.SelectOption(emoji="<:tri_yellowheart:1478132316122644544>", label="improper conduct", value="improper conduct"),
@@ -1177,6 +1178,8 @@ class TagsView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional mm":
             embed = discord.Embed(colour=0xFFD643, description="""
+wip
+            
 ## <a:tri_yellowarrow:1509836964453548133>　　unprofessional mm
 　　**__definition__**
 
@@ -1213,24 +1216,6 @@ class TagsView(discord.ui.View):
         if self.select_callback.values[0] == "unprofessional mm":
             embed = discord.Embed(colour=0xFFD643, description="""
 ## <a:tri_yellowarrow:1509836964453548133>　　unprofessional pilot
-　　**__definition__**
-
-wip
-
-""")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-        if self.select_callback.values[0] == "unprofessional pilot":
-            embed = discord.Embed(colour=0xFFD643, description="""
-## <a:tri_yellowarrow:1509836964453548133>　　unprofessional pilot
-　　**__definition__**
-
-wip
-
-""")
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-        if self.select_callback.values[0] == "unprofessional idv mm":
-            embed = discord.Embed(colour=0xFFD643, description="""
-## <a:tri_yellowarrow:1509836964453548133>　　unprofessional idv mm
 　　**__definition__**
 
 wip
@@ -1331,8 +1316,8 @@ closing_options = [
 async def cl(ctx, *, string: str = None):
     if ctx.guild.id == TRI_Archive:
         await ctx.reply(embed=discord.Embed(colour=0xffffff, title = "closing　guide　⸝⸝.ᐟ", description="""
-- rename ticket　┈　`,rn 𝐧𝐚𝐦𝐞 tbc`
-- ping sr+　┈　`,sr`
+- rename ticket　–　`,rn 𝐧𝐚𝐦𝐞 tbc`
+- ping sr+　–　`,sr`
 - see format for closing statements using the dropdown below.
 - please merge identical reasons.
 - for mass reports, you may wish to use `,pr` after reports are published to retrieve ids easily.
@@ -1441,7 +1426,9 @@ async def getids(ctx, *, string: str = None):
 
 @bot.command(name="ban", help="Pings ban perms.")
 @commands.has_any_role(staff_role, tethys_staff_role, professional_mm_role, professional_pilot_role)
-async def ban(ctx):
+async def ban_perms(ctx, *, perms: str):
+    if not perms or perms.lower() != "perms":
+        return
     if ctx.guild.id == TRI_Archive:
         await ctx.reply(f"<@&{ban_perms}>")
     elif ctx.guild.id == tethys:
@@ -1736,7 +1723,7 @@ async def lb(ctx, *args):
     for role_id, (title, staff_list) in role_categories.items():
         if not staff_list:
             continue
-        embed = discord.Embed(colour=0xffffff, description=f"\n\n**✦　　┈　　{title}**")
+        embed = discord.Embed(colour=0xffffff, description=f"\n\n**✦　　–　　{title}**")
         staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
         for i, (member, reports, weekly_reports, tickets, weekly_tickets) in enumerate(staff_list, start=1):
             embed.description += (
@@ -1789,7 +1776,7 @@ async def lbsr(ctx):
     for role_id, (title, staff_list) in role_categories.items():
         if not staff_list:
             continue
-        embed = discord.Embed(colour=0xffffff, description=f"\n\n**✦　　┈　　{title}**")
+        embed = discord.Embed(colour=0xffffff, description=f"\n\n**✦　　–　　{title}**")
         staff_list.sort(key=lambda x: (x[4], x[2]), reverse=True)
         for i, (member, reviews, weekly_reviews, closes, weekly_closes) in enumerate(staff_list, start=1):
             embed.description += (
@@ -2018,7 +2005,7 @@ class StaffGuideView(discord.ui.View):
 - Pings sr+.
 ### ,tp
 - Pings ticket ping, e.g. when you want open a ticket to other Staff.
-### ,ban
+### ,ban perms
 - Pings ban perms.
 ### ,cl
 - Sends closing guide.
