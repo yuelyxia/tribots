@@ -3066,10 +3066,6 @@ async def t(ctx, text: str = None, ticket_type: str = None):
         text = get_default_text()
         text_lower = text.lower()
         ticket_type = "all"
-    elif text_lower == "closed":
-        text = get_default_text()
-        text_lower = text.lower()
-        ticket_type = "closed"
     ticket_type_lower = ticket_type.lower() if ticket_type else None
     matching_threads = []
 
@@ -3084,21 +3080,26 @@ async def t(ctx, text: str = None, ticket_type: str = None):
         except Exception as e:
             owner_text = "Unknown"
             print(e)
-        return f"> {thread_obj.mention} – {owner_text}"
+        return f"> {thread_obj.mention} {owner_text}"
 
     try:
-        if ticket_type_lower is None or ticket_type_lower == "all":
+        if ticket_type_lower is None:
             for thread in ticket_channel.threads:
                 if text_lower in thread.name.lower():
                     formatted_line = await format_thread_line(thread)
                     matching_threads.append(formatted_line)
-        if ticket_type_lower in ["all", "closed"]:
-            async for thread in ticket_channel.archived_threads(limit=None, private=False):
-                if text_lower in thread.name.lower():
-                    matching_threads.append(f"> {thread.mention}")
-            async for thread in ticket_channel.archived_threads(limit=None, private=True):
-                if text_lower in thread.name.lower():
-                    matching_threads.append(f"> {thread.mention}")
+        elif text_lower == "all":
+            for thread in ticket_channel.threads:
+                formatted_line = await format_thread_line(thread)
+                matching_threads.append(formatted_line)
+        else:
+            if ticket_type_lower in ["all", "closed"]:
+                async for thread in ticket_channel.archived_threads(limit=None, private=False):
+                    if text_lower in thread.name.lower():
+                        matching_threads.append(f"> {thread.mention}")
+                async for thread in ticket_channel.archived_threads(limit=None, private=True):
+                    if text_lower in thread.name.lower():
+                        matching_threads.append(f"> {thread.mention}")
     except Exception as e:
         return await msg.edit(content=f"An error occurred while fetching threads: {e}")
     if not matching_threads:
