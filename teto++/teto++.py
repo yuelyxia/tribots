@@ -53,7 +53,7 @@ yellow_tags = ["Suspect", "Service Ban", "Unprofessional MM", "Unprofessional Pi
 red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "Fake Event Server"]
 yellow_server_tags = ["Suspect Server"]
 
-red_account_tags = ["Scammed Account", "Leeched Account"]
+red_account_tags = ["Scammed Account", "Scammer Account", "Leeched Account"]
 yellow_account_tags = ["Under Investigation", "Advertised by Scammer"]
 
 # formatting functions

@@ -87,7 +87,7 @@ yellow_tags = ["Suspect", "Service Ban", "Unprofessional MM", "Unprofessional Pi
 red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "Fake Event Server"]
 yellow_server_tags = ["Suspect Server"]
 
-red_account_tags = ["Scammed Account", "Scammer’s Account", "Leeched Account"]
+red_account_tags = ["Scammed Account", "Scammer Account", "Leeched Account"]
 yellow_account_tags = ["Suspicious Account", "Advertised by Scammer"]
 
 games_list = ["Genshin Impact", "Honkai: Star Rail", "Wuthering Waves", "Roblox", "Zenless Zone Zero", "Honkai Impact 3rd", "Project Sekai", "Cookie Run: Kingdom", "Identity V", "Valorant", "Others", "N/A"]
@@ -580,7 +580,7 @@ server_tags_options = [
 
 account_tag_options = [
     discord.SelectOption(label="Scammed Account", value="Scammed Account"),
-    discord.SelectOption(label="Scammer’s Account", value="Scammer’s Account"),
+    discord.SelectOption(label="Scammer Account", value="Scammer Account"),
     discord.SelectOption(label="Leeched Account", value="Leeched Account"),
     discord.SelectOption(label="Suspicious Account", value="Suspicious Account"),
     discord.SelectOption(label="Advertised by Scammer", value="Advertised by Scammer"),
