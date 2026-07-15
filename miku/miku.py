@@ -3061,7 +3061,11 @@ async def t(ctx, text: str = None, ticket_type: str = None):
             _, t = nickname.split("ㆍ", 1)
             return t
         return nickname
+
     if not text:
+        text = get_default_text()
+    show_all = text.lower() == "all"
+    if show_all:
         text = get_default_text()
     text_lower = text.lower()
     if text_lower == "all":
@@ -3082,18 +3086,19 @@ async def t(ctx, text: str = None, ticket_type: str = None):
         except Exception as e:
             owner_text = "Unknown"
             print(e)
-        return f"> {thread_obj.mention} {owner_text}"
+        return f"> {thread_obj.mention} – {owner_text}"
 
     try:
         if ticket_type_lower is None:
-            for thread in ticket_channel.threads:
-                if text_lower in thread.name.lower():
+            if show_all:
+                for thread in ticket_channel.threads:
                     formatted_line = await format_thread_line(thread)
                     matching_threads.append(formatted_line)
-        elif text_lower == "all":
-            for thread in ticket_channel.threads:
-                formatted_line = await format_thread_line(thread)
-                matching_threads.append(formatted_line)
+            else:
+                for thread in ticket_channel.threads:
+                    if text_lower in thread.name.lower():
+                        formatted_line = await format_thread_line(thread)
+                        matching_threads.append(formatted_line)
         else:
             if ticket_type_lower in ["all", "closed"]:
                 async for thread in ticket_channel.archived_threads(limit=None, private=False):
@@ -3106,13 +3111,14 @@ async def t(ctx, text: str = None, ticket_type: str = None):
         return await msg.edit(content=f"An error occurred while fetching threads: {e}")
     if not matching_threads:
         return await msg.edit(content=f"No tickets found containing `{text}`.")
-    field_groups = [matching_threads[i:i + 15] for i in range(0, len(matching_threads), 15)]
+    field_groups = [matching_threads[i:i + 10] for i in range(0, len(matching_threads), 10)]
     embed_pages = [field_groups[i:i + 2] for i in range(0, len(field_groups), 2)]
     embeds = []
     total_pages = len(embed_pages)
     for page_idx, page_fields in enumerate(embed_pages):
+        title = "all active tickets" if show_all else f"ticket search results for `{text}`"
         embed = discord.Embed(
-            title=f"Ticket search results for `{text}`",
+            title=title,
             color=0xffffff
         )
         for field_threads in page_fields:
