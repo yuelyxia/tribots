@@ -3076,24 +3076,17 @@ async def t(ctx, text: str = None, ticket_type: str = None):
         return f"> {thread_obj.mention} – {owner_text}"
 
     try:
-        if ticket_type_lower is None:
-            if show_all:
-                for thread in ticket_channel.threads:
-                    formatted_line = await format_thread_line(thread)
-                    matching_threads.append(formatted_line)
-            else:
-                for thread in ticket_channel.threads:
-                    if text_lower in thread.name.lower():
-                        formatted_line = await format_thread_line(thread)
-                        matching_threads.append(formatted_line)
-        else:
-            if ticket_type_lower in ["all", "closed"]:
-                async for thread in ticket_channel.archived_threads(limit=None, private=False):
-                    if text_lower in thread.name.lower():
-                        matching_threads.append(f"> {thread.mention}")
-                async for thread in ticket_channel.archived_threads(limit=None, private=True):
-                    if text_lower in thread.name.lower():
-                        matching_threads.append(f"> {thread.mention}")
+        if ticket_type_lower in [None, "all"]:
+            for thread in ticket_channel.threads:
+                if show_all or text_lower in thread.name.lower():
+                    matching_threads.append(await format_thread_line(thread))
+        if ticket_type_lower in ["all", "closed"]:
+            async for thread in ticket_channel.archived_threads(limit=None, private=False):
+                if show_all or text_lower in thread.name.lower():
+                    matching_threads.append(f"> {thread.mention}")
+            async for thread in ticket_channel.archived_threads(limit=None, private=True):
+                if show_all or text_lower in thread.name.lower():
+                    matching_threads.append(f"> {thread.mention}")
     except Exception as e:
         return await msg.edit(content=f"An error occurred while fetching threads: {e}")
     if not matching_threads:
