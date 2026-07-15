@@ -1583,6 +1583,8 @@ upload your video at [catbox.moe](https://catbox.moe) and copy & paste the link 
         await interaction.response.edit_message(embed=embed, view=self)
 
 @bot.command(name="rm")
+@commands.cooldown(2, 600, commands.BucketType.channel)
+@commands.has_any_role(staff_role)
 async def rm(ctx, hours: int = None):
     if isinstance(ctx.channel, discord.Thread):
         if ctx.channel.parent_id != TICKET_CHANNEL:
