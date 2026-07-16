@@ -1119,8 +1119,8 @@ async def close(ctx, *args):
         embed = discord.Embed(colour=0xffffff)
         embed.description = (
             f"### Ticket Claim Status\n"
-            f"**Newly claimed:** {new_mentions}\n"
-            f"**Previously credited:** {past_mentions}"
+            f"**Newly claimed** – {new_mentions}\n"
+            f"-# **Previously credited** – {past_mentions}"
         )
 
         async def get_miku_closing(thread: discord.Thread):
@@ -1218,9 +1218,7 @@ class TRICloseView(discord.ui.View):
         await interaction.edit_original_response(content="Ticket credit(s) have been given.", view=None)
         closing_embed = discord.Embed(description=f"""
 **Ticket closed by {interaction.user.mention}**
-\n**Closing:**\n{closing}
         """)
-        await interaction.channel.send(embed=closing_embed)
         try:
             await bot.ticket_manager.close(
                 ticket=ticket,
@@ -1231,6 +1229,7 @@ class TRICloseView(discord.ui.View):
             await interaction.channel.edit(locked=True, archived=True)
         except Exception as e:
             await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+        await interaction.channel.send(embed=closing_embed)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, custom_id="triclose:cancel")
     async def cancel_button(self, interaction, button):
