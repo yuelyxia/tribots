@@ -48,8 +48,8 @@ def alts_string(alts_list):
     string = "`" + string + "`"
     return string
 def default_no_alts(user):
-    profile = discord.Embed(colour=0xffffff)
-    profile.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n"
+    profile = discord.Embed(colour=0xffffff, title=user.display_name)
+    profile.description = f"`{user.id}`\n{user.mention}\n`{user.name}`\n\n"
     profile.description += f"<:tri_whitecross:1462774085737119828>　No alts logged for this user."
     return profile
 
@@ -403,8 +403,8 @@ async def ma(ctx, *, to_check: str = None):
             raw_ids = " ".join(alt for alt in alts_list)
             current_content.append(
                 f"<a:tri_whitealert:1496542298908000257> **`{current_id}` has {alts_count} logged alt(s).**")
-            embed = discord.Embed(colour=0xffffff)
-            embed.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:tri_whitealert:1496542298908000257> **Alt(s)**\n`{raw_ids}`"
+            embed = discord.Embed(colour=0xffffff, title=user.display_name)
+            embed.description = f"`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:tri_whitealert:1496542298908000257> **Alt(s)**\n`{raw_ids}`"
             current_embeds.append(embed)
         else:
             current_content.append(f"<:tri_whitedot:1462907474947342567> `{current_id}` has no logged alts.")
@@ -474,20 +474,20 @@ async def a(ctx, *, to_check: str = None):
             proof_with_server = f"[image]({parts[0]}) – {parts[1]}"
         chosen_lines.append(f"ㆍ `{alt}` – {proof_with_server}")
     LIMIT = 3800
-    header = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:tri_whitealert:1496542298908000257> **Alt(s)**\n"
+    header = f"`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:tri_whitealert:1496542298908000257> **Alt(s)**\n"
     embeds = []
     chunk = []
     for line in chosen_lines:
         test_chunk = "\n".join(chunk + [line])
         if len(header) + len(test_chunk) > LIMIT:
-            embed = discord.Embed(colour=0xffffff)
+            embed = discord.Embed(colour=0xffffff, title=user.display_name)
             embed.description = header + "\n".join(chunk)
             embeds.append(embed)
             chunk = [line]
         else:
             chunk.append(line)
     if chunk:
-        embed = discord.Embed(colour=0xffffff)
+        embed = discord.Embed(colour=0xffffff, title=user.display_name)
         embed.description = header + "\n".join(chunk)
         embeds.append(embed)
     for idx, embed in enumerate(embeds):
