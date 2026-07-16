@@ -1279,9 +1279,9 @@ class TicketCloseView(discord.ui.View):
         await interaction.edit_original_response(content="**Cancelled.** Ticket credit(s) have not been given.",view=None)
 
 def user_info(user, staff_data=None, mm_data=None, pilot_data=None):
-    profile = discord.Embed()
+    profile = discord.Embed(title=user.display_name)
     profile.set_thumbnail(url=f"{user.display_avatar}")
-    profile.description = f"{user.display_name}\n`{user.id}`\n{user.mention}\n`{user.name}`"
+    profile.description = f"`{user.id}`\n{user.mention}\n`{user.name}`"
     profile.description += f"\n**Account Created:** <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
     if staff_data is not None:
         profile.add_field(
