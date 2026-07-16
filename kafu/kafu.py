@@ -1219,6 +1219,7 @@ class TRICloseView(discord.ui.View):
         closing_embed = discord.Embed(description=f"""
 **Ticket closed by {interaction.user.mention}**
         """)
+        await interaction.channel.send(embed=closing_embed)
         try:
             await bot.ticket_manager.close(
                 ticket=ticket,
@@ -1229,7 +1230,6 @@ class TRICloseView(discord.ui.View):
             await interaction.channel.edit(locked=True, archived=True)
         except Exception as e:
             await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
-        await interaction.channel.send(embed=closing_embed)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, custom_id="triclose:cancel")
     async def cancel_button(self, interaction, button):
