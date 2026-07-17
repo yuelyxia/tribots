@@ -72,6 +72,7 @@ defender = 1374364037818617856
 staff_trainer = 1498599499893837874
 full_break = 1505568168880636014
 half_break = 1505568134617235546
+new_staff = 1527528889939787786
 tri_supporter = 1465630182462460040
 archived_staff = 1505062096336064552
 
@@ -309,6 +310,7 @@ async def weekly_quota():
     tr_r = get(guild.roles, id=tr_role)
     full_break_role = get(guild.roles, id=full_break)
     half_break_role = get(guild.roles, id=half_break)
+    new_staff_role = get(guild.roles, id=new_staff)
     def apply_breakbal(member, weekly_profile):
         bal = weekly_profile.get("breakbal", 12)
         if full_break_role in member.roles:
@@ -371,6 +373,10 @@ async def weekly_quota():
         tq = apply_break(tq, member)
         rr = ratio(weekly_reports, rq)
         tr = ratio(weekly_tickets, tq)
+        if member.get_role(new_staff):
+            rr = 1.0
+            tr = 1.0
+            await member.remove_roles(new_staff_role)
         weekly_profile.setdefault("reports_quota_list", [])
         weekly_profile["reports_quota_list"].append([weekly_reports, rq, rr])
         weekly_profile["reports_quota_list"] = weekly_profile["reports_quota_list"][-8:]
@@ -1894,7 +1900,7 @@ bot.tree.add_command(staff)
 @app_commands.describe(user="User to assign roles.")
 async def staff_accepted(interaction: discord.Interaction, user: discord.Member):
     try:
-        await user.add_roles(interaction.guild.get_role(int(t_role)), interaction.guild.get_role(int(staff_role)))
+        await user.add_roles(interaction.guild.get_role(int(t_role)), interaction.guild.get_role(int(staff_role)), interaction.guild.get_role(int(new_staff)))
         await user.edit(nick=f"tㆍ{user.display_name}")
     except:
         return await interaction.response.send_message("Unable to assign trainee roles to the user.")
