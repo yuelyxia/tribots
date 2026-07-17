@@ -554,64 +554,68 @@ async def process_invites():
                 f"> **Removed** – {', '.join([f'`{c}`' for c in removed_invites])}"
             ))
 
-        for guild in bot.guilds:
-            guild_id_str = str(guild.id)
-            server_doc = invitescol.find_one({"_id": guild_id_str}) or {"_id": guild_id_str, "invites": []}
-            current_invites = server_doc.get("invites", [])
-            current_invites = [{"code": x, "priority": 1, "expires_at": None} if isinstance(x, str) else x for x in
-                               current_invites]
-            existing_codes = {x["code"] for x in current_invites}
+    for guild in bot.guilds:
+        await asyncio.sleep(1)
+        guild_id_str = str(guild.id)
+        stored = {doc["_id"]: doc for doc in all_stored}
+        server_doc = stored.get(guild_id_str, {"_id": guild_id_str, "invites": []})
+        current_invites = server_doc.get("invites", [])
+        current_invites = [{"code": x, "priority": 1, "expires_at": None} if isinstance(x, str) else x for x in
+                           current_invites]
+        existing_codes = {x["code"] for x in current_invites}
 
-            added_invites = []
-            replaced_invites = []
+        added_invites = []
+        replaced_invites = []
 
-            try:
-                guild_invites = await guild.invites()
-                incoming_candidates = []
-                for inv in guild_invites:
-                    if inv.code not in existing_codes:
-                        p, exp = get_invite_priority_and_expiry(inv)
-                        incoming_candidates.append({"code": inv.code, "priority": p, "expires_at": exp})
-
-                incoming_candidates.sort(key=lambda x: x["priority"], reverse=True)
-
-                for candidate in incoming_candidates:
-                    if len(current_invites) < 5:
-                        current_invites.append(candidate)
-                        added_invites.append(candidate["code"])
-                    else:
-                        current_invites.sort(key=lambda x: (x["priority"], -(x["expires_at"] or 9999999999)))
-                        lowest_saved = current_invites[0]
-                        if candidate["priority"] > lowest_saved["priority"] or (
-                                candidate["priority"] == lowest_saved["priority"] and
-                                candidate["expires_at"] is not None and lowest_saved["expires_at"] is not None and
-                                candidate["expires_at"] > lowest_saved["expires_at"]
-                        ):
-                            current_invites[0] = candidate
-                            replaced_invites.append(f"`{lowest_saved['code']}` <:tri_whitearrow:1523377871480033301> `{candidate['code']}`")
-
-                if len(current_invites) < 5 and guild.text_channels:
-                    try:
-                        new_inv = await guild.text_channels[0].create_invite(max_age=0, max_uses=0, unique=True)
-                        if new_inv.code not in {x["code"] for x in current_invites}:
-                            p, exp = get_invite_priority_and_expiry(new_inv)
-                            current_invites.append({"code": new_inv.code, "priority": p, "expires_at": exp})
-                            added_invites.append(new_inv.code)
-                    except discord.Forbidden:
-                        pass
-
-            except discord.Forbidden:
+        try:
+            if len(current_invites) >= 5:
                 continue
+            guild_invites = await guild.invites()
+            incoming_candidates = []
+            for inv in guild_invites:
+                if inv.code not in existing_codes:
+                    p, exp = get_invite_priority_and_expiry(inv)
+                    incoming_candidates.append({"code": inv.code, "priority": p, "expires_at": exp})
 
-            if added_invites or replaced_invites:
-                invitescol.update_one({"_id": guild_id_str}, {"$set": {"invites": current_invites}}, upsert=True)
-                if log_channel:
-                    msg = f"**Invites Updated** for {guild.name} `{guild_id_str}`\n"
-                    if added_invites:
-                        msg += f"> **Added** – {', '.join([f'`{c}`' for c in added_invites])}\n"
-                    if replaced_invites:
-                        msg += f"> **Replaced** – {', '.join(replaced_invites)}\n"
-                    await log_channel.send(embed=discord.Embed(description=msg))
+            incoming_candidates.sort(key=lambda x: x["priority"], reverse=True)
+
+            for candidate in incoming_candidates:
+                if len(current_invites) < 5:
+                    current_invites.append(candidate)
+                    added_invites.append(candidate["code"])
+                else:
+                    current_invites.sort(key=lambda x: (x["priority"], -(x["expires_at"] or 9999999999)))
+                    lowest_saved = current_invites[0]
+                    if candidate["priority"] > lowest_saved["priority"] or (
+                            candidate["priority"] == lowest_saved["priority"] and
+                            candidate["expires_at"] is not None and lowest_saved["expires_at"] is not None and
+                            candidate["expires_at"] > lowest_saved["expires_at"]
+                    ):
+                        current_invites[0] = candidate
+                        replaced_invites.append(f"`{lowest_saved['code']}` <:tri_whitearrow:1523377871480033301> `{candidate['code']}`")
+
+            if len(current_invites) < 5 and guild.text_channels:
+                try:
+                    new_inv = await guild.text_channels[0].create_invite(max_age=0, max_uses=0, unique=True)
+                    if new_inv.code not in {x["code"] for x in current_invites}:
+                        p, exp = get_invite_priority_and_expiry(new_inv)
+                        current_invites.append({"code": new_inv.code, "priority": p, "expires_at": exp})
+                        added_invites.append(new_inv.code)
+                except discord.Forbidden:
+                    pass
+
+        except discord.Forbidden:
+            continue
+
+        if added_invites or replaced_invites:
+            invitescol.update_one({"_id": guild_id_str}, {"$set": {"invites": current_invites}}, upsert=True)
+            if log_channel:
+                msg = f"**Invites Updated** for {guild.name} `{guild_id_str}`\n"
+                if added_invites:
+                    msg += f"> **Added** – {', '.join([f'`{c}`' for c in added_invites])}\n"
+                if replaced_invites:
+                    msg += f"> **Replaced** – {', '.join(replaced_invites)}\n"
+                await log_channel.send(embed=discord.Embed(description=msg))
 
 
 async def process_and_save_invite(invite: discord.Invite):
@@ -1082,18 +1086,6 @@ async def c(ctx, *, to_check: str = None):
                     if expires_at and now_ts >= expires_at:
                         removed_invites.append(code)
                         continue
-
-                    try:
-                        invite = await bot.fetch_invite(code, with_counts=True)
-                        if invite.guild and str(invite.guild.id) == server_id:
-                            p, exp = get_invite_priority_and_expiry(invite)
-                            valid_invites.append({"code": code, "priority": p, "expires_at": exp})
-                            if not guild:
-                                guild = invite.guild
-                        else:
-                            removed_invites.append(code)
-                    except (discord.NotFound, discord.HTTPException):
-                        removed_invites.append(code)
 
                 invitescol.update_one({"_id": server_id}, {"$set": {"invites": valid_invites}})
                 guild_name = f"{guild.name} " if guild and not isinstance(guild, UnknownGuild) else ""

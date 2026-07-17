@@ -1082,18 +1082,6 @@ async def c(ctx, *, to_check: str = None):
                         removed_invites.append(code)
                         continue
 
-                    try:
-                        invite = await bot.fetch_invite(code, with_counts=True)
-                        if invite.guild and str(invite.guild.id) == server_id:
-                            p, exp = get_invite_priority_and_expiry(invite)
-                            valid_invites.append({"code": code, "priority": p, "expires_at": exp})
-                            if not guild:
-                                guild = invite.guild
-                        else:
-                            removed_invites.append(code)
-                    except (discord.NotFound, discord.HTTPException):
-                        removed_invites.append(code)
-
                 invitescol.update_one({"_id": server_id}, {"$set": {"invites": valid_invites}})
                 guild_name = f"{guild.name} " if guild and not isinstance(guild, UnknownGuild) else ""
                 if removed_invites and log_channel:
