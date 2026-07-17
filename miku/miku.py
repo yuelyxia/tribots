@@ -682,9 +682,9 @@ async def quota(ctx, member: discord.Member = None):
         return await ctx.send("This staff is still in training.")
     embeds = []
     rank = get_staff_rank(member)
-    profile = discord.Embed(colour=0xffffff)
+    profile = discord.Embed(colour=0xffffff, title=f"{member.display_name.replace("||", "\|\|")}")
     profile.set_thumbnail(url=f"{member.display_avatar}")
-    profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
+    profile.description = f"`{member.id}`\n{member.mention}\n`{member.name}`\n**Rank:** {rank}"
     embeds.append(profile)
     embed = discord.Embed(title="quota progress", colour=0xffffff, description="")
     if is_sr(member):
@@ -749,9 +749,9 @@ async def quota_history(ctx, member: discord.Member=None):
         return await ctx.send("This staff is still in training.")
     embeds = []
     rank = get_staff_rank(member)
-    profile = discord.Embed(colour=0xffffff)
+    profile = discord.Embed(colour=0xffffff, title=f"{member.display_name.replace("||", "\|\|")}")
     profile.set_thumbnail(url=f"{member.display_avatar}")
-    profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
+    profile.description = f"`{member.id}`\n{member.mention}\n`{member.name}`\n**Rank:** {rank}"
     embeds.append(profile)
     if is_sr(member):
         closes_history = weekly_profile.get("closes_quota_list", [])
@@ -904,9 +904,9 @@ async def bb(ctx, member: discord.Member=None):
         return await ctx.send("This staff is still in training.")
     embeds = []
     rank = get_staff_rank(member)
-    profile = discord.Embed(colour=0xffffff)
+    profile = discord.Embed(colour=0xffffff, title=f"{member.display_name.replace("||", "\|\|")}")
     profile.set_thumbnail(url=f"{member.display_avatar}")
-    profile.description = f"{member.name}\n`{member.id}`\n{member.mention}\n**Rank:** {rank}"
+    profile.description = f"`{member.id}`\n{member.mention}\n`{member.name}`\n**Rank:** {rank}"
     embeds.append(profile)
     staff_id = str(member.id)
     weekly_profile = staffweeklycol.find_one({"_id": staff_id}) or {}
