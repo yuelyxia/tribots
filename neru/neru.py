@@ -387,6 +387,7 @@ async def ma(ctx, *, to_check: str = None):
     message_batches = []
     current_content = []
     current_embeds = []
+    current_embed_chars = 0
 
     for user in valid_users:
         current_id = str(user.id)
@@ -394,11 +395,6 @@ async def ma(ctx, *, to_check: str = None):
         if current_id in processed_ids:
             continue
         processed_ids.add(current_id)
-
-        if len(current_embeds) == 10 or len(current_content) == 10:
-            message_batches.append(("\n".join(current_content), current_embeds))
-            current_content = []
-            current_embeds = []
 
         alts_info = altscol.find_one({"_id": current_id})
 
@@ -410,12 +406,27 @@ async def ma(ctx, *, to_check: str = None):
                 f"<a:tri_whitealert:1496542298908000257> **`{current_id}` has {alts_count} logged alt(s).**")
             embed = discord.Embed(colour=0xffffff, title=user.display_name.replace("||", "\|\|"))
             embed.description = f"`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:tri_whitealert:1496542298908000257> **Alt(s)**\n`{raw_ids}`"
+            embed_chars = len(embed.title or "") + len(embed.description or "")
+            if len(current_embeds) == 10 or current_embed_chars + embed_chars > 6000:
+                message_batches.append(("\n".join(current_content), current_embeds))
+                current_content = []
+                current_embeds = []
+                current_embed_chars = 0
             current_embeds.append(embed)
+            current_embed_chars += embed_chars
         else:
             current_content.append(f"<:tri_whitedot:1462907474947342567> `{current_id}` has no logged alts.")
             embed = discord.Embed(colour=0xffffff)
             embed.description = f"<:tri_whitecross:1462774085737119828>　No alts logged for `{current_id}`."
+            embed_chars = len(embed.description)
+            if len(current_embeds) == 10 or current_embed_chars + embed_chars > 6000:
+                message_batches.append(("\n".join(current_content), current_embeds))
+                current_content = []
+                current_embeds = []
+                current_embed_chars = 0
             current_embeds.append(embed)
+            current_embed_chars += embed_chars
+
     if current_content or current_embeds:
         message_batches.append(("\n".join(current_content), current_embeds))
 

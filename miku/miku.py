@@ -1349,9 +1349,11 @@ class ClosingView(discord.ui.View):
 - edited alts only
   - `edited alts for 𝐢𝐝 - added 𝐢𝐝 𝐢𝐝, removed 𝐢𝐝`
 - edited server owner
-  - `server owner edited for 𝐢𝐝 - from 𝐢𝐝 to 𝐢𝐝`
+  - `edited server owner for 𝐢𝐝 - from 𝐢𝐝 to 𝐢𝐝`
 - edited links only
   - `edited links for 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 - added 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝, removed 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝`
+- invalid reason
+  - `no report on 𝐢𝐝 // invalid reason`
 - insufficient proof
   - `no report on 𝐢𝐝 // insufficient proof`
 - deleted user
@@ -1380,6 +1382,9 @@ class ClosingView(discord.ui.View):
             await interaction.response.send_message(embed=discord.Embed(description="""
 - successful manual verification
   - `𝐢𝐝 manually verified`
+- user verified themselves
+  - `successfully verified`
+  - `already verified`
 - unresponsive contributor
   - `unresponsive contributor`
 - contributor left server
@@ -1393,6 +1398,8 @@ class ClosingView(discord.ui.View):
   - `no report // banned 𝐢𝐝 for 𝐫𝐞𝐚𝐬𝐨𝐧`
 - duplicate/troll ticket
   - `no report`
+  - `unresponsive contributor`
+  - `contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "sr+":
             await interaction.response.send_message(embed=discord.Embed(description="""
