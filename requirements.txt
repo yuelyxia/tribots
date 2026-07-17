@@ -4,9 +4,9 @@ asyncio
 datetime
 discord
 discord.py[voice]
+dotenv
 gtts
 PyNaCl
 ffmpeg-python
-aiosqlite
 fastapi
 uvicorn
