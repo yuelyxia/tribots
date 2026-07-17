@@ -16,6 +16,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
+from collections import OrderedDict
+
 from typing import Optional, Literal
 
 TOKEN = os.getenv("TOKEN")
@@ -36,6 +38,9 @@ adm_role = 1375276457890287748
 
 NERU_LOGS = 1460858907491569816
 PROOFS_CHANNEL = 1455055877034868769
+
+PROOF_CACHE_SIZE = 1000
+proof_cache = OrderedDict()
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
@@ -446,18 +451,28 @@ async def a(ctx, *, to_check: str = None):
     for i, alt in enumerate(alts):
         base_proof = proofs[i] if i < len(proofs) else "No proof"
         if isinstance(base_proof, dict):
-            try:
-                channel = bot.get_channel(base_proof["channel_id"])
-                if channel is None:
-                    channel = await bot.fetch_channel(base_proof["channel_id"])
-                message = await channel.fetch_message(base_proof["message_id"])
-                if message.attachments:
-                    url = message.attachments[0].proxy_url
-                    base_proof = f"{url} – added by <@{base_proof['added_by']}>"
-                else:
+            key = (base_proof["channel_id"], base_proof["message_id"])
+
+            cached = proof_cache.get(key)
+            if cached is not None:
+                proof_cache.move_to_end(key)
+                base_proof = cached
+            else:
+                try:
+                    channel = bot.get_channel(base_proof["channel_id"])
+                    if channel is None:
+                        channel = await bot.fetch_channel(base_proof["channel_id"])
+                    message = await channel.fetch_message(base_proof["message_id"])
+                    if message.attachments:
+                        base_proof = f"{message.attachments[0].proxy_url} – added by <@{base_proof['added_by']}>"
+                    else:
+                        base_proof = f"Proof unavailable – added by <@{base_proof['added_by']}>"
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                     base_proof = f"Proof unavailable – added by <@{base_proof['added_by']}>"
-            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
-                base_proof = f"Proof unavailable – added by <@{base_proof['added_by']}>"
+                proof_cache[key] = base_proof
+                proof_cache.move_to_end(key)
+                if len(proof_cache) > PROOF_CACHE_SIZE:
+                    proof_cache.popitem(last=False)
         proof_with_server = base_proof
         if isinstance(base_proof, str) and base_proof.endswith(" – dc"):
             jump_url = base_proof[:-5]
