@@ -1385,7 +1385,6 @@ class ClosingView(discord.ui.View):
   - `𝐢𝐝 manually verified`
 - user verified themselves
   - `successfully verified`
-  - `already verified`
 - unresponsive contributor
   - `unresponsive contributor`
 - contributor left server
