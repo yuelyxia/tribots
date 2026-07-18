@@ -2210,10 +2210,11 @@ async def send_languageroles(interaction: discord.Interaction, colour: str=None,
         image_embed.set_image(url=image.url)
         await interaction.channel.send("_ _", embed=image_embed)
     await interaction.channel.send("""
-    _ _
-    _ _　　<:cutie:1388714793585606656>ㆍ**claim  language roles  here** ㆍㆍ
-    -# <:greyreply:1448474301673115748>　select  for  the  role ,  select  again  to  remove .
+_ _
+_ _　　<:cutie:1388714793585606656>ㆍ**claim  language roles  here** ㆍㆍ
+-# <:greyreply:1448474301673115748>　select  for  the  role ,  select  again  to  remove .
     """, view=LanguageRolesView())
+    await interaction.followup.send("Sent!")
 
 @send.command(name="reactroles", description="Sends react roles embeds.")
 @app_commands.checks.has_role(adm_ping)
