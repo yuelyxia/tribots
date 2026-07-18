@@ -1929,11 +1929,8 @@ class LanguagesView(discord.ui.View):
         super().__init__(timeout=None)
 
     async def ping_role(self, interaction: discord.Interaction, role_id: int):
-        await interaction.response.defer()
-        await interaction.channel.send(f"<@&{role_id}>")
-        for item in self.children:
-            item.disabled = True
-        await interaction.edit_original_response(view=self)
+        await interaction.response.send_message(f"<@&{role_id}>")
+        await interaction.message.delete()
 
     @discord.ui.button(label="Chinese", style=discord.ButtonStyle.grey, custom_id="languages:chinese")
     async def chinese(self, interaction, button):
