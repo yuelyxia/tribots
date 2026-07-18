@@ -1374,6 +1374,8 @@ class ClosingView(discord.ui.View):
   - `no appeal on 𝐢𝐝 // invalid reason`
 - insufficient proof
   - `no appeal on 𝐢𝐝 // insufficient proof`
+- unreported
+  - `no appeal on 𝐢𝐝 // unreported`
 - unresponsive contributor
   - `no appeal on 𝐢𝐝 // unresponsive contributor`
 - contributor left server
@@ -2211,8 +2213,11 @@ async def send_languageroles(interaction: discord.Interaction, colour: str=None,
         await interaction.channel.send("_ _", embed=image_embed)
     await interaction.channel.send("""
 _ _
+_ _　_if you’d like to be **pinged** to help **translate proofs**_
+
 _ _　　<:cutie:1388714793585606656>ㆍ**claim  language roles  here** ㆍㆍ
 -# <:greyreply:1448474301673115748>　select  for  the  role ,  select  again  to  remove .
+_ _
     """, view=LanguageRolesView())
     await interaction.followup.send("Sent!")
 
