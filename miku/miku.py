@@ -188,6 +188,7 @@ async def on_ready():
     bot.add_view(FAQDefinitionsStandardsView())
     bot.add_view(FAQScamPreventionView())
     bot.add_view(FAQStaffTransparencyView())
+    bot.add_view(LanguageRolesView())
     if not reminder_loop.is_running():
         reminder_loop.start()
     if not weekly_quota.is_running():
@@ -1897,124 +1898,81 @@ async def break_command(interaction: discord.Interaction, type: Literal["full", 
     else:
         return await interaction.followup.send("User not appointed as current TRI Staff.")
 
-@bot.command(name="translate")
-async def translate(ctx):
-    if any(role.id in (ticket_ping, staff_role) for role in ctx.author.roles):
-        await ctx.send(view=LanguagesView())
+LANGUAGE_ROLES = {
+    "Chinese": 1527931955482460271,
+    "Japanese": 1527932415551602750,
+    "Korean": 1527932443284471829,
+    "Indonesian": 1527933151723126965,
+    "Malay": 1527933164918411284,
+    "Thai": 1527933184556404819,
+    "Vietnamese": 1527933269965017118,
+    "Filipino": 1527933646562918410,
+    "Hindi": 1527933660232155176,
+    "Urdu": 1527933690812960860,
+    "Arabic": 1527933714313510973,
+    "Persian": 1527933736036073472,
+    "Turkish": 1527933069342937109,
+    "Spanish": 1527932559936327740,
+    "French": 1527932583420100719,
+    "German": 1527932613673746543,
+    "Portuguese": 1527932709769576529,
+    "Russian": 1527932642899660881,
+    "Italian": 1527932770536390726,
+    "Polish": 1527933109545205914,
+    "Dutch": 1527933121872400504,
+}
 
-chinese_role = 1527931955482460271
-japanese_role = 1527932415551602750
-korean_role = 1527932443284471829
-indonesian_role = 1527933151723126965
-malay_role = 1527933164918411284
-thai_role = 1527933184556404819
-vietnamese_role = 1527933269965017118
-filipino_role = 1527933646562918410
-hindi_role = 1527933660232155176
-urdu_role = 1527933690812960860
-arabic_role = 1527933714313510973
-persian_role = 1527933736036073472
-turkish_role = 1527933069342937109
-spanish_role = 1527932559936327740
-french_role = 1527932583420100719
-german_role = 1527932613673746543
-portuguese_role = 1527932709769576529
-russian_role = 1527932642899660881
-italian_role = 1527932770536390726
-polish_role = 1527933109545205914
-dutch_role = 1527933121872400504
-
-class LanguagesView(discord.ui.View):
+class TranslateSelect(discord.ui.Select):
     def __init__(self):
-        super().__init__(timeout=None)
-
-    async def ping_role(self, interaction: discord.Interaction, role_id: int):
+        options = [discord.SelectOption(label=name, value=str(role)) for name, role in LANGUAGE_ROLES.items()]
+        super().__init__(
+            placeholder="‎　　Select a language . . .　　　",
+            min_values=1,
+            max_values=1,
+            options=options,
+            custom_id="translate_select"
+        )
+    async def callback(self, interaction: discord.Interaction):
+        role_id = int(self.values[0])
+        await interaction.response.defer()
         await interaction.channel.send(f"<@&{role_id}>")
         await interaction.message.delete()
 
-    @discord.ui.button(label="Chinese", style=discord.ButtonStyle.grey, custom_id="languages:chinese")
-    async def chinese(self, interaction, button):
-        await self.ping_role(interaction, chinese_role)
+class TranslateView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(TranslateSelect())
 
-    @discord.ui.button(label="Japanese", style=discord.ButtonStyle.grey, custom_id="languages:japanese")
-    async def japanese(self, interaction, button):
-        await self.ping_role(interaction, japanese_role)
+@bot.command(name="translate")
+async def translate(ctx):
+    if any(role.id in (ticket_ping, staff_role) for role in ctx.author.roles):
+        await ctx.send(view=TranslateView())
 
-    @discord.ui.button(label="Korean", style=discord.ButtonStyle.grey, custom_id="languages:korean")
-    async def korean(self, interaction, button):
-        await self.ping_role(interaction, korean_role)
+class LanguagesSelect(discord.ui.Select):
+    def __init__(self):
+        options = [discord.SelectOption(label=name, value=str(role_id)) for name, role_id in LANGUAGE_ROLES.items()]
+        super().__init__(
+            placeholder="‎　　Select a language . . .　　　",
+            min_values=1,
+            max_values=1,
+            options=options,
+            custom_id="language_roles"
+        )
 
-    @discord.ui.button(label="Indonesian", style=discord.ButtonStyle.grey, custom_id="languages:indonesian")
-    async def indonesian(self, interaction, button):
-        await self.ping_role(interaction, indonesian_role)
+    async def callback(self, interaction: discord.Interaction):
+        role = interaction.guild.get_role(int(self.values[0]))
+        if role in interaction.user.roles:
+            await interaction.user.remove_roles(role)
+            msg = f"Removed {role.mention}."
+        else:
+            await interaction.user.add_roles(role)
+            msg = f"Added {role.mention}."
+        await interaction.response.send_message(msg, ephemeral=True)
 
-    @discord.ui.button(label="Malay", style=discord.ButtonStyle.grey, custom_id="languages:malay")
-    async def malay(self, interaction, button):
-        await self.ping_role(interaction, malay_role)
-
-    @discord.ui.button(label="Thai", style=discord.ButtonStyle.grey, custom_id="languages:thai")
-    async def thai(self, interaction, button):
-        await self.ping_role(interaction, thai_role)
-
-    @discord.ui.button(label="Vietnamese", style=discord.ButtonStyle.grey, custom_id="languages:vietnamese")
-    async def vietnamese(self, interaction, button):
-        await self.ping_role(interaction, vietnamese_role)
-
-    @discord.ui.button(label="Filipino", style=discord.ButtonStyle.grey, custom_id="languages:filipino")
-    async def filipino(self, interaction, button):
-        await self.ping_role(interaction, filipino_role)
-
-    @discord.ui.button(label="Hindi", style=discord.ButtonStyle.grey, custom_id="languages:hindi")
-    async def hindi(self, interaction, button):
-        await self.ping_role(interaction, hindi_role)
-
-    @discord.ui.button(label="Urdu", style=discord.ButtonStyle.grey, custom_id="languages:urdu")
-    async def urdu(self, interaction, button):
-        await self.ping_role(interaction, urdu_role)
-
-    @discord.ui.button(label="Arabic", style=discord.ButtonStyle.grey, custom_id="languages:arabic")
-    async def arabic(self, interaction, button):
-        await self.ping_role(interaction, arabic_role)
-
-    @discord.ui.button(label="Persian", style=discord.ButtonStyle.grey, custom_id="languages:persian")
-    async def persian(self, interaction, button):
-        await self.ping_role(interaction, persian_role)
-
-    @discord.ui.button(label="Turkish", style=discord.ButtonStyle.grey, custom_id="languages:turkish")
-    async def turkish(self, interaction, button):
-        await self.ping_role(interaction, turkish_role)
-
-    @discord.ui.button(label="Spanish", style=discord.ButtonStyle.grey, custom_id="languages:spanish")
-    async def spanish(self, interaction, button):
-        await self.ping_role(interaction, spanish_role)
-
-    @discord.ui.button(label="French", style=discord.ButtonStyle.grey, custom_id="languages:french")
-    async def french(self, interaction, button):
-        await self.ping_role(interaction, french_role)
-
-    @discord.ui.button(label="German", style=discord.ButtonStyle.grey, custom_id="languages:german")
-    async def german(self, interaction, button):
-        await self.ping_role(interaction, german_role)
-
-    @discord.ui.button(label="Portuguese", style=discord.ButtonStyle.grey, custom_id="languages:portuguese")
-    async def portuguese(self, interaction, button):
-        await self.ping_role(interaction, portuguese_role)
-
-    @discord.ui.button(label="Russian", style=discord.ButtonStyle.grey, custom_id="languages:russian")
-    async def russian(self, interaction, button):
-        await self.ping_role(interaction, russian_role)
-
-    @discord.ui.button(label="Italian", style=discord.ButtonStyle.grey, custom_id="languages:italian")
-    async def italian(self, interaction, button):
-        await self.ping_role(interaction, italian_role)
-
-    @discord.ui.button(label="Polish", style=discord.ButtonStyle.grey, custom_id="languages:polish")
-    async def polish(self, interaction, button):
-        await self.ping_role(interaction, polish_role)
-
-    @discord.ui.button(label="Dutch", style=discord.ButtonStyle.grey, custom_id="languages:dutch")
-    async def dutch(self, interaction, button):
-        await self.ping_role(interaction, dutch_role)
+class LanguageRolesView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(LanguagesSelect())
 
 # slash commands
 
@@ -2243,6 +2201,20 @@ async def send_rules(interaction: discord.Interaction, colour: str=None, image: 
     await interaction.channel.send("_ _", embed=embed4)
     await interaction.followup.send("Sent!")
 
+@send.command(name="languageroles", description="Sends language roles embeds.")
+@app_commands.checks.has_role(adm_ping)
+async def send_languageroles(interaction: discord.Interaction, colour: str=None, image: discord.Attachment=None):
+    await interaction.response.defer(ephemeral=True)
+    colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
+    if image:
+        image_embed = discord.Embed(colour=colour)
+        image_embed.set_image(url=image.url)
+        await interaction.channel.send("_ _", embed=image_embed)
+    await interaction.channel.send("""
+    _ _
+    _ _　　<:cutie:1388714793585606656>ㆍ**claim  language roles  here** ㆍㆍ
+    -# <:greyreply:1448474301673115748>　select  for  the  role ,  select  again  to  remove .
+    """, view=LanguageRolesView())
 
 @send.command(name="reactroles", description="Sends react roles embeds.")
 @app_commands.checks.has_role(adm_ping)
