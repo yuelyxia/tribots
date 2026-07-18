@@ -3694,7 +3694,7 @@ class TRITicketView(discord.ui.View):
                         ephemeral=True
                     )
 
-                max_limit = 20 if is_adm(interaction.user) else 2
+                max_limit = 30 if is_adm(interaction.user) else 2
                 if open_count >= max_limit:
                     return await interaction.response.send_message(
                         f"> You have reached the maximum limit of {max_limit} active tickets.",
@@ -4948,7 +4948,7 @@ class TicketManager:
         if global_open_count >= 500:
             raise ValueError("The system has reached the global limit of 500 active tickets.")
 
-        max_limit = 20 if is_adm(creator) else 2
+        max_limit = 30 if is_adm(creator) else 2
         if open_count >= max_limit:
             raise ValueError(f"You have reached the maximum limit of {max_limit} active tickets.")
 
