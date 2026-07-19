@@ -19,7 +19,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from discord.utils import get
 
-from typing import Literal
+from typing import Literal, Union
 
 TOKEN = os.getenv("TOKEN")
 CLIENT = os.getenv("CLIENT")
@@ -102,7 +102,7 @@ def is_active_staff(user):
 # formatting functions
 
 def default_user_profile(user):
-    profile = discord.Embed(title=f"{user.display_name.replace("||", "\|\|")}")
+    profile = discord.Embed(title=f"{user.display_name.replace('||', '\\|\\|')}")
     profile.set_thumbnail(url=f"{user.display_avatar}")
     profile.description = f"`{user.id}`\n{user.mention}\n`{user.name}`"
     profile.description += f"\n-# **Account Created** – <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
@@ -215,13 +215,13 @@ def image_links_to_embeds(image_links):
 
 def format_trusteduser_profile(user, trusteduser_profile):
     if trusteduser_profile["current_staff"] == 1:
-        trusted_embed = discord.Embed(colour=0xbba8dd, title=f"{user.display_name.replace("||", "\|\|")}")
+        trusted_embed = discord.Embed(colour=0xbba8dd, title=f"{user.display_name.replace('||', '\\|\\|')}")
         title = "TRI Staff"
     elif trusteduser_profile["staff"] == 1:
-        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name.replace("||", "\|\|")}")
+        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name.replace('||', '\\|\\|')}")
         title = "Former TRI Staff"
     else:
-        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name.replace("||", "\|\|")}")
+        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name.replace('||', '\\|\\|')}")
         title = "Trusted User"
     trusted_embed.set_thumbnail(url=f"{user.display_avatar}")
     trusted_embed.description = f"```ansi\n\u001b[1m{title}\u001b[0m\n```"
@@ -246,16 +246,16 @@ def format_trusteduser_profile(user, trusteduser_profile):
     return trusted_embed
 def format_user_r_profile(user, r_profile_list, title):
     if title == "Ex-offender":
-        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name.replace("||", "\|\|")}")
+        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name.replace('||', '\\|\\|')}")
         colour = "\u001b[1;33m"
     elif title in red_tags:
-        r_profile = discord.Embed(colour=0xFF0045, title=f"{user.display_name.replace("||", "\|\|")}")
+        r_profile = discord.Embed(colour=0xFF0045, title=f"{user.display_name.replace('||', '\\|\\|')}")
         colour = "\u001b[1;31m"
     elif title in yellow_tags:
-        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name.replace("||", "\|\|")}")
+        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name.replace('||', '\\|\\|')}")
         colour = "\u001b[1;33m"
     else:
-        r_profile = discord.Embed(title=f"{user.display_name.replace("||", "\|\|")}")
+        r_profile = discord.Embed(title=f"{user.display_name.replace('||', '\\|\\|')}")
         colour = "\u001b[0m"
     r_profile.set_thumbnail(url=f"{user.display_avatar}")
     r_profile.description = f"```ansi\n{colour}{title}\u001b[0m\n```"
@@ -11616,10 +11616,21 @@ async def report(
 @bot.tree.command(name="merge", description="Merges the reports of two users. This action is irreversible.")
 @app_commands.describe(main="Main", alt="Alt")
 @app_commands.checks.has_any_role(adm_ping, sr_ping)
-async def merge_reports(interaction: discord.Interaction, main: discord.User, alt: discord.User):
-    if main == alt:
-        return await interaction.response.send_message("You cannot merge a user into themselves.", ephemeral=True)
+async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
     await interaction.response.defer()
+    try:
+        main_id = int(main.strip().replace("<@", "").replace(">", ""))
+        main = bot.get_user(main_id) or await bot.fetch_user(main_id)
+    except Exception:
+        return await interaction.followup.send("Please provide a valid main user id.")
+    try:
+        alt_id = int(alt.strip().replace("<@", "").replace(">", ""))
+        alt = bot.get_user(alt_id) or await bot.fetch_user(alt_id)
+    except Exception:
+        return await interaction.followup.send("Please provide a valid alt user id.")
+
+    if main.id == alt.id:
+        return await interaction.followup.send("You cannot merge a user into themselves.")
 
     main_query = {"_id": str(main.id)}
     main_profile = userscol.find_one(main_query)
@@ -11653,13 +11664,13 @@ async def merge_reports(interaction: discord.Interaction, main: discord.User, al
         merged_alts_proofs = proofs1 + proofs2
 
         merged_tags_list = []
-        merged_cases = []
+        raw_cases = []
 
         no_of_cases1 = len(main_profile) - 2
         for i in range(1, no_of_cases1 + 1):
             case = main_profile.get(str(i))
             if case:
-                merged_cases.append(case)
+                raw_cases.append(case)
                 if "tags" in case and case["tags"]:
                     for tag in case["tags"].split(", "):
                         merged_tags_list.append(tag)
@@ -11667,10 +11678,17 @@ async def merge_reports(interaction: discord.Interaction, main: discord.User, al
         for i in range(1, no_of_cases2 + 1):
             case = alt_profile.get(str(i))
             if case:
-                merged_cases.append(case)
+                raw_cases.append(case)
                 if "tags" in case and case["tags"]:
                     for tag in case["tags"].split(", "):
                         merged_tags_list.append(tag)
+
+        def get_case_timestamp(case_dict):
+            date_str = case_dict.get("date_added", "")
+            match = re.search(r"<t:(\d+)", date_str)
+            return int(match.group(1)) if match else 0
+
+        merged_cases = sorted(raw_cases, key=get_case_timestamp)
 
         merged_tags_list = sort_user_tags(merged_tags_list)
         all_other_tags = selected_string(merged_tags_list[1:]) if len(merged_tags_list) > 1 else ""
