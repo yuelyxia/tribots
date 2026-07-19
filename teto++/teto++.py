@@ -1469,7 +1469,7 @@ class ReportedUserView(discord.ui.View):
             cases = []
             for i in range(1, no_of_cases + 1):
                 cases.append(user_profile[str(i)])
-            image_links = cases[current_case-1][7]
+            image_links = cases[current_case-1]["proofs"]
             image_embeds = image_links_to_embeds(image_links)
             await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
@@ -1484,7 +1484,7 @@ class ReportedUserView(discord.ui.View):
         #
         if requested_by == interaction.user:
             r_profile_list = user_profile["r_profile_list"]
-            image_links = r_profile_list[6]
+            image_links = r_profile_list[2]
             image_embeds = image_links_to_embeds(image_links)
             await interaction.followup.send(f"Alts Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
@@ -1524,7 +1524,7 @@ class ReportedServerView(discord.ui.View):
             if current_case != 1:
                 prev_index = current_case - 2
             try:
-                prev_case_tags = cases[prev_index][1].split(", ")
+                prev_case_tags = cases[prev_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -1567,7 +1567,7 @@ class ReportedServerView(discord.ui.View):
             title = all_tags_list[0]
             next_index = current_case
             try:
-                next_case_tags = cases[next_index][1].split(", ")
+                next_case_tags = cases[next_index]["tags"].split(", ")
             except Exception:
                 pass
             else:
@@ -1595,7 +1595,7 @@ class ReportedServerView(discord.ui.View):
         cases = []
         for i in range(1, no_of_cases + 1):
             cases.append(server_profile[str(i)])
-        image_links = cases[current_case - 1][6]
+        image_links = cases[current_case - 1]["proofs"]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{guild.id}`", embeds=image_embeds, ephemeral=True)
 
@@ -1707,7 +1707,7 @@ class ReportedAccountView(discord.ui.View):
         cases = []
         for i in range(1, no_of_cases + 1):
             cases.append(account_profile[str(i)])
-        image_links = cases[current_case - 1][7]
+        image_links = cases[current_case - 1]["proofs"]
         image_embeds = image_links_to_embeds(image_links)
         await interaction.followup.send(f"Proofs for `{game_uid}`", embeds=image_embeds, ephemeral=True)
 
