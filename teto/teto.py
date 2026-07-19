@@ -12,6 +12,7 @@ import aiohttp
 import asyncio
 import re
 import datetime
+import copy
 
 import discord
 from discord import app_commands
@@ -11615,84 +11616,110 @@ async def report(
 @bot.tree.command(name="merge", description="Merges the reports of two users. This action is irreversible.")
 @app_commands.describe(main="Main", alt="Alt")
 @app_commands.checks.has_any_role(adm_ping, sr_ping)
-async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
-    if main.strip("<@>") != alt.strip("<@>"):
+async def merge_reports(interaction: discord.Interaction, main: discord.User, alt: discord.User):
+    if main == alt:
+        return await interaction.response.send_message("You cannot merge a user into themselves.", ephemeral=True)
+    await interaction.response.defer()
+
+    main_query = {"_id": str(main.id)}
+    main_profile = userscol.find_one(main_query)
+    alt_query = {"_id": str(alt.id)}
+    alt_profile = userscol.find_one(alt_query)
+
+    if not main_profile and not alt_profile:
+        return await interaction.followup.send("Neither user has a reported profile.")
+    if not main_profile:
+        return await interaction.followup.send(f"Report on main user `{main.id}` not found.")
+    if not alt_profile:
+        return await interaction.followup.send(f"Report on alt user `{alt.id}` not found.")
+
+    try:
+        r_profile_list1 = main_profile.get("r_profile_list", ["", "", []])
+        r_profile_list2 = alt_profile.get("r_profile_list", ["", "", []])
+
+        main_alts = r_profile_list1[0].strip("`").split() if r_profile_list1[0] else []
+        alt_alts = r_profile_list2[0].strip("`").split() if r_profile_list2[0] else []
+
+        all_alts = list(set(main_alts + alt_alts))
+        if str(alt.id) not in all_alts:
+            all_alts.append(str(alt.id))
+        if str(main.id) in all_alts:
+            all_alts.remove(str(main.id))
+
+        merged_alts_string = alts_string(all_alts) if all_alts else ""
+
+        proofs1 = r_profile_list1[2] if isinstance(r_profile_list1[2], list) else []
+        proofs2 = r_profile_list2[2] if isinstance(r_profile_list2[2], list) else []
+        merged_alts_proofs = proofs1 + proofs2
+
+        merged_tags_list = []
+        merged_cases = []
+
+        no_of_cases1 = len(main_profile) - 2
+        for i in range(1, no_of_cases1 + 1):
+            case = main_profile.get(str(i))
+            if case:
+                merged_cases.append(case)
+                if "tags" in case and case["tags"]:
+                    for tag in case["tags"].split(", "):
+                        merged_tags_list.append(tag)
+        no_of_cases2 = len(alt_profile) - 2
+        for i in range(1, no_of_cases2 + 1):
+            case = alt_profile.get(str(i))
+            if case:
+                merged_cases.append(case)
+                if "tags" in case and case["tags"]:
+                    for tag in case["tags"].split(", "):
+                        merged_tags_list.append(tag)
+
+        merged_tags_list = sort_user_tags(merged_tags_list)
+        all_other_tags = selected_string(merged_tags_list[1:]) if len(merged_tags_list) > 1 else ""
+
+        merged_r_profile_list = [
+            merged_alts_string,
+            all_other_tags,
+            merged_alts_proofs
+        ]
+
+        merged_profile = {
+            "_id": str(main.id),
+            "r_profile_list": merged_r_profile_list
+        }
+
+        for i, case in enumerate(merged_cases, start=1):
+            merged_profile[str(i)] = case
+
+        main_backup = copy.deepcopy(main_profile)
+        alt_backup = copy.deepcopy(alt_profile)
+        alt_backups = {}
+
+        for alt_id in alt_alts:
+            doc = userscol.find_one({"_id": alt_id})
+            if doc:
+                alt_backups[alt_id] = copy.deepcopy(doc)
+
         try:
-            main = await bot.fetch_user(int(main.strip("<@>")))
-            main_id = main.id
-            alt = await bot.fetch_user(int(alt.strip("<@>")))
-            alt_id = alt.id
-        except discord.NotFound:
-            await interaction.response.send_message(f"Please provide valid User IDs.", ephemeral=True)
-        else:
-            main_query = {"_id": str(main_id)}
-            main_profile = userscol.find_one(main_query)
-            alt_query = {"_id": str(alt_id)}
-            alt_profile = userscol.find_one(alt_query)
-            if main_profile and alt_profile:
-                r_profile_list1 = main_profile["r_profile_list"]
-                r_profile_list2 = alt_profile["r_profile_list"]
-                main_alts = r_profile_list1[0].strip("`").split()
-                alt_alts = r_profile_list2[0].strip("`").split()
-                all_alts = main_alts + alt_alts
-                all_alts.append(str(alt_id))
-                if len(all_alts) != 0:
-                    merged_alts_string = alts_string(all_alts)
-                else: merged_alts_string = ""
-                merged_alts_proofs = r_profile_list1[2] + r_profile_list2[2]
-                merged_tags_list = []
-                no_of_cases1 = len(main_profile) - 2
-                cases1 = []
-                for i in range(1, no_of_cases1 + 1):
-                    cases1.append(main_profile[str(i)])
-                tags_strings1 = []
-                for case in cases1:
-                    tags_strings1.append(case["tags"])
-                for tags_string in tags_strings1:
-                    tags_list = tags_string.split(", ")
-                    for tag in tags_list:
-                        merged_tags_list.append(tag)
-                no_of_cases2 = len(alt_profile) - 2
-                cases2 = []
-                for i in range(1, no_of_cases2 + 1):
-                    cases2.append(alt_profile[str(i)])
-                tags_strings2 = []
-                for case in cases2:
-                    tags_strings2.append(case["tags"])
-                for tags_string in tags_strings2:
-                    tags_list = tags_string.split(", ")
-                    for tag in tags_list:
-                        merged_tags_list.append(tag)
-                merged_tags_list = sort_user_tags(merged_tags_list)
-                all_other_tags = selected_string(merged_tags_list[1:])
-                merged_r_profile_list = [
-                    merged_alts_string,
-                    all_other_tags,
-                    merged_alts_proofs
-                ]
-                merged_cases = cases1 + cases2
-                merged_cases.sort(key=lambda x: int(x[0][3:13]))
-                #
-                merged_profile = {
-                    "_id": str(main_id),
-                    "r_profile_list": merged_r_profile_list,
-                }
-                i=0
-                for case in merged_cases:
-                    i+=1
-                    merged_profile[str(i)] = case
-                for alt_alt in alt_alts:
-                    alts_query = {"_id": alt_alt}
-                    alt_profile = {"_id": alt_alt, "main": str(main_id)}
-                    userscol.replace_one(alts_query, alt_profile)
-                userscol.replace_one(main_query, merged_profile)
-                await interaction.response.send_message(f"`{alt_id}` successfully merged into `{main_id}`.")
-            elif main_profile:
-                await interaction.response.send_message(f"Report on `{alt_id}` not found.")
-            elif alt_profile:
-                await interaction.response.send_message(f"Report on `{main_id}` not found.")
-            else:
-                await interaction.response.send_message(f"Neither user reported.")
+            userscol.replace_one(main_query, merged_profile, upsert=True)
+
+            userscol.replace_one(alt_query, {"_id": str(alt.id), "main": str(main.id)}, upsert=True)
+
+            for alt_id in alt_alts:
+                userscol.replace_one(
+                    {"_id": alt_id},
+                    {"_id": alt_id, "main": str(main.id)},
+                    upsert=True
+                )
+        except Exception:
+            userscol.replace_one(main_query, main_backup, upsert=True)
+            userscol.replace_one(alt_query, alt_backup, upsert=True)
+            for alt_id, doc in alt_backups.items():
+                userscol.replace_one({"_id": alt_id}, doc, upsert=True)
+            raise
+
+        await interaction.followup.send(f"Successfully merged `{alt.id}` into `{main.id}`.")
+
+    except Exception as e:
+        await interaction.followup.send(f"An unexpected error occurred during execution: `{e}`")
 
 disable = app_commands.Group(name="disable", description="Disable.")
 bot.tree.add_command(disable)
