@@ -1252,7 +1252,7 @@ async def ca(ctx, *, to_check: str = None):
 # reported user
 class ReportedUserView(discord.ui.View):
     def __init__(self, user, user_profile, requested_by, current_case):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.user = user
         self.user_profile = user_profile
         self.requested_by = requested_by
@@ -1377,7 +1377,7 @@ class ReportedUserView(discord.ui.View):
 # reported server
 class ReportedServerView(discord.ui.View):
     def __init__(self, guild, server_profile, requested_by, current_case):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.guild = guild
         self.server_profile = server_profile
         self.requested_by = requested_by
@@ -1489,7 +1489,7 @@ class ReportedServerView(discord.ui.View):
 # reported account
 class ReportedAccountView(discord.ui.View):
     def __init__(self, game_uid, account_profile, requested_by, current_case):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.game_uid = game_uid
         self.account_profile = account_profile
         self.requested_by = requested_by
@@ -1622,7 +1622,7 @@ class MemberView(discord.ui.View):
 # new user
 class NewUserReportView(discord.ui.View):
     def __init__(self, user, requested_by):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.user = user
         self.requested_by = requested_by
 
@@ -2437,7 +2437,7 @@ class UserProofsView(discord.ui.View):
 # edit user
 class EditUserReportView(discord.ui.View):
     def __init__(self, user, user_profile, requested_by, current_case):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.user = user
         self.user_profile = user_profile
         self.requested_by = requested_by
@@ -5043,7 +5043,7 @@ class UserVoteView(discord.ui.View):
 # new server
 class NewServerReportView(discord.ui.View):
     def __init__(self, guild, requested_by):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.guild = guild
         self.requested_by = requested_by
     @discord.ui.button(label="Report", style=discord.ButtonStyle.red, custom_id="newserverreport:report")
@@ -5649,7 +5649,7 @@ class ServerProofsView(discord.ui.View):
 # edit server
 class EditServerReportView(discord.ui.View):
     def __init__(self, guild, server_profile, requested_by, current_case):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.guild = guild
         self.server_profile = server_profile
         self.requested_by = requested_by
@@ -7523,7 +7523,7 @@ class ServerVoteView(discord.ui.View):
 # new account
 class NewAccountReportView(discord.ui.View):
     def __init__(self, game_uid, requested_by):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.game_uid = game_uid
         self.requested_by = requested_by
 
@@ -8332,7 +8332,7 @@ class AccountProofsView(discord.ui.View):
 # edit account
 class EditAccountReportView(discord.ui.View):
     def __init__(self, game_uid, account_profile, requested_by, current_case):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.game_uid = game_uid
         self.account_profile = account_profile
         self.requested_by = requested_by

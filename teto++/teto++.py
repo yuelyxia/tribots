@@ -1361,7 +1361,7 @@ async def mc(ctx, *, to_check: str = None):
 
 class ReportedUserView(discord.ui.View):
     def __init__(self, user, user_profile, requested_by, current_case):
-        super().__init__(timeout=None)
+        super().__init__(timeout=3600)
         self.user = user
         self.user_profile = user_profile
         self.requested_by = requested_by
@@ -1490,7 +1490,7 @@ class ReportedUserView(discord.ui.View):
 
 class ReportedServerView(discord.ui.View):
     def __init__(self, guild, server_profile, requested_by, current_case):
-        super().__init__(timeout=None)
+        super().__init__(timeout=3600)
         self.guild = guild
         self.server_profile = server_profile
         self.requested_by = requested_by
@@ -1602,7 +1602,7 @@ class ReportedServerView(discord.ui.View):
 # reported account
 class ReportedAccountView(discord.ui.View):
     def __init__(self, game_uid, account_profile, requested_by, current_case):
-        super().__init__(timeout=1440)
+        super().__init__(timeout=3600)
         self.game_uid = game_uid
         self.account_profile = account_profile
         self.requested_by = requested_by
