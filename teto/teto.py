@@ -11719,7 +11719,7 @@ async def merge_reports(interaction: discord.Interaction, main: discord.User, al
         await interaction.followup.send(f"Successfully merged `{alt.id}` into `{main.id}`.")
 
     except Exception as e:
-        await interaction.followup.send(f"An unexpected error occurred during execution: `{e}`")
+        await interaction.followup.send(f"An unexpected error occurred during execution: {e}")
 
 disable = app_commands.Group(name="disable", description="Disable.")
 bot.tree.add_command(disable)
