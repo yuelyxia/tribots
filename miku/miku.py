@@ -1349,6 +1349,7 @@ class ClosingView(discord.ui.View):
   - `added report on 𝐢𝐝 as 𝐭𝐚𝐠`
 - edited alts only
   - `edited alts for 𝐢𝐝 - added 𝐢𝐝 𝐢𝐝, removed 𝐢𝐝`
+  - `edited alts for 𝐢𝐝 - 𝐢𝐝 merged into 𝐢𝐝`
 - edited server owner
   - `edited server owner for 𝐢𝐝 - from 𝐢𝐝 to 𝐢𝐝`
 - edited links only
@@ -1418,9 +1419,7 @@ class ClosingView(discord.ui.View):
 - check published reports
   - `,pr`
   - `,c 𝐢𝐝` or `,mc 𝐢𝐝 𝐢𝐝 𝐢𝐝`
-- obtain closing from top of ticket (use `,fm`). ask reporter for closing if not provided.
-- `,close` to give ticket credit(s)
-- `/close` or click the `Close with Reason` button to close the ticket; input closing as the reason.
+- `,close` to close the ticket. ask reporter for closing if not provided in closing embed. **check** the closing and ensure it’s correct.
 """), ephemeral=True)
 
 @bot.command(name="getids", help="Extracts valid user IDs from the string provided.")
@@ -1657,6 +1656,11 @@ async def rn(ctx, *, new_name: str):
     if isinstance(ctx.channel, discord.Thread):
         if ctx.channel.parent_id != TICKET_CHANNEL and ctx.channel.parent_id != TRAINING_CHANNEL:
             return
+        try:
+            new_name = int(new_name)
+        except ValueError: pass
+        else:
+            await ctx.reply(f"Did you mean `,rm {new_name}`?")
         try:
             reminder = reminders.find_one({"thread_id": ctx.channel.id})
             reminder_text = ""
@@ -2018,12 +2022,12 @@ class StaffGuideView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "trial":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### Trial Period
+### trial period
 - **14–90 days**
-- Exceeding 90 days results in an **unappealable demotion** (you may reapply)
-- **Asking questions is encouraged** and will not affect your status
-- **No breaks in the first 14 days** unless it’s an emergency
-### Promotion Requirements
+- exceeding 90 days results in an **unappealable demotion** (you may reapply)
+- **asking questions is encouraged** and will not affect your status
+- **no breaks in the first 14 days** unless it’s an emergency
+### promotion requirements
 - **2 weeks of quota** (not necessarily consecutive)
 - **10 non-hitter report tickets**
 - **1 appeal ticket**
@@ -2031,77 +2035,78 @@ class StaffGuideView(discord.ui.View):
             """), ephemeral=True)
         if self.select_callback.values[0] == "breaks":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### Break Types
-- **Half Break** — weekly quota is **halved (rounded down)**
-- **Full Break** — weekly quota is **not counted**
-### Break Rules
-- Staff **cannot earn Annual Leave** while on break
-- **1 Full Break** may be split into **2 Half Breaks**
-### Annual Leave
-- Includes **all types of leave**
-- Basic entitlement: **12 Full Breaks**
-- **1/8 Full Break** for each **week of completed quota**
+### break types
+- **half break** — weekly quota is **halved (rounded down)**
+- **full break** — weekly quota is **not counted**
+### break rules
+- staff **cannot earn annual leave** while on break.
+- you may go on break as long as you have remaining break balance.
+### annual leave
+- includes **all types of leaves**.
+- basic entitlement: **12 full breaks**
+- **1/8 full break** for each **week of completed quota**.
             """), ephemeral=True)
         if self.select_callback.values[0] == "quota":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### Quota Basics
-- Weekly quota ranges between **5–10 reports/appeals**
-- Only **successfully published** reports/appeals are counted
-- Hitter reports count toward quota but have **low promotion value**
-### Strikes
-- Each week of **incomplete quota** while **not on a Full Break = 1 strike**
-### Consequences for Incomplete Quota
-- **Demotion in rank:**
+### quota basics
+- `,q` to check your quota progress for the week.
+- `,qh` to check your quota history for the past 8 weeks.
+- fulfilling _either ticket or report quota_ will be considered quota completed (same goes for close or review quota for sr+).
+- hitter reports count toward ticket quota but have **low promotion value**.
+### strikes
+- each week of **incomplete quota** while **not on a full break = 1 strike**
+### consequences for incomplete quota
+- **demotion in rank:**
   - 2 consecutive strikes with **no breaks taken**
-  - 3 consecutive strikes with **≤ 1 Full Break** taken in total
+  - 3 consecutive strikes with **≤ 1 full break** taken in total
   - 4 or more strikes (not necessarily consecutive) within the **past 8 weeks**
-- **Demotion from Staff:**
-  - Average activity of **below 50%** over the **past 8 weeks**
-  - Full Break weeks are **excluded** from calculation, but Half Break weeks are **included**
-  - Activity is measured by **quota fulfilled**, capped at **100% per week**
+- **demotion from staff:**
+  - average activity of **below 50%** over the **past 8 weeks**
+  - full break weeks are **excluded** from calculation, but half break weeks are **included**
+  - activity is measured by **quota fulfilled**, capped at **100% per week**
             """), ephemeral=True)
         if self.select_callback.values[0] == "tickets":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### Ticket Claiming
-- The **first Staff** to send a proper greeting (e.g. hi) handles the ticket
-- If multiple greetings are sent, **reload Discord** to see who was first
-- Other Staff must **delete their messages**
-### Ticket Handling
-- Only **one Staff** may handle a ticket at a time
-- A **Defender** may assist if required
-- Only **one Senior Reporter** may review when requested
-- After acceptance for voting, the **sr+ who publishes** the report is responsible for **closing the ticket**
-### Ticket Priority
-- Handle **older tickets first**
-- Do not skip tickets because they seem difficult
-### Ticket Limits
-- **Trial Reporter** — 1 active, 2 on-hold, 1 self ticket
-- **Reporter** — 2 active, 2 on-hold, 1 self ticket
-- If an on-hold ticket becomes active and exceeds your limit, you must **open one active ticket to other Staff**
-### On-Hold
-- Staff may place **their own tickets** on hold when necessary
-- Common reasons include:
-  - Waiting for Defendant response
-  - Waiting for Contributor response
-- Abuse of on-hold may result in **warnings or demotion**
-### Ticket Closure
-- If the Contributor does not reply within **12 hours**, you may request closure
-- If no meaningful proof is provided within **4 hours**, you may request closure
+### ticket claiming
+- the **first staff** to send a proper greeting (e.g. hi) handles the ticket
+- if multiple greetings are sent, **reload discord** to see who was first
+- other staff must **delete their messages**
+### ticket handling
+- only **one staff** may handle a ticket at a time
+- a **defender** may assist if required
+- only **one senior reporter** may review when requested
+- after acceptance for voting, the **sr+ who publishes** the report is responsible for **closing the ticket**
+### ticket priority
+- handle **older tickets first**
+- do not skip tickets because they seem difficult
+### ticket limits
+- **trial reporter** — 1 active, 2 on-hold, 1 self ticket
+- **reporter** — 2 active, 2 on-hold, 1 self ticket
+- if an on-hold ticket becomes active and exceeds your limit, you must **open one active ticket to other staff**
+### reminders / on hold
+- staff may place **their own tickets** on a reminder when necessary, using `,rm`
+- common reasons include
+  - waiting for defendant response
+  - waiting for contributor response
+- do not set reminders longer than 12h as it will spam the ticket.
+  - do not bypass this by setting consecutive reminders of 12h without a response from the contributor.
+- if a ticket needs to be put **on hold** for an extended period (e.g. several days), rename your ticket to _hold request_, and ping sr+. if approved, sr+ will rename your ticket to _on hold_.
+- abuse of reminders / on hold may result in **warnings or demotion**.
+### ticket closure
+- if the contributor does not reply within **12 hours**, you may request closure
+- if no meaningful proof is provided within **4 hours**, you may request closure
             """), ephemeral=True)
         if self.select_callback.values[0] == "autoresponders":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### ,adm
-- Pings adm+.
-### ,sr
-- Pings sr+.
-### ,tp
-- Pings ticket ping, e.g. when you want open a ticket to other Staff.
-### ,ban perms
-- Pings ban perms.
-### ,cl
-- Sends closing guide.
-### ,tags
-- Sends tags descriptions.
+`,sr`　–　pings sr+.
+`,adm`　–　pings adm+.
+`,tp`　–　pings ticket ping.
+`,ban perms`　–　pings ban perms.
+`,cl`　–　sends closing guide.
+`,tags`　–　sends tags descriptions.
+`.dm`　–　sends dm confrontation template.
+`.yue`　–　pings <@1303291812282372137>.
+`.ping`　–　sends a troll reply!
                 """), ephemeral=True)
 
 @send.command(name="staffrules", description="Sends staff rules.")
@@ -2109,33 +2114,33 @@ class StaffGuideView(discord.ui.View):
 async def send_staffrules(interaction: discord.Interaction):
     await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
 ## <:2paperclip:1449650494044639335>　　staff　　rules　　ꫂ᭪
-### Follow Server Rules
-- Adhere to all [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160)
-- Particular focus on **No Discrimination**, **No Hate or Threats**, and **No NSFW Content**
-### Confidentiality
-- Follow the Non-Disclosure Agreement (NDA)
-- Violation may result in immediate removal from Staff, a report as Unprofessional Staff, and/or a server ban depending on severity
-### Ticket Protocol
-- Only one Staff should handle a ticket at a time, unless a Defender is required
-- Do not hijack tickets assigned to others
-- Avoid tickets where you are related to the Defendant
-- Keep communication on-topic and case-related; no side-chatting
-- When handling multiple reports in a ticket, address one at a time in order
-### Professionalism
-- Reports on Staff may result in quarantine and demotion if accepted
-- Speaking negatively about ticket participants or Staff (current or former) is Unprofessional and will be addressed
-### Respect
-- Remain respectful, even toward those you dislike
-- Personal feelings are not an excuse for rudeness or unprofessional behavior
-### No Inappropriate Jokes
-- Jokes about ||suicide||, ||self-harm||, or ||body shaming|| (e.g., "||kys||", "||fat||", "||keep yourself safe||") are strictly prohibited
-- Even if said without ill-intention, these are not acceptable as they may make others uncomfortable
-### No Drama
-- Keep personal conflicts out of the server
-- Resolve issues privately and respectfully, or seek proper mediation
-### No Favouritism
-- Do not excessively praise, defend, or favour specific individuals
-- Favoritism that undermines neutrality, decision-making, or report handling is prohibited
+### follow server rules
+- adhere to all [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160)
+- particular focus on **no discrimination**, **no hate or threats**, and **no nsfw content**
+### confidentiality
+- follow the non-disclosure agreement (nda)
+- violation may result in removal from staff and/or a server ban depending on severity
+### ticket protocol
+- only one staff should handle a ticket at a time, unless a defender is required
+- do not hijack tickets claimed by others
+- avoid tickets where you are related to the defendant
+- keep communication on-topic and case-related; refrain from side-chatting
+- when handling multiple reports in a ticket, address one at a time in order
+### professionalism
+- reports on staff may result in quarantine and demotion if accepted
+- speaking negatively about ticket participants or staff (current or former) is unprofessional and will be addressed
+### respect
+- remain respectful, even toward those you dislike
+- personal feelings are not an excuse for rudeness or unprofessional behavior
+### no inappropriate jokes
+- jokes about ||suicide||, ||self-harm||, or ||body shaming|| (e.g., "||kys||", "||fat||", "||keep yourself safe||") are strictly prohibited
+- even if said without ill-intention, these are not acceptable as they may make others uncomfortable
+### no drama
+- keep personal conflicts out of the server
+- resolve issues privately and respectfully, or seek proper mediation
+### no favouritism
+- do not excessively praise, defend, or favour specific individuals
+- favoritism that undermines neutrality, decision-making, or report handling is prohibited
 """), view=StaffRulesView())
     await interaction.response.send_message("Staff Rules have been sent.", ephemeral=True)
 
@@ -2165,7 +2170,7 @@ async def send_rules(interaction: discord.Interaction, colour: str=None, image: 
 ╴be civil, any form of harassment, discrimination, bullying, etc will not be tolerated.
 
 **　⸝⸝⊹　do not reveal or ask for personal infoㆍ**
-╴this includes other’s info and your own, please do not share too much for your own and others' safety.
+╴this includes other’s info and your own, please do not share too much for your own and others’ safety.
 
 **　⊹⸝⸝　no plagiarismㆍ**
 ╴inspiration is allowed but do not plagiarise any content, please give proper credits.
@@ -2392,12 +2397,12 @@ _we do not ban scammers so that they may make an appeal._
             """), ephemeral=True)
         if self.select_callback.values[0] == "how can I contact admin+?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　how can I contact admin+?
 
                 """), ephemeral=True)
         if self.select_callback.values[0] == "how can I request a collaboration?":
             await interaction.response.send_message(embed=discord.Embed(description="""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　how can I request a collaboration?
 
                 """), ephemeral=True)
 
@@ -2498,7 +2503,7 @@ yes, you may choose to remain anonymous when reporting by requesting it when ope
 ### <a:tri_whitearrow2:1388147186654515273>　　can I report someone who has already been reported?
 yes, the same user may be reported multiple times to keep track of their latest activity, especially if
 - they are being reported for a separate incident under a different report tag/reason.
-- the new incident occurred at least 6 months after their latest report.
+- the new incident occurred 6 or more months after their latest report.
             """), ephemeral=True)
         if self.select_callback.values[0] == "can I update or withdraw my report?":
             await interaction.response.send_message(embed=discord.Embed(description="""
@@ -2548,7 +2553,10 @@ class FAQAppealsView(discord.ui.View):
         if self.select_callback.values[0] == "how to make an appeal?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
 ### <a:tri_whitearrow2:1388147186654515273>　　how to make an appeal?
-wip
+- <#1375261699111784478> to make an appeal if you believe your report is inaccurate or unfair, or if you have served the minimum report period (mrp) as stated on your report or in [legal codex](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/).
+  - note that appeals based on mrp are not guaranteed and will be reviewed on a case by case basis.
+- please provide all relevant information that may prove your report to be inaccurate or unfair.
+- you may request for a staff to be your defender i.e. argue in favour of your appeal. however, defenders will remain unbiased, and appeals will still be judged based on the facts and evidence presented.
             """), ephemeral=True)
         if self.select_callback.values[0] == "what can be appealed?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
@@ -2610,47 +2618,47 @@ class FAQDefinitionsStandardsView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "what is scamming?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what is scamming?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is a suspect?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what is a suspect?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is impersonation?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what is impersonation?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what do the report tags mean?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what do the report tags mean?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is beaming?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what is beaming?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is hitting?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what is hitting?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what is proof beyond reasonable doubt?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what is proof beyond reasonable doubt?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what does “insufficient proofs” mean?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what does “insufficient proofs” mean?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what does “invalid reason” mean?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what does “invalid reason” mean?
 wip
             """), ephemeral=True)
 
@@ -2673,37 +2681,37 @@ class FAQScamPreventionView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "how can I avoid being scammed?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　how can I avoid being scammed?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how do I identify impersonators?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　how do I identify impersonators?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how do I identify malicious links?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　how do I identify malicious links?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "can I report someone for refusing to use a middleman?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　can I report someone for refusing to use a middleman?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what should I do immediately after being scammed?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what should I do immediately after being scammed?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "can tri recover my lost items or money?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　can tri recover my lost items or money?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "what should I do if my account has been compromised?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　what should I do if my account has been compromised?
 wip
             """), ephemeral=True)
 
@@ -2723,22 +2731,22 @@ class FAQStaffTransparencyView(discord.ui.View):
     async def select_callback(self, interaction, select):
         if self.select_callback.values[0] == "who can access tickets & ongoing reports?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　who can access tickets & ongoing reports?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how does tri ensure reports & appeals are not biased?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　how does tri ensure reports & appeals are not biased?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how can I apply to be staff?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　how can I apply to be staff?
 wip
             """), ephemeral=True)
         if self.select_callback.values[0] == "how can I report a tri staff?":
             await interaction.response.send_message(embed=discord.Embed(description=f"""
-### <a:tri_whitearrow2:1388147186654515273>　　
+### <a:tri_whitearrow2:1388147186654515273>　　how can I report a tri staff?
 wip
             """), ephemeral=True)
 
@@ -2828,71 +2836,6 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
 <:tri_whiteheart:1434538078747365507>　　[staff & transparency]({msg6.jump_url})
 """)
     await interaction.channel.send("_ _", embed=embed)
-
-
-
-#     embed2 = discord.Embed(colour=colour, description="""
-# ### <a:tri_whitearrow2:1388147186654515273>　　how to check for reports?
-#
-# > - `,c` to check
-# >   - `,c 𝐮𝐬𝐞𝐫 𝐢𝐝`
-# >   - `,c 𝐢𝐧𝐯𝐢𝐭𝐞`
-# >   - `,c 𝐠𝐚𝐦𝐞 𝐮𝐢𝐝`
-# > - how to obtain user id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
-#
-# 　　**__examples__**
-#
-# > - `,c 1450073025818136598`
-# > - `,c` <@1450073025818136598>
-# > - `,c tri`
-# > - `,c https://discord.gg/tri`
-# > - `,c genshin 666666666`
-# > - `,c Honkai: Star Rail 777777777`
-# > - `,c idv eu/na10101010`
-#
-# """)
-#     msg2 = await interaction.channel.send("_ _", embed=embed2)
-#     embed3 = discord.Embed(colour=colour, description="""
-# ### <a:tri_whitearrow2:1388147186654515273>　　how to stay updated with tri’s reports?
-#
-# > - follow tri’s report announcement channels <#1375132097605406721>, <#1375184563675856916> and <#1515531623045533716> to receive updates in your own server.
-# > - how to follow a channel? guide [here](https://support.discord.com/hc/en-us/articles/360028384531-Channel-Following-FAQ).
-#
-# > - add tri’s bot <@1457249982104211467> to your server by clicking **add app** on the bot’s profile, or click [here](https://discord.com/oauth2/authorize?client_id=1457249982104211467).
-# > - `,c` to check users, servers or accounts using <@1457249982104211467>.
-# > - `/check all` to check your server for users with bannable reports.
-# """)
-#     msg3 = await interaction.channel.send("_ _", embed=embed3)
-#     embed4 = discord.Embed(colour=colour, description=f"""
-# ### <a:tri_whitearrow2:1388147186654515273>　　how to make a report?
-#
-# > - <#1375261699111784478> to make a report.
-# >   - please ensure you have the user id, server invite or account uid.
-# >   - how to obtain user id? guide [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
-# >   - please also check if the user has been reported recently (within the past 6 months) for similar reasons. [how to check for reports?]({msg2.jump_url})
-# > - provide **uncropped**, **unedited** screenshots or screen recordings from **top to bottom** as far as possible.
-#
-# """)
-#     msg4 = await interaction.channel.send("_ _", embed=embed4)
-#     embed5 = discord.Embed(colour=colour, description=f"""
-# ### <a:tri_whitearrow2:1388147186654515273>　　how to make an appeal?
-#
-# > - <#1375261699111784478> to make an appeal if you believe your report is inaccurate or unfair, or if you have served minimum report period (mrp) as stated in [legal codex](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/).
-# >   - note that appeals based on mrp are not guaranteed and will be reviewed on a case by case basis.
-# > - please provide all relevant information that may prove your report to be inaccurate or unfair.
-# > - you may request for a staff to be your defender i.e. argue in favour of your appeal. however, defenders will remain unbiased, and appeals will still be judged based on the facts and evidence presented.
-# """)
-#     msg5 = await interaction.channel.send("_ _", embed=embed5)
-#     embed6 = discord.Embed(colour=colour, description=f"""
-# ### <a:tri_whitearrow2:1388147186654515273>　　what are tri’s tos and server rules?
-# > - our terms of service may be found [here](https://docs.google.com/document/d/1ef3bb0l1EdXELcAbLDT7QOXFwbQco-600G-4HE6E7KM/edit?tab=t.0#heading=h.d0k3z1hwlns).
-# > - please read through [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160) carefully. not following rules may result in warns or bans.
-# > - we do not ban scammers so that they may make an appeal.
-
-#
-# """)
-#     msg6 = await interaction.channel.send("_ _", embed=embed6)
-
     await interaction.followup.send("Sent!", ephemeral=True)
 
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -2972,7 +2915,7 @@ async def anon_edit(interaction: discord.Interaction, message_id: str, message: 
     try:
         target_message = await interaction.channel.fetch_message(int(message_id))
         if target_message.author.id != bot.user.id:
-            await interaction.followup.send("I can only edit messages sent by the bot.", ephemeral=True)
+            await interaction.followup.send("I can only edit messages sent by MIKU.", ephemeral=True)
             return
         images = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10]
                   if img is not None]
