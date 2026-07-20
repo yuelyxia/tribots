@@ -551,9 +551,7 @@ async def on_message(message: discord.Message):
                 text = replace_mentions(message).strip()
                 if text:
                     accent = get_accent(message.author.id)
-                    await tts_queues[guild_id].put((
-                        f"{message.author.display_name} says {text}",
-                        accent))
+                    await tts_queues[guild_id].put((f"{message.author.display_name} says {text}", accent))
 
     await bot.process_commands(message)
 
@@ -588,6 +586,30 @@ async def pilot(ctx, *, desc:str=None):
         await ctx.send(view=PilotView())
     if desc == "forms":
         await ctx.send("> By filling any of the forms below, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.", view=PilotFormsView())
+    if desc == "guide":
+        await ctx.send(discord.Embed(colour=0xffffff, description="""
+### <a:tri_whitearrow2:1388147186654515273>　　pilot guide
+1. Check the client (and their alts, if any) across all scam awareness servers to ensure they do not have scam report(s) made on them.
+  - If the client is reported under a non-bannable tag (e.g. suspect/dwc/twc), you may proceed but choose to request for fee upfront before you start on the task.
+- Discuss the task(s), time limit, fee (if any) and when you (the pilot) will receive the fee in detail beforehand (in DMs if necessary).
+- Create a ticket, add the client, and ask them to complete the appropriate game form.
+- Review the submitted form. Ensure the task(s), time limit and fee (if any) are specified correctly.
+- Request the account login details via DMs and log into the account.
+- Screenshot / screen record the following
+  - Profile menu
+  - 5 star characters & duplicates (constellations, eidolons etc.)
+  - Inventory (levelled 5 star artifacts/relics, 5 star weapons, quest items, gadgets and precious items, minimally click through all tabs to show item count)
+  - Wish history (all banners)
+  - Shop (welkin page, skins owned, premium currency top-up page)
+  - Customer Service (currency records (genesis crystals/oneiric shards, welkin/express pass), welkin/express pass records, User Center (username/phone, 3rd party links & list of trusted devices))
+  - Abyss & Imaginarium Theatre challenge summary (minimally oldest & most recent).
+- Notify the client before logging in and after logging out. Give constant updates, and complete the task in a timely manner and do not ghost at any point of time.
+- Always ask before doing anything on the account other than the tasks requested.
+- After the service, screenshot/record everything listed above and remove your device from the list of trusted devices on their account and send the screen recording showing you have done so.
+  - It it recommended to record this in a single video and only stop recording after showing you no longer have access to the account.
+- Ask for the agreed fee (if any) and ask the client to leave a vouch.
+  - For large services, it is recommended to ask for the fee at halfway, or even partial fee at an agreed progress.
+"""))
 
 class PilotView(discord.ui.View):
     def __init__(self):
@@ -610,7 +632,7 @@ Time Limit:
 Fee: 
 Do’s & Don’ts: 
 Account Issues: 
-> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
+> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation if you choose to cancel.
 """)
 
     @discord.ui.button(label="hsr", style=discord.ButtonStyle.grey, custom_id="pilot_forms:hsr")
@@ -624,7 +646,7 @@ Time Limit:
 Fee: 
 Do’s & Don’ts: 
 Account Issues: 
-> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
+> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation if you choose to cancel.
 """)
 
     @discord.ui.button(label="wuwa", style=discord.ButtonStyle.grey, custom_id="pilot_forms:wuwa")
@@ -638,7 +660,7 @@ Time Limit:
 Fee: 
 Do’s & Don’ts: 
 Account Issues: 
-> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
+> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation if you choose to cancel.
 """)
 
     @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="pilot_forms:roblox")
@@ -650,7 +672,7 @@ Task:
 Time Limit: 
 Fee: 
 Do’s & Don’ts: 
-> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.
+> By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation if you choose to cancel.
 """)
 
 @bot.command(name="mm")
@@ -661,6 +683,43 @@ async def mm(ctx, *, desc: str=None):
         await ctx.send("> By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.", view=MMFormsView())
     if desc == "risks":
         await ctx.send(view=MMRisksView())
+    if desc == "guide":
+        await ctx.send(discord.Embed(colour=0xffffff, description="""
+### <a:tri_whitearrow2:1388147186654515273>　　mm guide
+1. Ask the trader who posted the MM request to ping you (the MM) and the other trader in chat.
+- Check both traders (and their alts, if any) across all scam awareness servers to ensure neither has any scam reports made on them.
+  - If either trader is reported under a non-bannable tag (e.g. suspect/dwc/twc), you may proceed with your & the other trader’s consent.
+- Create a ticket, add both traders, and ask each of them to complete the appropriate game form.
+- Review the submitted forms.
+  - Send the relevant risk autoresponders for every applicable risk.
+  - Explain each risk and ensure both traders explicitly agree before proceeding.
+- Request the account login details via DMs and log into the account.
+- Screenshot / screen record the following
+  - Profile menu
+  - 5 star characters & duplicates (constellations, eidolons etc.)
+  - 5 star weapons
+  - Shop (welkin page, skins owned, premium currency top-up page)
+  - Customer Service (currency records (genesis crystals/oneiric shards, welkin/express pass), welkin/express pass records, User Center (username/phone, 3rd party links & list of trusted devices))
+  - Abyss & Imaginarium Theatre challenge summary (minimally oldest & most recent).
+- Verify that all account details match the submitted form and explain any discrepancies or issues to both traders.
+- Secure the account.
+  - Log into [account.hoyoverse.com](https://account.hoyoverse.com).
+  - Link your dummy email.
+  - Remove all trusted devices.
+  - Check for deadlinks, especially PSN deadlinks.
+  - Change hoyoverse account password (Skip if too many requests).
+  - Screenshot the following and send into the mm ticket: the email has been changed to yours; and all trusted devices have been removed.
+- If email surrender is required
+  - Ask whether the email has been surrendered within the past 72 hours (especially Gmail). If yes, do not proceed.
+  - Explain all email surrender risks beforehand.
+  - Refer to the Gmail/Outlook Surrender Guides where applicable.
+- If it’s an account to account trade, repeat steps 5–9 and secure the other trader’s account.
+- Once the account(s) are fully secured, ask for the agreed fee (if any) and ask both traders to leave a vouch.
+- Lastly, give the account(s) to the respective trader(s).
+  - DM each trader their respective login details.
+  - Assist them with securing the account after handover.
+  - If an email was surrendered, remind the new owner not to change the Gmail password for the next 72 hours.
+"""), view=MMGuidesView())
 
 class MMView(discord.ui.View):
     def __init__(self):
@@ -668,9 +727,25 @@ class MMView(discord.ui.View):
     @discord.ui.button(label="forms", style=discord.ButtonStyle.grey, custom_id="mm:forms")
     async def forms_button(self, interaction, button):
         await interaction.response.send_message(view=MMFormsView())
+        button.disabled = True
+        await interaction.message.edit(view=self)
     @discord.ui.button(label="risks", style=discord.ButtonStyle.grey, custom_id="mm:risks")
     async def risks_button(self, interaction, button):
         await interaction.response.send_message(view=MMRisksView())
+        button.disabled = True
+        await interaction.message.edit(view=self)
+
+class MMGuidesView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label="gmail", style=discord.ButtonStyle.grey, custom_id="mm_guides:gmail")
+    async def gmail_button(self, interaction, button):
+        await interaction.response.send_message("""
+### Gmail Securing Guide
+wip
+""")
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
 class MMFormsView(discord.ui.View):
     def __init__(self):
@@ -692,6 +767,8 @@ Other Issues:
 Fee + who’s providing: 
 > By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
 """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="hsr", style=discord.ButtonStyle.grey, custom_id="mm_forms:hsr")
     async def hsr_button(self, interaction, button):
@@ -709,6 +786,8 @@ Other Issues:
 Fee + who’s providing: 
 > By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
 """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="wuwa", style=discord.ButtonStyle.grey, custom_id="mm_forms:wuwa")
     async def wuwa_button(self, interaction, button):
@@ -727,6 +806,8 @@ Other Issues:
 Fee + who’s providing: 
 > By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
 """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="mm_forms:roblox")
     async def roblox_button(self, interaction, button):
@@ -742,6 +823,8 @@ Other Issues:
 Fee + who’s providing: 
 > By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
 """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="roblox items", style=discord.ButtonStyle.grey, custom_id="mm_forms:roblox_items")
     async def roblox_items_button(self, interaction, button):
@@ -753,6 +836,8 @@ Roblox Game Items:
 Fee + who’s providing: 
 > By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.
 """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
 class MMRisksView(discord.ui.View):
     def __init__(self):
@@ -770,6 +855,8 @@ class MMRisksView(discord.ui.View):
 - **PSN and Xbox links are especially __dangerous__** as they do not require new device verification and require Hoyoverse CS to unlink. a PSN link may be considered dead if the most recent trophy was gained >6 months ago.
 > **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
                     """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="hacked abyss", style=discord.ButtonStyle.grey, custom_id="mm_risks:hacked_abyss")
     async def hacked_abyss_button(self, interaction, button):
@@ -782,6 +869,8 @@ class MMRisksView(discord.ui.View):
 - The risk may not be high, but it is always there and should always be mentioned when trading.
 > **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
                     """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="lost receipts", style=discord.ButtonStyle.grey, custom_id="mm_risks:lost_receipts")
     async def lost_receipts_button(self, interaction, button):
@@ -793,9 +882,11 @@ class MMRisksView(discord.ui.View):
 - Increased chances of retrieval from the owner who purchased something. the older the receipt, the easier the retrieval.
 - Scammers may lie about having lost the receipts when they still have possession of them but are unwilling to provide them so that they can retrieve the account from Hoyoverse CS later on.
 - Purchase records are only kept for 6 months in currency records.
-- Purchases made within 2 weeks can be __refunded.__ It will result in **negative premium currency (e.g. primogems) which needs to be brought back to 0 or more within __1 week__ or the account will be banned.
+- Purchases made within 2 weeks can be __refunded.__ It will result in **negative premium currency** (e.g. primogems) which needs to be brought back to 0 or more within __1 week__ or the account will be banned.
 > **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
                         """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="email surrender", style=discord.ButtonStyle.grey, custom_id="mm_risks:email_surrender")
     async def email_surrender_button(self, interaction, button):
@@ -810,6 +901,8 @@ class MMRisksView(discord.ui.View):
 **__FOR GMAILS: Do not change password within the first 72h__ and avoid changing recovery info frequently to prevent locking.** __Outlook__ emails are __safe__ to change password immediately.
 > **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
                             """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
 @bot.command(name="adm", help="Pings ADM+.")
 async def adm(ctx):
@@ -935,11 +1028,12 @@ async def rn(ctx, *, new_name: str):
             await ctx.send("This command can only be used in a channel or thread.")
 @rn.error
 async def rn_error(ctx, error):
-    if ctx.guild.id == TRI_Archive or ctx.guild.id == Tethys:
-        return
     if isinstance(error, commands.CommandOnCooldown):
-        remaining = error.retry_after  # cooldown time in seconds
-        return await ctx.send(f"This command is on cooldown. Retry in {round(remaining)} seconds.")
+        now_ts = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        retry_at = int(now_ts + error.retry_after)
+        return await ctx.send(
+            f"This command is on cooldown. Retry <t:{retry_at}:R>."
+        )
     raise error
 
 async def get_active_claims(channel_id):
@@ -3512,7 +3606,7 @@ async def add(ctx, mode: str = None, member: str = None):
     try:
         member_obj = await commands.MemberConverter().convert(ctx, member)
     except commands.BadArgument:
-        await ctx.reply("Could not find that user in this server. Make sure it's a valid mention or user ID.")
+        await ctx.reply("Could not find that user in this server. Make sure it’s a valid mention or user ID.")
         return
 
     manager = getattr(bot, "ticket_manager", None)
@@ -3581,7 +3675,7 @@ async def remove(ctx, mode: str = None, target: str = None):
     try:
         member_obj = await commands.MemberConverter().convert(ctx, target)
     except commands.BadArgument:
-        await ctx.reply("Could not find that user in this server. Make sure it's a valid mention or user ID.")
+        await ctx.reply("Could not find that user in this server. Make sure it’s a valid mention or user ID.")
         return
     manager = getattr(bot, "ticket_manager", None)
     if not manager:
