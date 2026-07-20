@@ -587,7 +587,7 @@ async def pilot(ctx, *, desc:str=None):
     if desc == "forms":
         await ctx.send("> By filling any of the forms below, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.", view=PilotFormsView())
     if desc == "guide":
-        await ctx.send(discord.Embed(colour=0xffffff, description="""
+        await ctx.send(embed=discord.Embed(colour=0xffffff, description="""
 ### <a:tri_whitearrow2:1388147186654515273>　　pilot guide
 1. Check the client (and their alts, if any) across all scam awareness servers to ensure they do not have scam report(s) made on them.
   - If the client is reported under a non-bannable tag (e.g. suspect/dwc/twc), you may proceed but choose to request for fee upfront before you start on the task.
@@ -684,7 +684,7 @@ async def mm(ctx, *, desc: str=None):
     if desc == "risks":
         await ctx.send(view=MMRisksView())
     if desc == "guide":
-        await ctx.send(discord.Embed(colour=0xffffff, description="""
+        await ctx.send(embed=discord.Embed(colour=0xffffff, description="""
 ### <a:tri_whitearrow2:1388147186654515273>　　mm guide
 1. Ask the trader who posted the MM request to ping you (the MM) and the other trader in chat.
 - Check both traders (and their alts, if any) across all scam awareness servers to ensure neither has any scam reports made on them.

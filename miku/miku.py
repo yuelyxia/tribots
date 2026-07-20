@@ -2085,6 +2085,7 @@ class StaffGuideView(discord.ui.View):
 - if an on-hold ticket becomes active and exceeds your limit, you must **open one active ticket to other staff**
 ### reminders / on hold
 - staff may place **their own tickets** on a reminder when necessary, using `,rm`
+  - example: `,rm 3` creates a reminder for 3 hours. miku will ping you after the reminder expires.
 - common reasons include
   - waiting for defendant response
   - waiting for contributor response
