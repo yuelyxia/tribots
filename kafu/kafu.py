@@ -573,6 +573,26 @@ async def on_member_remove(member):
 
 # text commands
 
+@bot.command(name='fm', help="Sends a jump url to the first message in the thread.")
+async def fm(ctx):
+    if ctx.guild.id == TRI_Archive or ctx.guild.id == Tethys:
+        return
+    guild_id = str(ctx.guild.id)
+    server_info = servers.find_one({"_id": guild_id})
+    if server_info:
+        staff_role = server_info.get("staff_role")
+    if (staff_role and get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">",
+                                                                                         "")))) in ctx.author.roles or ctx.author.guild_permissions.manage_channels:
+        if isinstance(ctx.channel, discord.Thread):
+            thread = ctx.channel
+            first_message = [msg async for msg in thread.history(limit=1, oldest_first=True)]
+            if first_message:
+                msg = first_message[0]
+                embed = discord.Embed(title="First message", description=f"[Jump]({msg.jump_url})", colour=0xffffff)
+                await ctx.reply(embed=embed)
+        else:
+            await ctx.reply("This command can only be used in a thread.")
+
 @bot.command(name="afk")
 async def afk_command(ctx, *, reason="none"):
     embed = discord.Embed(colour=0xffffff, description=f"You are now afk with reason: **{reason}**")
