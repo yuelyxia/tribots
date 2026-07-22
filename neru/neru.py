@@ -68,10 +68,17 @@ async def update_alts_count():
                                   name=f"{alts_count} alts."
                               )
                               )
+@tasks.loop(hours=24)
+async def clear_proof_cache():
+    proof_cache.clear()
+    print("Proof cache cleared!")
 
 @bot.event
 async def on_ready():
-    update_alts_count.start()
+    if not update_alts_count.is_running():
+        update_alts_count.start()
+    if not clear_proof_cache.is_running():
+        clear_proof_cache.start()
 
 @bot.event
 async def on_message(message: discord.Message):
