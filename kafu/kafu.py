@@ -603,9 +603,9 @@ async def afk_command(ctx, *, reason="none"):
 @bot.command(name="pilot")
 async def pilot(ctx, *, desc:str=None):
     if not desc:
-        await ctx.send(view=PilotView())
+        await ctx.send(view=PilotView(), ephemeral=True)
     if desc == "forms":
-        await ctx.send("> By filling any of the forms below, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation.", view=PilotFormsView())
+        await ctx.send(view=PilotFormsView(), ephemeral=True)
     if desc == "guide":
         await ctx.send(embed=discord.Embed(colour=0xffffff, description="""
 ### <a:tri_whitearrow2:1388147186654515273>　　pilot guide
@@ -615,10 +615,10 @@ async def pilot(ctx, *, desc:str=None):
 - Create a ticket, add the client, and ask them to complete the appropriate game form.
 - Review the submitted form. Ensure the task(s), time limit and fee (if any) are specified correctly.
 - Request the account login details via DMs and log into the account.
-- Screenshot / screen record the following
+- Screenshot / screen record the following and send into the service ticket.
   - Profile menu
   - 5 star characters & duplicates (constellations, eidolons etc.)
-  - Inventory (levelled 5 star artifacts/relics, 5 star weapons, quest items, gadgets and precious items, minimally click through all tabs to show item count)
+  - Inventory (5 star weapons, levelled 5 star artifacts/relics, quest items, gadgets and precious items, minimally click through all tabs to show item count)
   - Wish history (all banners)
   - Shop (welkin page, skins owned, premium currency top-up page)
   - Customer Service (currency records (genesis crystals/oneiric shards, welkin/express pass), welkin/express pass records, User Center (username/phone, 3rd party links & list of trusted devices))
@@ -636,14 +636,14 @@ class PilotView(discord.ui.View):
         super().__init__(timeout=None)
     @discord.ui.button(label="forms", style=discord.ButtonStyle.grey, custom_id="pilot:forms")
     async def forms_button(self, interaction, button):
-        await interaction.response.send_message(view=PilotFormsView())
+        await interaction.channel.send(view=PilotFormsView(), ephemeral=True)
 
 class PilotFormsView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
     @discord.ui.button(label="genshin", style=discord.ButtonStyle.grey, custom_id="pilot_forms:genshin")
     async def genshin_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ### Genshin Impact Pilot Form
 Account Size: 
 Server: 
@@ -657,7 +657,7 @@ Account Issues:
 
     @discord.ui.button(label="hsr", style=discord.ButtonStyle.grey, custom_id="pilot_forms:hsr")
     async def hsr_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ### Honkai: Star Rail Pilot Form
 Account Size: 
 Server: 
@@ -671,7 +671,7 @@ Account Issues:
 
     @discord.ui.button(label="wuwa", style=discord.ButtonStyle.grey, custom_id="pilot_forms:wuwa")
     async def wuwa_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ### Wuthering Waves Pilot Form
 Account Size: 
 Server: 
@@ -685,7 +685,7 @@ Account Issues:
 
     @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="pilot_forms:roblox")
     async def roblox_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ### Roblox Pilot Form
 Roblox Game: 
 Task: 
@@ -698,11 +698,11 @@ Do’s & Don’ts:
 @bot.command(name="mm")
 async def mm(ctx, *, desc: str=None):
     if not desc:
-        await ctx.send(view=MMView())
+        await ctx.send(view=MMView(), ephemeral=True)
     if desc == "forms":
-        await ctx.send("> By filling any of the forms below, you agree to vouch if at least **one** account was checked, and give fee if at least **one** account was **checked and __secured__** OR **two** accounts were checked before cancellation.", view=MMFormsView())
+        await ctx.send(view=MMFormsView(), ephemeral=True)
     if desc == "risks":
-        await ctx.send(view=MMRisksView())
+        await ctx.send(view=MMRisksView(), ephemeral=True)
     if desc == "guide":
         await ctx.send(embed=discord.Embed(colour=0xffffff, description="""
 ### <a:tri_whitearrow2:1388147186654515273>　　mm guide
@@ -714,26 +714,29 @@ async def mm(ctx, *, desc: str=None):
   - Send the relevant risk autoresponders for every applicable risk.
   - Explain each risk and ensure both traders explicitly agree before proceeding.
 - Request the account login details via DMs and log into the account.
-- Screenshot / screen record the following
+- Screenshot / screen record the following and send into the service ticket.
   - Profile menu
   - 5 star characters & duplicates (constellations, eidolons etc.)
-  - 5 star weapons
+  - Inventory (5 star weapons, levelled 5 star artifacts/relics, quest items, gadgets and precious items, minimally click through all tabs to show item count)
   - Shop (welkin page, skins owned, premium currency top-up page)
   - Customer Service (currency records (genesis crystals/oneiric shards, welkin/express pass), welkin/express pass records, User Center (username/phone, 3rd party links & list of trusted devices))
-  - Abyss & Imaginarium Theatre challenge summary (minimally oldest & most recent).
+  - Abyss & Imaginarium Theatre challenge summary (check every record).
 - Verify that all account details match the submitted form and explain any discrepancies or issues to both traders.
 - Secure the account.
   - Log into [account.hoyoverse.com](https://account.hoyoverse.com).
   - Link your dummy email.
   - Remove all trusted devices.
   - Check for deadlinks, especially PSN deadlinks.
-  - Change hoyoverse account password (Skip if too many requests).
+  - Change Hoyoverse account password (Skip if too many requests).
   - Screenshot the following and send into the mm ticket: the email has been changed to yours; and all trusted devices have been removed.
 - If email surrender is required
   - Ask whether the email has been surrendered within the past 72 hours (especially Gmail). If yes, do not proceed.
   - Explain all email surrender risks beforehand.
   - Refer to the Gmail/Outlook Surrender Guides where applicable.
 - If it’s an account to account trade, repeat steps 5–9 and secure the other trader’s account.
+- If trade has to be put on hold
+  - Record down the account login details safely.
+  - Remember to log into the account and fully check the account again when the trade resumes.
 - Once the account(s) are fully secured, ask for the agreed fee (if any) and ask both traders to leave a vouch.
 - Lastly, give the account(s) to the respective trader(s).
   - DM each trader their respective login details.
@@ -746,22 +749,50 @@ class MMView(discord.ui.View):
         super().__init__(timeout=None)
     @discord.ui.button(label="forms", style=discord.ButtonStyle.grey, custom_id="mm:forms")
     async def forms_button(self, interaction, button):
-        await interaction.response.send_message(view=MMFormsView())
+        await interaction.channel.send(view=MMFormsView(), ephemeral=True)
         button.disabled = True
         await interaction.message.edit(view=self)
     @discord.ui.button(label="risks", style=discord.ButtonStyle.grey, custom_id="mm:risks")
     async def risks_button(self, interaction, button):
-        await interaction.response.send_message(view=MMRisksView())
+        await interaction.channel.send(view=MMRisksView(), ephemeral=True)
         button.disabled = True
         await interaction.message.edit(view=self)
 
 class MMGuidesView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
+
     @discord.ui.button(label="gmail", style=discord.ButtonStyle.grey, custom_id="mm_guides:gmail")
-    async def gmail_button(self, interaction, button):
-        await interaction.response.send_message("""
+    async def gmail(self, interaction, button):
+        await interaction.channel.send("""
 ### Gmail Securing Guide
+wip
+""")
+        button.disabled = True
+        await interaction.message.edit(view=self)
+
+    @discord.ui.button(label="outlook", style=discord.ButtonStyle.grey, custom_id="mm_guides:outlook")
+    async def outlook(self, interaction, button):
+        await interaction.channel.send("""
+### Outlook Securing Guide
+wip
+""")
+        button.disabled = True
+        await interaction.message.edit(view=self)
+
+    @discord.ui.button(label="psn", style=discord.ButtonStyle.grey, custom_id="mm_guides:psn")
+    async def psn(self, interaction, button):
+        await interaction.channel.send("""
+### PSN Securing Guide
+wip
+""")
+        button.disabled = True
+        await interaction.message.edit(view=self)
+
+    @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="mm_guides:roblox")
+    async def roblox(self, interaction, button):
+        await interaction.channel.send("""
+### Roblox Securing Guide
 wip
 """)
         button.disabled = True
@@ -772,7 +803,7 @@ class MMFormsView(discord.ui.View):
         super().__init__(timeout=None)
     @discord.ui.button(label="genshin", style=discord.ButtonStyle.grey, custom_id="mm_forms:genshin")
     async def genshin_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ### Genshin Impact MM Form
 Account Size: 
 Adventure Rank: 
@@ -792,7 +823,7 @@ Fee + who’s providing:
 
     @discord.ui.button(label="hsr", style=discord.ButtonStyle.grey, custom_id="mm_forms:hsr")
     async def hsr_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ### Honkai: Star Rail MM form
 Account Size: 
 Trailblaze Level: 
@@ -811,7 +842,7 @@ Fee + who’s providing:
 
     @discord.ui.button(label="wuwa", style=discord.ButtonStyle.grey, custom_id="mm_forms:wuwa")
     async def wuwa_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ### Wuthering Waves MM form
 Account Size: 
 Union Level: 
@@ -831,7 +862,7 @@ Fee + who’s providing:
 
     @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="mm_forms:roblox")
     async def roblox_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ### Roblox MM form
 Username: 
 Do you have the original email? 
@@ -848,7 +879,7 @@ Fee + who’s providing:
 
     @discord.ui.button(label="roblox items", style=discord.ButtonStyle.grey, custom_id="mm_forms:roblox_items")
     async def roblox_items_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ### Roblox Items MM form
 Username: 
 Roblox Game: 
@@ -865,52 +896,52 @@ class MMRisksView(discord.ui.View):
 
     @discord.ui.button(label="deadlinks", style=discord.ButtonStyle.grey, custom_id="mm_risks:deadlinks")
     async def deadlinks_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ## Deadlinks <a:tri_whitealert:1496542298908000257>
-> 3rd party links are links binded to the hoyoverse account which serves as an alternative way to login - Facebook, Game Center, Google, PSN, Apple, Twitter. A deadlink is a 3rd party link where the owner no longer has access to the 3rd party account and is unable to unlink it, but also unable to login via the link, e.g. Twitter account was deleted.
+> 3rd party links are links bound to the Hoyoverse account which serves as an alternative way to login - Facebook, Game Center, Google, PSN, Apple, Twitter. A deadlink is a 3rd party link where the owner no longer has access to the 3rd party account and is unable to unlink it, but also unable to login via the link, e.g. Twitter account was deleted.
 **__Risks__**
 - **Hoyoverse:** Facebook, Twitter, Google, Apple and Game Center links are __safe__ and can be secured easily by removing all trusted devices via the [Hoyoverse website](https://account.hoyoverse.com). Attempts to login via these links will require a verification code sent to the linked email.
 - **Wuthering Waves:** Note that in Wuwa, ANY 3rd party links attached can be used to log into the account __without a verification code__, even after the password has been changed.
 - A deadlink may not be truly dead; scammers may lie about deadlinks and use them to attempt to retrieve the account later on.
 - **PSN and Xbox links are especially __dangerous__** as they do not require new device verification and require Hoyoverse CS to unlink. a PSN link may be considered dead if the most recent trophy was gained >6 months ago.
-> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
+> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. Choose to proceed only if you are willing to take the risks.
                     """)
         button.disabled = True
         await interaction.message.edit(view=self)
 
     @discord.ui.button(label="hacked abyss", style=discord.ButtonStyle.grey, custom_id="mm_risks:hacked_abyss")
     async def hacked_abyss_button(self, interaction, button):
-        await interaction.response.send_message("""
-## Hαcked Abyss <a:tri_whitealert:1496542298908000257>
+        await interaction.channel.send("""
+## Hacked Abyss <a:tri_whitealert:1496542298908000257>
 > A h.abyss account is where a bot was used to complete spiral abyss to gain primogems. A h.abyss account can be identified when a high number of stars has been obtained with missing stats (e.g. most damage taken) or an unusually low "strongest single strike" in the abyss challenge summary. They typically apply to reroll accounts using starter characters. However, other characters can also be used.
 **__Risks__**
 - As it is against Hoyoverse’s ToS, your account and/or IP address may get banned.
 - Asia accounts seem to be riskier than EU or NA accounts.
 - The risk may not be high, but it is always there and should always be mentioned when trading.
-> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
+> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. Choose to proceed only if you are willing to take the risks.
                     """)
         button.disabled = True
         await interaction.message.edit(view=self)
 
     @discord.ui.button(label="lost receipts", style=discord.ButtonStyle.grey, custom_id="mm_risks:lost_receipts")
     async def lost_receipts_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ## Lost Receipts <a:tri_whitealert:1496542298908000257>
-> These risks apply to **ALL __P2W__ accounts**, even if you have receipts. P2W is when there has been **any** purchase on the account, regardless of amount, when the purchase was made and from where (in-game top-up, codashop, giveaway win etc.)
+> These risks apply to **ALL __P2W__ accounts**, even if you have receipts. P2W (pay-to-win) is when there has been **any** purchase made on the account, regardless of amount, when the purchase was made and from where (in-game top-up, codashop, giveaway win etc.)
 > Receipts must have the __amount spent, transaction ID and what was purchased__ in a **__full__ screenshot** (preferably uncropped) to be a valid receipt.
 **__Risks__**
 - Increased chances of retrieval from the owner who purchased something. the older the receipt, the easier the retrieval.
 - Scammers may lie about having lost the receipts when they still have possession of them but are unwilling to provide them so that they can retrieve the account from Hoyoverse CS later on.
 - Purchase records are only kept for 6 months in currency records.
 - Purchases made within 2 weeks can be __refunded.__ It will result in **negative premium currency** (e.g. primogems) which needs to be brought back to 0 or more within __1 week__ or the account will be banned.
-> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
+> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. Choose to proceed only if you are willing to take the risks.
                         """)
         button.disabled = True
         await interaction.message.edit(view=self)
 
     @discord.ui.button(label="email surrender", style=discord.ButtonStyle.grey, custom_id="mm_risks:email_surrender")
     async def email_surrender_button(self, interaction, button):
-        await interaction.response.send_message("""
+        await interaction.channel.send("""
 ## Email Surrender <a:tri_whitealert:1496542298908000257>
 > Email surrender requires giving up the entire email, fully losing access of it, so ensure you will never need it in the future.
 **__Risks__**
@@ -919,7 +950,7 @@ class MMRisksView(discord.ui.View):
 - Previously surrendered emails are more risky.
 - Gmail holds recovery info for up to 2 weeks.
 **__FOR GMAILS: Do not change password within the first 72h__ and avoid changing recovery info frequently to prevent locking.** __Outlook__ emails are __safe__ to change password immediately.
-> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. choose to proceed only if you are willing to take the risks.
+> **Please __react__** once you have read and acknowledged that your middleman is __not__ responsible if these risks occur after the trade. Choose to proceed only if you are willing to take the risks.
                             """)
         button.disabled = True
         await interaction.message.edit(view=self)
@@ -1254,102 +1285,6 @@ async def close(ctx, *args):
     else:
         if get(ctx.guild.roles, id=int(staff_role.replace("<@&", "").replace(">", ""))) in ctx.author.roles:
             await ctx.reply(embed=embed, view=TicketCloseView(active_claims))
-
-class TicketClosingModal(discord.ui.Modal, title="Ticket Closing Reason"):
-    closing = discord.ui.TextInput(label="Closing", required=False, style=discord.TextStyle.paragraph)
-    def __init__(self, message: discord.Message, active_claims: list):
-        super().__init__()
-        self.message = message
-        self.active_claims = active_claims
-        embed = message.embeds[0]
-        current_closing = ""
-        if embed.fields:
-            current_closing = embed.fields[0].value.strip("`") or ""
-        self.closing.default = current_closing
-
-    async def on_submit(self, interaction: discord.Interaction):
-        embed = self.message.embeds[0]
-        val = f"{self.closing.value}" if self.closing.value.strip() else ""
-        if embed.fields:
-            embed.set_field_at(0, name="Closing", value=val, inline=False)
-        else:
-            embed.add_field(name="Closing", value=val, inline=False)
-        await self.message.edit(embed=embed, view=TRICloseView(self.active_claims))
-        await interaction.response.send_message("Closing updated.", ephemeral=True)
-
-class TRICloseView(discord.ui.View):
-    def __init__(self, active_claims):
-        super().__init__(timeout=120)
-        self.active_claims = active_claims
-
-    @discord.ui.button(label="Closing", style=discord.ButtonStyle.blurple, custom_id="triclose:closing",
-                       row=0)
-    async def closing_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_modal(TicketClosingModal(interaction.message, self.active_claims))
-
-    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green, custom_id="triclose:confirm")
-    async def confirm_button(self, interaction, button):
-        await interaction.response.defer(ephemeral=True)
-        if not is_sr(interaction.user):
-            return await interaction.followup.send("You do not have permission to close this ticket.", ephemeral=True)
-
-        closing = None
-        if interaction.message.embeds and interaction.message.embeds[0].fields:
-            closing = interaction.message.embeds[0].fields[0].value
-
-        if not closing:
-            return await interaction.followup.send("Please add a closing before confirming.", ephemeral=True)
-
-        ticket = await bot.ticket_manager.from_thread(interaction.channel_id)
-        if ticket is None:
-            return await interaction.followup.send("This channel is not an active ticket thread.", ephemeral=True)
-
-        claims_doc = ticket_claims.find_one({"_id": interaction.channel_id})
-
-        if "credited_users" not in ticket.data:
-            ticket.data["credited_users"] = []
-        new_claims = [uid for uid in self.active_claims if uid not in ticket.data["credited_users"]]
-
-        weekly_operations = []
-        alltime_operations = []
-        closer_id = str(interaction.user.id)
-
-        for uid in new_claims:
-            uid_str = str(uid)
-            weekly_operations.append(UpdateOne({"_id": uid_str}, {"$inc": {"weekly_tickets": 1}}))
-            alltime_operations.append(UpdateOne({"_id": uid_str}, {"$inc": {"tickets": 1}}))
-            ticket.data["credited_users"].append(uid)
-
-        weekly_operations.append(UpdateOne({"_id": closer_id}, {"$inc": {"weekly_closes": 1}}))
-        alltime_operations.append(UpdateOne({"_id": closer_id}, {"$inc": {"closes": 1}}))
-
-        await ticket.save()
-        if weekly_operations:
-            await asyncio.to_thread(staffweeklycol.bulk_write, weekly_operations)
-        if alltime_operations:
-            await asyncio.to_thread(trusteduserscol.bulk_write, alltime_operations)
-
-        await interaction.edit_original_response(content="Ticket credit(s) have been given.", view=None)
-        closing_embed = discord.Embed(description=f"""
-**Ticket closed by {interaction.user.mention}**
-        """)
-        await interaction.channel.send(embed=closing_embed)
-        try:
-            await bot.ticket_manager.close(
-                ticket=ticket,
-                closed_by=interaction.user.id,
-                closing=closing
-            )
-            await interaction.followup.send("Ticket closed successfully!", ephemeral=True)
-            await interaction.channel.edit(locked=True, archived=True)
-        except Exception as e:
-            await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, custom_id="triclose:cancel")
-    async def cancel_button(self, interaction, button):
-        await interaction.response.defer()
-        await interaction.edit_original_response(content="**Cancelled.** Ticket credit(s) have not been given.",view=None)
-
 
 class TicketCloseView(discord.ui.View):
     def __init__(self, active_claims):
@@ -2204,7 +2139,7 @@ async def vote_auto_close_loop():
     now = int(time.time())
     for session in votes.find({"ends_at": {"$lte": now}}):
         try:
-            channel = bot.get_channel(session["channel_id"])
+            channel = await bot.fetch_channel(session["channel_id"])
             if not channel:
                 continue
             message = await channel.fetch_message(session["_id"])
@@ -2228,6 +2163,16 @@ async def vote_cleanup_loop():
         "closed": True,
         "closed_at": {"$lte": one_hour_ago}
     })
+    for session in votes.find({}):
+        try:
+            channel = await bot.fetch_channel(session["channel_id"])
+            if not channel:
+                votes.delete_one({"_id": session["_id"]})
+            message = await channel.fetch_message(session["_id"])
+            if not message:
+                votes.delete_one({"_id": session["_id"]})
+        except Exception:
+            continue
 
 
 role = app_commands.Group(name="role", description="Manage roles.")
@@ -2271,12 +2216,20 @@ async def role_massadd(interaction: discord.Interaction, role: discord.Role, use
             failed_ids.append(uid)
     await interaction.followup.send(f"Added {role.mention} to **{success}** users. Failed: `{"` `".join(failed_ids)}`" if failed_ids else f"Added {role.mention} to **{success}** users.")
 
-mass = app_commands.Group(name="mass", description="Mass do something.")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+@app_commands.user_install()
+@app_commands.guild_install()
+class MassGroup(app_commands.Group):
+    def __init__(self):
+        super().__init__(name="mass", description="Mass do something.")
+mass = MassGroup()
 bot.tree.add_command(mass)
 
-@mass.command(name="delete", description="Delete messages between two message IDs.")
+@app_commands.allowed_contexts(guilds=True, dms=False, private_channels=True)
+@app_commands.guild_install()
+@mass.command(name="delete", description="Delete messages between two message IDs (inclusive).")
 @app_commands.checks.has_permissions(administrator=True)
-@app_commands.describe(start='start message ID or "oldest"', end="end message ID")
+@app_commands.describe(start='start message ID or “oldest”', end="end message ID")
 async def mass_delete(interaction: discord.Interaction, start: str, end: str):
     await interaction.response.defer(ephemeral=True)
     channel = interaction.channel
@@ -2299,7 +2252,8 @@ async def mass_delete(interaction: discord.Interaction, start: str, end: str):
         if start_msg.created_at > end_msg.created_at:
             return await interaction.followup.send("Invalid range: start must be earlier than end.", ephemeral=True)
     progress = await interaction.followup.send("Starting deletion... 0 messages deleted.", wait=True)
-    count = 0
+    start_msg.delete()
+    count = 1
     async for msg in channel.history(limit=None, oldest_first=True, after=after, before=end_msg):
         try:
             await msg.delete()
@@ -2308,7 +2262,111 @@ async def mass_delete(interaction: discord.Interaction, start: str, end: str):
                 await progress.edit(content=f"Deleting... **{count}** messages deleted.")
         except discord.HTTPException:
             pass
-    await progress.edit(content=f"Done. Deleted **{count}** messages.")
+    end_msg.delete()
+    await progress.edit(content=f"Done. Deleted **{count+1}** messages.")
+
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+@app_commands.user_install()
+@app_commands.guild_install()
+@mass.command(name="forward", description="Forward messages between two message IDs (inclusive).")
+@app_commands.rename(from_="from", to_="to")
+@app_commands.describe(
+    from_="source channel",
+    start='start message ID or “oldest”',
+    end="end message ID",
+    to_="destination channel or user"
+)
+async def mass_forward(
+    interaction: discord.Interaction,
+    from_: discord.TextChannel | discord.Thread,
+    start: str,
+    end: str,
+    to_: discord.TextChannel | discord.Thread | discord.User
+):
+    await interaction.response.defer(ephemeral=True)
+
+    try:
+        end_msg = await from_.fetch_message(int(end))
+    except discord.NotFound:
+        return await interaction.followup.send("End message not found.", ephemeral=True)
+    start_msg = None
+    if start.lower() == "oldest":
+        after = discord.utils.MISSING
+    else:
+        try:
+            start_msg = await from_.fetch_message(int(start))
+        except discord.NotFound:
+            return await interaction.followup.send("Start message not found.", ephemeral=True)
+        except ValueError:
+            return await interaction.followup.send("Invalid start message ID.", ephemeral=True)
+        after = start_msg
+    if start_msg:
+        if start_msg.created_at > end_msg.created_at:
+            return await interaction.followup.send("Invalid range: start must be earlier than end.", ephemeral=True)
+
+    if isinstance(to_, discord.User):
+        if interaction.guild is not None:
+            return await interaction.followup.send("When forwarding to a user, you must run this command inside your DM with that user.", ephemeral=True)
+        if not isinstance(interaction.channel, discord.DMChannel) or interaction.channel.recipient.id != to_.id:
+            return await interaction.followup.send("You must use this command inside your DM with the selected user.", ephemeral=True)
+        destination = interaction.channel
+    else:
+        destination = to_
+
+    files = []
+    for attachment in start_msg.attachments:
+        try:
+            files.append(await attachment.to_file())
+        except Exception:
+            pass
+    kwargs = {}
+    if start_msg.content:
+        kwargs["content"] = start_msg.content
+    if start_msg.embeds:
+        kwargs["embeds"] = start_msg.embeds
+    if files:
+        kwargs["files"] = files
+    if kwargs:
+        await destination.send(**kwargs)
+
+    forwarded = 1
+
+    async for msg in from_.history(limit=None, oldest_first=True, after=after, before=end_msg):
+        files = []
+        for attachment in msg.attachments:
+            try:
+                files.append(await attachment.to_file())
+            except Exception:
+                pass
+        kwargs = {}
+        if msg.content:
+            kwargs["content"] = msg.content
+        if msg.embeds:
+            kwargs["embeds"] = msg.embeds
+        if files:
+            kwargs["files"] = files
+        if kwargs:
+            await destination.send(**kwargs)
+        forwarded += 1
+
+    files = []
+    for attachment in end_msg.attachments:
+        try:
+            files.append(await attachment.to_file())
+        except Exception:
+            pass
+    kwargs = {}
+    if end_msg.content:
+        kwargs["content"] = end_msg.content
+    if end_msg.embeds:
+        kwargs["embeds"] = end_msg.embeds
+    if files:
+        kwargs["files"] = files
+    if kwargs:
+        await destination.send(**kwargs)
+
+    await interaction.followup.send(f"Forwarded **{forwarded+1}** message(s).", ephemeral=True)
+
 
 @bot.tree.command(name="say", description="KAFU will speak on your behalf.")
 @app_commands.checks.cooldown(1, 3)
@@ -3824,6 +3882,101 @@ class TRITicketView(discord.ui.View):
                 await interaction.response.send_modal(VerifyModal())
             elif selected_value == "others":
                 await interaction.response.send_modal(OthersModal())
+
+class TicketClosingModal(discord.ui.Modal, title="Ticket Closing Reason"):
+    closing = discord.ui.TextInput(label="Closing", required=False, style=discord.TextStyle.paragraph)
+    def __init__(self, message: discord.Message, active_claims: list):
+        super().__init__()
+        self.message = message
+        self.active_claims = active_claims
+        embed = message.embeds[0]
+        current_closing = ""
+        if embed.fields:
+            current_closing = embed.fields[0].value.strip("`") or ""
+        self.closing.default = current_closing
+
+    async def on_submit(self, interaction: discord.Interaction):
+        embed = self.message.embeds[0]
+        val = f"{self.closing.value}" if self.closing.value.strip() else ""
+        if embed.fields:
+            embed.set_field_at(0, name="Closing", value=val, inline=False)
+        else:
+            embed.add_field(name="Closing", value=val, inline=False)
+        await self.message.edit(embed=embed, view=TRICloseView(self.active_claims))
+        await interaction.response.send_message("Closing updated.", ephemeral=True)
+
+class TRICloseView(discord.ui.View):
+    def __init__(self, active_claims):
+        super().__init__(timeout=120)
+        self.active_claims = active_claims
+
+    @discord.ui.button(label="Closing", style=discord.ButtonStyle.blurple, custom_id="triclose:closing",
+                       row=0)
+    async def closing_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_modal(TicketClosingModal(interaction.message, self.active_claims))
+
+    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green, custom_id="triclose:confirm")
+    async def confirm_button(self, interaction, button):
+        await interaction.response.defer(ephemeral=True)
+        if not is_sr(interaction.user):
+            return await interaction.followup.send("You do not have permission to close this ticket.", ephemeral=True)
+
+        closing = None
+        if interaction.message.embeds and interaction.message.embeds[0].fields:
+            closing = interaction.message.embeds[0].fields[0].value
+
+        if not closing:
+            return await interaction.followup.send("Please add a closing before confirming.", ephemeral=True)
+
+        ticket = await bot.ticket_manager.from_thread(interaction.channel_id)
+        if ticket is None:
+            return await interaction.followup.send("This channel is not an active ticket thread.", ephemeral=True)
+
+        claims_doc = ticket_claims.find_one({"_id": interaction.channel_id})
+
+        if "credited_users" not in ticket.data:
+            ticket.data["credited_users"] = []
+        new_claims = [uid for uid in self.active_claims if uid not in ticket.data["credited_users"]]
+
+        weekly_operations = []
+        alltime_operations = []
+        closer_id = str(interaction.user.id)
+
+        for uid in new_claims:
+            uid_str = str(uid)
+            weekly_operations.append(UpdateOne({"_id": uid_str}, {"$inc": {"weekly_tickets": 1}}))
+            alltime_operations.append(UpdateOne({"_id": uid_str}, {"$inc": {"tickets": 1}}))
+            ticket.data["credited_users"].append(uid)
+
+        weekly_operations.append(UpdateOne({"_id": closer_id}, {"$inc": {"weekly_closes": 1}}))
+        alltime_operations.append(UpdateOne({"_id": closer_id}, {"$inc": {"closes": 1}}))
+
+        await ticket.save()
+        if weekly_operations:
+            await asyncio.to_thread(staffweeklycol.bulk_write, weekly_operations)
+        if alltime_operations:
+            await asyncio.to_thread(trusteduserscol.bulk_write, alltime_operations)
+
+        await interaction.edit_original_response(content="Ticket credit(s) have been given.", view=None)
+        closing_embed = discord.Embed(description=f"""
+**Ticket closed by {interaction.user.mention}**
+        """)
+        await interaction.channel.send(embed=closing_embed)
+        try:
+            await bot.ticket_manager.close(
+                ticket=ticket,
+                closed_by=interaction.user.id,
+                closing=closing
+            )
+            await interaction.followup.send("Ticket closed successfully!", ephemeral=True)
+            await interaction.channel.edit(locked=True, archived=True)
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, custom_id="triclose:cancel")
+    async def cancel_button(self, interaction, button):
+        await interaction.response.defer()
+        await interaction.edit_original_response(content="**Cancelled.** Ticket credit(s) have not been given.",view=None)
 
 async def create_ticket(
     interaction: discord.Interaction,

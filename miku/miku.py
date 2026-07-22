@@ -1046,20 +1046,20 @@ class TagsView(discord.ui.View):
 
 　　**__examples__**
 
-> - gaining control of victim’s account (directly or via MM) and ghosting/blocking without completing the trade.
-> - sending malicious links (e.g. beam links) to steal accounts, items, or information.
-> - providing a different account/item than agreed and refusing to refund or trade back.
+> - gaining possession of victim’s account/item(s) (directly or via MM), then ghosting/blocking without completing the trade and/or refusing to return account/item(s).
+> - sending malicious links (e.g. beam links) used to steal accounts, items, or information. confrontation required.
+> - providing a different account/item than agreed and refusing to compensate or trade back.
 > - refusal, failure, or unreasonable delay in providing mutually accepted payment for services rendered.
 > - refusing to refund or provide agreed items after receiving payment, including attempts to justify non-fulfilment under a “final sale” policy.
 > - refusing to provide warranty, replacement, or refund for an account or item after a trade when no prior “no warranty” agreement was clearly stated or mutually accepted.
-> - faking account details (e.g. edited or stolen screenshots).
+> - faking account/item details (e.g. advertising using edited or stolen screenshots).
 > - retrieving an account or filing chargebacks after a completed trade to reclaim money or assets.
 > - causing damage to others’ account or items, especially with malicious intent.
 
 　　**__notes__**
 
-> - **admitting to scamming:** only reportable with proof (e.g. hit logs). claims alone aren’t enough.
-> - **scam backs:** open a ticket before attempting a scam back to avoid being reported. please provide proof of original ownership and proof of the scam.
+> - **admitting to scamming** – only reportable with proof & context (e.g. hit logs). claims alone aren’t enough.
+> - **scam backs** – open a ticket before attempting a scam back to avoid being reported. please provide proof of original ownership and proof of the scam.
 
 -# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
@@ -1078,7 +1078,7 @@ class TagsView(discord.ui.View):
 
 　　**__notes__**
 
-> - screenshots of **vencord** or **serverinfo bot command** are preferred. If you do not have vencord, ask another staff for help.
+> - screenshots of **vencord** or **serverinfo bot command** are preferred. if you do not have vencord, ask another staff for help.
 > - the scam server owner may only be appealed if the scam server has been appealed.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -1087,7 +1087,7 @@ class TagsView(discord.ui.View):
 ## <a:tri_redarrow:1388148121242177726>　　raider
 　　**__definition__**
 
-> users who have **raided server(s)**.
+> users who have **raided** or threatened to raid server(s).
 > 　⤷　raiding is defined as: mass-banning server members, mass-deleting channels, spamming messages in server channels or server members’ dms, etc.
 
 　　**__examples__**
@@ -1099,6 +1099,7 @@ class TagsView(discord.ui.View):
 
 > - it is not reportable if
 >   - the raid targets a server primarily used for malicious, fraudulent, or otherwise unlawful activities.
+>   - the threat to raid was meant as a joke.
 
 -# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
@@ -1147,7 +1148,8 @@ class TagsView(discord.ui.View):
 ## <a:tri_redarrow:1388148121242177726>　　vouch scammer
 　　**__definition__**
 
-> users who use spammed (often botted) vouches or stolen proofs/vouches, with the intent of deceiving others.
+> users who use fake or spammed (often botted) vouches or stolen proofs/vouches, with the intent of deceiving others.
+> users who sell/trade fake or spammed vouches, therefore enabling vouch scammers to deceive others.
 > 　⤷　show evidence of vouches left by ≥4 users with similar account creation dates.
 
 　　**__notes__**
@@ -1155,7 +1157,7 @@ class TagsView(discord.ui.View):
 > - a server owner may be reported as vouch scammer for allowing spammed vouches in a trading server.
 > - neither the vouched user nor voucher are reportable unless there is evidence of them scamming/attempting to scam.
 
--# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+-# **confrontation is __required__.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "suspect":
@@ -1180,7 +1182,7 @@ class TagsView(discord.ui.View):
 >   - the user unknowingly suggested scam server(s).
 >   - the user ghosts or blocks due to the contributor being rude towards them, or due to not being interested in the trade anymore.
 
--# **confrontation is __strongly preferred__ and in some cases, required.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
+-# **confrontation is __required__.** do be polite as much as possible. if ghosted/blocked upon confrontation, it is considered reportable.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional mm":
@@ -1191,32 +1193,28 @@ wip
 　　**__definition__**
 
 > mm is deemed unprofessional if they have proven to be irresponsible in their service.
-> this tag is for mming of lower-risked games, e.g. genshin, hsr, wuwa, hi3, zzz, prsk, roblox accounts or items. 
-> 　⤷　usually excludes idv, unless irreversible damage was done to an account due to lack of basic knowledge of the game.
+> 　⤷　reports relating to idv will have additional remarks.
 
 　　**__examples__**
 
-> - items or accounts were put at **preventable, unnecessary and unreasonable** risks
->   - not checking the validity of every receipt sent
->   - not checking basic account details carefully before the account is given to the other trader.
->   - knowingly breaking reasonable service rules of a trading server in which they are a mm, especially rules set in place to ensure the mm’s and traders’ safety.
-> - items or accounts were lost, damaged and/or retrieved (i.e. scammed) in a preventable situation
->   - knowingly mming for a scammer, which led to the items/accounts getting lost, damaged and/or retrieved.
->   - incorrectly securing an account, which led to the items/accounts getting lost, damaged and/or retrieved.
->   - altering the state of the account(s) without both traders’ permissions.
-> - account was lost, damaged and/or retrieved (i.e. scammed) in an unpreventable situation but the trader was **not** informed of the risks beforehand.
-> - mm lost an account in an unpreventable situation but did not attempt to offer any compensation whatsoever.
-> - not sending compulsory mm screenshots into the ticket and unable to provide them when needed.
-> - not following important steps of the full mm procedure within a trading server in which they are a mm
->   - not sending login and/or logout screenshots within the ticket, unless mm is unable to due to special circumstances.
->   - traders fail to complete mm forms accurately, which creates ambiguity between the accounts/items described and the accounts/items actually secured and traded, and mm failed to resolve the discrepany before proceeding. not reportable if mm is able to prove traders agreed to such changes before proceeding.
+> - failing to follow essential mm procedures, resulting in item(s)/account(s) being exposed to preventable, unnecessary, or unreasonable risk(s), including reduced recoverability in the event of a scam.
+>   - failing to verify the validity of receipts provided in DMs or the ticket, regardless of whether the trader consented to the lost receipts risk.
+>   - failing to verify basic account details before transferring the account.
+> - failing to resolve discrepancies or follow the trading server’s required mm procedure before proceeding.
+>   - proceeding despite incomplete or inaccurate mm forms, and failure to provide documented proof that both traders agreed to the trade before it proceeded, creating ambiguity between the account(s)/item(s) described and those actually traded.
+> - knowingly breaking reasonable service rules of a trading server in which they are a mm, especially rules set in place to ensure the mm’s and traders’ safety.
+> - failing to disclose foreseeable, material risk(s) before proceeding with a trade, where a reasonable trader may have chosen not to proceed if informed.
+> - negligently handling an account or item, resulting in avoidable loss, damage, or retrieval.
+>   - incorrectly securing an account and/or its linked email, resulting in retrieval.
+>   - altering the state of an account without both traders’ permission.
+>   - losing an account through negligence.
+> - knowingly mming for scammer(s) which resulted in item(s)/account(s) being lost, damaged, or retrieved.
 
 　　**__notes__**
 
 > - it is not reportable if
 >   - mm lost an account in an unpreventable situation and offered compensation that the trader was satisfied with, or continually attempted to offer compensation, subject to limitations such as the mm’s financial ability.
 >   - account was retrieved in an unpreventable situation and the trader consented to the risks beforehand.
->   - low or moderate preventable risks were taken but no harm was done to the account in the end.
 >   - mm is new/unfamiliar with the rules of the discord trading community.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -1225,8 +1223,35 @@ wip
 ## <a:tri_yellowarrow:1509836964453548133>　　unprofessional pilot
 　　**__definition__**
 
-wip
+> pilot is deemed unprofessional if they have proven to be irresponsible in their service.
 
+　　**__examples__**
+
+> - failing to exercise reasonable care while handling a client’s account, resulting in preventable, unnecessary and unreasonable risk(s). including but not limited to:
+>   - leaking or sharing login information without the client’s or account owner’s permission.
+>   - using a virtual machine to run a game that prohibits the use of virtual machines (especially hoyoverse games) without the client’s permission.
+>   - using cheats or modifications without the client’s prior consent.
+>   - adding third party links to the account without the client’s permission.
+> - knowingly violating reasonable service rules of a trading server in which they are a pilot, particularly rules intended to protect the pilot and client. this will be reviewed on a case-by-case basis.
+> - negligently handling a client’s account, resulting in avoidable loss, damage, or penalties in a preventable situation.
+>   - failing to generate a transfer code after completing a project sekai piloting service.
+>   - performing actions beyond the agreed service (e.g. wishing without permission, opening additional chests, or completing quests not requested by the client).
+>   - using cheats or plugins that result in temporary or permanent account bans.
+>   - trainees disregarding their supervisor's instructions or failing to seek guidance, resulting in account loss or damage.
+> - failing to complete the agreed service within a reasonable timeframe without sufficient justification. this will be reviewed on a case-by-case basis, taking into account factors including but not limited to:
+>   - insufficient effort relative to the size of the task;
+>   - failing to request an extension;
+>   - completing less than 50% of the agreed service by the deadline;
+>   - the service fee having been paid, in part or in full, beforehand.
+> - failing to follow essential pilot procedures or maintain adequate documentation.
+>   - failing to send login and/or logout screenshots, unless prevented by exceptional circumstances (e.g. the client traded away the account or scammed the pilot).
+
+　　**__notes__**
+
+> - it is not reportable if
+>   - the agreed time limit was unreasonable, the pilot was actively working on the service and providing updates, and/or the client failed to provide reasonable reminders or warnings before reporting.
+>   - account received a temporary ban and there is insufficient evidence that the pilot caused it.
+>   - pilot is new/unfamiliar with the rules of the discord trading community.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "unprofessional supervisor":
@@ -1234,8 +1259,18 @@ wip
 ## <a:tri_yellowarrow:1509836964453548133>　　unprofessional supervisor
 　　**__definition__**
 
-wip
+> supervisor is deemed unprofessional if they have proven to be irresponsible in their supervision of trainee(s).
 
+　　**__examples__**
+
+> - not ensuring that the correct mm/pilot form has been sent and correctly filled at the start of the service.
+> - not checking login and/or logout screenshots fully, or telling the trainee to proceed when there are several missing screenshots. refer to appendix (screenshots) for more details.
+> - not instructing the trainee to ping them before proceeding and the trainee proceeded to put the client’s item(s)/account(s) at risk.
+
+　　**__notes__**
+
+> - it is not reportable if
+>   - supervisor instructed the trainee to ping them before proceeding, but the trainee ignored this instruction and proceeded to put the client’s item(s)/account(s) at risk.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "ex-offender":
@@ -1243,8 +1278,8 @@ wip
 ## <a:tri_yellowarrow:1509836964453548133>　　ex-offender
 　　**__definition__**
 
-wip
-
+> users who have committed offences reportable under any of the following tags: scammer, scam server owner, raider, plagiarist, fake event host, impersonator, vouch scammer and have shown themselves to no longer have committed such offences after a minimum report period.
+> 　⤷　they must also provide proofs showing that they have genuinely changed since the incident. simply claiming to be sorry or promising not to repeat the offense is generally insufficient.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "improper conduct":
@@ -1252,8 +1287,18 @@ wip
 ## <a:tri_yellowarrow:1509836964453548133>　　improper conduct
 　　**__definition__**
 
-wip
+> users who have been excessively rude or disruptive in report/appeal tickets, breaking server rule(s).
 
+　　**__examples__**
+
+> - expressing homophobic, xenophobic, racist, sexist, etc. sentiments towards others
+> - threats of violence or intimidation.
+> - insults, harassment, or hostility towards staff or other users.
+> - attempts at bribery, coercion, blackmail, or manipulation.
+
+　　**__notes__**
+
+> - this tag does not affect the credibility of a user, but serves to discourage inappropriate behaviour towards staff and maintain respectful proceedings.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "service ban":
@@ -1261,8 +1306,21 @@ wip
 ## <a:tri_yellowarrow:1509836964453548133>　　service ban
 　　**__definition__**
 
-wip
+> users who have made services unpleasant for others, which may include the mm/pilot.
 
+　　**__examples__**
+
+> - constantly ghosting or slow responses without informing beforehand.
+> - frequently ghosting or refusing to vouch on 3 or more separate occasions despite 3 or more reminders that are minimally 1h apart.
+> - delaying the giving of fee or changing fee to something unsatisfactory.
+> - changing the task and/or fee that has been initially agreed-upon by both parties and refusing to pay the initially agreed-upon fee if the pilot declines to change to the new task.
+
+　　**__notes__**
+
+> - it is not reportable if
+>   - there is only evidence of a singular occurrence.
+>   - the user made an effort to compensate for the trouble within their ability.
+> - this is usually determined based on the shared sentiments of 2 or more mms/pilots, and will be reviewed on a case-by-case basis.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "scam server":
@@ -1270,8 +1328,26 @@ wip
 ## <a:tri_redarrow:1388148121242177726>　　scam server
 　　**__definition__**
 
-wip
+> server promotes or is used for scamming, e.g. fake mm or hitter services.
+> server owner(s) must be involved, or allow scams to happen within the server.
+> users are reportable as scam server owner for simply having ownership of scam server(s), as shown via vencord, serverinfo bot command or the built-in crown symbol.
+> server staff and/or members are only reportable as scammer if there is sufficient evidence of them scamming. simply being part of a scam server is, on its own, insufficient.
+> higher staff (e.g. mm and above) may be reportable as suspect if they hold such roles and are active in such scam servers.
+it is not reportable if:
+the server owner(s) refuse to ban scammer(s) who have not scammed within the server.
+not reportable under this tag:
+impersonator server, fake vouch server or fake event server that does not have any scam activity.
+however, if there is scam activity occurring in any of the above types of servers, the server will be reportable under all relevant tags.
 
+　　**__notes__**
+
+> - it is not reportable if
+>   - the server owner(s) refuse to ban scammer(s) who have not scammed within the server.
+> - not reportable under this tag
+>   - impersonator server, fake vouch server or fake event server that does not have any scam activity.
+>   - however, if there is scam activity occurring in any of the above types of servers, the server will be reportable under all relevant tags.
+> - it is appealable if
+>   - ownership of the server has changed and the new owner is taking steps to prevent all scam activity within the server.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "impersonator server":
@@ -1279,8 +1355,15 @@ wip
 ## <a:tri_redarrow:1388148121242177726>　　impersonator server
 　　**__definition__**
 
-wip
+> server which deliberately imitates or copies the icon, name, layout, bots, roles and/or channels of another server without the real server’s owners’ permission, or falsely claims to be the official discord server of a known/registered website/organisation, with the intent of deception, i.e. impersonation with intent to defraud.
+> users are reportable as scam server owner for simply having ownership of impersonator server(s), as shown via vencord, serverinfo bot command or the built-in crown symbol.
+> users are reportable as scammers if there is evidence of them scamming, or reportable as impersonator if there is evidence of them impersonating. however, they are not reportable for simply being a member of an impersonator server.
 
+　　**__notes__**
+
+> - it is not reportable if
+>   - it may be a joke.
+>   - the server owner(s) were unaware/did not have malicious intent and agree to change the icon, name, layout, bots, roles and/or channels.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "fake vouch server":
@@ -1288,7 +1371,8 @@ wip
 ## <a:tri_redarrow:1388148121242177726>　　fake vouch server
 　　**__definition__**
 
-wip
+> server with fake or spammed (often botted) vouches, vouch server owned by scammer, or server that steals vouches, with the intent of deceiving others.
+> servers that sell, buy or trade fake or spammed vouches.
 
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -1297,8 +1381,8 @@ wip
 ## <a:tri_redarrow:1388148121242177726>　　fake event server
 　　**__definition__**
 
-wip
-
+> server which hosted events e.g. giveaways, invite rewards and refused to or repeatedly delayed giving the participant their prize/reward provided that the participant had followed all rules strictly, and owners and/or other staff made no effort to resolve the situation, such as prohibiting the host from further hosting events.
+> the event host is reportable as fake event host.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         if self.select_callback.values[0] == "suspect server":
@@ -1306,8 +1390,7 @@ wip
 ## <a:tri_yellowarrow:1509836964453548133>　　suspect server
 　　**__definition__**
 
-wip
-
+> server within which scam activity is suspected to have been occurring, or suspected backup server of a scam server.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
