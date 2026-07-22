@@ -28,6 +28,7 @@ client = pymongo.MongoClient(CLIENT)
 db = client["database"]
 userscol = db["users"]
 altscol = db["alts"]
+invitescol = db["invites"]
 
 # tri roles info
 o5_role = 1372426616671834234
@@ -497,9 +498,33 @@ async def a(ctx, *, to_check: str = None):
             parts = jump_url.split("/")
             try:
                 guild_id = int(parts[-3])
-                guild = bot.get_guild(guild_id) or await bot.fetch_guild(guild_id)
+                guild = bot.get_guild(guild_id)
+                server_name = None
+                if not guild:
+                    try:
+                        guild = await bot.fetch_guild(guild_id)
+                    except (discord.NotFound, discord.HTTPException, discord.Forbidden):
+                        guild = None
+
                 if guild:
-                    proof_with_server = f"[{guild.name}]({jump_url}) – dc"
+                    server_name = guild.name
+                else:
+                    server_doc = invitescol.find_one({"_id": guild_id})
+                    if server_doc and server_doc.get("invites"):
+                        for inv_entry in server_doc["invites"]:
+                            code = inv_entry if isinstance(inv_entry, str) else inv_entry.get("code")
+                            if not code:
+                                continue
+
+                            try:
+                                invite = await bot.fetch_invite(code)
+                                if invite and invite.guild:
+                                    server_name = invite.guild.name
+                                    break
+                            except (discord.NotFound, discord.HTTPException, discord.Forbidden):
+                                continue
+                if server_name:
+                    proof_with_server = f"[{server_name}]({jump_url}) – dc"
             except Exception:
                 pass
         if isinstance(base_proof, str) and base_proof.endswith(">"):
