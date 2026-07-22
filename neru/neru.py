@@ -509,7 +509,6 @@ async def a(ctx, *, to_check: str = None):
                 if guild:
                     server_name = guild.name
                 else:
-                    print("finding invite!")
                     server_doc = invitescol.find_one({"_id": str(guild_id)})
                     if server_doc and server_doc.get("invites"):
                         for inv_entry in server_doc["invites"]:
@@ -520,7 +519,6 @@ async def a(ctx, *, to_check: str = None):
                                 invite = await bot.fetch_invite(code)
                                 if invite and invite.guild:
                                     server_name = invite.guild.name
-                                    print(server_name)
                                     break
                             except (discord.NotFound, discord.HTTPException, discord.Forbidden):
                                 continue
