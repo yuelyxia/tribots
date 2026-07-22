@@ -102,7 +102,7 @@ def is_active_staff(user):
 # formatting functions
 
 def default_user_profile(user):
-    profile = discord.Embed(title=f"{user.display_name.replace('||', '\\|\\|')}")
+    profile = discord.Embed(title=f"{user.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
     profile.set_thumbnail(url=f"{user.display_avatar}")
     profile.description = f"`{user.id}`\n{user.mention}\n`{user.name}`"
     profile.description += f"\n-# **Account Created** – <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)" + '\n'
@@ -215,13 +215,13 @@ def image_links_to_embeds(image_links):
 
 def format_trusteduser_profile(user, trusteduser_profile):
     if trusteduser_profile["current_staff"] == 1:
-        trusted_embed = discord.Embed(colour=0xbba8dd, title=f"{user.display_name.replace('||', '\\|\\|')}")
+        trusted_embed = discord.Embed(colour=0xbba8dd, title=f"{user.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
         title = "TRI Staff"
     elif trusteduser_profile["staff"] == 1:
-        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name.replace('||', '\\|\\|')}")
+        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
         title = "Former TRI Staff"
     else:
-        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name.replace('||', '\\|\\|')}")
+        trusted_embed = discord.Embed(colour=0x9279b5, title=f"{user.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
         title = "Trusted User"
     trusted_embed.set_thumbnail(url=f"{user.display_avatar}")
     trusted_embed.description = f"```ansi\n\u001b[1m{title}\u001b[0m\n```"
@@ -246,16 +246,16 @@ def format_trusteduser_profile(user, trusteduser_profile):
     return trusted_embed
 def format_user_r_profile(user, r_profile_list, title):
     if title == "Ex-offender":
-        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name.replace('||', '\\|\\|')}")
+        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
         colour = "\u001b[1;33m"
     elif title in red_tags:
-        r_profile = discord.Embed(colour=0xFF0045, title=f"{user.display_name.replace('||', '\\|\\|')}")
+        r_profile = discord.Embed(colour=0xFF0045, title=f"{user.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
         colour = "\u001b[1;31m"
     elif title in yellow_tags:
-        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name.replace('||', '\\|\\|')}")
+        r_profile = discord.Embed(colour=0xFFD643, title=f"{user.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
         colour = "\u001b[1;33m"
     else:
-        r_profile = discord.Embed(title=f"{user.display_name.replace('||', '\\|\\|')}")
+        r_profile = discord.Embed(title=f"{user.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
         colour = "\u001b[0m"
     r_profile.set_thumbnail(url=f"{user.display_avatar}")
     r_profile.description = f"```ansi\n{colour}{title}\u001b[0m\n```"
