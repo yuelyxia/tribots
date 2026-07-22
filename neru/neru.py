@@ -54,7 +54,7 @@ def alts_string(alts_list):
     string = "`" + string + "`"
     return string
 def default_no_alts(user):
-    profile = discord.Embed(colour=0xffffff, title=user.display_name.replace("||", "\|\|"))
+    profile = discord.Embed(colour=0xffffff, title=user.display_name.replace("||", "\\|\\|"))
     profile.description = f"`{user.id}`\n{user.mention}\n`{user.name}`\n\n"
     profile.description += f"<:tri_whitecross:1462774085737119828>　No alts logged for this user."
     return profile
@@ -412,7 +412,7 @@ async def ma(ctx, *, to_check: str = None):
             raw_ids = " ".join(alt for alt in alts_list)
             current_content.append(
                 f"<a:tri_whitealert:1496542298908000257> **`{current_id}` has {alts_count} logged alt(s).**")
-            embed = discord.Embed(colour=0xffffff, title=user.display_name.replace("||", "\|\|"))
+            embed = discord.Embed(colour=0xffffff, title=user.display_name.replace("||", "\\|\\|"))
             embed.description = f"`{user.id}`\n{user.mention}\n`{user.name}`\n\n<a:tri_whitealert:1496542298908000257> **Alt(s)**\n`{raw_ids}`"
             embed_chars = len(embed.title or "") + len(embed.description or "")
             if len(current_embeds) == 10 or current_embed_chars + embed_chars > 6000:
@@ -509,17 +509,18 @@ async def a(ctx, *, to_check: str = None):
                 if guild:
                     server_name = guild.name
                 else:
-                    server_doc = invitescol.find_one({"_id": guild_id})
+                    print("finding invite!")
+                    server_doc = invitescol.find_one({"_id": str(guild_id)})
                     if server_doc and server_doc.get("invites"):
                         for inv_entry in server_doc["invites"]:
                             code = inv_entry if isinstance(inv_entry, str) else inv_entry.get("code")
                             if not code:
                                 continue
-
                             try:
                                 invite = await bot.fetch_invite(code)
                                 if invite and invite.guild:
                                     server_name = invite.guild.name
+                                    print(server_name)
                                     break
                             except (discord.NotFound, discord.HTTPException, discord.Forbidden):
                                 continue
@@ -538,14 +539,14 @@ async def a(ctx, *, to_check: str = None):
     for line in chosen_lines:
         test_chunk = "\n".join(chunk + [line])
         if len(header) + len(test_chunk) > LIMIT:
-            embed = discord.Embed(colour=0xffffff, title=user.display_name.replace("||", "\|\|"))
+            embed = discord.Embed(colour=0xffffff, title=user.display_name.replace("||", "\\|\\|"))
             embed.description = header + "\n".join(chunk)
             embeds.append(embed)
             chunk = [line]
         else:
             chunk.append(line)
     if chunk:
-        embed = discord.Embed(colour=0xffffff, title=user.display_name.replace("||", "\|\|"))
+        embed = discord.Embed(colour=0xffffff, title=user.display_name.replace("||", "\\|\\|"))
         embed.description = header + "\n".join(chunk)
         embeds.append(embed)
     for idx, embed in enumerate(embeds):
