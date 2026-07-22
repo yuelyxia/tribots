@@ -590,8 +590,15 @@ async def fm(ctx):
                 msg = first_message[0]
                 embed = discord.Embed(title="First message", description=f"[Jump]({msg.jump_url})", colour=0xffffff)
                 await ctx.reply(embed=embed)
+        elif isinstance(ctx.channel, discord.TextChannel):
+            channel = ctx.channel
+            first_message = [msg async for msg in channel.history(limit=1, oldest_first=True)]
+            if first_message:
+                msg = first_message[0]
+                embed = discord.Embed(title="First message", description=f"[Jump]({msg.jump_url})", colour=0xffffff)
+                await ctx.reply(embed=embed)
         else:
-            await ctx.reply("This command can only be used in a thread.")
+            await ctx.reply("This command can only be used in a thread or channel.")
 
 @bot.command(name="afk")
 async def afk_command(ctx, *, reason="none"):
@@ -603,9 +610,9 @@ async def afk_command(ctx, *, reason="none"):
 @bot.command(name="pilot")
 async def pilot(ctx, *, desc:str=None):
     if not desc:
-        await ctx.send(view=PilotView(), ephemeral=True)
+        await ctx.send(view=PilotView())
     if desc == "forms":
-        await ctx.send(view=PilotFormsView(), ephemeral=True)
+        await ctx.send(view=PilotFormsView())
     if desc == "guide":
         await ctx.send(embed=discord.Embed(colour=0xffffff, description="""
 ### <a:tri_whitearrow2:1388147186654515273>　　pilot guide
@@ -636,14 +643,16 @@ class PilotView(discord.ui.View):
         super().__init__(timeout=None)
     @discord.ui.button(label="forms", style=discord.ButtonStyle.grey, custom_id="pilot:forms")
     async def forms_button(self, interaction, button):
-        await interaction.channel.send(view=PilotFormsView(), ephemeral=True)
+        await interaction.response.send_message(view=PilotFormsView())
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
 class PilotFormsView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
     @discord.ui.button(label="genshin", style=discord.ButtonStyle.grey, custom_id="pilot_forms:genshin")
     async def genshin_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Genshin Impact Pilot Form
 Account Size: 
 Server: 
@@ -654,10 +663,12 @@ Do’s & Don’ts:
 Account Issues: 
 > By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation if you choose to cancel.
 """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="hsr", style=discord.ButtonStyle.grey, custom_id="pilot_forms:hsr")
     async def hsr_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Honkai: Star Rail Pilot Form
 Account Size: 
 Server: 
@@ -668,10 +679,12 @@ Do’s & Don’ts:
 Account Issues: 
 > By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation if you choose to cancel.
 """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="wuwa", style=discord.ButtonStyle.grey, custom_id="pilot_forms:wuwa")
     async def wuwa_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Wuthering Waves Pilot Form
 Account Size: 
 Server: 
@@ -682,10 +695,12 @@ Do’s & Don’ts:
 Account Issues: 
 > By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation if you choose to cancel.
 """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="pilot_forms:roblox")
     async def roblox_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Roblox Pilot Form
 Roblox Game: 
 Task: 
@@ -694,15 +709,17 @@ Fee:
 Do’s & Don’ts: 
 > By filling in the form, you agree to vouch if the account has been logged into, give **partial** fee if services worth **≥$3** has been completed, and give **__full__** fee if at least **50%** of the task was done before cancellation if you choose to cancel.
 """)
+        button.disabled = True
+        await interaction.message.edit(view=self)
 
 @bot.command(name="mm")
 async def mm(ctx, *, desc: str=None):
     if not desc:
-        await ctx.send(view=MMView(), ephemeral=True)
+        await ctx.send(view=MMView())
     if desc == "forms":
-        await ctx.send(view=MMFormsView(), ephemeral=True)
+        await ctx.send(view=MMFormsView())
     if desc == "risks":
-        await ctx.send(view=MMRisksView(), ephemeral=True)
+        await ctx.send(view=MMRisksView())
     if desc == "guide":
         await ctx.send(embed=discord.Embed(colour=0xffffff, description="""
 ### <a:tri_whitearrow2:1388147186654515273>　　mm guide
@@ -749,12 +766,12 @@ class MMView(discord.ui.View):
         super().__init__(timeout=None)
     @discord.ui.button(label="forms", style=discord.ButtonStyle.grey, custom_id="mm:forms")
     async def forms_button(self, interaction, button):
-        await interaction.channel.send(view=MMFormsView(), ephemeral=True)
+        await interaction.response.send_message(view=MMFormsView())
         button.disabled = True
         await interaction.message.edit(view=self)
     @discord.ui.button(label="risks", style=discord.ButtonStyle.grey, custom_id="mm:risks")
     async def risks_button(self, interaction, button):
-        await interaction.channel.send(view=MMRisksView(), ephemeral=True)
+        await interaction.response.send_message(view=MMRisksView())
         button.disabled = True
         await interaction.message.edit(view=self)
 
@@ -764,7 +781,7 @@ class MMGuidesView(discord.ui.View):
 
     @discord.ui.button(label="gmail", style=discord.ButtonStyle.grey, custom_id="mm_guides:gmail")
     async def gmail(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Gmail Securing Guide
 wip
 """)
@@ -773,7 +790,7 @@ wip
 
     @discord.ui.button(label="outlook", style=discord.ButtonStyle.grey, custom_id="mm_guides:outlook")
     async def outlook(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Outlook Securing Guide
 wip
 """)
@@ -782,7 +799,7 @@ wip
 
     @discord.ui.button(label="psn", style=discord.ButtonStyle.grey, custom_id="mm_guides:psn")
     async def psn(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### PSN Securing Guide
 wip
 """)
@@ -791,7 +808,7 @@ wip
 
     @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="mm_guides:roblox")
     async def roblox(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Roblox Securing Guide
 wip
 """)
@@ -803,7 +820,7 @@ class MMFormsView(discord.ui.View):
         super().__init__(timeout=None)
     @discord.ui.button(label="genshin", style=discord.ButtonStyle.grey, custom_id="mm_forms:genshin")
     async def genshin_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Genshin Impact MM Form
 Account Size: 
 Adventure Rank: 
@@ -823,7 +840,7 @@ Fee + who’s providing:
 
     @discord.ui.button(label="hsr", style=discord.ButtonStyle.grey, custom_id="mm_forms:hsr")
     async def hsr_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Honkai: Star Rail MM form
 Account Size: 
 Trailblaze Level: 
@@ -842,7 +859,7 @@ Fee + who’s providing:
 
     @discord.ui.button(label="wuwa", style=discord.ButtonStyle.grey, custom_id="mm_forms:wuwa")
     async def wuwa_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Wuthering Waves MM form
 Account Size: 
 Union Level: 
@@ -862,7 +879,7 @@ Fee + who’s providing:
 
     @discord.ui.button(label="roblox", style=discord.ButtonStyle.grey, custom_id="mm_forms:roblox")
     async def roblox_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Roblox MM form
 Username: 
 Do you have the original email? 
@@ -879,7 +896,7 @@ Fee + who’s providing:
 
     @discord.ui.button(label="roblox items", style=discord.ButtonStyle.grey, custom_id="mm_forms:roblox_items")
     async def roblox_items_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ### Roblox Items MM form
 Username: 
 Roblox Game: 
@@ -896,7 +913,7 @@ class MMRisksView(discord.ui.View):
 
     @discord.ui.button(label="deadlinks", style=discord.ButtonStyle.grey, custom_id="mm_risks:deadlinks")
     async def deadlinks_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ## Deadlinks <a:tri_whitealert:1496542298908000257>
 > 3rd party links are links bound to the Hoyoverse account which serves as an alternative way to login - Facebook, Game Center, Google, PSN, Apple, Twitter. A deadlink is a 3rd party link where the owner no longer has access to the 3rd party account and is unable to unlink it, but also unable to login via the link, e.g. Twitter account was deleted.
 **__Risks__**
@@ -911,7 +928,7 @@ class MMRisksView(discord.ui.View):
 
     @discord.ui.button(label="hacked abyss", style=discord.ButtonStyle.grey, custom_id="mm_risks:hacked_abyss")
     async def hacked_abyss_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ## Hacked Abyss <a:tri_whitealert:1496542298908000257>
 > A h.abyss account is where a bot was used to complete spiral abyss to gain primogems. A h.abyss account can be identified when a high number of stars has been obtained with missing stats (e.g. most damage taken) or an unusually low "strongest single strike" in the abyss challenge summary. They typically apply to reroll accounts using starter characters. However, other characters can also be used.
 **__Risks__**
@@ -925,7 +942,7 @@ class MMRisksView(discord.ui.View):
 
     @discord.ui.button(label="lost receipts", style=discord.ButtonStyle.grey, custom_id="mm_risks:lost_receipts")
     async def lost_receipts_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ## Lost Receipts <a:tri_whitealert:1496542298908000257>
 > These risks apply to **ALL __P2W__ accounts**, even if you have receipts. P2W (pay-to-win) is when there has been **any** purchase made on the account, regardless of amount, when the purchase was made and from where (in-game top-up, codashop, giveaway win etc.)
 > Receipts must have the __amount spent, transaction ID and what was purchased__ in a **__full__ screenshot** (preferably uncropped) to be a valid receipt.
@@ -941,7 +958,7 @@ class MMRisksView(discord.ui.View):
 
     @discord.ui.button(label="email surrender", style=discord.ButtonStyle.grey, custom_id="mm_risks:email_surrender")
     async def email_surrender_button(self, interaction, button):
-        await interaction.channel.send("""
+        await interaction.response.send_message("""
 ## Email Surrender <a:tri_whitealert:1496542298908000257>
 > Email surrender requires giving up the entire email, fully losing access of it, so ensure you will never need it in the future.
 **__Risks__**
@@ -1328,7 +1345,7 @@ class TicketCloseView(discord.ui.View):
         await interaction.edit_original_response(content="**Cancelled.** Ticket credit(s) have not been given.",view=None)
 
 def user_info(user, staff_data=None, mm_data=None, pilot_data=None):
-    profile = discord.Embed(title=user.display_name.replace("||", "\|\|"))
+    profile = discord.Embed(title=user.display_name.replace("||", "\\|\\|"))
     profile.set_thumbnail(url=f"{user.display_avatar}")
     profile.description = f"`{user.id}`\n{user.mention}\n`{user.name}`"
     profile.description += f"\n**Account Created:** <t:{round(int(user.created_at.timestamp()))}:D> (<t:{round(int(user.created_at.timestamp()))}:R>)\n"
@@ -2239,99 +2256,133 @@ async def mass_delete(interaction: discord.Interaction, start: str, end: str):
         return await interaction.followup.send("End message not found.", ephemeral=True)
     start_msg = None
     if start.lower() == "oldest":
-        after = discord.utils.MISSING
+        after_target = None
     else:
         try:
             start_msg = await channel.fetch_message(int(start))
-        except discord.NotFound:
-            return await interaction.followup.send("Start message not found.", ephemeral=True)
-        except ValueError:
-            return await interaction.followup.send("Invalid start message ID.", ephemeral=True)
-        after = start_msg
-    if start_msg:
+        except (discord.NotFound, ValueError):
+            return await interaction.followup.send("Start message not found or invalid ID.", ephemeral=True)
         if start_msg.created_at > end_msg.created_at:
             return await interaction.followup.send("Invalid range: start must be earlier than end.", ephemeral=True)
+        after_target = start_msg
     progress = await interaction.followup.send("Starting deletion... 0 messages deleted.", wait=True)
-    start_msg.delete()
-    count = 1
-    async for msg in channel.history(limit=None, oldest_first=True, after=after, before=end_msg):
+    messages_to_delete = []
+
+    if start_msg:
+        messages_to_delete.append(start_msg)
+
+    async for msg in channel.history(limit=None, oldest_first=True, after=after_target, before=end_msg):
+        if start_msg and msg.id == start_msg.id:
+            continue
+        messages_to_delete.append(msg)
+
+    if not start_msg or start_msg.id != end_msg.id:
+        messages_to_delete.append(end_msg)
+
+    deleted_count = 0
+    fourteen_days_ago = discord.utils.utcnow() - datetime.timedelta(days=14)
+
+    bulk_deletable = [m for m in messages_to_delete if m.created_at > fourteen_days_ago]
+    older_messages = [m for m in messages_to_delete if m.created_at <= fourteen_days_ago]
+
+    for i in range(0, len(bulk_deletable), 100):
+        chunk = bulk_deletable[i:i + 100]
+        try:
+            if len(chunk) == 1:
+                await chunk[0].delete()
+            else:
+                await channel.delete_messages(chunk)
+            deleted_count += len(chunk)
+            await progress.edit(content=f"Deleting... **{deleted_count}/{len(messages_to_delete)}** messages deleted.")
+        except discord.HTTPException:
+            for msg in chunk:
+                try:
+                    await msg.delete()
+                    deleted_count += 1
+                except discord.HTTPException:
+                    pass
+
+    for msg in older_messages:
         try:
             await msg.delete()
-            count += 1
-            if count % 5 == 0:
-                await progress.edit(content=f"Deleting... **{count}** messages deleted.")
+            deleted_count += 1
+            if deleted_count % 5 == 0 or deleted_count == len(messages_to_delete):
+                await progress.edit(
+                    content=f"Deleting older messages... **{deleted_count}/{len(messages_to_delete)}** messages deleted.")
         except discord.HTTPException:
             pass
-    end_msg.delete()
-    await progress.edit(content=f"Done. Deleted **{count+1}** messages.")
+    await progress.edit(content=f"Done. Successfully deleted **{deleted_count}** message(s).")
 
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.user_install()
 @app_commands.guild_install()
 @mass.command(name="forward", description="Forward messages between two message IDs (inclusive).")
-@app_commands.rename(from_="from", to_="to")
+@app_commands.rename(from_="from")
 @app_commands.describe(
     from_="source channel",
     start='start message ID or “oldest”',
     end="end message ID",
-    to_="destination channel or user"
+    to_channel="destination channel",
 )
 async def mass_forward(
     interaction: discord.Interaction,
-    from_: discord.TextChannel | discord.Thread,
+    from_: str,
     start: str,
     end: str,
-    to_: discord.TextChannel | discord.Thread | discord.User
+    to_channel: str = None,
 ):
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer()
 
     try:
+        clean_from_id = int(from_.strip("<#> "))
+        fetched_from = interaction.client.get_channel(clean_from_id)
+        if fetched_from is None:
+            fetched_from = await interaction.client.fetch_channel(clean_from_id)
+        from_ = fetched_from  # Reassign `from_` so `.fetch_message()` works below!
+    except (ValueError, discord.NotFound, discord.Forbidden):
+        return await interaction.followup.send("Source channel not found or bot lacks access.", ephemeral=True)
+
+    if interaction.guild is not None:
+        if isinstance(interaction.user, discord.Member):
+            permissions = interaction.channel.permissions_for(interaction.user)
+            if not permissions.manage_channels:
+                return await interaction.followup.send(
+                    "You need the **Manage Channels** permission to use this command in a server.", ephemeral=True)
+
+    is_dm = False
+    if interaction.guild is None and to_channel is None:
+        is_dm = True
+        destination = interaction.channel
+    elif to_channel:
+        try:
+            clean_to_id = int(to_channel.strip("<#> "))
+            fetched_to = interaction.client.get_channel(clean_to_id)
+            if fetched_to is None:
+                fetched_to = await interaction.client.fetch_channel(clean_to_id)
+            destination = fetched_to
+        except (ValueError, discord.NotFound, discord.Forbidden):
+            return await interaction.followup.send("Destination channel not found or bot lacks access.", ephemeral=True)
+    else:
+        return await interaction.followup.send(
+            "Please specify a `to_channel` when running inside a server.", ephemeral=True
+        )
+    try:
         end_msg = await from_.fetch_message(int(end))
-    except discord.NotFound:
-        return await interaction.followup.send("End message not found.", ephemeral=True)
+    except (discord.NotFound, ValueError):
+        return await interaction.followup.send("End message not found or invalid ID.", ephemeral=True)
     start_msg = None
     if start.lower() == "oldest":
-        after = discord.utils.MISSING
+        after_target = None
     else:
         try:
             start_msg = await from_.fetch_message(int(start))
-        except discord.NotFound:
-            return await interaction.followup.send("Start message not found.", ephemeral=True)
-        except ValueError:
-            return await interaction.followup.send("Invalid start message ID.", ephemeral=True)
-        after = start_msg
-    if start_msg:
+        except (discord.NotFound, ValueError):
+            return await interaction.followup.send("Start message not found or invalid ID.", ephemeral=True)
         if start_msg.created_at > end_msg.created_at:
             return await interaction.followup.send("Invalid range: start must be earlier than end.", ephemeral=True)
+        after_target = start_msg
 
-    if isinstance(to_, discord.User):
-        if interaction.guild is not None:
-            return await interaction.followup.send("When forwarding to a user, you must run this command inside your DM with that user.", ephemeral=True)
-        if not isinstance(interaction.channel, discord.DMChannel) or interaction.channel.recipient.id != to_.id:
-            return await interaction.followup.send("You must use this command inside your DM with the selected user.", ephemeral=True)
-        destination = interaction.channel
-    else:
-        destination = to_
-
-    files = []
-    for attachment in start_msg.attachments:
-        try:
-            files.append(await attachment.to_file())
-        except Exception:
-            pass
-    kwargs = {}
-    if start_msg.content:
-        kwargs["content"] = start_msg.content
-    if start_msg.embeds:
-        kwargs["embeds"] = start_msg.embeds
-    if files:
-        kwargs["files"] = files
-    if kwargs:
-        await destination.send(**kwargs)
-
-    forwarded = 1
-
-    async for msg in from_.history(limit=None, oldest_first=True, after=after, before=end_msg):
+    async def send_msg(msg: discord.Message):
         files = []
         for attachment in msg.attachments:
             try:
@@ -2345,28 +2396,40 @@ async def mass_forward(
             kwargs["embeds"] = msg.embeds
         if files:
             kwargs["files"] = files
+
         if kwargs:
-            await destination.send(**kwargs)
-        forwarded += 1
+            try:
+                if is_dm:
+                    await interaction.followup.send(**kwargs)
+                else:
+                    await destination.send(**kwargs)
+                return True
+            except (discord.Forbidden, discord.HTTPException):
+                return False
+        return False
 
-    files = []
-    for attachment in end_msg.attachments:
-        try:
-            files.append(await attachment.to_file())
-        except Exception:
-            pass
-    kwargs = {}
-    if end_msg.content:
-        kwargs["content"] = end_msg.content
-    if end_msg.embeds:
-        kwargs["embeds"] = end_msg.embeds
-    if files:
-        kwargs["files"] = files
-    if kwargs:
-        await destination.send(**kwargs)
+    messages_to_send = []
 
-    await interaction.followup.send(f"Forwarded **{forwarded+1}** message(s).", ephemeral=True)
+    if start_msg:
+        messages_to_send.append(start_msg)
 
+    async for msg in from_.history(limit=None, oldest_first=True, after=after_target, before=end_msg):
+        if start_msg and msg.id == start_msg.id:
+            continue
+        messages_to_send.append(msg)
+
+    if not start_msg or start_msg.id != end_msg.id:
+        messages_to_send.append(end_msg)
+
+    if is_dm:
+        messages_to_send = messages_to_send[:5]
+
+    forwarded = 0
+    for msg in messages_to_send:
+        if await send_msg(msg):
+            forwarded += 1
+
+    await interaction.followup.send(f"Forwarded **{forwarded}** message(s).", ephemeral=True)
 
 @bot.tree.command(name="say", description="KAFU will speak on your behalf.")
 @app_commands.checks.cooldown(1, 3)
