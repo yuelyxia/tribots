@@ -14,7 +14,7 @@ import html
 import base64
 from asyncio import Lock
 from collections import defaultdict
-from typing import Literal, Optional
+from typing import Literal, Optional, List, Tuple
 from zoneinfo import ZoneInfo, available_timezones
 
 # 3rd party libraries
@@ -2442,7 +2442,17 @@ async def anon_say(interaction: discord.Interaction, message: str):
         await interaction.response.send_message(f"Unable to send message: {e}", ephemeral=True)
 
 @bot.tree.command(name="ban", description="Bans a user.")
-@app_commands.describe(user="User to ban", reason="Reason for ban")
+@app_commands.describe(user="User to ban", reason="Reason for ban",
+                       image1="Proof attachment 1",
+                       image2="Proof attachment 2",
+                       image3="Proof attachment 3",
+                       image4="Proof attachment 4",
+                       image5="Proof attachment 5",
+                       image6="Proof attachment 6",
+                       image7="Proof attachment 7",
+                       image8="Proof attachment 8",
+                       image9="Proof attachment 9",
+                       image10="Proof attachment 10",)
 async def ban(interaction: discord.Interaction, user: str, reason: Optional[str], image1: Optional[discord.Attachment], image2: Optional[discord.Attachment], image3: Optional[discord.Attachment], image4: Optional[discord.Attachment], image5: Optional[discord.Attachment], image6: Optional[discord.Attachment], image7: Optional[discord.Attachment], image8: Optional[discord.Attachment], image9: Optional[discord.Attachment], image10: Optional[discord.Attachment]):
     await interaction.response.defer(ephemeral=True)
     try:
@@ -2481,9 +2491,10 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
         server_query = {"_id": str(guild_id)}
         server_info = servers.find_one(server_query)
         if server_info:
-            if not server_info.get("bans_warns_channel"):
-                await interaction.followup.send("**bans warns channel** has not been set up for this server.")
-                return
+            if not server_info.get("staff_role") or not server_info.get("bans_warns_channel"):
+                return await interaction.followup.send(
+                    "**staff_role** or **bans_warns_channel** has not been set up for this server.",
+                    ephemeral=True)
             bans_warns_channel = server_info.get("bans_warns_channel")
             bans_warns_channel = bot.get_channel(int(bans_warns_channel.replace("<#", "").replace(">", "")))
             try:
@@ -2588,6 +2599,222 @@ async def ban(interaction: discord.Interaction, user: str, reason: Optional[str]
                 servers.replace_one(server_query, server_info)
 @ban.error
 async def ban_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
+
+
+async def prepare_attachments(attachments: List[Optional[discord.Attachment]]) -> List[Tuple[bytes, str]]:
+    valid_attachments = [att for att in attachments if
+                         att and att.content_type and att.content_type.startswith("image/")]
+    image_data = []
+
+    if valid_attachments:
+        async with aiohttp.ClientSession() as session:
+            for att in valid_attachments:
+                try:
+                    async with session.get(att.url) as resp:
+                        if resp.status == 200:
+                            data = await resp.read()
+                            image_data.append((data, att.filename))
+                except Exception:
+                    continue
+    return image_data
+
+def create_file_list(image_data: List[Tuple[bytes, str]]) -> List[discord.File]:
+    return [discord.File(io.BytesIO(data), filename=filename) for data, filename in image_data]
+
+@bot.tree.command(name="massban", description="Bans multiple users.")
+@app_commands.describe(
+    users="Users to ban, leave a space between users.",
+    reason="Reason for massban",
+    image1="Proof attachment 1",
+    image2="Proof attachment 2",
+    image3="Proof attachment 3",
+    image4="Proof attachment 4",
+    image5="Proof attachment 5",
+    image6="Proof attachment 6",
+    image7="Proof attachment 7",
+    image8="Proof attachment 8",
+    image9="Proof attachment 9",
+    image10="Proof attachment 10",
+)
+async def massban(
+        interaction: discord.Interaction,
+        users: str,
+        reason: Optional[str] = None,
+        image1: Optional[discord.Attachment] = None,
+        image2: Optional[discord.Attachment] = None,
+        image3: Optional[discord.Attachment] = None,
+        image4: Optional[discord.Attachment] = None,
+        image5: Optional[discord.Attachment] = None,
+        image6: Optional[discord.Attachment] = None,
+        image7: Optional[discord.Attachment] = None,
+        image8: Optional[discord.Attachment] = None,
+        image9: Optional[discord.Attachment] = None,
+        image10: Optional[discord.Attachment] = None,
+):
+    await interaction.response.defer(ephemeral=True)
+
+    if reason is None:
+        reason = "No reason specified."
+    raw_user_list = [u.strip("<@!> ") for u in users.replace(",", " ").split() if u.strip()]
+
+    if not raw_user_list:
+        return await interaction.followup.send("Please provide at least one valid user or user ID.", ephemeral=True)
+
+    attachments_list = [img for img in [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10] if img is not None]
+    prepared_images = await prepare_attachments(attachments_list)
+
+    guild_id = interaction.guild.id
+    has_ban_perms = interaction.user.guild_permissions.ban_members
+
+    if has_ban_perms:
+        server_query = {"_id": str(guild_id)}
+        server_info = servers.find_one(server_query)
+
+        banned_users = []
+        skipped_users = []
+
+        for raw_u in raw_user_list:
+            try:
+                target_user = await bot.fetch_user(int(raw_u))
+            except (ValueError, discord.NotFound, discord.HTTPException):
+                skipped_users.append(f"`{raw_u}` (Invalid User)")
+                continue
+            if target_user == interaction.user:
+                skipped_users.append(f"`{target_user.id}` (Cannot ban self)")
+                continue
+
+            try:
+                member = await interaction.guild.fetch_member(target_user.id)
+                if member and interaction.user.top_role <= member.top_role:
+                    skipped_users.append(f"`{target_user.id}` (Equal/Higher role)")
+                    continue
+            except discord.NotFound:
+                pass
+            try:
+                await target_user.send(
+                    f"You have been banned from {interaction.guild.name} for the following reason: {reason}")
+            except discord.Forbidden:
+                pass
+            try:
+                await interaction.guild.ban(target_user, reason=reason, delete_message_seconds=604800)
+                banned_users.append(target_user)
+            except Exception:
+                skipped_users.append(f"`{target_user.id}` (Ban Failed)")
+
+        if not banned_users:
+            return await interaction.followup.send("No users were banned.\nSkipped: " + ", ".join(skipped_users),
+                                                   ephemeral=True)
+
+        if server_info and server_info.get("bans_warns_channel"):
+            bans_warns_channel_id = int(server_info.get("bans_warns_channel").replace("<#", "").replace(">", ""))
+            bans_warns_channel = bot.get_channel(bans_warns_channel_id)
+            if bans_warns_channel:
+                banned_ids_str = "\n".join([f"ㆍ　User ID: {u.id}" for u in banned_users])
+                content_text = f"**Mass Ban ({len(banned_users)})**\n{banned_ids_str}\nㆍ　Reason: {reason}\nㆍ　Banned by: {interaction.user.id}"
+                files_to_send = create_file_list(prepared_images)
+                if files_to_send:
+                    content_text += "\nㆍ　Proof:"
+                try:
+                    await bans_warns_channel.send(content=content_text, files=files_to_send if files_to_send else None)
+                except Exception:
+                    await interaction.followup.send("Unable to send mass ban log images.", ephemeral=True)
+
+        if server_info and "staff" in server_info:
+            try:
+                staff_entry = server_info.get("staff").get(str(interaction.user.id))
+                if staff_entry:
+                    staff_entry["monthly"] = staff_entry.get("monthly", 0) + len(banned_users)
+                    staff_entry["alltime"] = staff_entry.get("alltime", 0) + len(banned_users)
+                    servers.replace_one(server_query, server_info)
+            except KeyError:
+                await interaction.followup.send(f"Unable to add staff credits to {interaction.user.mention}.",
+                                                ephemeral=True)
+
+        summary = f"Successfully mass banned **{len(banned_users)}** user(s)."
+        if skipped_users:
+            summary += f"\nSkipped: {', '.join(skipped_users)}"
+
+        await interaction.followup.send(summary, ephemeral=True)
+
+    else:
+        if guild_id == TRI_Archive:
+            return await interaction.followup.send("ban requests disabled for this server.", ephemeral=True)
+
+        server_info = servers.find_one_and_update(
+            {"_id": str(interaction.guild.id)},
+            {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+            upsert=True,
+            return_document=True
+        )
+
+        if not server_info.get("staff_role") or not server_info.get("bans_warns_channel"):
+            return await interaction.followup.send(
+                "**staff_role** or **bans_warns_channel** has not been set up for this server.",
+                ephemeral=True)
+
+        staff_role_id = int(server_info.get("staff_role").replace("<@&", "").replace(">", ""))
+        has_staff_role = discord.utils.get(interaction.user.roles, id=staff_role_id) is not None
+
+        if not has_staff_role:
+            return await interaction.followup.send("You do not have permission to request bans.", ephemeral=True)
+
+        server_info.setdefault("bans_warns_req", {})
+        bans_warns_channel_id = int(server_info.get("bans_warns_channel").replace("<#", "").replace(">", ""))
+        bans_warns_channel = bot.get_channel(bans_warns_channel_id)
+        ban_perms = server_info.get("ban_perms")
+
+        requested_count = 0
+        skipped_users = []
+        is_first_req = True
+
+        for raw_u in raw_user_list:
+            try:
+                target_user = await bot.fetch_user(int(raw_u))
+            except (ValueError, discord.NotFound, discord.HTTPException):
+                skipped_users.append(f"`{raw_u}`")
+                continue
+
+            if str(target_user.id) in server_info["bans_warns_req"]:
+                skipped_users.append(f"{target_user.mention} (Req exists)")
+                continue
+
+            files_to_send = create_file_list(prepared_images)
+
+            req_content = f"**Ban Request**\nㆍ User ID: {target_user.id}\nㆍ Reason: {reason}\nㆍ Requested by: {interaction.user.id}"
+            if ban_perms and is_first_req:
+                req_content = f"{ban_perms}\n" + req_content
+            if files_to_send:
+                req_content += "\nㆍ Proof:"
+
+            try:
+                ban_req = await bans_warns_channel.send(
+                    content=req_content,
+                    files=files_to_send if files_to_send else None,
+                    view=BanReqView()
+                )
+            except Exception:
+                ban_req = await bans_warns_channel.send(
+                    content=req_content,
+                    view=BanReqView()
+                )
+            is_first_req = False
+
+            server_info["bans_warns_req"][str(target_user.id)] = [reason, str(interaction.user.id),
+                                                                  str(ban_req.jump_url)]
+            server_info["bans_warns_req"][str(ban_req.id)] = str(target_user.id)
+            requested_count += 1
+
+        servers.replace_one({"_id": str(guild_id)}, server_info)
+
+        summary = f"Sent **{requested_count}** ban request(s) in <#{bans_warns_channel_id}>."
+        if skipped_users:
+            summary += f"\nSkipped: {', '.join(skipped_users)}"
+
+        await interaction.followup.send(summary, ephemeral=True)
+
+@massban.error
+async def massban_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
 class BanReqView(discord.ui.View):
