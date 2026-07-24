@@ -93,6 +93,19 @@ professional_mm_role = 1435205320300302396
 
 tethys = 1434471275723493388
 
+TAG_ROLES_MAP = {
+    "Ex-offender": 1523198664707674112,
+    "Scammer": 1523197275445137569,
+    "Scam Server Owner": 1523197278675009617,
+    "Raider": 1523197277227974747,
+    "Impersonator": 1523197280310530058,
+    "Vouch Scammer": 1523197280910442496,
+    "Plagiarist": 1523197279232720966,
+    "Fake Event Host": 1523197279366942882,
+    "Suspect": 1523197276418473984,
+    "Service Ban": 1523198697540682000,
+}
+
 banned_words = os.getenv("banned_words").split(",")
 
 def is_sr(user):
@@ -101,7 +114,86 @@ def is_sr(user):
 def is_active_staff(user):
     return any(role.id in (ticket_ping, adm_ping) for role in user.roles)
 
+def extract_user_tags(user_profile: dict) -> set:
+    found_tags = set()
+    r_profile = user_profile.get("r_profile_list", [])
+    if len(r_profile) > 1 and isinstance(r_profile[1], str):
+        for tag in r_profile[1].split(","):
+            if tag.strip():
+                found_tags.add(tag.strip().lower())
+    for key, val in user_profile.items():
+        if key.isdigit() and isinstance(val, dict):
+            tags_str = val.get("tags", "")
+            if tags_str:
+                for tag in tags_str.split(","):
+                    if tag.strip():
+                        found_tags.add(tag.strip().lower())
+    return found_tags
+
+async def sync_tag_roles(member: discord.Member) -> bool:
+    if member.bot:
+        return False
+    user_id_str = str(member.id)
+    user_profile = userscol.find_one({"_id": user_id_str})
+    all_tag_roles = set()
+    for role_id in TAG_ROLES_MAP.values():
+        role = member.guild.get_role(role_id)
+        if role:
+            all_tag_roles.add(role)
+
+    if not user_profile:
+        roles_to_remove = [r for r in all_tag_roles if r in member.roles]
+        if roles_to_remove:
+            try:
+                await member.remove_roles(*roles_to_remove, reason="User is not reported; clearing tag roles.")
+                return True
+            except (discord.Forbidden, discord.HTTPException):
+                pass
+        return False
+
+    user_tags = extract_user_tags(user_profile)
+    roles_to_add = []
+    roles_to_keep = set()
+    for tag in user_tags:
+        if tag in TAG_ROLES_MAP:
+            role_id = TAG_ROLES_MAP[tag]
+            role = member.guild.get_role(role_id)
+            if role:
+                roles_to_keep.add(role)
+                if role not in member.roles:
+                    roles_to_add.append(role)
+    roles_to_remove = [r for r in all_tag_roles if r in member.roles and r not in roles_to_keep]
+    changes_made = False
+    if roles_to_add:
+        try:
+            await member.add_roles(*roles_to_add, reason="Automatic report tag role sync.")
+            changes_made = True
+        except (discord.Forbidden, discord.HTTPException):
+            pass
+    if roles_to_remove:
+        try:
+            await member.remove_roles(*roles_to_remove, reason="Removing unassigned report tag roles.")
+            changes_made = True
+        except (discord.Forbidden, discord.HTTPException):
+            pass
+    return changes_made
+
 # events
+
+@tasks.loop(hours=1)
+async def periodic_role_sync():
+    guild = bot.get_guild(TRI_Archive)
+    if not guild:
+        try:
+            guild = await bot.fetch_guild(TRI_Archive)
+        except (discord.NotFound, discord.HTTPException):
+            return
+    for member in guild.members:
+        await sync_tag_roles(member)
+
+@periodic_role_sync.before_loop
+async def before_periodic_sync():
+    await bot.wait_until_ready()
 
 @bot.event
 async def on_message(message):
@@ -158,6 +250,7 @@ async def on_member_join(member):
     if member.guild.id == TRI_Archive:
         channel = bot.get_channel(VERIFY_CHANNEL)
         await channel.send(f"Welcome to TRI Archive, {member.mention}! Please verify.", delete_after=0)
+        await sync_tag_roles(member)
 
 @bot.event
 async def on_member_update(before, after):
