@@ -1534,32 +1534,24 @@ class ClosingView(discord.ui.View):
   - `edited server owner for 𝐢𝐝 - from 𝐢𝐝 to 𝐢𝐝`
 - edited links only
   - `edited links for 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 - added 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝, removed 𝐠𝐚𝐦𝐞ㆍ𝐮𝐢𝐝`
-- invalid reason
+- no report
   - `no report on 𝐢𝐝 // invalid reason`
-- insufficient proof
   - `no report on 𝐢𝐝 // insufficient proof`
-- deleted user
+  - `no report on 𝐢𝐝 // warned for service ban`
   - `no report on 𝐢𝐝 // deleted user`
-- issue resolved
   - `no report on 𝐢𝐝 // issue resolved`
-- unresponsive contributor
   - `no report on 𝐢𝐝 // unresponsive contributor`
-- contributor left server
   - `no report on 𝐢𝐝 // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "appeal":
             await interaction.response.send_message(embed=discord.Embed(description="""
 - accepted appeal
   - `accepted appeal on 𝐢𝐝 as 𝐭𝐚𝐠`
-- rejected appeal
+- no appeal / rejected appeal
   - `no appeal on 𝐢𝐝 // invalid reason`
-- insufficient proof
   - `no appeal on 𝐢𝐝 // insufficient proof`
-- unreported
   - `no appeal on 𝐢𝐝 // unreported`
-- unresponsive contributor
   - `no appeal on 𝐢𝐝 // unresponsive contributor`
-- contributor left server
   - `no appeal on 𝐢𝐝 // contributor left server`
 """), ephemeral=True)
         if self.select_callback.values[0] == "verify":
@@ -2179,6 +2171,26 @@ async def staff_accepted(interaction: discord.Interaction, user: discord.Member)
 send = app_commands.Group(name="send", description="Send embeds/rules/guides.")
 bot.tree.add_command(send)
 
+@send.command(name="verify", description="Sends verify embed.")
+@app_commands.checks.has_role(adm_ping)
+async def send_verify(interaction: discord.Interaction, colour: str=None, image: discord.Attachment=None):
+    await interaction.response.defer(ephemeral=True)
+    colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
+    if image:
+        image_embed = discord.Embed(colour=colour)
+        image_embed.set_image(url=image.url)
+        await interaction.channel.send("_ _", embed=image_embed)
+    await interaction.channel.send(embed=discord.Embed(colour=colour, description="""
+<:tri_whiteheart:1434538078747365507>　verify  to  access  the  rest  of  the  server
+
+### _ _　　꒰ <a:tri_purpleflower:1515565233798778930>　Verify　Below　⟣
+_ _
+◟　if access denied, miku will **automatically verify you** .ᐟ
+◟　other issues or still need help? _[open ticket](https://discord.com/channels/1371673839695826974/1375261699111784478)_
+"""))
+    await interaction.followup.send("Verify embed has been sent.", ephemeral=True)
+
+
 class StaffRulesView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -2186,11 +2198,11 @@ class StaffRulesView(discord.ui.View):
                                         url="https://docs.google.com/document/d/18GPfRrvzJ4b1d6cJ_yLyd1HELJbE4y9PqBH5-FVQktc/"))
 
 staff_guide_options = [
-    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍTrial", value="trial"),
-    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍBreaks", value="breaks"),
-    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍQuota", value="quota"),
-    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍTickets", value="tickets"),
-    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍAutoresponders", value="autoresponders"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍtrial", value="trial"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍbreaks", value="breaks"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍquota", value="quota"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍtickets", value="tickets"),
+    discord.SelectOption(emoji="<:tri_whiteheart:1434538078747365507>", label="ㆍㆍautoresponders", value="autoresponders"),
 ]
 
 class StaffGuideView(discord.ui.View):
@@ -2292,47 +2304,71 @@ class StaffGuideView(discord.ui.View):
 
 @send.command(name="staffrules", description="Sends staff rules.")
 @app_commands.checks.has_role(adm_ping)
-async def send_staffrules(interaction: discord.Interaction):
-    await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
+async def send_staffrules(interaction: discord.Interaction, colour: str=None, image: discord.Attachment=None):
+    await interaction.response.defer(ephemeral=True)
+    colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
+    if image:
+        image_embed = discord.Embed(colour=colour)
+        image_embed.set_image(url=image.url)
+        await interaction.channel.send("_ _", embed=image_embed)
+    await interaction.channel.send(embed=discord.Embed(colour=colour, description="""
 ## <:2paperclip:1449650494044639335>　　staff　　rules　　ꫂ᭪
-### follow server rules
-- adhere to all [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160)
-- particular focus on **no discrimination**, **no hate or threats**, and **no nsfw content**
-### confidentiality
-- follow the non-disclosure agreement (nda)
-- violation may result in removal from staff and/or a server ban depending on severity
-### ticket protocol
-- only one staff should handle a ticket at a time, unless a defender is required
-- do not hijack tickets claimed by others
-- avoid tickets where you are related to the defendant
-- keep communication on-topic and case-related; refrain from side-chatting
-- when handling multiple reports in a ticket, address one at a time in order
-### professionalism
-- reports on staff may result in quarantine and demotion if accepted
-- speaking negatively about ticket participants or staff (current or former) is unprofessional and will be addressed
-### respect
-- remain respectful, even toward those you dislike
-- personal feelings are not an excuse for rudeness or unprofessional behavior
-### no inappropriate jokes
-- jokes about ||suicide||, ||self-harm||, or ||body shaming|| (e.g., "||kys||", "||fat||", "||keep yourself safe||") are strictly prohibited
-- even if said without ill-intention, these are not acceptable as they may make others uncomfortable
-### no drama
-- keep personal conflicts out of the server
-- resolve issues privately and respectfully, or seek proper mediation
-### no favouritism
-- do not excessively praise, defend, or favour specific individuals
-- favoritism that undermines neutrality, decision-making, or report handling is prohibited
+**　⸝⸝⊹　follow server rulesㆍ**
+– adhere to all [server rules](https://discord.com/channels/1371673839695826974/1371674470611161160)
+– particular focus on **no discrimination**, **no hate or threats**, and **no nsfw content**
+
+**　⊹⸝⸝　confidentialityㆍ**
+– follow the non-disclosure agreement (nda)
+– violation may result in removal from staff and/or a server ban depending on severity
+
+**　⸝⸝⊹　ticket protocolㆍ**
+– only one staff should handle a ticket at a time, unless a defender is required
+– do not hijack tickets claimed by others
+– avoid tickets where you are related to the defendant
+– keep communication on-topic and case-related; refrain from side-chatting
+– when handling multiple reports in a ticket, address one at a time in order
+
+**　⊹⸝⸝　professionalismㆍ**
+– reports on staff may result in quarantine and demotion if accepted
+– speaking negatively about ticket participants or staff (current or former) is unprofessional and will be addressed
+
+**　⸝⸝⊹　respectㆍ**
+– remain respectful, even toward those you dislike
+– personal feelings are not an excuse for rudeness or unprofessional behavior
+
+**　⊹⸝⸝　no inappropriate jokesㆍ**
+– jokes about ||suicide||, ||self-harm||, or ||body shaming|| (e.g., "||kys||", "||fat||", "||keep yourself safe||") are strictly prohibited
+– even if said without ill-intention, these are not acceptable as they may make others uncomfortable
+
+**　⸝⸝⊹　no dramaㆍ**
+– keep personal conflicts out of the server
+– resolve issues privately and respectfully, or seek proper mediation
+
+**　⊹⸝⸝　no favouritismㆍ**
+– do not excessively praise, defend, or favour specific individuals
+– favoritism that undermines neutrality, decision-making, or report handling is prohibited
 """), view=StaffRulesView())
-    await interaction.response.send_message("Staff Rules have been sent.", ephemeral=True)
+    await interaction.followup.send("Staff Rules have been sent.", ephemeral=True)
 
 @send.command(name="staffguide", description="Sends staff guide.")
 @app_commands.checks.has_role(adm_ping)
-async def send_staffguide(interaction: discord.Interaction):
-    await interaction.channel.send(embed=discord.Embed(colour=0xffffff, description="""
+async def send_staffguide(interaction: discord.Interaction, colour: str=None, image: discord.Attachment=None):
+    await interaction.response.defer(ephemeral=True)
+    colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
+    if image:
+        image_embed = discord.Embed(colour=colour)
+        image_embed.set_image(url=image.url)
+        await interaction.channel.send("_ _", embed=image_embed)
+    await interaction.channel.send(embed=discord.Embed(colour=colour, description="""
 ## <:tri_whitebow:1388714593211125971>　　staff　　guide　　ꫂ᭪
-　　`,help` for list of TRI bots commands.
+　　`,help` for list of tri bots commands.
+> -# – trial
+> -# – breaks
+> -# – quota
+> -# – tickets
+> -# – autoresponders
 """), view=StaffGuideView())
-    await interaction.response.send_message("Staff Guide has been sent.", ephemeral=True)
+    await interaction.followup.send("Staff Guide has been sent.", ephemeral=True)
 
 @send.command(name="rules", description="Sends server rules.")
 @app_commands.checks.has_role(adm_ping)
@@ -2345,41 +2381,41 @@ async def send_rules(interaction: discord.Interaction, colour: str=None, image: 
         await interaction.channel.send("_ _", embed=image_embed)
     embed1 = discord.Embed(colour=colour, title="_ _　　✦，　〝　general　guidelines　◝", description="""
 **　⸝⸝⊹　follow discord [tos](https://discord.com/terms) and [gls](https://discord.com/guidelines)ㆍ**
-╴read discord terms of service & guidelines fully to ensure you don’t break them.
+– read discord terms of service & guidelines fully to ensure you don’t break them.
 
 **　⊹⸝⸝　be respectful﹐strictly no hateㆍ**
-╴be civil, any form of harassment, discrimination, bullying, etc will not be tolerated.
+– be civil, any form of harassment, discrimination, bullying, etc will not be tolerated.
 
 **　⸝⸝⊹　do not reveal or ask for personal infoㆍ**
-╴this includes other’s info and your own, please do not share too much for your own and others’ safety.
+– this includes other’s info and your own, please do not share too much for your own and others’ safety.
 
 **　⊹⸝⸝　no plagiarismㆍ**
-╴inspiration is allowed but do not plagiarise any content, please give proper credits.
+– inspiration is allowed but do not plagiarise any content, please give proper credits.
 
 **　⊹⸝⸝　respect the staff﹐open a ticket for help ／ concernsㆍ**
-╴listen to staff and respect them, do not block them as they are here to help you. if you have concerns, need help or would like to report someone who broke the rules please open a ticket and do not deal with the problem yourself.
+– listen to staff and respect them, do not block them as they are here to help you. if you have concerns, need help or would like to report someone who broke the rules please open a ticket and do not deal with the problem yourself.
 
 **　⸝⸝⊹　no ads ／ self - promo﹙includes dms﹚ㆍ**
-╴any form of self promotion is strictly __prohibited__.
+– any form of self promotion is strictly __prohibited__.
     """)
     await interaction.channel.send("_ _", embed=embed1)
     embed2 = discord.Embed(colour=colour, title="_ _　　✦，　〝　language　etiquette　◝", description="""
 **　⸝⸝⊹　nsfw is strictly prohibitedㆍ**
-╴includes both images and nsfw text, this is a public server and minors are present.
+– includes both images and nsfw text, this is a public server and minors are present.
 
 **　⊹⸝⸝　no excessive swearing﹐or slursㆍ**
-╴swearing is alright, as long as it isn’t unnecessarily excessive or targeted towards someone in a serious matter. slurs will strictly result in an immediate ban, even if it is reclaimable by you.
+– swearing is alright, as long as it isn’t unnecessarily excessive or targeted towards someone in a serious matter. slurs will strictly result in an immediate ban, even if it is reclaimable by you.
 
 **　⸝⸝⊹ 　do not spam anything for any reasonㆍ**
-╴this includes text, images, pings, etc..
+– this includes text, images, pings, etc..
     """)
     await interaction.channel.send("_ _", embed=embed2)
     embed3 = discord.Embed(colour=colour, title="_ _　　✦，　〝　reporting　don’ts　◝", description="""
 **　⸝⸝⊹　no false reportsㆍ**
-╴falsely reporting someone and producing fake evidence will result in a ban.
+– falsely reporting someone and producing fake evidence will result in a ban.
 
 **　⸝⸝⊹　no briberyㆍ**
-╴any attempt to bribe someone or any attempt to take a bribe, is strictly prohibited.
+– any attempt to bribe someone or any attempt to take a bribe, is strictly prohibited.
     """)
     await interaction.channel.send("_ _", embed=embed3)
     embed4 = discord.Embed(colour=colour, description="""
@@ -2942,65 +2978,65 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
         await interaction.channel.send("_ _", embed=image_embed)
     embed1 = discord.Embed(colour=colour, description="""
 ### _ _　　overview
-> -# what is tri?
-> -# terms of service
-> -# privacy policy
-> -# ban policy
-> -# how can I contact admin+?
-> -# how can I request a collaboration?
+> -# – what is tri?
+> -# – terms of service
+> -# – privacy policy
+> -# – ban policy
+> -# – how can I contact admin+?
+> -# – how can I request a collaboration?
 """)
     msg1 = await interaction.channel.send("_ _", embed=embed1, view=FAQOverviewView())
     embed2 = discord.Embed(colour=colour, description="""
 ### _ _　　reports
-> -# how do I check for reports?
-> -# what can be reported?
-> -# what proofs are required for reports?
-> -# can I remain anonymous?
-> -# can I report someone who has already been reported?
-> -# can I update or withdraw my report?
-> -# how long does it take for reports to be published?
-> -# how do I stay updated with new reports?
-> -# what if someone files a false report?
+> -# – how do I check for reports?
+> -# – what can be reported?
+> -# – what proofs are required for reports?
+> -# – can I remain anonymous?
+> -# – can I report someone who has already been reported?
+> -# – can I update or withdraw my report?
+> -# – how long does it take for reports to be published?
+> -# – how do I stay updated with new reports?
+> -# – what if someone files a false report?
 """)
     msg2 = await interaction.channel.send("_ _", embed=embed2, view=FAQReportsView())
     embed3 = discord.Embed(colour=colour, description="""
 ### _ _　　appeals
-> -# how to make an appeal?
-> -# what can be appealed?
-> -# what proofs are required for appeals?
-> -# can someone else appeal on my behalf?
+> -# – how to make an appeal?
+> -# – what can be appealed?
+> -# – what proofs are required for appeals?
+> -# – can someone else appeal on my behalf?
 """)
     msg3 = await interaction.channel.send("_ _", embed=embed3, view=FAQAppealsView())
     embed4 = discord.Embed(colour=colour, description="""
 ### _ _　　definitions & standards
-> -# what is scamming?
-> -# what is a suspect?
-> -# what is impersonation?
-> -# what do the report tags mean?
-> -# what is beaming?
-> -# what is hitting?
-> -# what is proof beyond reasonable doubt?
-> -# what does “insufficient proofs” mean?
-> -# what does “invalid reason” mean?
+> -# – what is scamming?
+> -# – what is a suspect?
+> -# – what is impersonation?
+> -# – what do the report tags mean?
+> -# – what is beaming?
+> -# – what is hitting?
+> -# – what is proof beyond reasonable doubt?
+> -# – what does “insufficient proofs” mean?
+> -# – what does “invalid reason” mean?
 """)
     msg4 = await interaction.channel.send("_ _", embed=embed4, view=FAQDefinitionsStandardsView())
     embed5 = discord.Embed(colour=colour, description="""
 ### _ _　　scam prevention
-> -# how can I avoid being scammed?
-> -# how do I identify impersonators?
-> -# how do I identify malicious links?
-> -# can I report someone for refusing to use a middleman?
-> -# what should I do immediately after being scammed?
-> -# can tri recover my lost items or money?
-> -# what should I do if my account has been compromised?
+> -# – how can I avoid being scammed?
+> -# – how do I identify impersonators?
+> -# – how do I identify malicious links?
+> -# – can I report someone for refusing to use a middleman?
+> -# – what should I do immediately after being scammed?
+> -# – can tri recover my lost items or money?
+> -# – what should I do if my account has been compromised?
 """)
     msg5 = await interaction.channel.send("_ _", embed=embed5, view=FAQScamPreventionView())
     embed6 = discord.Embed(colour=colour, description="""
 ### _ _　　staff & transparency
-> -# who can access tickets & ongoing reports?
-> -# how does tri ensure reports & appeals are not biased?
-> -# how can I apply to be staff?
-> -# how can I report a tri staff?
+> -# – who can access tickets & ongoing reports?
+> -# – how does tri ensure reports & appeals are not biased?
+> -# – how can I apply to be staff?
+> -# – how can I report a tri staff?
 """)
     msg6 = await interaction.channel.send("_ _", embed=embed6, view=FAQStaffTransparencyView())
     embed = discord.Embed(colour=colour, description=f"""
