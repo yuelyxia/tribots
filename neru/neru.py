@@ -37,6 +37,11 @@ ticket_ping = 1449382692671193294
 sr_role = 1375254710952661102
 adm_role = 1375276457890287748
 
+TRI_Archive = 1371673839695826974
+
+members_role = 1373806415256223895
+unverified_role = 1373806500396535889
+
 NERU_LOGS = 1460858907491569816
 PROOFS_CHANNEL = 1455055877034868769
 
@@ -81,10 +86,36 @@ async def on_ready():
     if not clear_proof_cache.is_running():
         clear_proof_cache.start()
 
+async def autoverify(user_id: int):
+    guild = bot.get_guild(TRI_Archive)
+    if not guild:
+        try:
+            guild = await bot.fetch_guild(TRI_Archive)
+        except (discord.NotFound, discord.HTTPException):
+            return
+    try:
+        member = guild.get_member(user_id) or await guild.fetch_member(user_id)
+    except (discord.NotFound, discord.HTTPException):
+        return
+    member_r = guild.get_role(members_role)
+    unverified_r = guild.get_role(unverified_role)
+    if member_r and member_r not in member.roles:
+        try:
+            await member.add_roles(member_r, reason="Alt account logged.")
+        except discord.Forbidden:
+            pass
+    if unverified_r and unverified_r in member.roles:
+        try:
+            await member.remove_roles(unverified_r, reason="Alt account logged.")
+        except discord.Forbidden:
+            pass
+
 @bot.event
 async def on_message(message: discord.Message):
     neru_logs_channel = bot.get_channel(NERU_LOGS)
     if message.author.id == 703886990948565003:
+        alt1_id = None
+        alt2_id = None
         pattern1 = r"\((\d{17,20})\)\s*-\s*Main account\s*:\s*.*?\((\d{17,20})\)"
         match1 = re.search(pattern1, message.content)
         match2 = False
@@ -104,9 +135,10 @@ async def on_message(message: discord.Message):
             if match1:
                 alt1_id = match1.group(1)
                 alt2_id = match1.group(2)
-            if alt1_id != alt2_id:
+            if alt1_id and alt2_id and alt1_id != alt2_id:
                 proof = f"{message.jump_url} – dc"
                 formatted_proof = proof
+                guild_id = None
                 try:
                     parts = message.jump_url.split('/')
                     guild_id = int(parts[-3])
@@ -341,6 +373,8 @@ async def on_message(message: discord.Message):
                         else:
                             await neru_logs_channel.send(
                                 f"`{alt1_id}` and `{alt2_id}` have been added as alts.\n{formatted_proof}")
+                if guild_id == TRI_Archive or (message.guild and message.guild.id == TRI_Archive):
+                    await autoverify(int(alt1_id))
 
     await bot.process_commands(message)
 
