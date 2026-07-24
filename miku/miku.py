@@ -94,16 +94,16 @@ professional_mm_role = 1435205320300302396
 tethys = 1434471275723493388
 
 TAG_ROLES_MAP = {
-    "Ex-offender": 1523198664707674112,
-    "Scammer": 1523197275445137569,
-    "Scam Server Owner": 1523197278675009617,
-    "Raider": 1523197277227974747,
-    "Impersonator": 1523197280310530058,
-    "Vouch Scammer": 1523197280910442496,
-    "Plagiarist": 1523197279232720966,
-    "Fake Event Host": 1523197279366942882,
-    "Suspect": 1523197276418473984,
-    "Service Ban": 1523198697540682000,
+    "ex-offender": 1523198664707674112,
+    "scammer": 1523197275445137569,
+    "scam server owner": 1523197278675009617,
+    "raider": 1523197277227974747,
+    "impersonator": 1523197280310530058,
+    "vouch Scammer": 1523197280910442496,
+    "plagiarist": 1523197279232720966,
+    "fake event host": 1523197279366942882,
+    "suspect": 1523197276418473984,
+    "service ban": 1523198697540682000,
 }
 
 banned_words = os.getenv("banned_words").split(",")
@@ -116,9 +116,9 @@ def is_active_staff(user):
 
 def extract_user_tags(user_profile: dict) -> set:
     found_tags = set()
-    r_profile = user_profile.get("r_profile_list", [])
-    if len(r_profile) > 1 and isinstance(r_profile[1], str):
-        for tag in r_profile[1].split(","):
+    r_profile_list = user_profile.get("r_profile_list", [])
+    if len(r_profile_list) > 1 and isinstance(r_profile_list[1], str):
+        for tag in r_profile_list[1].split(","):
             if tag.strip():
                 found_tags.add(tag.strip().lower())
     for key, val in user_profile.items():
@@ -135,6 +135,10 @@ async def sync_tag_roles(member: discord.Member) -> bool:
         return False
     user_id_str = str(member.id)
     user_profile = userscol.find_one({"_id": user_id_str})
+    if user_profile:
+        if len(user_profile) == 2:
+            main = user_profile['main']
+            user_profile = userscol.find_one({"_id": main})
     all_tag_roles = set()
     for role_id in TAG_ROLES_MAP.values():
         role = member.guild.get_role(role_id)
@@ -776,7 +780,7 @@ async def quota(ctx, member: discord.Member = None):
         return await ctx.send("This staff is still in training.")
     embeds = []
     rank = get_staff_rank(member)
-    profile = discord.Embed(colour=0xffffff, title=f"{member.display_name.replace("||", "\|\|")}")
+    profile = discord.Embed(colour=0xffffff, title=f"{member.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
     profile.set_thumbnail(url=f"{member.display_avatar}")
     profile.description = f"`{member.id}`\n{member.mention}\n`{member.name}`\n**Rank:** {rank}"
     embeds.append(profile)
@@ -843,7 +847,7 @@ async def quota_history(ctx, member: discord.Member=None):
         return await ctx.send("This staff is still in training.")
     embeds = []
     rank = get_staff_rank(member)
-    profile = discord.Embed(colour=0xffffff, title=f"{member.display_name.replace("||", "\|\|")}")
+    profile = discord.Embed(colour=0xffffff, title=f"{member.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
     profile.set_thumbnail(url=f"{member.display_avatar}")
     profile.description = f"`{member.id}`\n{member.mention}\n`{member.name}`\n**Rank:** {rank}"
     embeds.append(profile)
@@ -998,7 +1002,7 @@ async def bb(ctx, member: discord.Member=None):
         return await ctx.send("This staff is still in training.")
     embeds = []
     rank = get_staff_rank(member)
-    profile = discord.Embed(colour=0xffffff, title=f"{member.display_name.replace("||", "\|\|")}")
+    profile = discord.Embed(colour=0xffffff, title=f"{member.display_name.replace('||', '\\|\\|').replace('_', '\\_')}")
     profile.set_thumbnail(url=f"{member.display_avatar}")
     profile.description = f"`{member.id}`\n{member.mention}\n`{member.name}`\n**Rank:** {rank}"
     embeds.append(profile)
@@ -3355,6 +3359,54 @@ async def notify(ctx, user: discord.User):
         await ctx.message.add_reaction("<:tri_whitetick:1462774288020013161>")
     except discord.Forbidden:
         await ctx.message.add_reaction("<:tri_whitecross:1462774085737119828>")
+
+@bot.command()
+@commands.has_any_role(adm_ping)
+async def syncroles(ctx: commands.Context):
+    msg = await ctx.send("Syncing tree commands and member tag roles...")
+    guild = bot.get_guild(TRI_Archive)
+    if not guild:
+        try:
+            guild = await bot.fetch_guild(TRI_Archive)
+        except (discord.NotFound, discord.HTTPException):
+            return
+    members = guild.members
+    if not members:
+        try:
+            members = [m async for m in guild.fetch_members(limit=None)]
+        except (discord.Forbidden, discord.HTTPException):
+            return await msg.edit(content="Failed to fetch guild members. Check bot permissions/intents.")
+
+    total_members = len(members)
+    synced_count = 0
+    roles_changed = 0
+
+    for index, member in enumerate(members, start=1):
+        changed = await sync_tag_roles(member)
+        synced_count += 1
+        if changed:
+            roles_changed += 1
+
+        if index % 10 == 0 or index == total_members:
+            try:
+                await msg.edit(
+                    content=(
+                        f"**Syncing member roles...**\n"
+                        f"Progress: {index:,}/{total_members:,} ({index / total_members:.1%})\n"
+                        f"Roles Updated: `{roles_changed}`"
+                    )
+                )
+                await asyncio.sleep(2)
+            except discord.HTTPException:
+                pass
+
+    await msg.edit(
+        content=(
+            f"**Sync complete!**\n"
+            f"Synced tree commands and checked **{total_members}** member(s).\n"
+            f"Updated roles for **{roles_changed}** member(s)."
+        )
+    )
 
 @bot.command()
 async def sync(ctx: commands.Context):
