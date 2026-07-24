@@ -1120,9 +1120,47 @@ tags_options = [
 
 @bot.command(name="tags", help="Sends the descriptions of demerit tags.")
 async def tags(ctx, *, tag: str = None):
-    await ctx.reply(embed=discord.Embed(colour=0xffffff, title = "demerit　tags　⸝⸝.ᐟ", description="""
+    embed = discord.Embed(colour=0xffffff, title = "demerit　tags　⸝⸝.ᐟ", description="""
 　　use the dropdown to select a tag and view its description.
-    """), view=TagsView())
+    """)
+    embed.add_field(
+        name="user tags",
+        value="""
+-# <:tri_redheart:1462285627243499655> scammer
+-# <:tri_redheart:1462285627243499655> scam server owner
+-# <:tri_redheart:1462285627243499655> raider
+-# <:tri_redheart:1462285627243499655> plagiarist
+-# <:tri_redheart:1462285627243499655> fake event host
+-# <:tri_redheart:1462285627243499655> impersonator
+-# <:tri_redheart:1462285627243499655> vouch scammer
+""",
+        inline=True
+    )
+    embed.add_field(
+        name="\u200b",
+        value="""
+-# <:tri_yellowheart:1478132316122644544> suspect
+-# <:tri_yellowheart:1478132316122644544> unprofessional mm
+-# <:tri_yellowheart:1478132316122644544> unprofessional pilot
+-# <:tri_yellowheart:1478132316122644544> unprofessional supervisor
+-# <:tri_yellowheart:1478132316122644544> ex-offender
+-# <:tri_yellowheart:1478132316122644544> improper conduct
+-# <:tri_yellowheart:1478132316122644544> service ban
+""",
+        inline=True
+    )
+    embed.add_field(
+        name="server tags",
+        value="""
+-# <:tri_redheart:1462285627243499655> scam server
+-# <:tri_redheart:1462285627243499655> impersonator server
+-# <:tri_redheart:1462285627243499655> fake vouch server
+-# <:tri_redheart:1462285627243499655> fake event server
+-# <:tri_yellowheart:1478132316122644544> suspect server
+    """,
+        inline=False
+    )
+    await ctx.reply(embed=embed, view=TagsView())
 
 class TagsView(discord.ui.View):
     def __init__(self):
@@ -1430,11 +1468,6 @@ wip
 > users are reportable as scam server owner for simply having ownership of scam server(s), as shown via vencord, serverinfo bot command or the built-in crown symbol.
 > server staff and/or members are only reportable as scammer if there is sufficient evidence of them scamming. simply being part of a scam server is, on its own, insufficient.
 > higher staff (e.g. mm and above) may be reportable as suspect if they hold such roles and are active in such scam servers.
-it is not reportable if:
-the server owner(s) refuse to ban scammer(s) who have not scammed within the server.
-not reportable under this tag:
-impersonator server, fake vouch server or fake event server that does not have any scam activity.
-however, if there is scam activity occurring in any of the above types of servers, the server will be reportable under all relevant tags.
 
 　　**__notes__**
 
@@ -2978,65 +3011,65 @@ async def send_faq(interaction: discord.Interaction, colour: str=None, image: di
         await interaction.channel.send("_ _", embed=image_embed)
     embed1 = discord.Embed(colour=colour, description="""
 ### _ _　　overview
-> -# – what is tri?
-> -# – terms of service
-> -# – privacy policy
-> -# – ban policy
-> -# – how can I contact admin+?
-> -# – how can I request a collaboration?
+-# – what is tri?
+-# – terms of service
+-# – privacy policy
+-# – ban policy
+-# – how can I contact admin+?
+-# – how can I request a collaboration?
 """)
     msg1 = await interaction.channel.send("_ _", embed=embed1, view=FAQOverviewView())
     embed2 = discord.Embed(colour=colour, description="""
 ### _ _　　reports
-> -# – how do I check for reports?
-> -# – what can be reported?
-> -# – what proofs are required for reports?
-> -# – can I remain anonymous?
-> -# – can I report someone who has already been reported?
-> -# – can I update or withdraw my report?
-> -# – how long does it take for reports to be published?
-> -# – how do I stay updated with new reports?
-> -# – what if someone files a false report?
+-# – how do I check for reports?
+-# – what can be reported?
+-# – what proofs are required for reports?
+-# – can I remain anonymous?
+-# – can I report someone who has already been reported?
+-# – can I update or withdraw my report?
+-# – how long does it take for reports to be published?
+-# – how do I stay updated with new reports?
+-# – what if someone files a false report?
 """)
     msg2 = await interaction.channel.send("_ _", embed=embed2, view=FAQReportsView())
     embed3 = discord.Embed(colour=colour, description="""
 ### _ _　　appeals
-> -# – how to make an appeal?
-> -# – what can be appealed?
-> -# – what proofs are required for appeals?
-> -# – can someone else appeal on my behalf?
+-# – how to make an appeal?
+-# – what can be appealed?
+-# – what proofs are required for appeals?
+-# – can someone else appeal on my behalf?
 """)
     msg3 = await interaction.channel.send("_ _", embed=embed3, view=FAQAppealsView())
     embed4 = discord.Embed(colour=colour, description="""
 ### _ _　　definitions & standards
-> -# – what is scamming?
-> -# – what is a suspect?
-> -# – what is impersonation?
-> -# – what do the report tags mean?
-> -# – what is beaming?
-> -# – what is hitting?
-> -# – what is proof beyond reasonable doubt?
-> -# – what does “insufficient proofs” mean?
-> -# – what does “invalid reason” mean?
+-# – what is scamming?
+-# – what is a suspect?
+-# – what is impersonation?
+-# – what do the report tags mean?
+-# – what is beaming?
+-# – what is hitting?
+-# – what is proof beyond reasonable doubt?
+-# – what does “insufficient proofs” mean?
+-# – what does “invalid reason” mean?
 """)
     msg4 = await interaction.channel.send("_ _", embed=embed4, view=FAQDefinitionsStandardsView())
     embed5 = discord.Embed(colour=colour, description="""
 ### _ _　　scam prevention
-> -# – how can I avoid being scammed?
-> -# – how do I identify impersonators?
-> -# – how do I identify malicious links?
-> -# – can I report someone for refusing to use a middleman?
-> -# – what should I do immediately after being scammed?
-> -# – can tri recover my lost items or money?
-> -# – what should I do if my account has been compromised?
+-# – how can I avoid being scammed?
+-# – how do I identify impersonators?
+-# – how do I identify malicious links?
+-# – can I report someone for refusing to use a middleman?
+-# – what should I do immediately after being scammed?
+-# – can tri recover my lost items or money?
+-# – what should I do if my account has been compromised?
 """)
     msg5 = await interaction.channel.send("_ _", embed=embed5, view=FAQScamPreventionView())
     embed6 = discord.Embed(colour=colour, description="""
 ### _ _　　staff & transparency
-> -# – who can access tickets & ongoing reports?
-> -# – how does tri ensure reports & appeals are not biased?
-> -# – how can I apply to be staff?
-> -# – how can I report a tri staff?
+-# – who can access tickets & ongoing reports?
+-# – how does tri ensure reports & appeals are not biased?
+-# – how can I apply to be staff?
+-# – how can I report a tri staff?
 """)
     msg6 = await interaction.channel.send("_ _", embed=embed6, view=FAQStaffTransparencyView())
     embed = discord.Embed(colour=colour, description=f"""
