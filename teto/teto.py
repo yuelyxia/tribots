@@ -2363,10 +2363,10 @@ class UserProofsView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             #
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="userproofs:accept")
@@ -2941,10 +2941,10 @@ class EditAltsOnlyView(discord.ui.View):
             requested_by = session["requested_by"]
             channel_id = session["channel_id"]
             message_id = interaction.message.id
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="editaltsonly:accept")
@@ -3272,10 +3272,10 @@ class UserAppealView(discord.ui.View):
             requested_by = session["requested_by"]
             channel_id = session["channel_id"]
             message_id = interaction.message.id
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="userappeal:accept")
@@ -4273,10 +4273,10 @@ class AddReportUserProofsView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             #
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="addreportuserproofs:accept")
@@ -5576,10 +5576,10 @@ class ServerProofsView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             #
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="serverproofs:accept")
@@ -6055,10 +6055,10 @@ class EditOwnerOnlyView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             #
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="editowneronly:accept")
@@ -6220,10 +6220,10 @@ class ServerAppealView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             #
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="serverappeal:accept")
@@ -6843,10 +6843,10 @@ class AddReportServerProofsView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             #
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="addreportserverproofs:accept")
@@ -8259,10 +8259,10 @@ class AccountProofsView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             #
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accountproofs:accept")
@@ -8835,10 +8835,10 @@ class EditLinksOnlyView(discord.ui.View):
             requested_by = session["requested_by"]
             channel_id = session["channel_id"]
             message_id = interaction.message.id
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="editlinksonly:accept")
@@ -9151,10 +9151,10 @@ class AccountAppealView(discord.ui.View):
             requested_by = session["requested_by"]
             channel_id = session["channel_id"]
             message_id = interaction.message.id
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="accountappeal:accept")
@@ -10137,10 +10137,10 @@ class AddReportAccountProofsView(discord.ui.View):
             channel_id = session["channel_id"]
             message_id = interaction.message.id
             #
-            inprogresscol.delete_one({"_id": interaction.message.id})
             thread = await bot.fetch_channel(channel_id)
             message = await thread.fetch_message(message_id)
             if requested_by == interaction.user.id or is_sr(interaction.user):
+                inprogresscol.delete_one({"_id": interaction.message.id})
                 await message.edit(content=f"**Cancelled by {interaction.user.mention}.**", view=None)
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.grey, custom_id="addreportaccountproofs:accept")

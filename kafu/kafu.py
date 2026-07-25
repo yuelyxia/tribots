@@ -1305,7 +1305,7 @@ async def close(ctx, *args):
 
 class TicketCloseView(discord.ui.View):
     def __init__(self, active_claims):
-        super().__init__(timeout=120)
+        super().__init__(timeout=600)
         self.active_claims = active_claims
 
     @discord.ui.button(label="Confirm", style=discord.ButtonStyle.green, custom_id="ticketclose:confirm")
@@ -4197,7 +4197,7 @@ class TicketClosingModal(discord.ui.Modal, title="Ticket Closing Reason"):
 
 class TRICloseView(discord.ui.View):
     def __init__(self, active_claims):
-        super().__init__(timeout=120)
+        super().__init__(timeout=600)
         self.active_claims = active_claims
 
     @discord.ui.button(label="Closing", style=discord.ButtonStyle.blurple, custom_id="triclose:closing",
