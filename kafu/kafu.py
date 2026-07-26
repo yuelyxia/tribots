@@ -1344,6 +1344,71 @@ class TicketCloseView(discord.ui.View):
         await interaction.response.defer()
         await interaction.edit_original_response(content="**Cancelled.** Ticket credit(s) have not been given.",view=None)
 
+@bot.tree.command(name="confess", description="Send an anonymous confession. You can also choose to sign off so they know who you are.")
+@app_commands.describe(
+    to="member to dm the confession to",
+    text="your confession message",
+    colour="hex colour for the embed",
+    image="image attachment"
+)
+async def confess(
+        interaction: discord.Interaction,
+        to: discord.Member,
+        text: str,
+        colour: Optional[str] = None,
+        image: Optional[discord.Attachment] = None
+):
+    await interaction.response.defer(ephemeral=True)
+    if to == interaction.user:
+        return await interaction.followup.send("You cannot send a confession to yourself!", ephemeral=True)
+    if to.bot:
+        return await interaction.followup.send("You cannot send a confession to a bot!", ephemeral=True)
+    guild_id = interaction.guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one(server_query)
+    if server_info:
+        confessions_channel = server_info.get("confessions_channel")
+        if not confessions_channel:
+            return await interaction.followup.send("**confessions channel** has not been set up for this server.")
+        confessions_channel = bot.get_channel(int(confessions_channel.replace("<#", "").replace(">", "")))
+        embed_colour = discord.Colour(int(colour.strip("#"), 16)) if colour else 0xffffff
+        desc = "‎　　　　𓏲﹕ **_a confession arrived ._** ﹕⸝⸝　\n‎　now you have to decide what to do with it . . .　"+f"\n\n{text}"
+        embed = discord.Embed(
+            description=desc,
+            colour=embed_colour
+        )
+        embed.set_footer(text=f"sent from {interaction.guild.name}")
+
+        final_file = None
+        if image:
+            if image.content_type and image.content_type.startswith("image/"):
+                try:
+                    final_file = await image.to_file()
+                    embed.set_image(url=f"attachment://{final_file.filename}")
+                except (discord.NotFound, discord.HTTPException):
+                    return await interaction.followup.send("Failed to retrieve the attached image.", ephemeral=True)
+            else:
+                return await interaction.followup.send("The attached file must be an image.",
+                                                       ephemeral=True)
+        try:
+            if final_file:
+                await to.send(embed=embed, file=final_file)
+            else:
+                await to.send(embed=embed)
+            await interaction.followup.send(
+                f"Success! Your confession has been delivered anonymously to {to.mention}.",
+                ephemeral=True)
+            await confessions_channel.send(embed = discord.Embed(description=f"{interaction.user.mention} has sent a confession!"))
+        except discord.Forbidden:
+            await interaction.followup.send(
+                f"Unable to send a DM to {to.mention}. They may have their DMs closed.",
+                ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred while delivering your message: `{e}`", ephemeral=True)
+    else:
+        return await interaction.followup.send("**confessions channel** has not been set up for this server.")
+
+
 def user_info(user, staff_data=None, mm_data=None, pilot_data=None):
     profile = discord.Embed(title=user.display_name.replace('||', '\\|\\|').replace('_', '\\_'))
     profile.set_thumbnail(url=f"{user.display_avatar}")
@@ -3517,13 +3582,13 @@ async def dismiss_error(interaction: discord.Interaction, error: app_commands.Ap
     else:
         await interaction.followup.send(f"An error occurred: {error}", ephemeral=True)
 
-@bot.tree.command(name="setup", description="Set up KAFU.")
+setup = app_commands.Group(name="setup", description="Set up KAFU.")
+bot.tree.add_command(setup)
+
+@setup.command(name="general", description="Set up KAFU general settings.")
 @app_commands.checks.has_permissions(administrator=True)
-async def setup(interaction: discord.Interaction, topic: Optional[Literal[
-    "bans warns channel", "transcripts channel", "staff lb channel", "services lb channel", "revive ping",
-    "staff roles", "staff role", "staff ping", "staff break", "adm ping", "ban perms",
-    "mm roles", "mm role", "mm ping", "mm supervisor", "mm trainer", "mm break", "mm vouch channel",
-    "pilot roles", "pilot role", "pilot ping", "pilot supervisor", "pilot trainer", "pilot break", "pilot vouch channel"
+async def setup_general(interaction: discord.Interaction, topic: Optional[Literal[
+    "bans warns channel", "transcripts channel", "staff lb channel", "services lb channel", "revive ping", "confessions channel",
 ]]=None, input: Optional[str]=None):
     guild_id = interaction.guild.id
     TRI_enablelist = ["bans warns channel", "staff roles", "staff role", "staff ping"]
@@ -3548,31 +3613,9 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
         general_embed.add_field(name="transcripts channel", value=server_info.get("transcripts_channel", "unset"), inline=False) #
         general_embed.add_field(name="staff lb channel", value=server_info.get("staff_lb_channel", "unset"), inline=False) #
         general_embed.add_field(name="services lb channel", value=server_info.get("services_lb_channel", "unset"), inline=False) #
-        general_embed.add_field(name="revive ping", value=server_info.get("services_lb_channel", "unset"), inline=False)  #
-        staff_embed = discord.Embed(colour=0xffffff)
-        staff_embed.add_field(name="staff roles", value=server_info.get("staff_roles", "unset"), inline=False) #
-        staff_embed.add_field(name="staff role", value=server_info.get("staff_role", "unset"), inline=False) #
-        staff_embed.add_field(name="staff ping", value=server_info.get("staff_ping", "unset"), inline=False) #
-        staff_embed.add_field(name="staff break", value=server_info.get("staff_break", "unset"), inline=False)  #
-        staff_embed.add_field(name="adm ping", value=server_info.get("adm_ping", "unset"), inline=False) #
-        staff_embed.add_field(name="ban perms", value=server_info.get("ban_perms", "unset"), inline=False)  #
-        service_embed = discord.Embed(colour=0xffffff)
-        service_embed.add_field(name="mm roles", value=server_info.get("mm_roles", "unset"), inline=False) #
-        service_embed.add_field(name="mm role", value=server_info.get("mm_role", "unset"), inline=False) #
-        service_embed.add_field(name="mm ping", value=server_info.get("mm_ping", "unset"), inline=False) #
-        service_embed.add_field(name="mm supervisor", value=server_info.get("mm_supervisor", "unset"), inline=False) #
-        service_embed.add_field(name="mm trainer", value=server_info.get("mm_trainer", "unset"), inline=False) #
-        service_embed.add_field(name="mm break", value=server_info.get("mm_break", "unset"), inline=False) #
-        service_embed.add_field(name="mm vouch channel", value=server_info.get("mm_vouch_channel", "unset"), inline=False)
-        service_embed.add_field(name="pilot roles", value=server_info.get("pilot_roles", "unset"), inline=False) #
-        service_embed.add_field(name="pilot role", value=server_info.get("pilot_role", "unset"), inline=False) #
-        service_embed.add_field(name="pilot ping", value=server_info.get("pilot_ping", "unset"), inline=False) #
-        service_embed.add_field(name="pilot supervisor", value=server_info.get("pilot_supervisor", "unset"), inline=False) #
-        service_embed.add_field(name="pilot trainer", value=server_info.get("pilot_trainer", "unset"), inline=False) #
-        service_embed.add_field(name="pilot break", value=server_info.get("pilot_break", "unset"), inline=False) #
-        service_embed.add_field(name="pilot vouch channel", value=server_info.get("pilot_vouch_channel", "unset"), inline=False)
-        embeds = [general_embed, staff_embed, service_embed]
-        return await interaction.response.send_message(embeds=embeds, ephemeral=True)
+        general_embed.add_field(name="revive ping", value=server_info.get("revive_ping", "unset"), inline=False)  #
+        general_embed.add_field(name="confessions channel", value=server_info.get("confessions_channel", "unset"), inline=False) #
+        return await interaction.response.send_message(embed=general_embed, ephemeral=True)
     if topic == "bans warns channel" and input is not None:
         if input.strip().lower() == "none":
             server_info["bans_warns_channel"] = None
@@ -3643,6 +3686,54 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**revive ping** has been set to {revive_ping}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
+    if topic == "confessions channel" and input is not None:
+        if input.strip().lower() == "none":
+            server_info["confessions_channel"] = None
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message("The **confessions channel** has been reset.")
+            return
+        try:
+            confessions_channel = await interaction.guild.fetch_channel(int(input.replace("<#", "").replace(">", "")))
+        except discord.NotFound:
+            await interaction.response.send_message("Invalid channel.")
+        else:
+            confessions_channel = f"<#{confessions_channel.id}>"
+            server_info["confessions_channel"] = confessions_channel
+            servers.replace_one(server_query, server_info)
+            await interaction.response.send_message(
+                f"The **confessions channel** has been set to {confessions_channel}.")
+
+@setup.command(name="staff", description="Set up KAFU staff settings.")
+@app_commands.checks.has_permissions(administrator=True)
+async def setup_staff(interaction: discord.Interaction, topic: Optional[Literal[
+    "staff roles", "staff role", "staff ping", "staff break", "adm ping", "ban perms",
+]]=None, input: Optional[str]=None):
+    guild_id = interaction.guild.id
+    TRI_enablelist = ["bans warns channel", "staff roles", "staff role", "staff ping"]
+    if guild_id == TRI_Archive:
+        if topic not in TRI_enablelist:
+            return await interaction.response.send_message(f"**{topic}** is disabled for TRI Archive.")
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
+    if topic is None:
+        if guild_id == TRI_Archive:
+            for topic in TRI_enablelist:
+                embed = discord.Embed(colour=0xffffff)
+                embed.add_field(name=topic, value=server_info.get(topic, "unset"), inline=False)
+                return await interaction.response.send_message(embed=embed, ephemeral=True)
+        staff_embed = discord.Embed(colour=0xffffff)
+        staff_embed.add_field(name="staff roles", value=server_info.get("staff_roles", "unset"), inline=False) #
+        staff_embed.add_field(name="staff role", value=server_info.get("staff_role", "unset"), inline=False) #
+        staff_embed.add_field(name="staff ping", value=server_info.get("staff_ping", "unset"), inline=False) #
+        staff_embed.add_field(name="staff break", value=server_info.get("staff_break", "unset"), inline=False)  #
+        staff_embed.add_field(name="adm ping", value=server_info.get("adm_ping", "unset"), inline=False) #
+        staff_embed.add_field(name="ban perms", value=server_info.get("ban_perms", "unset"), inline=False)  #
+        return await interaction.response.send_message(embed=staff_embed, ephemeral=True)
     if topic == "staff roles" and input is not None:
         if input.strip().lower() == "none":
             server_info["staff_roles"] = None
@@ -3737,6 +3828,30 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             await interaction.response.send_message(f"**ban perms** has been set to {ban_perms}.")
         else:
             await interaction.response.send_message(f"Invalid role.")
+
+@setup.command(name="mm", description="Set up KAFU mm settings.")
+@app_commands.checks.has_permissions(administrator=True)
+async def setup_mm(interaction: discord.Interaction, topic: Optional[Literal[
+    "mm roles", "mm role", "mm ping", "mm supervisor", "mm trainer", "mm break", "mm vouch channel",
+]]=None, input: Optional[str]=None):
+    guild_id = interaction.guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
+    if topic is None:
+        service_embed = discord.Embed(colour=0xffffff)
+        service_embed.add_field(name="mm roles", value=server_info.get("mm_roles", "unset"), inline=False) #
+        service_embed.add_field(name="mm role", value=server_info.get("mm_role", "unset"), inline=False) #
+        service_embed.add_field(name="mm ping", value=server_info.get("mm_ping", "unset"), inline=False) #
+        service_embed.add_field(name="mm supervisor", value=server_info.get("mm_supervisor", "unset"), inline=False) #
+        service_embed.add_field(name="mm trainer", value=server_info.get("mm_trainer", "unset"), inline=False) #
+        service_embed.add_field(name="mm break", value=server_info.get("mm_break", "unset"), inline=False) #
+        service_embed.add_field(name="mm vouch channel", value=server_info.get("mm_vouch_channel", "unset"), inline=False)
+        return await interaction.response.send_message(embeds=service_embed, ephemeral=True)
     if topic == "mm roles" and input is not None:
         if input.strip().lower() == "none":
             server_info["mm_roles"] = None
@@ -3846,6 +3961,30 @@ async def setup(interaction: discord.Interaction, topic: Optional[Literal[
             server_info["mm_vouch_channel"] = mm_vouch_channel
             servers.replace_one(server_query, server_info)
             await interaction.response.send_message(f"The **mm vouch channel** has been set to {mm_vouch_channel}.")
+
+@setup.command(name="pilot", description="Set up KAFU pilot settings.")
+@app_commands.checks.has_permissions(administrator=True)
+async def setup_pilot(interaction: discord.Interaction, topic: Optional[Literal[
+    "pilot roles", "pilot role", "pilot ping", "pilot supervisor", "pilot trainer", "pilot break", "pilot vouch channel",
+]]=None, input: Optional[str]=None):
+    guild_id = interaction.guild.id
+    server_query = {"_id": str(guild_id)}
+    server_info = servers.find_one_and_update(
+        {"_id": str(interaction.guild.id)},
+        {"$setOnInsert": {"_id": str(interaction.guild.id)}},
+        upsert=True,
+        return_document=True
+    )
+    if topic is None:
+        service_embed = discord.Embed(colour=0xffffff)
+        service_embed.add_field(name="pilot roles", value=server_info.get("pilot_roles", "unset"), inline=False) #
+        service_embed.add_field(name="pilot role", value=server_info.get("pilot_role", "unset"), inline=False) #
+        service_embed.add_field(name="pilot ping", value=server_info.get("pilot_ping", "unset"), inline=False) #
+        service_embed.add_field(name="pilot supervisor", value=server_info.get("pilot_supervisor", "unset"), inline=False) #
+        service_embed.add_field(name="pilot trainer", value=server_info.get("pilot_trainer", "unset"), inline=False) #
+        service_embed.add_field(name="pilot break", value=server_info.get("pilot_break", "unset"), inline=False) #
+        service_embed.add_field(name="pilot vouch channel", value=server_info.get("pilot_vouch_channel", "unset"), inline=False)
+        return await interaction.response.send_message(embeds=service_embed, ephemeral=True)
     if topic == "pilot roles" and input is not None:
         if input.strip().lower() == "none":
             server_info["pilot_roles"] = None
