@@ -3591,7 +3591,7 @@ async def setup_general(interaction: discord.Interaction, topic: Optional[Litera
     "bans warns channel", "transcripts channel", "staff lb channel", "services lb channel", "revive ping", "confessions channel",
 ]]=None, input: Optional[str]=None):
     guild_id = interaction.guild.id
-    TRI_enablelist = ["bans warns channel", "staff roles", "staff role", "staff ping"]
+    TRI_enablelist = ["bans warns channel", "confessions channel"]
     if guild_id == TRI_Archive:
         if topic not in TRI_enablelist:
             return await interaction.response.send_message(f"**{topic}** is disabled for TRI Archive.")
@@ -3709,7 +3709,7 @@ async def setup_staff(interaction: discord.Interaction, topic: Optional[Literal[
     "staff roles", "staff role", "staff ping", "staff break", "adm ping", "ban perms",
 ]]=None, input: Optional[str]=None):
     guild_id = interaction.guild.id
-    TRI_enablelist = ["bans warns channel", "staff roles", "staff role", "staff ping"]
+    TRI_enablelist = ["staff roles", "staff role", "staff ping"]
     if guild_id == TRI_Archive:
         if topic not in TRI_enablelist:
             return await interaction.response.send_message(f"**{topic}** is disabled for TRI Archive.")
