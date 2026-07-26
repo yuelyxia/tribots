@@ -3604,10 +3604,10 @@ async def setup_general(interaction: discord.Interaction, topic: Optional[Litera
     )
     if topic is None:
         if guild_id == TRI_Archive:
+            embed = discord.Embed(colour=0xffffff)
             for topic in TRI_enablelist:
-                embed = discord.Embed(colour=0xffffff)
                 embed.add_field(name=topic, value=server_info.get(topic, "unset"), inline=False)
-                return await interaction.response.send_message(embed=embed, ephemeral=True)
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
         general_embed = discord.Embed(colour=0xffffff)
         general_embed.add_field(name="bans warns channel", value=server_info.get("bans_warns_channel", "unset"), inline=False) #
         general_embed.add_field(name="transcripts channel", value=server_info.get("transcripts_channel", "unset"), inline=False) #
@@ -3722,10 +3722,10 @@ async def setup_staff(interaction: discord.Interaction, topic: Optional[Literal[
     )
     if topic is None:
         if guild_id == TRI_Archive:
+            embed = discord.Embed(colour=0xffffff)
             for topic in TRI_enablelist:
-                embed = discord.Embed(colour=0xffffff)
                 embed.add_field(name=topic, value=server_info.get(topic, "unset"), inline=False)
-                return await interaction.response.send_message(embed=embed, ephemeral=True)
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
         staff_embed = discord.Embed(colour=0xffffff)
         staff_embed.add_field(name="staff roles", value=server_info.get("staff_roles", "unset"), inline=False) #
         staff_embed.add_field(name="staff role", value=server_info.get("staff_role", "unset"), inline=False) #
