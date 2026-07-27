@@ -2827,52 +2827,54 @@ async def massban(
         bans_warns_channel = bot.get_channel(bans_warns_channel_id)
         ban_perms = server_info.get("ban_perms")
 
-        requested_count = 0
+        valid_users = []
         skipped_users = []
-        is_first_req = True
 
         for raw_u in raw_user_list:
             try:
                 target_user = await bot.fetch_user(int(raw_u))
+                valid_users.append(target_user)
             except (ValueError, discord.NotFound, discord.HTTPException):
                 skipped_users.append(f"`{raw_u}`")
-                continue
 
-            if str(target_user.id) in server_info["bans_warns_req"]:
-                skipped_users.append(f"{target_user.mention} (Req exists)")
-                continue
+        if not valid_users:
+            return await interaction.followup.send("No valid users were provided to request a ban for.", ephemeral=True)
 
-            files_to_send = create_file_list(prepared_images)
+        user_ids_list = [str(u.id) for u in valid_users]
+        user_ids_formatted = "\n".join([f"ㆍ　User ID: `{u.id}`" for u in valid_users])
 
-            req_content = f"**Ban Request**\nㆍ User ID: {target_user.id}\nㆍ Reason: {reason}\nㆍ Requested by: {interaction.user.id}"
-            if ban_perms and is_first_req:
-                req_content = f"{ban_perms}\n" + req_content
-            if files_to_send:
-                req_content += "\nㆍ Proof:"
+        files_to_send = create_file_list(prepared_images)
 
-            try:
-                ban_req = await bans_warns_channel.send(
-                    content=req_content,
-                    files=files_to_send if files_to_send else None,
-                    view=BanReqView()
-                )
-            except Exception:
-                ban_req = await bans_warns_channel.send(
-                    content=req_content,
-                    view=BanReqView()
-                )
-            is_first_req = False
+        req_content = f"**Mass Ban Request ({len(valid_users)})**\n{user_ids_formatted}\nㆍ　Reason: {reason}\nㆍ　Requested by: {interaction.user.id}"
+        if ban_perms:
+            req_content = f"{ban_perms}\n" + req_content
+        if files_to_send:
+            req_content += "\nㆍ　Proof:"
 
-            server_info["bans_warns_req"][str(target_user.id)] = [reason, str(interaction.user.id),
-                                                                  str(ban_req.jump_url)]
-            server_info["bans_warns_req"][str(ban_req.id)] = str(target_user.id)
-            requested_count += 1
+        try:
+            ban_req = await bans_warns_channel.send(
+                content=req_content,
+                files=files_to_send if files_to_send else None,
+                view=BanReqView()
+            )
+        except Exception:
+            ban_req = await bans_warns_channel.send(
+                content=req_content,
+                view=BanReqView()
+            )
+
+        server_info["bans_warns_req"][str(ban_req.id)] = {
+            "user_ids": user_ids_list,
+            "reason": reason,
+            "requested_by": str(interaction.user.id),
+            "jump_url": str(ban_req.jump_url)
+        }
 
         servers.replace_one({"_id": str(guild_id)}, server_info)
 
-        summary = f"Sent **{requested_count}** ban request(s) in <#{bans_warns_channel_id}>."
+        summary = f"Sent a massban request for **{len(valid_users)}** user(s) in <#{bans_warns_channel_id}>: [Jump]({ban_req.jump_url})"
         if skipped_users:
-            summary += f"\nSkipped: {', '.join(skipped_users)}"
+            summary += f"\nSkipped invalid user IDs: {', '.join(skipped_users)}"
 
         await interaction.followup.send(summary, ephemeral=True)
 
@@ -2890,36 +2892,65 @@ class BanReqView(discord.ui.View):
         server_info = servers.find_one(server_query)
         if server_info:
             if interaction.user.guild_permissions.ban_members:
-                user_id = server_info["bans_warns_req"][str(interaction.message.id)]
-                reason = server_info["bans_warns_req"][user_id][0]
-                requested_by = server_info["bans_warns_req"][user_id][1]
-                user = await bot.fetch_user(int(user_id.replace("<@", "").replace(">", "")))
-                try:
-                    await user.send(
-                        f"You have been banned from {interaction.guild.name} for the following reason: {reason}")
-                except discord.Forbidden:
-                    pass
-                await interaction.guild.ban(user, reason=reason, delete_message_seconds=604800)
+                req_data = server_info.get("bans_warns_req", {}).get(str(interaction.message.id))
+                if not req_data:
+                    return await interaction.response.send_message("This request is no longer active.", ephemeral=True)
+                if isinstance(req_data, dict):
+                    user_ids = req_data.get("user_ids")
+                    reason = req_data.get("reason", "No reason specified.")
+                    requested_by = req_data.get("requested_by")
+                else:
+                    user_id = str(req_data)
+                    user_ids = [user_id]
+                    reason = server_info["bans_warns_req"].get(user_id)[0]
+                    requested_by = server_info["bans_warns_req"].get(user_id)[1]
+                banned_count = 0
+                for u_id in user_ids:
+                    try:
+                        user = await bot.fetch_user(int(str(u_id).replace("<@", "").replace(">", "")))
+                        try:
+                            await user.send(
+                                f"You have been banned from {interaction.guild.name} for the following reason: {reason}")
+                        except discord.Forbidden:
+                            pass
+                        await interaction.guild.ban(user, reason=reason, delete_message_seconds=604800)
+                        banned_count += 1
+                    except Exception:
+                        pass
+                if len(user_ids) == 1:
+                    user_id_display = f"ㆍ　User ID: {user_ids[0]}"
+                    header = "**Ban Accepted**"
+                else:
+                    user_id_display = "\n".join([f"ㆍ　User ID: {uid}" for uid in user_ids])
+                    header = f"**Massban Accepted ({banned_count})**"
+
                 await interaction.response.edit_message(
-                    content=f"**Ban Accepted**\nㆍ　User ID: {user_id}\nㆍ　Reason: {reason}\nㆍ　Requested by: {requested_by}\nㆍ　Accepted by: {interaction.user.id}\nㆍ　Proof:",
+                    content=f"{header}\n{user_id_display}\nㆍ　Reason: {reason}\nㆍ　Requested by: {requested_by}\nㆍ　Accepted by: {interaction.user.id}\nㆍ　Proof:",
                     view=None)
-                server_info["bans_warns_req"].pop(str(interaction.message.id))
-                server_info["bans_warns_req"].pop(str(user_id))
+                server_info.get("bans_warns_req", {}).pop(str(interaction.message.id), None)
+                for u_id in user_ids:
+                    server_info.get("bans_warns_req", {}).pop(str(u_id), None)
+
                 await interaction.followup.send(f"Ban request accepted.", ephemeral=True)
+
                 try:
-                    server_info.get("staff").get(requested_by)["monthly"] = server_info.get("staff").get(requested_by).get(
-                        "monthly", 0) + 1
-                    server_info.get("staff").get(requested_by)["alltime"] = server_info.get("staff").get(requested_by).get(
-                        "alltime", 0) + 1
+                    staff_info = server_info.get("staff", {}).get(requested_by)
+                    if staff_info:
+                        staff_info["monthly"] = staff_info.get("monthly", 0) + banned_count
+                        staff_info["alltime"] = staff_info.get("alltime", 0) + banned_count
                 except KeyError:
-                    await interaction.followup.send(f"Unable to add staff credits to <@{requested_by}>.", ephemeral=True)
+                    await interaction.followup.send(f"Unable to add staff credits to <@{requested_by}>.",
+                                                    ephemeral=True)
+
                 try:
-                    server_info.get("staff").get(str(interaction.user.id))["monthly"] = server_info.get("staff").get(
-                        str(interaction.user.id)).get("monthly", 0) + 1
-                    server_info.get("staff").get(str(interaction.user.id))["alltime"] = server_info.get("staff").get(
-                        str(interaction.user.id)).get("alltime", 0) + 1
+                    staff_info = server_info.get("staff", {}).get(str(interaction.user.id))
+                    if staff_info:
+                        staff_info["monthly"] = staff_info.get("monthly", 0) + banned_count
+                        staff_info["alltime"] = staff_info.get("alltime", 0) + banned_count
                 except KeyError:
-                    await interaction.followup.send(f"Unable to add staff credits to {interaction.user.mention}.", ephemeral=True)
+                    await interaction.followup.send(f"Unable to add staff credits to {interaction.user.mention}.",
+                                                    ephemeral=True)
+
                 servers.replace_one(server_query, server_info)
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red, custom_id="reject")
@@ -3153,6 +3184,15 @@ class UnbanReqView(discord.ui.View):
                 server_info["bans_warns_req"].pop(str(user_id))
                 servers.replace_one(server_query, server_info)
                 await interaction.followup.send(f"Unban request rejected.", ephemeral=True)
+
+
+
+
+
+
+
+
+
 
 @bot.tree.command(name="break", description="Toggle staff/mm/pilot break.")
 async def break_command(interaction: discord.Interaction, category: Literal["staff", "mm", "pilot"]):
