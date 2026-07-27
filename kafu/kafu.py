@@ -2027,11 +2027,9 @@ async def customrole_setexpiry(
         return_document=True
     )
     custom_roles = server_info.get("custom_roles", {})
-    for role_id, data in custom_roles.items():
-        role = interaction.guild.get_role(int(role_id))
-        if not role:
-            await interaction.followup.send("Custom role no longer exists.", ephemeral=True)
-            return
+    if str(role.id) not in custom_roles:
+        return await interaction.followup.send("Custom role no longer exists.", ephemeral=True)
+
     duration = parse_duration(duration) if duration else None
     expires_at = None if booster else int(time.time()) + duration if duration else None
     servers.update_one(
