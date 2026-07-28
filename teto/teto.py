@@ -937,7 +937,7 @@ async def mc(ctx, *, to_check: str = None):
         await ctx.send(content=f"Invalid: {invalid_formatted}")
 
 
-@bot.command(name="c", help="Checks a user or server.")
+@bot.command(name="c", help="Checks a user, server or account.")
 async def c(ctx, *, to_check: str = None):
     requested_by = ctx.author
 
@@ -1166,7 +1166,7 @@ async def c(ctx, *, to_check: str = None):
         view = NewUserReportView(target_user, requested_by) if is_staff else MemberView()
         return await ctx.reply(embed=profile, view=view)
 
-@bot.command(name="ca", help="Checks a user’s alts and profile data.")
+@bot.command(name="ca", help="Checks a user and for their alts.")
 async def ca(ctx, *, to_check: str = None):
     requested_by = ctx.author
 
@@ -1249,6 +1249,256 @@ async def ca(ctx, *, to_check: str = None):
         profile = default_user_profile(target_user)
         view = NewUserReportView(target_user, requested_by) if is_staff else MemberView()
         return await ctx.send(embed=profile, view=view)
+
+
+CHAINS = {
+    "btc": "bitcoin",
+    "bitcoin": "bitcoin",
+
+    "ltc": "litecoin",
+    "litecoin": "litecoin",
+
+    "eth": "ethereum",
+    "ethereum": "ethereum",
+
+    "doge": "dogecoin",
+    "dogecoin": "dogecoin",
+
+    "bch": "bitcoin-cash",
+    "bitcoincash": "bitcoin-cash",
+
+    "dash": "dash",
+
+    "xrp": "ripple",
+    "ripple": "ripple",
+
+    "trx": "tron",
+    "tron": "tron",
+
+    "matic": "polygon",
+    "polygon": "polygon",
+
+    "arb": "arbitrum",
+    "arbitrum": "arbitrum",
+
+    "op": "optimism",
+    "optimism": "optimism",
+
+    "base": "base",
+
+    "avax": "avalanche",
+    "avalanche": "avalanche",
+
+    "bnb": "binance-smart-chain",
+    "bsc": "binance-smart-chain",
+
+    "sol": "solana",
+    "solana": "solana"
+}
+
+COINGECKO_IDS = {
+    "bitcoin": "bitcoin",
+    "litecoin": "litecoin",
+    "ethereum": "ethereum",
+    "dogecoin": "dogecoin",
+    "bitcoin-cash": "bitcoin-cash",
+    "dash": "dash",
+    "ripple": "ripple",
+    "tron": "tron",
+    "polygon": "matic-network",
+    "arbitrum": "ethereum",
+    "optimism": "ethereum",
+    "base": "ethereum",
+    "binance-smart-chain": "binancecoin",
+    "avalanche": "avalanche-2",
+    "solana": "solana"
+}
+
+SYMBOLS = {
+    "bitcoin": "BTC",
+    "litecoin": "LTC",
+    "ethereum": "ETH",
+    "dogecoin": "DOGE",
+    "bitcoin-cash": "BCH",
+    "dash": "DASH",
+    "ripple": "XRP",
+    "tron": "TRX",
+    "polygon": "POL",
+    "arbitrum": "ETH",
+    "optimism": "ETH",
+    "base": "ETH",
+    "binance-smart-chain": "BNB",
+    "avalanche": "AVAX",
+    "solana": "SOL",
+}
+
+DECIMALS = {
+    "bitcoin": 8,
+    "litecoin": 8,
+    "ethereum": 18,
+    "dogecoin": 8,
+    "bitcoin-cash": 8,
+    "dash": 8,
+    "ripple": 6,
+    "tron": 6,
+    "polygon": 18,
+    "arbitrum": 18,
+    "optimism": 18,
+    "base": 18,
+    "binance-smart-chain": 18,
+    "avalanche": 18,
+    "solana": 9,
+}
+
+@bot.command()
+async def txid(ctx, chain: str, txid: str):
+    chain = CHAINS.get(chain.lower())
+    if chain is None:
+        return await ctx.send("Unsupported cryptocurrency.")
+    url = f"https://api.blockchair.com/{chain}/dashboards/transaction/{txid}"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status != 200:
+                return await ctx.send("Transaction not found.")
+            data = await resp.json()
+    if "data" not in data or txid not in data["data"]:
+        return await ctx.send("Transaction not found.")
+    tx = data["data"][txid]
+    transaction = tx["transaction"]
+
+    inputs = tx.get("inputs", [])
+    outputs = sorted(
+        tx.get("outputs", []),
+        key=lambda x: x.get("value", 0),
+        reverse=True
+    )
+    senders = list(dict.fromkeys(
+        i["recipient"]
+        for i in inputs
+        if i.get("recipient")
+    ))
+    recipients = []
+    largest_value = outputs[0]["value"] if outputs else 0
+    for o in outputs:
+        if not o.get("recipient"):
+            continue
+        label = ""
+        if o["value"] == largest_value:
+            label = " <:tri_whitestar2:1525772163930390548>"
+        recipients.append((o["recipient"], label))
+    decimals = DECIMALS.get(chain, 18)
+    symbol = SYMBOLS.get(chain, chain.upper())
+    amount = transaction["output_total"] / (10 ** decimals)
+    fee = transaction["fee"] / (10 ** decimals)
+    block_time = transaction["time"]
+    unix = int(datetime.datetime.fromisoformat(block_time).timestamp())
+
+    historical_price = None
+    current_price = None
+    coin = COINGECKO_IDS.get(chain)
+    if coin:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                        f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=usd"
+                ) as r:
+                    current = await r.json()
+                    current_price = current[coin]["usd"]
+                frm = unix - 1800
+                to = unix + 1800
+                async with session.get(
+                        f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart/range",
+                        params={
+                            "vs_currency": "usd",
+                            "from": frm,
+                            "to": to
+                        }
+                ) as r:
+                    history = await r.json()
+                    if history.get("prices"):
+                        historical_price = history["prices"][0][1]
+        except Exception:
+            pass
+    worth_then = (
+        f"${amount * historical_price:,.2f}"
+        if historical_price
+        else "Unknown"
+    )
+    worth_now = (
+        f"${amount * current_price:,.2f}"
+        if current_price
+        else "Unknown"
+    )
+
+    embed = discord.Embed(title=f"{symbol} Transaction", colour=0xffffff)
+    embed.add_field(
+        name="Hash",
+        value=f"`{txid}`",
+        inline=False
+    )
+    embed.add_field(
+        name="Status",
+        value="Confirmed" if transaction["block_id"] else "Unconfirmed",
+        inline=True
+    )
+    embed.add_field(
+        name="Confirmations",
+        value=transaction.get("confirmations", "Unknown"),
+        inline=True
+    )
+    embed.add_field(
+        name="Block",
+        value=transaction.get("block_id", "Pending"),
+        inline=True
+    )
+    embed.add_field(
+        name="Confirmed",
+        value=f"<t:{unix}:F>",
+        inline=True
+    )
+    embed.add_field(
+        name="Amount",
+        value=f"{amount:,.8f}".rstrip("0").rstrip(".") + f" {symbol}",
+        inline=True
+    )
+    embed.add_field(
+        name="Fee",
+        value=f"{fee:,.8f}".rstrip("0").rstrip(".") + f" {symbol}",
+        inline=True
+    )
+    embed.add_field(
+        name="Worth Then",
+        value=worth_then,
+        inline=True
+    )
+    embed.add_field(
+        name="Worth Now",
+        value=worth_now,
+        inline=True
+    )
+    embed.add_field(
+        name="Sender(s)",
+        value="\n".join(
+            f"`{x}`"
+            for x in senders[:5]
+        ) or "Unknown",
+        inline=False
+    )
+    embed.add_field(
+        name="Recipient(s)",
+        value="\n".join(
+            f"`{addr}`{label}"
+            for addr, label in recipients[:5]
+        ) or "Unknown",
+        inline=False
+    )
+    embed.add_field(
+        name="Explorer",
+        value=f"https://blockchair.com/{chain}/transaction/{txid}",
+        inline=False
+    )
+    await ctx.reply(embed=embed)
+
 
 # reported user
 class ReportedUserView(discord.ui.View):
@@ -11689,8 +11939,8 @@ async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
             return int(match.group(1)) if match else 0
 
         merged_cases = sorted(raw_cases, key=get_case_timestamp)
-
-        merged_tags_list = sort_user_tags(merged_tags_list)
+        unique_tags = list(set(merged_tags_list))
+        merged_tags_list = sort_user_tags(unique_tags)
         all_other_tags = selected_string(merged_tags_list[1:]) if len(merged_tags_list) > 1 else ""
 
         merged_r_profile_list = [
@@ -11737,7 +11987,7 @@ async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
         await interaction.followup.send(f"Successfully merged `{alt.id}` into `{main.id}`.")
 
     except Exception as e:
-        await interaction.followup.send(f"An unexpected error occurred during execution: {e}")
+        await interaction.followup.send(f"An unexpected error occurred: {e}")
 
 disable = app_commands.Group(name="disable", description="Disable.")
 bot.tree.add_command(disable)
