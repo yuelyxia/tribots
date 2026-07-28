@@ -678,6 +678,14 @@ async def on_ready():
         update_scam_domains.start()
     if not process_invites.is_running():
         process_invites.start()
+    await bot.tree.sync()
+    reports_count = userscol.count_documents({}) + serverscol.count_documents({}) + accountscol.count_documents({})
+    await bot.change_presence(status=discord.Status.dnd,
+                              activity=discord.Activity(
+                                  type=discord.ActivityType.watching,
+                                  name=f"{reports_count} reports."
+                              )
+                              )
 
 
 # check
@@ -701,8 +709,8 @@ async def fetch_worker(raw_user):
     except discord.HTTPException:
         return None, None
 
-@bot.tree.command(name="c")
-@app_commands.rename(to_check="to check")
+@bot.tree.command(name="c", description="Check a user, server or account.")
+@app_commands.rename(to_check="target")
 @app_commands.describe(to_check="User, server or account to check.")
 async def c(interaction: discord.Interaction, to_check: str):
 
@@ -910,10 +918,10 @@ async def c(interaction: discord.Interaction, to_check: str):
     else:
         return await interaction.response.send_message(embed=default_user_profile(target_user), view=MemberView())
 
-@bot.command(name="ca")
-@app_commands.rename(to_check="to check")
+@bot.tree.command(name="ca", description="Check a user and for their alts.")
+@app_commands.rename(to_check="user")
 @app_commands.describe(to_check="User to check.")
-async def ca(interaction: discord.Interaction, to_check):
+async def ca(interaction: discord.Interaction, to_check: str):
 
     requested_by = interaction.user
     target_user = None
@@ -978,16 +986,11 @@ async def ca(interaction: discord.Interaction, to_check):
         return await interaction.channel.send(embed=profile, view=view)
 
 
-@bot.tree.command(name='mc')
+@bot.tree.command(name='mc', description="Mass check up to 100 users.")
+@app_commands.rename(to_check="users")
 @app_commands.describe(to_check='List of users to check (max 100), leave a space between users.')
-async def mc(interaction: discord.Interaction, to_check: str = None):
-    if to_check is None:
-        return
-
-    if interaction.guild.id == TRI_Archive:
-        teto = interaction.guild.get_member(1450073025818136598)
-        if not teto.status == discord.Status.offline:
-            return
+async def mc(interaction: discord.Interaction, to_check: str):
+    await interaction.response.defer()
 
     users = to_check.split()
     valid_users = []
@@ -1002,9 +1005,9 @@ async def mc(interaction: discord.Interaction, to_check: str = None):
             invalid_users.append(invalid_raw)
 
     if len(valid_users) + len(invalid_users) > 100:
-        return await interaction.response.send_message("Exceeded 100 users.")
+        return await interaction.edit_original_response("Exceeded 100 users.")
 
-    status_message = await interaction.response.send_message(
+    status_message = await interaction.followup.send(
         f"_Checking **{len(valid_users)}** users..._")
     if not valid_users:
         await status_message.delete()
@@ -1100,7 +1103,7 @@ async def mc(interaction: discord.Interaction, to_check: str = None):
 
     for idx, (content, embeds_chunk) in enumerate(message_batches):
         if idx == 0:
-            await status_message.edit(content=content, embeds=embeds_chunk)
+            await interaction.followup.edit_message(message_id=status_message.id, content=content, embeds=embeds_chunk)
         else:
             await interaction.channel.send(content=content, embeds=embeds_chunk)
 
@@ -1626,18 +1629,6 @@ async def check_all(interaction: discord.Interaction):
     for doc in userscol.find({"main": {"$exists": True}}):
         if userscol.find_one({"_id": doc["main"]}) is None:
             print("Orphan alt:", doc["_id"], "->", doc["main"])
-
-
-@bot.tree.command()
-async def sync(interaction: discord.Interaction):
-    await bot.tree.sync()
-    reports_count = userscol.count_documents({}) + serverscol.count_documents({}) + accountscol.count_documents({})
-    await bot.change_presence(status=discord.Status.dnd,
-        activity=discord.Activity(
-            type=discord.ActivityType.watching,
-            name=f"{reports_count} reports."
-        )
-    )
 
 
 bot.run(TOKEN)

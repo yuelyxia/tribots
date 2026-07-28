@@ -228,7 +228,7 @@ class InputClosingView(discord.ui.View):
             await interaction.response.send_modal(InputClosingModal(interaction.message))
 
 class InputClosingModal(discord.ui.Modal, title="Closing"):
-    closing = discord.ui.TextInput(label="Closing", required=False, style=discord.TextStyle.paragraph)
+    closing = discord.ui.TextInput(label="Closing", required=False, style=discord.TextStyle.paragraph, max_length=1000)
     def __init__(self, message: discord.Message):
         super().__init__()
         self.message = message
@@ -1353,7 +1353,7 @@ wip
 >   - mm is new/unfamiliar with the rules of the discord trading community.
 """)
             await interaction.response.send_message(embed=embed, ephemeral=True)
-        if self.select_callback.values[0] == "unprofessional mm":
+        if self.select_callback.values[0] == "unprofessional pilot":
             embed = discord.Embed(colour=0xFFD643, description="""
 ## <a:tri_yellowarrow:1509836964453548133>　　unprofessional pilot
 　　**__definition__**
