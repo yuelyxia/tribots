@@ -680,255 +680,6 @@ async def on_ready():
         process_invites.start()
 
 
-CHAINS = {
-    "btc": "bitcoin",
-    "bitcoin": "bitcoin",
-
-    "ltc": "litecoin",
-    "litecoin": "litecoin",
-
-    "eth": "ethereum",
-    "ethereum": "ethereum",
-
-    "doge": "dogecoin",
-    "dogecoin": "dogecoin",
-
-    "bch": "bitcoin-cash",
-    "bitcoincash": "bitcoin-cash",
-
-    "dash": "dash",
-
-    "xrp": "ripple",
-    "ripple": "ripple",
-
-    "trx": "tron",
-    "tron": "tron",
-
-    "matic": "polygon",
-    "polygon": "polygon",
-
-    "arb": "arbitrum",
-    "arbitrum": "arbitrum",
-
-    "op": "optimism",
-    "optimism": "optimism",
-
-    "base": "base",
-
-    "avax": "avalanche",
-    "avalanche": "avalanche",
-
-    "bnb": "binance-smart-chain",
-    "bsc": "binance-smart-chain",
-
-    "sol": "solana",
-    "solana": "solana"
-}
-
-COINGECKO_IDS = {
-    "bitcoin": "bitcoin",
-    "litecoin": "litecoin",
-    "ethereum": "ethereum",
-    "dogecoin": "dogecoin",
-    "bitcoin-cash": "bitcoin-cash",
-    "dash": "dash",
-    "ripple": "ripple",
-    "tron": "tron",
-    "polygon": "matic-network",
-    "arbitrum": "ethereum",
-    "optimism": "ethereum",
-    "base": "ethereum",
-    "binance-smart-chain": "binancecoin",
-    "avalanche": "avalanche-2",
-    "solana": "solana"
-}
-
-SYMBOLS = {
-    "bitcoin": "BTC",
-    "litecoin": "LTC",
-    "ethereum": "ETH",
-    "dogecoin": "DOGE",
-    "bitcoin-cash": "BCH",
-    "dash": "DASH",
-    "ripple": "XRP",
-    "tron": "TRX",
-    "polygon": "POL",
-    "arbitrum": "ETH",
-    "optimism": "ETH",
-    "base": "ETH",
-    "binance-smart-chain": "BNB",
-    "avalanche": "AVAX",
-    "solana": "SOL",
-}
-
-DECIMALS = {
-    "bitcoin": 8,
-    "litecoin": 8,
-    "ethereum": 18,
-    "dogecoin": 8,
-    "bitcoin-cash": 8,
-    "dash": 8,
-    "ripple": 6,
-    "tron": 6,
-    "polygon": 18,
-    "arbitrum": 18,
-    "optimism": 18,
-    "base": 18,
-    "binance-smart-chain": 18,
-    "avalanche": 18,
-    "solana": 9,
-}
-
-
-@bot.command()
-async def txid(ctx, chain: str, txid: str):
-    chain = CHAINS.get(chain.lower())
-    if chain is None:
-        return await ctx.send("Unsupported cryptocurrency.")
-    url = f"https://api.blockchair.com/{chain}/dashboards/transaction/{txid}"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            if resp.status != 200:
-                return await ctx.send("Transaction not found.")
-            data = await resp.json()
-    if "data" not in data or txid not in data["data"]:
-        return await ctx.send("Transaction not found.")
-    tx = data["data"][txid]
-    transaction = tx["transaction"]
-
-    inputs = tx.get("inputs", [])
-    outputs = sorted(
-        tx.get("outputs", []),
-        key=lambda x: x.get("value", 0),
-        reverse=True
-    )
-    senders = list(dict.fromkeys(
-        i["recipient"]
-        for i in inputs
-        if i.get("recipient")
-    ))
-    recipients = []
-    largest_value = outputs[0]["value"] if outputs else 0
-    for o in outputs:
-        if not o.get("recipient"):
-            continue
-        label = ""
-        if o["value"] == largest_value:
-            label = " <:tri_whitestar2:1525772163930390548>"
-        recipients.append((o["recipient"], label))
-    decimals = DECIMALS.get(chain, 18)
-    symbol = SYMBOLS.get(chain, chain.upper())
-    amount = transaction["output_total"] / (10 ** decimals)
-    fee = transaction["fee"] / (10 ** decimals)
-    block_time = transaction["time"]
-    unix = int(datetime.datetime.fromisoformat(block_time).timestamp())
-
-    historical_price = None
-    current_price = None
-    coin = COINGECKO_IDS.get(chain)
-    if coin:
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                        f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=usd"
-                ) as r:
-                    current = await r.json()
-                    current_price = current[coin]["usd"]
-                frm = unix - 1800
-                to = unix + 1800
-                async with session.get(
-                        f"https://api.coingecko.com/api/v3/coins/{coin}/market_chart/range",
-                        params={
-                            "vs_currency": "usd",
-                            "from": frm,
-                            "to": to
-                        }
-                ) as r:
-                    history = await r.json()
-                    if history.get("prices"):
-                        historical_price = history["prices"][0][1]
-        except Exception:
-            pass
-    worth_then = (
-        f"${amount * historical_price:,.2f}"
-        if historical_price
-        else "Unknown"
-    )
-    worth_now = (
-        f"${amount * current_price:,.2f}"
-        if current_price
-        else "Unknown"
-    )
-
-    embed = discord.Embed(title=f"{symbol} Transaction", colour=0xffffff)
-    embed.add_field(
-        name="Hash",
-        value=f"`{txid}`",
-        inline=False
-    )
-    embed.add_field(
-        name="Status",
-        value="Confirmed" if transaction["block_id"] else "Unconfirmed",
-        inline=True
-    )
-    embed.add_field(
-        name="Confirmations",
-        value=transaction.get("confirmations", "Unknown"),
-        inline=True
-    )
-    embed.add_field(
-        name="Block",
-        value=transaction.get("block_id", "Pending"),
-        inline=True
-    )
-    embed.add_field(
-        name="Confirmed",
-        value=f"<t:{unix}:F>",
-        inline=True
-    )
-    embed.add_field(
-        name="Amount",
-        value=f"{amount:,.8f}".rstrip("0").rstrip(".") + f" {symbol}",
-        inline=True
-    )
-    embed.add_field(
-        name="Fee",
-        value=f"{fee:,.8f}".rstrip("0").rstrip(".") + f" {symbol}",
-        inline=True
-    )
-    embed.add_field(
-        name="Worth Then",
-        value=worth_then,
-        inline=True
-    )
-    embed.add_field(
-        name="Worth Now",
-        value=worth_now,
-        inline=True
-    )
-    embed.add_field(
-        name="Sender(s)",
-        value="\n".join(
-            f"`{x}`"
-            for x in senders[:5]
-        ) or "Unknown",
-        inline=False
-    )
-    embed.add_field(
-        name="Recipient(s)",
-        value="\n".join(
-            f"`{addr}`{label}"
-            for addr, label in recipients[:5]
-        ) or "Unknown",
-        inline=False
-    )
-    embed.add_field(
-        name="Explorer",
-        value=f"https://blockchair.com/{chain}/transaction/{txid}",
-        inline=False
-    )
-    await ctx.reply(embed=embed)
-
 # check
 
 async def fetch_worker(raw_user):
@@ -950,14 +701,12 @@ async def fetch_worker(raw_user):
     except discord.HTTPException:
         return None, None
 
-@bot.command(name="c", help="Checks a user or server.")
-async def c(ctx, *, to_check: str = None):
-    if ctx.guild.id == TRI_Archive:
-        teto = ctx.guild.get_member(1450073025818136598)
-        if not teto.status == discord.Status.offline:
-            return
+@bot.tree.command(name="c")
+@app_commands.rename(to_check="to check")
+@app_commands.describe(to_check="User, server or account to check.")
+async def c(interaction: discord.Interaction, to_check: str):
 
-    requested_by = ctx.author
+    requested_by = interaction.user
     game_input, uid_input, game = None, None, None
     has_space = to_check and " " in to_check.strip()
     log_channel = bot.get_channel(INVITE_LOGS_CHANNEL)
@@ -978,21 +727,21 @@ async def c(ctx, *, to_check: str = None):
             if len(account_profile) == 2:
                 main = account_profile['main']
                 main_profile = accountscol.find_one({"_id": main})
-                return await ctx.reply(
+                return await interaction.response.send_message(
                     f"Account `{game_uid}` is linked to `{main}`.",
                     embeds=reported_account_profile(main, main_profile),
                     view=ReportedAccountView(main, main_profile, requested_by, len(main_profile) - 2)
                 )
             else:
-                return await ctx.reply(
+                return await interaction.response.send_message(
                     "Account is reported.",
                     embeds=reported_account_profile(game_uid, account_profile),
                     view=ReportedAccountView(game_uid, account_profile, requested_by, len(account_profile) - 2)
                 )
         else:
-            return await ctx.reply(embed=default_account_profile(game_uid), view=MemberView())
+            return await interaction.response.send_message(embed=default_account_profile(game_uid), view=MemberView())
 
-    target_raw = to_check if to_check else str(ctx.author.id)
+    target_raw = to_check if to_check else str(interaction.user.id)
 
     fetched_invite_guild = None
     if not target_raw.strip().isdigit() and not (target_raw.startswith('<@') and target_raw.endswith('>')):
@@ -1032,7 +781,7 @@ async def c(ctx, *, to_check: str = None):
                 break
 
     if has_space and not first_valid_id:
-        return await ctx.reply(f"The game {game_input} is **invalid** or **unsupported**.")
+        return await interaction.response.send_message(f"The game {game_input} is **invalid** or **unsupported**.")
 
     worker_input = first_valid_id if first_valid_id else target_raw
     if not target_user and not is_reported_server_id:
@@ -1052,7 +801,7 @@ async def c(ctx, *, to_check: str = None):
         }
         profile.description += bot_desc.get(target_user.id, "")
         profile.set_footer(text="✦　TRI bot")
-        return await ctx.reply(embed=profile)
+        return await interaction.response.send_message(embed=profile)
 
     if is_reported_server_id or fetched_invite_guild or not target_user:
         server_id = worker_input.strip('<@>')
@@ -1073,7 +822,7 @@ async def c(ctx, *, to_check: str = None):
                 server_id = str(guild.id)
                 await process_and_save_invite(invite)
             except Exception:
-                return await ctx.send("The invite link is **invalid** or **expired**.")
+                return await interaction.response.send_message("The invite link is **invalid** or **expired**.")
         else:
             server_doc = invitescol.find_one({"_id": server_id})
             if server_doc and server_doc.get("invites"):
@@ -1113,18 +862,18 @@ async def c(ctx, *, to_check: str = None):
 
         server_profile = serverscol.find_one({"_id": server_id})
         if trustedserverscol.find_one({"_id": server_id}):
-            return await ctx.reply("Server is trusted.", embed=format_trustedserver_profile(guild))
+            return await interaction.response.send_message("Server is trusted.", embed=format_trustedserver_profile(guild))
         elif server_profile:
-            return await ctx.reply(
+            return await interaction.response.send_message(
                 "Server is reported.",
                 embeds=reported_server_profile(guild, server_profile),
                 view=ReportedServerView(guild, server_profile, requested_by, len(server_profile) - 2)
             )
         else:
             if server_id.isdigit() and (not guild or isinstance(guild, UnknownGuild)):
-                return await ctx.reply(
+                return await interaction.response.send_message(
                     "Please provide a valid user ID. To check servers, please provide a valid invite link.")
-            return await ctx.reply(embed=default_server_profile(guild), view=MemberView())
+            return await interaction.response.send_message(embed=default_server_profile(guild), view=MemberView())
 
     user_id_str = str(target_user.id) if target_user else str(worker_input.strip('<@>'))
     trusteduser_profile = trusteduserscol.find_one({"_id": user_id_str})
@@ -1133,7 +882,7 @@ async def c(ctx, *, to_check: str = None):
             trusteduser_profile.get("current_staff", 0) == 0 and trusteduser_profile.get("staff", 0) == 0 and
             trusteduser_profile.get("mm", 0) == 0 and trusteduser_profile.get("pilot", 0) == 0 and
             trusteduser_profile.get("trader", 0) == 0):
-        return await ctx.reply("User is trusted.", embed=format_trusteduser_profile(target_user, trusteduser_profile))
+        return await interaction.response.send_message("User is trusted.", embed=format_trusteduser_profile(target_user, trusteduser_profile))
 
     user_profile = userscol.find_one({"_id": user_id_str})
     if user_profile:
@@ -1147,42 +896,35 @@ async def c(ctx, *, to_check: str = None):
                 except Exception:
                     main_user = target_user
 
-            return await ctx.reply(
+            return await interaction.response.send_message(
                 f"User `{user_id_str}` is reported as alt of `{main}`.",
                 embeds=reported_user_profile(main_user, main_user_profile),
                 view=ReportedUserView(main_user, main_user_profile, requested_by, len(main_user_profile) - 2)
             )
         else:
-            return await ctx.reply(
+            return await interaction.response.send_message(
                 "User is reported.",
                 embeds=reported_user_profile(target_user, user_profile),
                 view=ReportedUserView(target_user, user_profile, requested_by, len(user_profile) - 2)
             )
     else:
-        return await ctx.reply(embed=default_user_profile(target_user), view=MemberView())
+        return await interaction.response.send_message(embed=default_user_profile(target_user), view=MemberView())
 
-@bot.command(name="ca", help="Checks a user’s alts and profile data.")
-async def ca(ctx, *, to_check: str = None):
-    if ctx.guild.id == TRI_Archive:
-        teto = ctx.guild.get_member(1450073025818136598)
-        if not teto.status == discord.Status.offline:
-            return
+@bot.command(name="ca")
+@app_commands.rename(to_check="to check")
+@app_commands.describe(to_check="User to check.")
+async def ca(interaction: discord.Interaction, to_check):
 
-    requested_by = ctx.author
-
+    requested_by = interaction.user
     target_user = None
-    if to_check:
-        clean_text = re.sub(r"<a?:\w+:\d+>", "", to_check.strip())
-        cleaned_token = re.sub(r"\D", "", clean_text)
+    clean_text = re.sub(r"<a?:\w+:\d+>", "", to_check.strip())
+    cleaned_token = re.sub(r"\D", "", clean_text)
 
-        if 17 <= len(cleaned_token) <= 20:
-            target_user, _ = await fetch_worker(cleaned_token)
-            user_id_str = cleaned_token
-        else:
-            user_id_str = clean_text
+    if 17 <= len(cleaned_token) <= 20:
+        target_user, _ = await fetch_worker(cleaned_token)
+        user_id_str = cleaned_token
     else:
-        target_user = ctx.author
-        user_id_str = str(ctx.author.id)
+        user_id_str = clean_text
 
     if not target_user and user_id_str.isdigit():
         try:
@@ -1191,7 +933,7 @@ async def ca(ctx, *, to_check: str = None):
             pass
 
     if not target_user:
-        return await ctx.reply("Please provide a valid user ID or mention.")
+        return await interaction.response.send_message("Please provide a valid user ID or mention.")
 
     alts_info = altscol.find_one({"_id": user_id_str})
     alts_embed = discord.Embed(colour=0xffffff)
@@ -1199,16 +941,16 @@ async def ca(ctx, *, to_check: str = None):
         raw_ids = " ".join(alt for alt in alts_info.get("alts", []))
         alts_embed.description = f"<a:tri_whitealert:1496542298908000257> **Alt(s)** of `{target_user.id}`\n\n`{raw_ids}`"
     else:
-        alts_embed.description = "<:tri_whitecross:1462774085737119828>　No alts logged for this user."
+        alts_embed.description = f"<:tri_whitecross:1462774085737119828>　No alts logged for `{target_user.id}`."
 
-    await ctx.reply(embed=alts_embed)
+    await interaction.response.send_message(embed=alts_embed)
 
     trusteduser_profile = trusteduserscol.find_one({"_id": user_id_str})
     if trusteduser_profile and not (
             trusteduser_profile.get("current_staff", 0) == 0 and trusteduser_profile.get("staff", 0) == 0 and
             trusteduser_profile.get("mm", 0) == 0 and trusteduser_profile.get("pilot", 0) == 0 and
             trusteduser_profile.get("trader", 0) == 0):
-        return await ctx.send("User is trusted.", embed=format_trusteduser_profile(target_user, trusteduser_profile))
+        return await interaction.channel.send("User is trusted.", embed=format_trusteduser_profile(target_user, trusteduser_profile))
 
     user_profile = userscol.find_one({"_id": user_id_str})
     if user_profile:
@@ -1224,25 +966,26 @@ async def ca(ctx, *, to_check: str = None):
 
             msg = f"User `{user_id_str}` is reported as alt of `{main}`."
             view = ReportedUserView(main_user, main_user_profile, requested_by, len(main_user_profile) - 2)
-            return await ctx.send(msg, embeds=reported_user_profile(main_user, main_user_profile), view=view)
+            return await interaction.channel.send(msg, embeds=reported_user_profile(main_user, main_user_profile), view=view)
         else:
             view = ReportedUserView(target_user, user_profile, requested_by, len(user_profile) - 2)
-            return await ctx.send("User is reported.", embeds=reported_user_profile(target_user, user_profile),
+            return await interaction.channel.send("User is reported.", embeds=reported_user_profile(target_user, user_profile),
                                    view=view)
 
     else:
         profile = default_user_profile(target_user)
         view = MemberView()
-        return await ctx.send(embed=profile, view=view)
+        return await interaction.channel.send(embed=profile, view=view)
 
 
-@bot.command(name='mc', help='Checks a list of users (max 100), leave a space between users.')
-async def mc(ctx, *, to_check: str = None):
+@bot.tree.command(name='mc')
+@app_commands.describe(to_check='List of users to check (max 100), leave a space between users.')
+async def mc(interaction: discord.Interaction, to_check: str = None):
     if to_check is None:
         return
 
-    if ctx.guild.id == TRI_Archive:
-        teto = ctx.guild.get_member(1450073025818136598)
+    if interaction.guild.id == TRI_Archive:
+        teto = interaction.guild.get_member(1450073025818136598)
         if not teto.status == discord.Status.offline:
             return
 
@@ -1259,15 +1002,15 @@ async def mc(ctx, *, to_check: str = None):
             invalid_users.append(invalid_raw)
 
     if len(valid_users) + len(invalid_users) > 100:
-        return await ctx.reply("Exceeded 100 users.")
+        return await interaction.response.send_message("Exceeded 100 users.")
 
-    status_message = await ctx.reply(
+    status_message = await interaction.response.send_message(
         f"_Checking **{len(valid_users)}** users..._")
     if not valid_users:
         await status_message.delete()
         if invalid_users:
-            await ctx.send(f"Invalid: {' '.join([f'`{u}`' for u in invalid_users])}")
-        return await ctx.reply("No valid user IDs provided.")
+            await interaction.channel.send(f"Invalid: {' '.join([f'`{u}`' for u in invalid_users])}")
+        return await interaction.channel.send("No valid user IDs provided.")
 
     processed_ids = set()
     processed_mains = set()
@@ -1359,11 +1102,11 @@ async def mc(ctx, *, to_check: str = None):
         if idx == 0:
             await status_message.edit(content=content, embeds=embeds_chunk)
         else:
-            await ctx.send(content=content, embeds=embeds_chunk)
+            await interaction.channel.send(content=content, embeds=embeds_chunk)
 
     if invalid_users:
         invalid_formatted = " ".join([f"`{user}`" for user in invalid_users])
-        await ctx.send(content=f"Invalid: {invalid_formatted}")
+        await interaction.channel.send(content=f"Invalid: {invalid_formatted}")
 
 class ReportedUserView(discord.ui.View):
     def __init__(self, user, user_profile, requested_by, current_case):
@@ -1885,8 +1628,8 @@ async def check_all(interaction: discord.Interaction):
             print("Orphan alt:", doc["_id"], "->", doc["main"])
 
 
-@bot.command()
-async def sync(ctx: commands.Context):
+@bot.tree.command()
+async def sync(interaction: discord.Interaction):
     await bot.tree.sync()
     reports_count = userscol.count_documents({}) + serverscol.count_documents({}) + accountscol.count_documents({})
     await bot.change_presence(status=discord.Status.dnd,
