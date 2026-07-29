@@ -2895,6 +2895,7 @@ class BanReqView(discord.ui.View):
                 req_data = server_info.get("bans_warns_req", {}).get(str(interaction.message.id))
                 if not req_data:
                     return await interaction.response.send_message("This request is no longer active.", ephemeral=True)
+                await interaction.response.defer()
                 if isinstance(req_data, dict):
                     user_ids = req_data.get("user_ids")
                     reason = req_data.get("reason", "No reason specified.")
@@ -2924,7 +2925,7 @@ class BanReqView(discord.ui.View):
                     user_id_display = "\n".join([f"ㆍ　User ID: {uid}" for uid in user_ids])
                     header = f"**Massban Accepted ({banned_count})**"
 
-                await interaction.response.edit_message(
+                await interaction.message.edit(
                     content=f"{header}\n{user_id_display}\nㆍ　Reason: {reason}\nㆍ　Requested by: {requested_by}\nㆍ　Accepted by: {interaction.user.id}\nㆍ　Proof:",
                     view=None)
                 server_info.get("bans_warns_req", {}).pop(str(interaction.message.id), None)
@@ -2952,6 +2953,9 @@ class BanReqView(discord.ui.View):
                                                     ephemeral=True)
 
                 servers.replace_one(server_query, server_info)
+            else:
+                return await interaction.response.send_message("You do not have permission to accept ban requests.",
+                                                               ephemeral=True)
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red, custom_id="reject")
     async def reject_button(self, interaction, button):
@@ -2960,16 +2964,43 @@ class BanReqView(discord.ui.View):
         server_info = servers.find_one(server_query)
         if server_info:
             if interaction.user.guild_permissions.ban_members:
-                user_id = server_info["bans_warns_req"][str(interaction.message.id)]
-                reason = server_info["bans_warns_req"][user_id][0]
-                requested_by = server_info["bans_warns_req"][user_id][1]
-                await interaction.response.edit_message(
-                    content=f"> **Ban Rejected**\n> ㆍ　User ID: {user_id}\n> ㆍ　Reason: {reason}\n> ㆍ　Requested by: {requested_by}\n> ㆍ　Rejected by: {interaction.user.id}\n> ㆍ　Proof:",
-                    view=None)
-                server_info["bans_warns_req"].pop(str(interaction.message.id))
-                server_info["bans_warns_req"].pop(str(user_id))
+                req_data = server_info.get("bans_warns_req", {}).get(str(interaction.message.id))
+                if not req_data:
+                    return await interaction.response.send_message("This request is no longer active.", ephemeral=True)
+                await interaction.response.defer()
+
+                if isinstance(req_data, dict):
+                    user_ids = req_data.get("user_ids", [])
+                    reason = req_data.get("reason", "No reason specified.")
+                    requested_by = req_data.get("requested_by", "Unknown")
+                else:
+                    user_id = str(req_data)
+                    user_ids = [user_id]
+                    req_info = server_info.get("bans_warns_req", {}).get(user_id, ["No reason specified", "Unknown"])
+                    reason = req_info[0]
+                    requested_by = req_info[1]
+
+                if len(user_ids) == 1:
+                    user_id_display = f"> ㆍ　User ID: {user_ids[0]}"
+                    header = "> **Ban Rejected**"
+                else:
+                    user_id_display = "\n".join([f"> ㆍ　User ID: `{uid}`" for uid in user_ids])
+                    header = "> **Mass Ban Rejected**"
+
+                await interaction.message.edit(
+                    content=f"{header}\n{user_id_display}\n> ㆍ　Reason: {reason}\n> ㆍ　Requested by: {requested_by}\n> ㆍ　Rejected by: {interaction.user.id}\n> ㆍ{f' Proof:' if 'Proof:' in interaction.message.content else ''}",
+                    view=None
+                )
+
+                server_info.get("bans_warns_req", {}).pop(str(interaction.message.id), None)
+                for u_id in user_ids:
+                    server_info.get("bans_warns_req", {}).pop(str(u_id), None)
+
                 servers.replace_one(server_query, server_info)
-                await interaction.followup.send(f"Ban request rejected.", ephemeral=True)
+                await interaction.followup.send("Ban request rejected.", ephemeral=True)
+            else:
+                return await interaction.response.send_message("You do not have permission to reject ban requests.",
+                                                               ephemeral=True)
 
 @bot.tree.command(name="unban", description="Unbans a user.")
 @app_commands.describe(user="User to unban", reason="Reason for unban")
