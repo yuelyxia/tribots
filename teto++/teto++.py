@@ -669,6 +669,85 @@ async def process_and_save_invite(invite: discord.Invite):
                 msg += f"> **Added** – `{invite.code}`"
             await log_channel.send(embed=discord.Embed(description=msg))
 
+@bot.event
+async def on_message(message):
+    user_profile = await asyncio.to_thread(
+        userscol.find_one,
+        {"_id": str(message.author.id)}
+    )
+
+    if user_profile:
+        if len(user_profile) == 2:
+            main = user_profile["main"]
+            profile = await asyncio.to_thread(
+                userscol.find_one,
+                {"_id": main}
+            )
+        else:
+            profile = user_profile
+        if profile:
+            no_of_cases = len(profile) - 2
+            all_tags = []
+            for i in range(1, no_of_cases + 1):
+                tags = profile[str(i)]["tags"].split(", ")
+                all_tags.extend(tags)
+            all_tags = sort_user_tags(all_tags)
+            if all_tags and all_tags[0] in red_tags:
+                if not any(reaction.emoji == "<a:tri_redalert:1523203497573617705>" for reaction in message.reactions):
+                    try:
+                        await message.add_reaction("<a:tri_redalert:1523203497573617705>")
+                    except discord.HTTPException:
+                        pass
+
+    extracted_urls = re.findall(
+        r'(?:https?://)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+)',
+        message.content
+    )
+    if extracted_urls:
+        flagged_domains = []
+        for domain in extracted_urls:
+            cleaned_domain = domain.lower()
+
+            if cleaned_domain in scam_domains:
+                flagged_domains.append(cleaned_domain)
+            else:
+                parts = cleaned_domain.split('.')
+                if len(parts) > 2:
+                    root_domain = ".".join(parts[-2:])
+                    if root_domain in scam_domains:
+                        flagged_domains.append(cleaned_domain)
+
+        if flagged_domains:
+            try:
+                await message.delete()
+            except discord.Forbidden:
+                pass
+            except discord.NotFound:
+                pass
+
+            unique_flags = list(set(flagged_domains))
+            safe_text = message.content
+            for bad_domain in unique_flags:
+                escaped_domain = re.escape(bad_domain)
+                safe_text = re.sub(
+                    rf'(https?://)?(www\.)?{escaped_domain}',
+                    defang_url,
+                    safe_text,
+                    flags=re.IGNORECASE
+                )
+
+            public_embed = discord.Embed(description=f"{safe_text}", colour=0xFFFFFF)
+            public_embed.set_footer(text="The malicious link(s) have been safely censored.")
+
+            warning_content = (
+                f"<a:tri_whitealert:1496542298908000257> {message.author.mention}, "
+                f"your message was deleted because it contained known malicious link(s)."
+            )
+
+            await message.channel.send(content=warning_content, embed=public_embed)
+            return
+
+    await bot.process_commands(message)
 
 @bot.event
 async def on_ready():
