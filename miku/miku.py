@@ -290,6 +290,8 @@ async def on_ready():
         reminder_loop.start()
     if not weekly_quota.is_running():
         weekly_quota.start()
+    if not periodic_role_sync.is_running():
+        periodic_role_sync.start()
     await bot.tree.sync()
 
 # loop tasks
