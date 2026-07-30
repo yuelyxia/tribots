@@ -137,7 +137,7 @@ async def sync_tag_roles(member: discord.Member) -> bool:
     user_profile = userscol.find_one({"_id": user_id_str})
     if user_profile:
         if len(user_profile) == 2:
-            main = user_profile['main']
+            main = str(user_profile["main"])
             user_profile = userscol.find_one({"_id": main})
     all_tag_roles = set()
     for role_id in TAG_ROLES_MAP.values():
