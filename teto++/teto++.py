@@ -1291,18 +1291,15 @@ class ReportedUserView(discord.ui.View):
         #
         user = self.user
         user_profile = self.user_profile
-        requested_by = self.requested_by
         current_case = self.current_case
         #
-        if requested_by == interaction.user:
-            r_profile_list = user_profile["r_profile_list"]
-            no_of_cases = len(user_profile) - 2
-            cases = []
-            for i in range(1, no_of_cases + 1):
-                cases.append(user_profile[str(i)])
-            image_links = cases[current_case-1]["proofs"]
-            image_embeds = image_links_to_embeds(image_links)
-            await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
+        no_of_cases = len(user_profile) - 2
+        cases = []
+        for i in range(1, no_of_cases + 1):
+            cases.append(user_profile[str(i)])
+        image_links = cases[current_case-1]["proofs"]
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
     @discord.ui.button(label="Alts", style=discord.ButtonStyle.grey, custom_id="see_alts_proofs")
     async def alts_proofs_button(self, interaction, button):
@@ -1313,11 +1310,10 @@ class ReportedUserView(discord.ui.View):
         requested_by = self.requested_by
         current_case = self.current_case
         #
-        if requested_by == interaction.user:
-            r_profile_list = user_profile["r_profile_list"]
-            image_links = r_profile_list[2]
-            image_embeds = image_links_to_embeds(image_links)
-            await interaction.followup.send(f"Alts Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
+        r_profile_list = user_profile["r_profile_list"]
+        image_links = r_profile_list[2]
+        image_embeds = image_links_to_embeds(image_links)
+        await interaction.followup.send(f"Alts Proofs for `{user.id}`", embeds=image_embeds, ephemeral=True)
 
 class ReportedServerView(discord.ui.View):
     def __init__(self, guild, server_profile, requested_by, current_case):
