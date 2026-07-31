@@ -134,11 +134,11 @@ async def sync_tag_roles(member: discord.Member) -> bool:
     if member.bot:
         return False
     user_id_str = str(member.id)
-    user_profile = userscol.find_one({"_id": user_id_str})
+    user_profile = await asyncio.to_thread(userscol.find_one, {"_id": user_id_str})
     if user_profile:
         if len(user_profile) == 2:
             main = str(user_profile["main"])
-            user_profile = userscol.find_one({"_id": main})
+            user_profile = await asyncio.to_thread(userscol.find_one, {"_id": main})
     all_tag_roles = set()
     for role_id in TAG_ROLES_MAP.values():
         role = member.guild.get_role(role_id)
@@ -192,7 +192,7 @@ async def periodic_role_sync():
             guild = await bot.fetch_guild(TRI_Archive)
         except (discord.NotFound, discord.HTTPException):
             return
-    for member in guild.members:
+    async for member in guild.fetch_members(limit=None):
         await sync_tag_roles(member)
 
 @periodic_role_sync.before_loop
