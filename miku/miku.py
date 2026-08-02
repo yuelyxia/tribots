@@ -2489,49 +2489,50 @@ async def send_reactroles(interaction: discord.Interaction, colour: str=None, im
         await interaction.channel.send("_ _", embed=image_embed)
     await interaction.channel.send("""
 _ _
-_ _　　<:cutie:1388714793585606656>ㆍ**claim  roles  here** ㆍㆍ
+_ _　　<:cutie:1388714793585606656> ㆍ **claim  roles  here** ㆍㆍ
 -# <:greyreply:1448474301673115748>　click  for  the  role ,  click  again  to  remove .
 """)
-    embed1 = discord.Embed(colour=colour, title="★．．　age　range　⊹⁺₊", description="""  
+    embed1 = discord.Embed(colour=colour, title="★ . .　age　range　⊹⁺₊", description="""  
 -# _ _
-　❜ <:tri_whiteheart:1434538078747365507> ㆍ18 +　︵
-　 <:tri_whitebow:1388714593211125971> ㆍ16 — 17　❜
-　❜ <:tri_whitestar:1388147381152911381> ㆍ13 — 15　︵
+　　<:tri_number1:1525502620217901117>　<@&1375276990096998440>
+　<:tri_number2:1525502698512711850>　<@&1375277014679818332>
+　　<:tri_number3:1525502752883605524>　<@&1375277046204203148>
 """)
     msg1 = await interaction.channel.send("_ _", embed=embed1)
-    embed2 = discord.Embed(colour=colour, title="★．．　pronouns　⊹⁺₊", description="""  
+    embed2 = discord.Embed(colour=colour, title="★ . .　pronouns　⊹⁺₊", description="""  
 -# _ _
-　┅ <:tri_whitebutterfly:1459750881611354237> ㆍhe 　❀
-　 <:tri_whitepaperclip:1449650494044639335> ㆍ she 　┅
-　┅ <:tri_whitestar:1388147381152911381> ㆍthey 　❀
-　 <:tri_whitebowheart:1459750975710691410> ㆍ ask 　┅
+　　<:tri_number1:1525502620217901117>　<@&1375274759507411034>
+　<:tri_number2:1525502698512711850>　<@&1375274745616011355>
+　　<:tri_number3:1525502752883605524>　<@&1375274890894250045>
+　<:tri_number4:1525502799209697372>　<@&1375274908275445780>
     """)
     msg2 = await interaction.channel.send("_ _", embed=embed2)
-    embed3 = discord.Embed(colour=colour, title="★．．　user　update　pings　⊹⁺₊", description="""  
+    embed3 = discord.Embed(colour=colour, title="★ . .　user　update　pings　⊹⁺₊", description="""  
 -# _ _
-　∿ <:tri_whitestar:1388147381152911381> ㆍnew user report　⿻
-　 <:tri_whitebow:1388714593211125971> ㆍupdated user report　∿
-　∿ <:tri_whitepaperclip:1449650494044639335> ㆍappealed user report　⿻
+　　<:tri_number1:1525502620217901117>　<@&1375275062185168957>
+　<:tri_number2:1525502698512711850>　<@&1459590866724323625>
+　　<:tri_number3:1525502752883605524>　<@&1459590865335877663>
 """)
     msg3 = await interaction.channel.send("_ _", embed=embed3)
-    embed4 = discord.Embed(colour=colour, title="★．．　server　update　pings　⊹⁺₊", description="""  
+    embed4 = discord.Embed(colour=colour, title="★ . .　server　update　pings　⊹⁺₊", description="""  
 -# _ _
-　 <:tri_whiteheart:1434538078747365507> ㆍnew server report　∿
-　∿ <:tri_whitebutterfly:1459750881611354237> ㆍupdated server report　⿻
-　 <:tri_whitebowheart:1459750975710691410> ㆍappealed server report　∿
+　　<:tri_number1:1525502620217901117>　<@&1375275002537971742>
+　<:tri_number2:1525502698512711850>　<@&1459590362703204405>
+　　<:tri_number3:1525502752883605524>　<@&1459590364292972776>
 """)
     msg4 = await interaction.channel.send("_ _", embed=embed4)
-    embed5 = discord.Embed(colour=colour, title="★．．　account　update　pings　⊹⁺₊", description="""  
+    embed5 = discord.Embed(colour=colour, title="★ . .　account　update　pings　⊹⁺₊", description="""  
 -# _ _
-　 <:tri_whitebutterfly:1459750881611354237> ㆍnew account report　⿻
-　∿ <:tri_whitepaperclip:1449650494044639335> ㆍupdated account report　∿
-　 <:tri_whitestar:1388147381152911381> ㆍappealed account report　⿻
+　　<:tri_number1:1525502620217901117>　<@&1515589534438395914>
+　<:tri_number2:1525502698512711850>　<@&1515589535059284148>
+　　<:tri_number3:1525502752883605524>　<@&1515589539069169844>
 """)
     msg5 = await interaction.channel.send("_ _", embed=embed5)
     embed6 = discord.Embed(colour=colour, description="""  
 -# _ _
-　⬩ <:tri_whitebutterfly:1459750881611354237> ㆍnews　✿
-　 <:tri_whitebow:1388714593211125971> ㆍticket status　⬩
+　　<:tri_number1:1525502620217901117>　<@&1375276744956706916>
+　<:tri_number2:1525502698512711850>　<@&1533024647615086623>
+　　<:tri_number3:1525502752883605524>　<@&1459594319110602833>
     """)
     msg6 = await interaction.channel.send("_ _", embed=embed6)
     await interaction.followup.send("Sent!")
@@ -2539,34 +2540,35 @@ _ _　　<:cutie:1388714793585606656>ㆍ**claim  roles  here** ㆍㆍ
 Use the following commands to add react roles:
 
 `!rr addmany {interaction.channel.id} {msg1.id}
-<:tri_whiteheart:1434538078747365507> 1375276990096998440 
-<:tri_whitebow:1388714593211125971> 1375277014679818332 
-<:tri_whitestar:1388147381152911381> 1375277046204203148`
+<:tri_number1:1525502620217901117> 1375276990096998440 
+<:tri_number2:1525502698512711850> 1375277014679818332 
+<:tri_number3:1525502752883605524> 1375277046204203148`
 
 `!rr addmany {interaction.channel.id} {msg2.id}
-<:tri_whitebutterfly:1459750881611354237> 1375274759507411034
-<:tri_whitepaperclip:1449650494044639335> 1375274745616011355
-<:tri_whitestar:1388147381152911381> 1375274890894250045
-<:tri_whitebowheart:1459750975710691410> 1375274908275445780`
+<:tri_number1:1525502620217901117> 1375274759507411034
+<:tri_number2:1525502698512711850> 1375274745616011355
+<:tri_number3:1525502752883605524> 1375274890894250045
+<:tri_number4:1525502799209697372> 1375274908275445780`
 
 `!rr addmany {interaction.channel.id} {msg3.id}
-<:tri_whitestar:1388147381152911381> 1375275062185168957
-<:tri_whitebow:1388714593211125971> 1459590866724323625
-<:tri_whitepaperclip:1449650494044639335> 1459590865335877663`
+<:tri_number1:1525502620217901117> 1375275062185168957
+<:tri_number2:1525502698512711850> 1459590866724323625
+<:tri_number3:1525502752883605524> 1459590865335877663`
 
 `!rr addmany {interaction.channel.id} {msg4.id}
-<:tri_whiteheart:1434538078747365507> 1375275002537971742
-<:tri_whitebutterfly:1459750881611354237> 1459590362703204405 
-<:tri_whitebowheart:1459750975710691410> 1459590364292972776`
+<:tri_number1:1525502620217901117> 1375275002537971742
+<:tri_number2:1525502698512711850> 1459590362703204405 
+<:tri_number3:1525502752883605524> 1459590364292972776`
 
 `!rr addmany {interaction.channel.id} {msg5.id}
-<:tri_whitebutterfly:1459750881611354237> 1515589534438395914
-<:tri_whitepaperclip:1449650494044639335> 1515589535059284148
-<:tri_whitestar:1388147381152911381> 1515589539069169844`
+<:tri_number1:1525502620217901117> 1515589534438395914
+<:tri_number2:1525502698512711850> 1515589535059284148
+<:tri_number3:1525502752883605524> 1515589539069169844`
 
 `!rr addmany {interaction.channel.id} {msg6.id}
-<:tri_whitebutterfly:1459750881611354237> 1375276744956706916
-<:tri_whitebow:1388714593211125971> 1459594319110602833`
+<:tri_number1:1525502620217901117> 1375276744956706916
+<:tri_number2:1525502698512711850> 1533024647615086623
+<:tri_number3:1525502752883605524> 1459594319110602833`
 
 """, ephemeral=True)
 
