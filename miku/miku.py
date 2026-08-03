@@ -2539,33 +2539,33 @@ _ _　　<:cutie:1388714793585606656> ㆍ **claim  roles  here** ㆍㆍ
     await interaction.followup.send(f"""
 Use the following commands to add react roles:
 
-`!rr addmany {interaction.channel.id} {msg1.id}
+`?rr addmany {interaction.channel.id} {msg1.id}
 <:tri_number1:1525502620217901117> 1375276990096998440 
 <:tri_number2:1525502698512711850> 1375277014679818332 
 <:tri_number3:1525502752883605524> 1375277046204203148`
 
-`!rr addmany {interaction.channel.id} {msg2.id}
+`?rr addmany {interaction.channel.id} {msg2.id}
 <:tri_number1:1525502620217901117> 1375274759507411034
 <:tri_number2:1525502698512711850> 1375274745616011355
 <:tri_number3:1525502752883605524> 1375274890894250045
 <:tri_number4:1525502799209697372> 1375274908275445780`
 
-`!rr addmany {interaction.channel.id} {msg3.id}
+`?rr addmany {interaction.channel.id} {msg3.id}
 <:tri_number1:1525502620217901117> 1375275062185168957
 <:tri_number2:1525502698512711850> 1459590866724323625
 <:tri_number3:1525502752883605524> 1459590865335877663`
 
-`!rr addmany {interaction.channel.id} {msg4.id}
+`?rr addmany {interaction.channel.id} {msg4.id}
 <:tri_number1:1525502620217901117> 1375275002537971742
 <:tri_number2:1525502698512711850> 1459590362703204405 
 <:tri_number3:1525502752883605524> 1459590364292972776`
 
-`!rr addmany {interaction.channel.id} {msg5.id}
+`?rr addmany {interaction.channel.id} {msg5.id}
 <:tri_number1:1525502620217901117> 1515589534438395914
 <:tri_number2:1525502698512711850> 1515589535059284148
 <:tri_number3:1525502752883605524> 1515589539069169844`
 
-`!rr addmany {interaction.channel.id} {msg6.id}
+`?rr addmany {interaction.channel.id} {msg6.id}
 <:tri_number1:1525502620217901117> 1375276744956706916
 <:tri_number2:1525502698512711850> 1533024647615086623
 <:tri_number3:1525502752883605524> 1459594319110602833`
@@ -3367,6 +3367,7 @@ async def t(ctx, text: str = None, ticket_type: str = None):
         ticket_type = "all"
     ticket_type_lower = ticket_type.lower() if ticket_type else None
     matching_threads = []
+    seen_threads = set()
 
     async def format_thread_line(thread_obj):
         try:
@@ -3385,14 +3386,35 @@ async def t(ctx, text: str = None, ticket_type: str = None):
         if ticket_type_lower in [None, "all"]:
             for thread in ticket_channel.threads:
                 if show_all or text_lower in thread.name.lower():
+                    seen_threads.add(thread.id)
                     matching_threads.append(await format_thread_line(thread))
+
+            if show_all:
+                open_docs = tickets.find({"status": "open"})
+                for doc in open_docs:
+                    tid_raw = doc.get("thread_id")
+                    if tid_raw:
+                        try:
+                            tid = int(tid_raw)
+                            if tid not in seen_threads:
+                                seen_threads.add(tid)
+                                creator_id = doc.get("creator_id")
+                                owner_text = f"<@{creator_id}>" if creator_id else "Unknown"
+                                matching_threads.append(f"> <#{tid}> – {owner_text}")
+                        except ValueError:
+                            pass
+
         if ticket_type_lower in ["all", "closed"]:
             async for thread in ticket_channel.archived_threads(limit=None, private=False):
                 if show_all or text_lower in thread.name.lower():
-                    matching_threads.append(f"> {thread.mention}")
+                    if thread.id not in seen_threads:
+                        seen_threads.add(thread.id)
+                        matching_threads.append(f"> {thread.mention}")
             async for thread in ticket_channel.archived_threads(limit=None, private=True):
                 if show_all or text_lower in thread.name.lower():
-                    matching_threads.append(f"> {thread.mention}")
+                    if thread.id not in seen_threads:
+                        seen_threads.add(thread.id)
+                        matching_threads.append(f"> {thread.mention}")
     except Exception as e:
         return await msg.edit(content=f"An error occurred while fetching threads: {e}")
     if not matching_threads:
