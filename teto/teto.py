@@ -12105,26 +12105,26 @@ bot.tree.add_command(disable)
 )
 @app_commands.describe(
     user_id="User ID",
-    server_id="Server ID",
+    guild_id="Server ID",
     account_id="Game UID"
 )
 @app_commands.checks.has_role(adm_ping)
 async def disable_vote(
     interaction: discord.Interaction,
     user_id: str | None = None,
-    server_id: str | None = None,
+    guild_id: str | None = None,
     account_id: str | None = None,
 ):
-    provided = sum(x is not None for x in (user_id, server_id, account_id))
+    provided = sum(x is not None for x in (user_id, guild_id, account_id))
     if provided != 1:
         return await interaction.response.send_message(
-            "Please provide exactly one of `user_id`, `server_id`, or `account_id`.", ephemeral=True)
+            "Please provide exactly one of `user_id`, `guild_id`, or `account_id`.", ephemeral=True)
     if user_id is not None:
         session = inprogresscol.find_one({"user_id": int(user_id), "vote_channel_id": {"$exists": True}})
         entity = f"user `{user_id}`"
-    elif server_id is not None:
-        session = inprogresscol.find_one({"server_id": int(server_id), "vote_channel_id": {"$exists": True}})
-        entity = f"server `{server_id}`"
+    elif guild_id is not None:
+        session = inprogresscol.find_one({"guild_id": int(guild_id), "vote_channel_id": {"$exists": True}})
+        entity = f"server `{guild_id}`"
     else:
         session = inprogresscol.find_one({"account_id": account_id, "vote_channel_id": {"$exists": True}})
         entity = f"account `{account_id}`"
@@ -12162,27 +12162,27 @@ async def disable_vote(
 )
 @app_commands.describe(
     user_id="User ID",
-    server_id="Server ID",
+    guild_id="Server ID",
     account_id="Game UID"
 )
 @app_commands.checks.has_any_role(adm_ping, sr_ping)
 async def disable_report(
     interaction: discord.Interaction,
     user_id: str | None = None,
-    server_id: str | None = None,
+    guild_id: str | None = None,
     account_id: str | None = None,
 ):
-    provided = sum(x is not None for x in (user_id, server_id, account_id))
+    provided = sum(x is not None for x in (user_id, guild_id, account_id))
     if provided != 1:
         await interaction.response.send_message(
-            "Please provide exactly one of `user_id`, `server_id`, or `account_id`.", ephemeral=True)
+            "Please provide exactly one of `user_id`, `guild_id`, or `account_id`.", ephemeral=True)
         return
     if user_id is not None:
         session = inprogresscol.find_one({"user_id": int(user_id)})
         entity = f"user `{user_id}`"
-    elif server_id is not None:
-        session = inprogresscol.find_one({"server_id": int(server_id)})
-        entity = f"server `{server_id}`"
+    elif guild_id is not None:
+        session = inprogresscol.find_one({"guild_id": int(guild_id)})
+        entity = f"server `{guild_id}`"
     else:
         session = inprogresscol.find_one({"account_id": account_id})
         entity = f"account `{account_id}`"
