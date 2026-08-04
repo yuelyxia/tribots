@@ -1893,14 +1893,22 @@ class NewUserReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                         f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
@@ -2830,7 +2838,11 @@ class EditUserReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -2838,7 +2850,11 @@ class EditUserReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
@@ -2903,7 +2919,11 @@ class EditUserReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -2911,7 +2931,11 @@ class EditUserReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
@@ -2982,7 +3006,11 @@ class EditUserReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -2990,7 +3018,11 @@ class EditUserReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
             return
@@ -5310,7 +5342,14 @@ class NewServerReportView(discord.ui.View):
             if "vote_channel_id" in existing_entry:
                 vote_channel_id = existing_entry["vote_channel_id"]
                 vote_message_id = existing_entry["_id"]
-                vote_message = await bot.get_channel(vote_channel_id).fetch_message(vote_message_id)
+                vote_channel = bot.get_channel(vote_channel_id)
+                if not vote_channel:
+                    vote_channel = await bot.fetch_channel(vote_channel_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -5318,7 +5357,11 @@ class NewServerReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
@@ -6029,7 +6072,11 @@ class EditServerReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -6037,7 +6084,11 @@ class EditServerReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
@@ -6109,7 +6160,11 @@ class EditServerReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -6117,7 +6172,11 @@ class EditServerReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
@@ -6201,7 +6260,11 @@ class EditServerReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{guild.id}`: {vote_message.jump_url}")
             # ongoing report
@@ -6209,7 +6272,11 @@ class EditServerReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{guild.id}`: {message.jump_url}")
             return
@@ -7794,14 +7861,22 @@ class NewAccountReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(f"There already exists an ongoing vote on `{game_uid}`: {vote_message.jump_url}")
             # ongoing report
             else:
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                         f"There already exists an ongoing report on `{game_uid}`: {message.jump_url}")
             return
@@ -8725,7 +8800,11 @@ class EditAccountReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{game_uid}`: {vote_message.jump_url}")
             # ongoing report
@@ -8733,7 +8812,11 @@ class EditAccountReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{game_uid}`: {message.jump_url}")
             return
@@ -8798,7 +8881,11 @@ class EditAccountReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{game_uid}`: {vote_message.jump_url}")
             # ongoing report
@@ -8806,7 +8893,11 @@ class EditAccountReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{game_uid}`: {message.jump_url}")
             return
@@ -8877,7 +8968,11 @@ class EditAccountReportView(discord.ui.View):
                 vote_channel = bot.get_channel(vote_channel_id)
                 if not vote_channel:
                     vote_channel = await bot.fetch_channel(vote_channel_id)
-                vote_message = await vote_channel.fetch_message(vote_message_id)
+                try:
+                    vote_message = await vote_channel.fetch_message(vote_message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing vote on `{game_uid}`: {vote_message.jump_url}")
             # ongoing report
@@ -8885,7 +8980,11 @@ class EditAccountReportView(discord.ui.View):
                 channel_id = existing_entry["channel_id"]
                 message_id = existing_entry["_id"]
                 thread = await bot.fetch_channel(channel_id)
-                message = await thread.fetch_message(message_id)
+                try:
+                    message = await thread.fetch_message(message_id)
+                except discord.NotFound:
+                    return await interaction.followup.send(
+                        "This message could not be found. It may have been deleted.", ephemeral=True)
                 await interaction.followup.send(
                     f"There already exists an ongoing report on `{game_uid}`: {message.jump_url}")
             return
@@ -11767,7 +11866,11 @@ async def report(
             vote_channel = bot.get_channel(vote_channel_id)
             if not vote_channel:
                 vote_channel = await bot.fetch_channel(vote_channel_id)
-            vote_message = await vote_channel.fetch_message(vote_message_id)
+            try:
+                vote_message = await vote_channel.fetch_message(vote_message_id)
+            except discord.NotFound:
+                return await interaction.followup.send(
+                    "This message could not be found. It may have been deleted.", ephemeral=True)
             await interaction.followup.send(
                 f"There already exists an ongoing vote on `{user.id}`: {vote_message.jump_url}")
         # ongoing report
@@ -11775,7 +11878,11 @@ async def report(
             channel_id = existing_entry["channel_id"]
             message_id = existing_entry["_id"]
             thread = await bot.fetch_channel(channel_id)
-            message = await thread.fetch_message(message_id)
+            try:
+                message = await thread.fetch_message(message_id)
+            except discord.NotFound:
+                return await interaction.followup.send(
+                    "This message could not be found. It may have been deleted.", ephemeral=True)
             await interaction.followup.send(
                 f"There already exists an ongoing report on `{user.id}`: {message.jump_url}")
         return
@@ -11992,58 +12099,108 @@ async def merge_reports(interaction: discord.Interaction, main: str, alt: str):
 disable = app_commands.Group(name="disable", description="Disable.")
 bot.tree.add_command(disable)
 
-@disable.command(name="vote", description="Disables a staff vote.")
-@app_commands.describe(message_id="Message ID of vote")
+@disable.command(
+    name="vote",
+    description="Disables an active staff vote."
+)
+@app_commands.describe(
+    user_id="User ID",
+    server_id="Server ID",
+    account_id="Game UID"
+)
 @app_commands.checks.has_role(adm_ping)
-async def disable_vote(interaction: discord.Interaction, message_id: str):
-    try:
-        message = await interaction.channel.fetch_message(int(message_id))
-    except discord.NotFound:
-        await interaction.response.send_message("Message not found in this channel.", ephemeral=True)
+async def disable_vote(
+    interaction: discord.Interaction,
+    user_id: str | None = None,
+    server_id: str | None = None,
+    account_id: str | None = None,
+):
+    provided = sum(x is not None for x in (user_id, server_id, account_id))
+    if provided != 1:
+        return await interaction.response.send_message(
+            "Please provide exactly one of `user_id`, `server_id`, or `account_id`.", ephemeral=True)
+    if user_id is not None:
+        session = inprogresscol.find_one({"user_id": int(user_id), "vote_channel_id": {"$exists": True}})
+        entity = f"user `{user_id}`"
+    elif server_id is not None:
+        session = inprogresscol.find_one({"server_id": int(server_id), "vote_channel_id": {"$exists": True}})
+        entity = f"server `{server_id}`"
     else:
-        if "accepted by" in message.content and "Link to thread" in message.content and "Agree:" in message.content \
-                and "Disagree:" in message.content and "has been published." not in message.content \
-                and message.author.id == bot.user.id:
-            await message.edit(view=None)
-            session = inprogresscol.find_one({"_id": message.id})
-            if session:
-                channel_id = session["channel_id"]
-                message_id = session["message_id"]
-                try:
-                    report_thread = await bot.fetch_channel(channel_id)
-                    report_message = await report_thread.fetch_message(message_id)
-                    await report_message.edit(content=f"**Disabled by {interaction.user.mention}.**", view=None)
-                except Exception:
-                    pass
-                inprogresscol.delete_one({"_id": message.id})
-            thread = message.channel
-            new_name = f"d-{thread.name}"
-            await interaction.response.send_message(f"Vote has been disabled by {interaction.user.mention}.")
-            await asyncio.sleep(2)
-            await thread.edit(name=new_name, archived=True, locked=True)
-        else:
-            await interaction.response.send_message("That is not a valid staff vote. Please try again.", ephemeral=True)
+        session = inprogresscol.find_one({"account_id": account_id, "vote_channel_id": {"$exists": True}})
+        entity = f"account `{account_id}`"
+    if session is None:
+        return await interaction.response.send_message(f"No active vote found for {entity}.", ephemeral=True)
+    try:
+        vote_channel = await bot.fetch_channel(session["vote_channel_id"])
+        vote_message = await vote_channel.fetch_message(session["_id"])
+    except discord.NotFound:
+        inprogresscol.delete_one({"_id": session["_id"]})
+        return await interaction.response.send_message(
+            "The vote message no longer exists. The stale session has been removed.", ephemeral=True)
+    await vote_message.edit(view=None)
+    try:
+        report_thread = await bot.fetch_channel(session["channel_id"])
+        report_message = await report_thread.fetch_message(session["message_id"])
+        await report_message.edit(content=f"**Disabled by {interaction.user.mention}.**", view=None)
+    except Exception:
+        pass
+    inprogresscol.delete_one({"_id": session["_id"]})
+    thread = vote_message.channel
+    try:
+        await thread.edit(
+            name=f"d-{thread.name}",
+            archived=True,
+            locked=True
+        )
+    except Exception:
+        pass
+    await interaction.response.send_message(f"Disabled active vote for {entity}.")
 
-@disable.command(name="report", description="Disables a report/appeal.")
-@app_commands.describe(message_id="Message ID of report/appeal")
+@disable.command(
+    name="report",
+    description="Disables an active report or appeal."
+)
+@app_commands.describe(
+    user_id="User ID",
+    server_id="Server ID",
+    account_id="Game UID"
+)
 @app_commands.checks.has_any_role(adm_ping, sr_ping)
-async def disable_report(interaction: discord.Interaction, message_id: str):
-    try:
-        message = await interaction.channel.fetch_message(int(message_id))
-    except discord.NotFound:
-        await interaction.response.send_message("Message not found in this channel.", ephemeral=True)
+async def disable_report(
+    interaction: discord.Interaction,
+    user_id: str | None = None,
+    server_id: str | None = None,
+    account_id: str | None = None,
+):
+    provided = sum(x is not None for x in (user_id, server_id, account_id))
+    if provided != 1:
+        await interaction.response.send_message(
+            "Please provide exactly one of `user_id`, `server_id`, or `account_id`.", ephemeral=True)
+        return
+    if user_id is not None:
+        session = inprogresscol.find_one({"user_id": int(user_id)})
+        entity = f"user `{user_id}`"
+    elif server_id is not None:
+        session = inprogresscol.find_one({"server_id": int(server_id)})
+        entity = f"server `{server_id}`"
     else:
-        if message.content.startswith(f"Adding report on") or \
-                    message.content.startswith(f"Editing alts for") or \
-                    message.content.startswith(f"Editing owner for") or \
-                    message.content.startswith(f"Appealing for") or \
-                    message.content.startswith(f"Initializing report on") \
-                    and message.author.id == bot.user.id:
-            await message.edit(content=f"**Disabled by {interaction.user.mention}.**", view=None)
-            inprogresscol.delete_one({"_id": message.id})
-            await interaction.response.send_message("Report/appeal disabled.")
-        else:
-            await interaction.response.send_message("That is not a valid report/appeal. Please try again.", ephemeral=True)
+        session = inprogresscol.find_one({"account_id": account_id})
+        entity = f"account `{account_id}`"
+    if session is None:
+        return await interaction.response.send_message(
+            f"No active report or appeal found for {entity}.", ephemeral=True)
+    try:
+        channel = await bot.fetch_channel(session["channel_id"])
+        message = await channel.fetch_message(session["_id"])
+    except discord.NotFound:
+        inprogresscol.delete_one({"_id": session["_id"]})
+        return await interaction.response.send_message(
+            "The report message no longer exists. The stale session has been removed.", ephemeral=True)
+    await message.edit(
+        content=f"**Disabled by {interaction.user.mention}.**", view=None)
+    inprogresscol.delete_one({"_id": session["_id"]})
+    await interaction.response.send_message(
+        f"Disabled active report for {entity}.")
 
 def is_int(value):
     try:
