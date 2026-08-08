@@ -85,7 +85,7 @@ red_tags = ["Scammer", "Scam Server Owner", "Raider", "Plagiarist", "Fake Event 
 yellow_tags = ["Suspect", "Service Ban", "Unprofessional MM", "Unprofessional Pilot", "Unprofessional IDV MM",
                "Unprofessional Supervisor", "Improper Conduct"]
 
-red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "Fake Event Server"]
+red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "Fake Event Server", "Raid Server"]
 yellow_server_tags = ["Suspect Server"]
 
 red_account_tags = ["Scammed Account", "Scammer Account", "Leeched Account"]
@@ -576,6 +576,7 @@ server_tags_options = [
     discord.SelectOption(label="Impersonator Server", value="Impersonator Server"),
     discord.SelectOption(label="Fake Vouch Server", value="Fake Vouch Server"),
     discord.SelectOption(label="Fake Event Server", value="Fake Event Server"),
+    discord.SelectOption(label="Raid Server", value="Raid Server"),
     discord.SelectOption(label="Suspect Server", value="Suspect Server"),
 ]
 
