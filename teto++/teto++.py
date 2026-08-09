@@ -676,26 +676,31 @@ async def on_message(message):
         {"_id": str(message.author.id)}
     )
 
+
     if user_profile:
-        if len(user_profile) == 2:
-            main = user_profile["main"]
+        if "main" in user_profile:
+            main_id = str(user_profile["main"])
             profile = await asyncio.to_thread(
                 userscol.find_one,
-                {"_id": main}
+                {"_id": main_id}
             )
         else:
             profile = user_profile
         if profile:
-            no_of_cases = len(profile) - 2
             all_tags = []
-            for i in range(1, no_of_cases + 1):
-                tags = profile[str(i)]["tags"].split(", ")
-                all_tags.extend(tags)
+            for key, val in profile.items():
+                if key.isdigit() and isinstance(val, dict) and "tags" in val:
+                    tags = val["tags"].split(", ")
+                    all_tags.extend(tags)
             all_tags = sort_user_tags(all_tags)
             if all_tags and all_tags[0] in red_tags:
-                if not any(reaction.emoji == "<a:tri_redalert:1523203497573617705>" for reaction in message.reactions):
+                alert_emoji = "<a:tri_redalert:1523203497573617705>"
+                already_reacted = any(
+                    str(reaction.emoji) == alert_emoji for reaction in message.reactions
+                )
+                if not already_reacted:
                     try:
-                        await message.add_reaction("<a:tri_redalert:1523203497573617705>")
+                        await message.add_reaction(alert_emoji)
                     except discord.HTTPException:
                         pass
 
