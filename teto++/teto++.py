@@ -50,7 +50,7 @@ bot = commands.Bot(command_prefix=',', help_command=None, intents=intents)
 red_tags = ["Scammer", "Scam Server Owner", "Raider", "Plagiarist", "Fake Event Host", "Impersonator", "Vouch Scammer"]
 yellow_tags = ["Suspect", "Service Ban", "Unprofessional MM", "Unprofessional Pilot", "Unprofessional IDV MM", "Unprofessional Staff", "Unprofessional Supervisor", "Improper Conduct"]
 
-red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "Fake Event Server", "Raid Server"]
+red_server_tags = ["Scam Server", "Impersonator Server", "Fake Vouch Server", "Fake Event Server"]
 yellow_server_tags = ["Suspect Server"]
 
 red_account_tags = ["Scammed Account", "Scammer Account", "Leeched Account"]
