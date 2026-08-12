@@ -1809,8 +1809,11 @@ async def customrole_edit(interaction: discord.Interaction,
         return
     if name:
         await role.edit(name=name)
+        await interaction.followup.send(f"Role name updated to **{name}**.", ephemeral=True)
     if colour:
-        try: await role.edit(colour=discord.Colour(int(colour.strip("#"), 16)))
+        try:
+            await role.edit(colour=discord.Colour(int(colour.strip("#"), 16)))
+            await interaction.followup.send(embed=discord.Embed(colour=discord.Colour(int(colour.strip("#"), 16)), description="Role colour updated."), ephemeral=True)
         except Exception: await interaction.followup.send("Invalid HEX code.", ephemeral=True)
     # role icon
     if image:
