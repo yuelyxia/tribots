@@ -475,10 +475,53 @@ def format_duration(seconds: int) -> str:
                 result.append(f"{value} {suffix}")
     return " ".join(result)
 
+censored_words = ["trade", "buy", "sell", "trading", "trader", "trader", "traders", "buying", "buyer" "buyers"]
+
+def censor_words(text):
+    for word in censored_words:
+        text = re.sub(
+            rf"\b{re.escape(word)}\b",
+            lambda m: m.group(0)[0] + r"\*" * (len(m.group(0)) - 1),
+            text,
+            flags=re.IGNORECASE)
+    return text
+
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.id == bot.user.id:
         return
+
+    if message.author.bot:
+        return
+    if message.guild is None:
+        await bot.process_commands(message)
+        return
+
+    censored = censor_words(message.content)
+
+    if censored == message.content:
+        await bot.process_commands(message)
+        return
+
+    try:
+        webhook = None
+        webhooks = await message.channel.webhooks()
+        for wh in webhooks:
+            if wh.user and wh.user.id == bot.user.id:
+                webhook = wh
+                break
+        if webhook is None:
+            webhook = await message.channel.create_webhook(name="KAFU")
+        await message.delete()
+        await webhook.send(
+            censored,
+            username=message.author.display_name,
+            avatar_url=message.author.display_avatar.url,
+            allowed_mentions=discord.AllowedMentions.none())
+    except discord.Forbidden:
+        pass
+    except discord.HTTPException as e:
+        print(f"Failed to censor message: {e}")
 
     data = afk.find_one({"_id": message.author.id})
     if data:
