@@ -11666,21 +11666,21 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         user = await bot.fetch_user(session["user_id"])
         r_profile = format_user_r_profile(user, r_profile_list, title)
         embeds = [r_profile]
-        if add_case_list:
+        if add_case_list and len(add_case_list) >= 2:
             add_case = format_user_add_case(add_case_list, case_title)
             embeds.append(add_case)
     elif is_server_report:
         guild_data = session["guild_data"]
         r_profile = reconstruct_server_r_profile(guild_data, r_profile_list, title)
         embeds = [r_profile]
-        if add_case_list:
+        if add_case_list and len(add_case_list) >= 2:
             add_case = format_server_add_case(add_case_list, case_title)
             embeds.append(add_case)
     elif is_account_report:
         game_uid = session["account_id"]
         r_profile = format_account_r_profile(game_uid, r_profile_list, title)
         embeds = [r_profile]
-        if add_case_list:
+        if add_case_list and len(add_case_list) >= 2:
             add_case = format_account_add_case(add_case_list, case_title)
             embeds.append(add_case)
     if not embeds:

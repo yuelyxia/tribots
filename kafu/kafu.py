@@ -352,7 +352,7 @@ QUOTA_CHECK_DAY = 1
 async def quota_check():
     now = datetime.datetime.now(datetime.timezone.utc)
     if now.day == QUOTA_CHECK_DAY:
-        guilds = servers.find({})  # all servers
+        guilds = await asyncio.to_thread(lambda: list(servers.find({})))  # all servers
         for server_info in guilds:
             guild_id = int(server_info["_id"])
             if guild_id == TRI_Archive:
@@ -493,7 +493,7 @@ async def on_message(message: discord.Message):
 
     if message.author.bot:
         return
-    if message.guild is None:
+    if message.guild is None or message.guild.id == TRI_Archive:
         await bot.process_commands(message)
         return
 
@@ -523,7 +523,7 @@ async def on_message(message: discord.Message):
     except discord.HTTPException as e:
         print(f"Failed to censor message: {e}")
 
-    data = afk.find_one({"_id": message.author.id})
+    data = await asyncio.to_thread(afk.find_one, {"_id": message.author.id})
     if data:
         duration = int(time.time()) - data["since"]
         duration = format_duration(duration)
@@ -542,7 +542,7 @@ async def on_message(message: discord.Message):
         if lines:
             embed.description +="\n".join(lines)
         await message.reply(embed=embed)
-        afk.delete_one({"_id": message.author.id})
+        await asyncio.to_thread(afk.delete_one, {"_id": message.author.id})
 
     for member in message.mentions:
         if member.id == message.author.id:
@@ -550,7 +550,7 @@ async def on_message(message: discord.Message):
         data = afk.find_one({"_id": member.id})
         if not data:
             continue
-        afk.update_one({"_id": member.id}, {"$push": {"mentions": {"user_id": message.author.id, "jump_url": message.jump_url}}})
+        await asyncio.to_thread(afk.update_one, {"_id": member.id}, {"$push": {"mentions": {"user_id": message.author.id, "jump_url": message.jump_url}}})
         embed = discord.Embed(colour=0xffffff, description=f"**{member.display_name}** has been afk since <t:{data["since"]}:R>\nReason: **{data["reason"]}**")
         await message.reply(embed=embed)
 
@@ -1170,10 +1170,9 @@ async def get_uncredited_claims(channel_id):
 @tasks.loop(hours=1)
 async def ticket_claim_cleanup_loop():
     cutoff = int(time.time()) - 86400
-    ticket_claims.delete_many({
-        "closed": True,
-        "closed_at": {"$lte": cutoff}
-    })
+    await asyncio.to_thread(
+        ticket_claims.delete_many,
+        {"closed": True, "closed_at": {"$lte": cutoff}})
 
 @bot.command(name="claim")
 async def claim(ctx, mode: str = None, member: discord.Member = None):
@@ -1753,7 +1752,8 @@ async def cr(ctx):
 @tasks.loop(hours=1)
 async def customrole_expiry_loop():
     now = int(time.time())
-    for server_info in servers.find({}):
+    server_list = await asyncio.to_thread(lambda: list(servers.find({})))
+    for server_info in server_list:
         guild = bot.get_guild(int(server_info["_id"]))
         if not guild:
             continue
@@ -1765,22 +1765,29 @@ async def customrole_expiry_loop():
             owner = guild.get_member(int(data["owner"]))
             if data["type"] == "booster":
                 if not owner or not owner.premium_since:
-                    await role.delete(reason="Booster custom role expired")
-                    servers.update_one(
+                    try:
+                        await role.delete(reason="Booster custom role expired")
+                    except discord.NotFound:
+                        pass
+                    await asyncio.to_thread(
+                        servers.update_one,
                         {"_id": server_info["_id"]},
-                        {"$unset": {f"custom_roles.{role_id}": ""}}
-                    )
+                        {"$unset": {f"custom_roles.{role_id}": ""}})
                 continue
             if data["expires_at"] and now >= data["expires_at"]:
-                await role.delete(reason="Custom role expired")
-                servers.update_one(
+                try:
+                    await role.delete(reason="Custom role expired")
+                except discord.NotFound:
+                    pass
+                await asyncio.to_thread(
+                    servers.update_one,
                     {"_id": server_info["_id"]},
-                    {"$unset": {f"custom_roles.{role_id}": ""}}
-                )
+                    {"$unset": {f"custom_roles.{role_id}": ""}})
 
 @tasks.loop(hours=6)
 async def cleanup_custom_roles():
-    for server in servers.find({}):
+    servers_list = await asyncio.to_thread(lambda: list(servers.find({})))
+    for server in servers_list:
         guild = bot.get_guild(int(server["_id"]))
         if not guild:
             continue
@@ -1788,7 +1795,8 @@ async def cleanup_custom_roles():
         for role_id in list(custom_roles.keys()):
             role = guild.get_role(int(role_id))
             if role is None:
-                servers.update_one(
+                await asyncio.to_thread(
+                    servers.update_one,
                     {"_id": server["_id"]},
                     {"$unset": {f"custom_roles.{role_id}": ""}}
                 )
@@ -2263,21 +2271,20 @@ def build_final_results(session):
 @tasks.loop(seconds=10)
 async def vote_auto_close_loop():
     now = int(time.time())
-    for session in votes.find({"ends_at": {"$lte": now}}):
+    sessions = await asyncio.to_thread(lambda: list(votes.find({"ends_at": {"$lte": now}, "closed": {"$ne": True}})))
+    for session in sessions:
         try:
             channel = await bot.fetch_channel(session["channel_id"])
-            if not channel:
-                continue
             message = await channel.fetch_message(session["_id"])
             if not message.components:
                 continue
             results = build_final_results(session)
             await message.edit(embed=results, view=None)
             await message.reply("**Vote has ended.**")
-            votes.update_one(
+            await asyncio.to_thread(
+                votes.update_one,
                 {"_id": session["_id"]},
-                {"$set": {"closed": True}}
-            )
+                {"$set": {"closed": True}})
         except Exception:
             continue
 
@@ -2285,21 +2292,20 @@ async def vote_auto_close_loop():
 async def vote_cleanup_loop():
     now = int(time.time())
     one_hour_ago = now - 3600
-    votes.delete_many({
-        "closed": True,
-        "closed_at": {"$lte": one_hour_ago}
-    })
-    for session in votes.find({}):
+    await asyncio.to_thread(
+        votes.delete_many,
+        {"closed": True, "closed_at": {"$lte": one_hour_ago}})
+    sessions = await asyncio.to_thread(lambda: list(votes.find({})))
+    for session in sessions:
         try:
             channel = await bot.fetch_channel(session["channel_id"])
-            if not channel:
-                votes.delete_one({"_id": session["_id"]})
             message = await channel.fetch_message(session["_id"])
-            if not message:
-                votes.delete_one({"_id": session["_id"]})
+        except (discord.NotFound, discord.Forbidden):
+            await asyncio.to_thread(
+                votes.delete_one,
+                {"_id": session["_id"]})
         except Exception:
             continue
-
 
 role = app_commands.Group(name="role", description="Manage roles.")
 bot.tree.add_command(role)
