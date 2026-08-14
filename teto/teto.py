@@ -11232,13 +11232,6 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
         message = await channel.fetch_message(session["_id"])
     except:
         return await interaction.followup.send("Report not found in this channel.", ephemeral=True)
-    restricted_flow = False
-    if message and message.content:
-        restricted_flow = (
-                message.content.startswith("Editing alts for") or
-                message.content.startswith("Editing owner for") or
-                message.content.startswith("Appealing for")
-        )
     is_user_report = "user_id" in session
     is_server_report = "guild_id" in session
     is_account_report = "account_id" in session
@@ -11248,7 +11241,7 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
     case_title = session.get("case_title")
     r_profile_list = session.get("r_profile_list", [])
     add_case_list = session.get("add_case_list", {})
-    if restricted_flow:
+    if is_edit_or_appeal:
         if alts and is_user_report:
             if len(add_case_list) >= 2:
                 return await interaction.followup.send("This report does not contain an editable case.", ephemeral=True)
@@ -11348,10 +11341,9 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             image_embeds = image_links_to_embeds(image_links)
             await message.reply(content=f"Images received from {interaction.user.mention}.", embeds=image_embeds)
         if reason:
-            if is_edit_or_appeal:
-                session["reason"] = reason
-                await message.reply(embed=discord.Embed(title="Reason", colour=0xffffff, description=reason))
-                edited_fields.append("reason updated")
+            session["reason"] = reason
+            await message.reply(embed=discord.Embed(title="Reason", colour=0xffffff, description=reason))
+            edited_fields.append(f"reason updated　–　{reason}")
 
         update_data = {"r_profile_list": r_profile_list, "title": title}
         if reason is not None:
@@ -11593,17 +11585,13 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             add_case_list["related_users"] = ""
         edited_fields.append(f"related users　–　{related_users_string(valid_users)}")
     if reason:
-        if session.get("reason"):
-            session["reason"] = reason
-            edited_fields.append(f"reason updated　–　{reason}")
-        else:
-            if is_user_report:
-                add_case_list["reason"] = reason
-            elif is_server_report:
-                add_case_list["reason"] = reason
-            elif is_account_report:
-                add_case_list["reason"] = reason
-            edited_fields.append("reason updated")
+        if is_user_report:
+            add_case_list["reason"] = reason
+        elif is_server_report:
+            add_case_list["reason"] = reason
+        elif is_account_report:
+            add_case_list["reason"] = reason
+        edited_fields.append("reason updated")
     if contributor:
         contributor_value = None
         if contributor == "n":
