@@ -11593,13 +11593,17 @@ async def edit_report(interaction: discord.Interaction, id: str, alts: str = Non
             add_case_list["related_users"] = ""
         edited_fields.append(f"related users　–　{related_users_string(valid_users)}")
     if reason:
-        if is_user_report:
-            add_case_list["reason"] = reason
-        elif is_server_report:
-            add_case_list["reason"] = reason
-        elif is_account_report:
-            add_case_list["reason"] = reason
-        edited_fields.append("reason updated")
+        if session.get("reason"):
+            session["reason"] = reason
+            edited_fields.append(f"reason updated　–　{reason}")
+        else:
+            if is_user_report:
+                add_case_list["reason"] = reason
+            elif is_server_report:
+                add_case_list["reason"] = reason
+            elif is_account_report:
+                add_case_list["reason"] = reason
+            edited_fields.append("reason updated")
     if contributor:
         contributor_value = None
         if contributor == "n":
