@@ -3397,7 +3397,7 @@ async def t(ctx, text: str = None, ticket_type: str = None):
 
     async def format_thread_line(thread_obj):
         try:
-            ticket_data = tickets.find_one({"thread_id": int(thread_obj.id)})
+            ticket_data = await asyncio.to_thread(tickets.find_one, {"thread_id": int(thread_obj.id)})
             if ticket_data and "creator_id" in ticket_data:
                 creator_id = ticket_data["creator_id"]
                 owner_text = f"<@{creator_id}>"
