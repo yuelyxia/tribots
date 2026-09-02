@@ -292,9 +292,34 @@ async def on_ready():
         weekly_quota.start()
     if not periodic_role_sync.is_running():
         periodic_role_sync.start()
+    if not auto_bump_tickets.is_running():
+        auto_bump_tickets.start()
     await bot.tree.sync()
 
 # loop tasks
+
+@tasks.loop(hours=12)
+async def auto_bump_tickets():
+    ticket_channel = bot.get_channel(TICKET_CHANNEL)
+    if not ticket_channel:
+        return
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    threshold = now - datetime.timedelta(days=6)
+    for thread in ticket_channel.threads:
+        if thread.last_message_id:
+            try:
+                last_msg = await thread.fetch_message(thread.last_message_id)
+                last_active = last_msg.created_at
+            except (discord.NotFound, discord.HTTPException):
+                last_active = thread.created_at
+        else:
+            last_active = thread.created_at
+        if last_active < threshold:
+            try:
+                await thread.send("-# _*Bump!*_")
+            except (discord.Forbidden, discord.HTTPException):
+                pass
 
 async def send_low_performance_dm(member, rratio, vratio=None):
     try:
