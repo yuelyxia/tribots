@@ -82,6 +82,7 @@ STAFF_ROLES = [ban_perms, files_access, defender, sr_of_the_month, sr_role, tsr_
 TRI_Archive = 1371673839695826974
 
 KAFU = 1457009979817988241
+SEKAI = 1544374259759976488
 
 #tethys roles info
 tethys_adm_role = 1435570385960833024
@@ -201,7 +202,7 @@ async def before_periodic_sync():
 
 @bot.event
 async def on_message(message):
-    if message.author.id == KAFU:
+    if message.author.id == KAFU or message.author.id == SEKAI:
         if message.embeds:
             for embed in message.embeds:
                 if embed.description and "。。。ticket　ೀ　" in embed.description:
