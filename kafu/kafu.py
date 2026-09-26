@@ -1893,7 +1893,7 @@ async def customrole_edit(interaction: discord.Interaction,
                             await interaction.followup.send("An error occured while uploading role icon.", ephemeral=True)
 
 @customrole.command(name="create", description="Create a custom role.")
-@app_commands.default_permissions(manage_roles=True)
+@app_commands.checks.has_permissions(manage_roles=True)
 async def customrole_create(interaction: discord.Interaction,
     owner: discord.Member,
     name: str,
@@ -1976,7 +1976,7 @@ async def customrole_create(interaction: discord.Interaction,
     await interaction.followup.send(f"Custom role {role.mention} created for {owner.mention}")
 
 @customrole.command(name="delete", description="Delete a custom role.")
-@app_commands.default_permissions(manage_roles=True)
+@app_commands.checks.has_permissions(manage_roles=True)
 async def customrole_delete(interaction: discord.Interaction, role: discord.Role):
     await interaction.response.defer(ephemeral=True)
     server_info = servers.find_one_and_update(
@@ -2004,7 +2004,7 @@ async def customrole_delete(interaction: discord.Interaction, role: discord.Role
     await interaction.followup.send(f"Custom role deleted.")
 
 @customrole.command(name="add", description="Add an existing role to custom roles.")
-@app_commands.default_permissions(manage_roles=True)
+@app_commands.checks.has_permissions(manage_roles=True)
 async def customrole_add(
     interaction: discord.Interaction,
     role: discord.Role,
@@ -2047,7 +2047,7 @@ async def customrole_add(
     await interaction.followup.send("Custom role added.")
 
 @customrole.command(name="remove", description="Remove a role from custom roles.")
-@app_commands.default_permissions(manage_roles=True)
+@app_commands.checks.has_permissions(manage_roles=True)
 async def customrole_remove(interaction: discord.Interaction, role: discord.Role):
     await interaction.response.defer(ephemeral=True)
     server_info = servers.find_one_and_update(
@@ -2066,7 +2066,7 @@ async def customrole_remove(interaction: discord.Interaction, role: discord.Role
     await interaction.followup.send(f"{role.mention} removed from database.")
 
 @customrole.command(name="setexpiry", description="Set expiry for an existing custom role.")
-@app_commands.default_permissions(manage_roles=True)
+@app_commands.checks.has_permissions(manage_roles=True)
 async def customrole_setexpiry(
     interaction: discord.Interaction,
     role: discord.Role,
@@ -2312,7 +2312,7 @@ bot.tree.add_command(role)
 
 @role.command(name="massadd", description="Adds a role to multiple users.")
 @app_commands.describe(role="Role to add", users="Users or IDs (separate with a space)")
-@app_commands.default_permissions(manage_roles=True)
+@app_commands.checks.has_permissions(manage_roles=True)
 async def role_massadd(interaction: discord.Interaction, role: discord.Role, users: str):
     await interaction.response.defer()
     guild = interaction.guild
