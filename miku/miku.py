@@ -1673,7 +1673,7 @@ async def getids(ctx, *, string: str = None):
 
 @bot.command(name="ban", help="Pings ban perms.")
 @commands.has_any_role(staff_role, tethys_staff_role, professional_mm_role, professional_pilot_role)
-async def ban_perms(ctx, *, perms: str):
+async def ban_ping(ctx, *, perms: str):
     if not perms or perms.lower() != "perms":
         return
     if ctx.guild.id == TRI_Archive:
